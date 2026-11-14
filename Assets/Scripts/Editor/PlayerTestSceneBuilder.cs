@@ -17,6 +17,8 @@ public static class PlayerTestSceneBuilder
     static readonly Color OneWayColor = new Color(0.30f, 0.80f, 0.90f);
     static readonly Color PlayerColor = new Color(1.00f, 0.55f, 0.80f);
     static readonly Color BackgroundColor = new Color(0.10f, 0.08f, 0.20f);
+    static readonly Color EnemyColor = new Color(0.95f, 0.35f, 0.30f);
+    static readonly Color HazardColor = new Color(1.00f, 0.80f, 0.20f);
 
     [MenuItem("Tools/Team1/プレイヤー操作テストシーンを作成")]
     public static void BuildFromMenu()
@@ -31,9 +33,10 @@ public static class PlayerTestSceneBuilder
         int ground = LayerMask.NameToLayer("Ground");
         int oneWay = LayerMask.NameToLayer("OneWayPlatform");
         int playerLayer = LayerMask.NameToLayer("Player");
-        if (ground < 0 || oneWay < 0 || playerLayer < 0)
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        if (ground < 0 || oneWay < 0 || playerLayer < 0 || enemyLayer < 0)
         {
-            Debug.LogError("レイヤー Ground / OneWayPlatform / Player が見つかりません。Project Settings > Tags and Layers を確認してください。");
+            Debug.LogError("レイヤー Ground / OneWayPlatform / Player / Enemy が見つかりません。Project Settings > Tags and Layers を確認してください。");
             return;
         }
 
@@ -88,6 +91,74 @@ public static class PlayerTestSceneBuilder
         controllerSo.FindProperty("_visualRoot").objectReferenceValue = visual;
         controllerSo.ApplyModifiedPropertiesWithoutUndo();
 
+        // --- ダメージ（ライフ制：3回当たるとアウト） ---
+        var playerHealth = player.AddComponent<Health>();
+        SetProps(playerHealth, so =>
+        {
+            so.FindProperty("_team").enumValueIndex = (int)Team.Player;
+            so.FindProperty("_max").intValue = 3;
+            so.FindProperty("_oneDamagePerHit").boolValue = true;
+            so.FindProperty("_invincibleTimeAfterHit").floatValue = 1.5f;
+        });
+        player.AddComponent<PlayerDamageReaction>();
+        var playerBlink = player.AddComponent<DamageBlink>();
+        SetProps(playerBlink, so =>
+        {
+            var arr = so.FindProperty("_renderers");
+            arr.arraySize = 2;
+            arr.GetArrayElementAtIndex(0).objectReferenceValue = bodySprite;
+            arr.GetArrayElementAtIndex(1).objectReferenceValue = eye;
+        });
+        var playerLabel = player.AddComponent<HealthDebugLabel>();
+        SetProps(playerLabel, so =>
+        {
+            so.FindProperty("_label").stringValue = "LIFE";
+            so.FindProperty("_showGameOver").boolValue = true;
+        });
+
+        // 被弾範囲＝体の絵と同じ大きさ
+        AddHurtbox(bodySprite.gameObject);
+
+        // 【仮】J キーの攻撃（M3 で本番の攻撃に置き換える）
+        var attackSprite = CreateSprite("DebugAttack", visual, new Vector2(0.75f, 0.5f), new Vector2(0.8f, 0.6f), new Color(1f, 1f, 1f, 0.5f), square, 2);
+        attackSprite.gameObject.layer = playerLayer;
+        var attackHitbox = AddHitbox(attackSprite.gameObject, Team.Player, 1 << enemyLayer, damage: 1,
+            knockback: new Vector2(4f, 3f), hitStun: 0.2f, hitOnce: true, activeOnStart: false);
+        var debugAttack = player.AddComponent<PlayerDebugAttack>();
+        SetProps(debugAttack, so =>
+        {
+            so.FindProperty("_hitbox").objectReferenceValue = attackHitbox;
+            so.FindProperty("_effect").objectReferenceValue = attackSprite;
+        });
+
+        // --- 的になる敵（HP3、触れるとダメージ） ---
+        var enemy = new GameObject("Enemy_Dummy");
+        enemy.layer = enemyLayer;
+        enemy.transform.position = new Vector3(4f, 0f, 0f);
+        var enemyHealth = enemy.AddComponent<Health>();
+        SetProps(enemyHealth, so =>
+        {
+            so.FindProperty("_team").enumValueIndex = (int)Team.Enemy;
+            so.FindProperty("_max").intValue = 3;
+            so.FindProperty("_oneDamagePerHit").boolValue = false;
+            so.FindProperty("_invincibleTimeAfterHit").floatValue = 0f;
+        });
+        enemy.AddComponent<DamageBlink>();
+        enemy.AddComponent<DisableOnDeath>();
+        var enemyLabel = enemy.AddComponent<HealthDebugLabel>();
+        SetProps(enemyLabel, so => so.FindProperty("_offset").vector3Value = new Vector3(0f, 1.7f, 0f));
+        var enemyBody = CreateSprite("Body", enemy.transform, new Vector2(0f, 0.6f), new Vector2(0.9f, 1.2f), EnemyColor, square, 0);
+        enemyBody.gameObject.layer = enemyLayer;
+        var enemyHurtbox = AddHurtbox(enemyBody.gameObject);
+        // 体当たり：被弾範囲と同じ形で、プレイヤーに当たり続ける（連続ヒットはプレイヤーの無敵時間で防ぐ）
+        AddHitbox(enemyBody.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
+            knockback: new Vector2(6f, 5f), hitStun: 0.25f, hitOnce: false, activeOnStart: true, area: enemyHurtbox);
+
+        // --- トゲ（触れるとダメージ） ---
+        var spikes = CreateSprite("Hazard_Spikes", terrain, new Vector2(10.5f, 0.2f), new Vector2(2f, 0.4f), HazardColor, square, 0);
+        AddHitbox(spikes.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
+            knockback: new Vector2(5f, 7f), hitStun: 0.25f, hitOnce: false, activeOnStart: true);
+
         // --- カメラ ---
         var camGo = new GameObject("Main Camera");
         camGo.tag = "MainCamera";
@@ -120,6 +191,49 @@ public static class PlayerTestSceneBuilder
         sr.sprite = sprite;
         sr.color = color;
         go.AddComponent<BoxCollider2D>().size = Vector2.one;
+    }
+
+    static void SetProps(Object target, System.Action<SerializedObject> edit)
+    {
+        var so = new SerializedObject(target);
+        edit(so);
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    /// <summary>絵と同じ大きさのトリガーを付けて被弾範囲にする（絵は 1×1 ユニットの四角）</summary>
+    static BoxCollider2D AddHurtbox(GameObject go)
+    {
+        var col = go.AddComponent<BoxCollider2D>();
+        col.size = Vector2.one;
+        col.offset = Vector2.zero;
+        col.isTrigger = true;
+        go.AddComponent<Hurtbox>();
+        return col;
+    }
+
+    static Hitbox AddHitbox(GameObject go, Team team, int targetMask, int damage, Vector2 knockback, float hitStun,
+        bool hitOnce, bool activeOnStart, Collider2D area = null)
+    {
+        if (area == null)
+        {
+            var col = go.AddComponent<BoxCollider2D>();
+            col.size = Vector2.one;
+            col.isTrigger = true;
+            area = col;
+        }
+        var hitbox = go.AddComponent<Hitbox>();
+        SetProps(hitbox, so =>
+        {
+            so.FindProperty("_team").enumValueIndex = (int)team;
+            so.FindProperty("_area").objectReferenceValue = area;
+            so.FindProperty("_targetLayers").intValue = targetMask;
+            so.FindProperty("_damage").intValue = damage;
+            so.FindProperty("_knockback").vector2Value = knockback;
+            so.FindProperty("_hitStun").floatValue = hitStun;
+            so.FindProperty("_hitOncePerActivation").boolValue = hitOnce;
+            so.FindProperty("_activeOnStart").boolValue = activeOnStart;
+        });
+        return hitbox;
     }
 
     static SpriteRenderer CreateSprite(string name, Transform parent, Vector2 localPos, Vector2 size, Color color, Sprite sprite, int order)
