@@ -7,6 +7,8 @@ using UnityEngine;
 /// ・ボタンを早く離すと低く跳ぶ（可変ジャンプ）
 /// ・崖から落ちた直後でも少しの間ジャンプできる（コヨーテタイム）
 /// ・着地の少し前に押したジャンプも受け付ける（先行入力）
+/// ・ダッシュ：向いている方向へ短く高速移動（仕様書 3.2：無敵なし）。ダッシュ中は重力なし。空中では着地までに1回。
+///   ジャンプするとダッシュは終わる
 /// </summary>
 [RequireComponent(typeof(KinematicBody2D), typeof(PlayerInputReader))]
 public class PlayerController : MonoBehaviour
@@ -33,6 +35,16 @@ public class PlayerController : MonoBehaviour
     [Tooltip("着地前に押したジャンプを覚えておく時間（秒）")]
     [SerializeField] float _jumpBufferTime = 0.12f;
 
+    [Header("ダッシュ")]
+    [Tooltip("ダッシュ中の速さ（マス／秒）")]
+    [SerializeField] float _dashSpeed = 16f;
+    [Tooltip("ダッシュが続く秒数。距離＝速さ×秒数（16×0.15＝2.4マス）")]
+    [SerializeField, Min(0.01f)] float _dashDuration = 0.15f;
+    [Tooltip("ダッシュを始めてから、次のダッシュができるまでの秒数")]
+    [SerializeField, Min(0f)] float _dashCooldown = 0.4f;
+    [Tooltip("空中でできるダッシュの回数（着地で回復）")]
+    [SerializeField, Min(0)] int _airDashCount = 1;
+
     [Header("被弾")]
     [Tooltip("のけぞり中の横方向の減速。小さいほど遠くまで吹き飛ぶ")]
     [SerializeField] float _knockbackDeceleration = 12f;
@@ -49,6 +61,11 @@ public class PlayerController : MonoBehaviour
     bool _isJumpRising; // ジャンプで上昇中（可変ジャンプの判定用）
     bool _wasGrounded;
     float _stunUntil = float.NegativeInfinity;
+    bool _dashRequested;
+    float _dashUntil = float.NegativeInfinity;
+    float _nextDashTime = float.NegativeInfinity;
+    int _airDashesUsed;
+    int _dashDirection = 1;
 
     public Vector2 Velocity => _velocity;
     public bool IsGrounded => _body.IsGrounded;
@@ -60,11 +77,15 @@ public class PlayerController : MonoBehaviour
     public bool IsStunned => Time.time < _stunUntil;
     /// <summary>今プレイヤーが操作できるか（CanControl かつ のけぞり中でない）</summary>
     public bool IsControllable => CanControl && !IsStunned;
+    /// <summary>ダッシュ中か</summary>
+    public bool IsDashing => Time.time < _dashUntil;
 
     /// <summary>ジャンプした瞬間（SE・エフェクト用）</summary>
     public event Action Jumped;
     /// <summary>着地した瞬間（SE・エフェクト用）</summary>
     public event Action Landed;
+    /// <summary>ダッシュを始めた瞬間（SE・エフェクト・アニメーション用）</summary>
+    public event Action Dashed;
 
     float Gravity => 2f * _jumpHeight / (_timeToApex * _timeToApex);
     float JumpVelocity => Gravity * _timeToApex;
@@ -75,12 +96,26 @@ public class PlayerController : MonoBehaviour
         _input = GetComponent<PlayerInputReader>();
     }
 
-    void OnEnable() => _input.JumpPressed += OnJumpPressed;
-    void OnDisable() => _input.JumpPressed -= OnJumpPressed;
+    void OnEnable()
+    {
+        _input.JumpPressed += OnJumpPressed;
+        _input.DashPressed += OnDashPressed;
+    }
+
+    void OnDisable()
+    {
+        _input.JumpPressed -= OnJumpPressed;
+        _input.DashPressed -= OnDashPressed;
+    }
 
     void OnJumpPressed()
     {
         if (CanControl) _lastJumpPressedTime = Time.time;
+    }
+
+    void OnDashPressed()
+    {
+        if (IsControllable) _dashRequested = true; // 次の FixedUpdate で始める
     }
 
     void Update()
@@ -102,9 +137,22 @@ public class PlayerController : MonoBehaviour
         float dt = Time.fixedDeltaTime;
         float now = Time.time;
         bool grounded = _body.IsGrounded; // 前回の Move の結果
-        if (grounded) _lastGroundedTime = now;
+        if (grounded)
+        {
+            _lastGroundedTime = now;
+            _airDashesUsed = 0;
+        }
         bool stunned = IsStunned;
         bool controllable = CanControl && !stunned;
+
+        // --- ダッシュの開始 ---
+        if (_dashRequested)
+        {
+            _dashRequested = false;
+            if (controllable) TryStartDash(grounded, now);
+        }
+        if (!controllable) _dashUntil = float.NegativeInfinity; // のけぞり・操作不可になったらダッシュは終わり
+        bool dashing = now < _dashUntil;
 
         // --- 横移動 ---
         float inputX = controllable ? _input.Move.x : 0f;
@@ -114,7 +162,8 @@ public class PlayerController : MonoBehaviour
         if (stunned) accel = _knockbackDeceleration; // のけぞり中は弱い減速で吹き飛ばす
         else if (grounded) accel = hasInput ? _groundAcceleration : _groundDeceleration;
         else accel = hasInput ? _airAcceleration : _airDeceleration;
-        _velocity.x = Mathf.MoveTowards(_velocity.x, targetX, accel * dt);
+        if (dashing) _velocity.x = _dashDirection * _dashSpeed;
+        else _velocity.x = Mathf.MoveTowards(_velocity.x, targetX, accel * dt);
 
         // --- ジャンプ（先行入力 × コヨーテタイム） ---
         bool jumpBuffered = now - _lastJumpPressedTime <= _jumpBufferTime;
@@ -123,6 +172,8 @@ public class PlayerController : MonoBehaviour
         {
             _velocity.y = JumpVelocity;
             _isJumpRising = true;
+            if (dashing) EndDash(); // ジャンプでダッシュは終わる
+            dashing = false;
             // 同じ猶予時間内に二段ジャンプしないよう、両方を消費する
             _lastJumpPressedTime = float.NegativeInfinity;
             _lastGroundedTime = float.NegativeInfinity;
@@ -143,9 +194,16 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // --- 重力 ---
-        float g = Gravity * (_velocity.y < 0f ? _fallGravityMultiplier : 1f);
-        _velocity.y = Mathf.Max(_velocity.y - g * dt, -_maxFallSpeed);
+        // --- 重力（ダッシュ中はまっすぐ飛ぶ） ---
+        if (dashing)
+        {
+            _velocity.y = 0f;
+        }
+        else
+        {
+            float g = Gravity * (_velocity.y < 0f ? _fallGravityMultiplier : 1f);
+            _velocity.y = Mathf.Max(_velocity.y - g * dt, -_maxFallSpeed);
+        }
 
         // --- 移動と衝突 ---
         _body.Move(_velocity * dt);
@@ -159,10 +217,40 @@ public class PlayerController : MonoBehaviour
         if ((_body.HitWallLeft && _velocity.x < 0f) || (_body.HitWallRight && _velocity.x > 0f))
         {
             _velocity.x = 0f;
+            if (dashing) _dashUntil = float.NegativeInfinity; // 壁にぶつかったらダッシュは終わり
+        }
+        else if (dashing && Time.time + dt >= _dashUntil)
+        {
+            EndDash(); // 次のフレームで終わるので、ふつうの速さに戻しておく
         }
 
         if (_body.IsGrounded && !_wasGrounded) Landed?.Invoke();
         _wasGrounded = _body.IsGrounded;
+    }
+
+    void TryStartDash(bool grounded, float now)
+    {
+        if (now < _nextDashTime) return;
+        if (!grounded)
+        {
+            if (_airDashesUsed >= _airDashCount) return;
+            _airDashesUsed++;
+        }
+        float x = _input.Move.x;
+        _dashDirection = x > 0f ? 1 : x < 0f ? -1 : FacingDirection;
+        FacingDirection = _dashDirection;
+        _dashUntil = now + _dashDuration;
+        _nextDashTime = now + _dashCooldown;
+        _isJumpRising = false;
+        _velocity = new Vector2(_dashDirection * _dashSpeed, 0f);
+        Dashed?.Invoke();
+    }
+
+    /// <summary>ダッシュを終わらせ、横の速さをふつうの移動速度に戻す（急に止まらないように）</summary>
+    void EndDash()
+    {
+        _dashUntil = float.NegativeInfinity;
+        _velocity.x = _dashDirection * _moveSpeed;
     }
 
     /// <summary>速度を直接上書きする（スキルの移動など）</summary>
@@ -176,6 +264,7 @@ public class PlayerController : MonoBehaviour
     public void ApplyKnockback(Vector2 velocity, float stunTime)
     {
         SetVelocity(velocity);
+        _dashUntil = float.NegativeInfinity;
         _stunUntil = Mathf.Max(_stunUntil, Time.time + stunTime);
         _lastJumpPressedTime = float.NegativeInfinity; // 被弾前に押したジャンプを持ち越さない
     }

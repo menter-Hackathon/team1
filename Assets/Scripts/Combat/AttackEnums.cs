@@ -12,7 +12,7 @@ public enum AttackKind
     Spawn = 2,
     /// <summary>瞬間移動（新しい種類）。ボスの移動と、能力「新しいタブ」で共用</summary>
     Warp = 3,
-    /// <summary>【仮】プレイヤーの近接。持ち主に付けた Hitbox を使うので、AttackRunner では実行しない（PlayerDebugAttack が使う）</summary>
+    /// <summary>プレイヤーの近接。持ち主に付けた Hitbox を使うので、AttackRunner では実行しない（PlayerMeleeAttack が使う）</summary>
     Melee = 4,
 }
 

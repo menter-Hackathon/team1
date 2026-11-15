@@ -79,7 +79,7 @@ public class AttackRunner : MonoBehaviour
         if (IsRunning && !_allowConcurrent) return false;
         if (data.Kind == AttackKind.Melee)
         {
-            Debug.LogWarning($"{name}: 近接（{data.name}）は AttackRunner では実行しません。PlayerDebugAttack に設定してください", this);
+            Debug.LogWarning($"{name}: 近接（{data.name}）は AttackRunner では実行しません。PlayerMeleeAttack に設定してください", this);
             return false;
         }
         Current = data;

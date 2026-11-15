@@ -145,7 +145,7 @@ public class BossTestDirector : MonoBehaviour
         }
 
         GUI.Label(new Rect(10f, Screen.height - 24f, Screen.width - 20f, 22f),
-            "【仮】B：ボス切替　R：やり直し　N：ゲージ+10　J：近接　1/2/3：能力", _smallStyle);
+            "【仮】B：ボス切替　R：やり直し　N：ゲージ+10　J：近接　K：ダッシュ　1/2/3：能力", _smallStyle);
     }
 
     static void DrawBar(Rect r, float ratio, Color fill)

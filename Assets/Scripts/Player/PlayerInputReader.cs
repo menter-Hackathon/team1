@@ -6,7 +6,9 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Input System からプレイヤーの入力を読み取る。
 /// キー割り当てはコード内で定義している（.inputactions アセット不要で、マージ時に衝突しにくい）。
-/// 通常攻撃のボタンは、仕様が決まったらここに追加する。
+/// ・移動：WASD／矢印、左スティック／十字キー　・ジャンプ：Space、A
+/// ・近接：J（ゲームパッドは左のボタン）　・ダッシュ：K／左 Shift、RT
+/// ・スキル：1／2／3（Y／B／RB）、選択 Q／E（LB）、捨てる X 長押し（LT 長押し）
 /// </summary>
 public class PlayerInputReader : MonoBehaviour
 {
@@ -24,6 +26,10 @@ public class PlayerInputReader : MonoBehaviour
     public bool JumpHeld => _jump != null && _jump.IsPressed();
     /// <summary>ジャンプボタンが押された瞬間に呼ばれる</summary>
     public event Action JumpPressed;
+    /// <summary>近接のボタン（J）が押された瞬間</summary>
+    public event Action AttackPressed;
+    /// <summary>ダッシュのボタン（K／左 Shift）が押された瞬間</summary>
+    public event Action DashPressed;
 
     /// <summary>スキル枠のボタン（1／2／3）が押された瞬間。引数は枠の番号（0始まり）</summary>
     public event Action<int> SkillSlotPressed;
@@ -54,6 +60,21 @@ public class PlayerInputReader : MonoBehaviour
         _jump.AddBinding("<Gamepad>/buttonSouth");
         _jump.performed += OnJumpPerformed;
         _actions.Add(_jump);
+
+        // 近接：J（ゲームパッドは左のボタン）
+        var attack = new InputAction("Attack", InputActionType.Button);
+        attack.AddBinding("<Keyboard>/j");
+        attack.AddBinding("<Gamepad>/buttonWest");
+        attack.performed += _ => AttackPressed?.Invoke();
+        _actions.Add(attack);
+
+        // ダッシュ：K／左 Shift（ゲームパッドは RT）
+        var dash = new InputAction("Dash", InputActionType.Button);
+        dash.AddBinding("<Keyboard>/k");
+        dash.AddBinding("<Keyboard>/leftShift");
+        dash.AddBinding("<Gamepad>/rightTrigger");
+        dash.performed += _ => DashPressed?.Invoke();
+        _actions.Add(dash);
 
         // --- スキル ---
         // 枠を使う：1／2／3（ゲームパッドは Y／B／RB）

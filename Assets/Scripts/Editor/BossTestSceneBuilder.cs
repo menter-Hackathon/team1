@@ -503,7 +503,7 @@ public static class BossTestSceneBuilder
     }
 
     /// <summary>ボスの攻撃の共通値（docs 3章：ダメージ1、ノックバック (6,5)、のけぞり0.25秒）</summary>
-    static void BossCommon(SerializedObject so, AttackKind kind, Color color)
+    internal static void BossCommon(SerializedObject so, AttackKind kind, Color color)
     {
         Kind(so, kind);
         I(so, "_damage", 1);
@@ -514,7 +514,7 @@ public static class BossTestSceneBuilder
     }
 
     /// <summary>攻撃データを作る（すでにあれば、それを使う。値は上書きしない）</summary>
-    static AttackData GetOrCreateAttack(string relativePath, Action<SerializedObject> init)
+    internal static AttackData GetOrCreateAttack(string relativePath, Action<SerializedObject> init)
     {
         string path = $"{AttackFolder}/{relativePath}.asset";
         var data = AssetDatabase.LoadAssetAtPath<AttackData>(path);
