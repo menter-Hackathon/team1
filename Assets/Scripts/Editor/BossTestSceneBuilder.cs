@@ -61,16 +61,9 @@ public static class BossTestSceneBuilder
         PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
 
         // --- プレイヤー ---
-        var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-6f, 0.05f, 0f), attacks.PlayerMelee, out _);
-
-        // 【仮】G キーで手に入るスキルを、本物の能力2つにする（ボスを倒さずに能力を試せる）
-        PlayerTestSceneBuilder.SetProps(player.GetComponent<SkillDebugGiver>(), so =>
-        {
-            var arr = so.FindProperty("_skills");
-            arr.arraySize = 2;
-            arr.GetArrayElementAtIndex(0).objectReferenceValue = attacks.SkillNewTab;
-            arr.GetArrayElementAtIndex(1).objectReferenceValue = attacks.SkillBreakpoint;
-        });
+        // 【仮】G キーで本物の能力2つを順番にもらえる（ボスを倒さずに能力を試せる）
+        var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-6f, 0.05f, 0f), attacks.PlayerMelee,
+            new[] { attacks.SkillNewTab, attacks.SkillBreakpoint });
 
         // --- ボス（B キーで切り替え。最初は Chrome） ---
         // Chrome：空中に浮く（下の端が床から2.5マス）。VS Code：床に立つ
