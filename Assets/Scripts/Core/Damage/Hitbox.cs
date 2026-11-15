@@ -17,8 +17,10 @@ public class Hitbox : MonoBehaviour
     [Tooltip("当てる相手のレイヤー（プレイヤーの攻撃なら Enemy、敵の攻撃なら Player）")]
     [SerializeField] LayerMask _targetLayers;
 
-    [Header("攻撃の中身（M3 で攻撃データから設定する予定）")]
+    [Header("攻撃の中身（AttackData から使うときは Setup で上書きされる）")]
     [SerializeField, Min(0)] int _damage = 1;
+    [Tooltip("ボスのウイルス解除ゲージを増やす量（プレイヤーの攻撃用）")]
+    [SerializeField, Min(0)] int _gaugeGain;
     [Tooltip("吹き飛ばす速度。x は相手が攻撃から離れる向きに自動で反転する")]
     [SerializeField] Vector2 _knockback = new Vector2(6f, 5f);
     [Tooltip("相手がのけぞって操作できない秒数")]
@@ -54,6 +56,29 @@ public class Hitbox : MonoBehaviour
         _ownerHealth = GetComponentInParent<Health>();
         IsActive = _activeOnStart;
     }
+
+    /// <summary>
+    /// 攻撃の中身（ダメージ・ゲージ増加・ノックバック・のけぞり）を AttackData から設定する。
+    /// 判定のオン・オフは変えない
+    /// </summary>
+    public void Setup(AttackData data)
+    {
+        _damage = data.Damage;
+        _gaugeGain = data.GaugeGain;
+        _knockback = data.Knockback;
+        _hitStun = data.HitStun;
+    }
+
+    /// <summary>陣営・当てる相手・当たり方を設定する（弾・判定を実行時に作るとき用）</summary>
+    public void SetOwner(Team team, LayerMask targetLayers, bool hitOncePerActivation = true)
+    {
+        _team = team;
+        _targetLayers = targetLayers;
+        _hitOncePerActivation = hitOncePerActivation;
+    }
+
+    /// <summary>攻撃範囲のコライダーを差し替える</summary>
+    public void SetArea(Collider2D area) => _area = area;
 
     /// <summary>攻撃判定を出す。「当てた相手」の記録もリセットされる</summary>
     public void Activate()
@@ -107,6 +132,7 @@ public class Hitbox : MonoBehaviour
         return new DamageInfo
         {
             Amount = _damage,
+            GaugeGain = _gaugeGain,
             SourceTeam = _team,
             Knockback = new Vector2(_knockback.x * dir, _knockback.y),
             HitStun = _hitStun,

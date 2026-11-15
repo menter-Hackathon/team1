@@ -74,9 +74,79 @@ public static class PlayerTestSceneBuilder
         CreateBlock("OneWay_2", new Vector2(4f, 5f), new Vector2(3f, 0.3f), oneWay, OneWayColor, square, terrain);
 
         // --- プレイヤー（原点＝足元） ---
+        var player = CreatePlayer(square, new Vector3(-3f, 0.5f, 0f), null, out SkillDefinition[] testSkills);
+
+        // 拾えるスキル（ボスの代わり）。最後の1つは、同じスキルを拾えないことの確認用
+        var pickups = new GameObject("SkillPickups").transform;
+        CreateSkillPickup(testSkills[0], new Vector2(-5f, 0f), TestSkillColors[0], pickups, square, playerLayer);
+        CreateSkillPickup(testSkills[1], new Vector2(-8f, 1f), TestSkillColors[1], pickups, square, playerLayer);   // 低い段の上
+        CreateSkillPickup(testSkills[2], new Vector2(-13f, 3f), TestSkillColors[2], pickups, square, playerLayer);  // 高い段の上
+        CreateSkillPickup(testSkills[3], new Vector2(-17f, 0f), TestSkillColors[3], pickups, square, playerLayer);
+        CreateSkillPickup(testSkills[0], new Vector2(-19.5f, 0f), TestSkillColors[0], pickups, square, playerLayer, "_Duplicate");
+
+        // --- 的になる敵（HP3、触れるとダメージ） ---
+        var enemy = new GameObject("Enemy_Dummy");
+        enemy.layer = enemyLayer;
+        enemy.transform.position = new Vector3(4f, 0f, 0f);
+        var enemyHealth = enemy.AddComponent<Health>();
+        SetProps(enemyHealth, so =>
+        {
+            so.FindProperty("_team").enumValueIndex = (int)Team.Enemy;
+            so.FindProperty("_max").intValue = 3;
+            so.FindProperty("_oneDamagePerHit").boolValue = false;
+            so.FindProperty("_invincibleTimeAfterHit").floatValue = 0f;
+        });
+        enemy.AddComponent<DamageBlink>();
+        enemy.AddComponent<DisableOnDeath>();
+        var enemyLabel = enemy.AddComponent<HealthDebugLabel>();
+        SetProps(enemyLabel, so => so.FindProperty("_offset").vector3Value = new Vector3(0f, 1.7f, 0f));
+        var enemyBody = CreateSprite("Body", enemy.transform, new Vector2(0f, 0.6f), new Vector2(0.9f, 1.2f), EnemyColor, square, 0);
+        enemyBody.gameObject.layer = enemyLayer;
+        var enemyHurtbox = AddHurtbox(enemyBody.gameObject);
+        // 体当たり：被弾範囲と同じ形で、プレイヤーに当たり続ける（連続ヒットはプレイヤーの無敵時間で防ぐ）
+        AddHitbox(enemyBody.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
+            knockback: new Vector2(6f, 5f), hitStun: 0.25f, hitOnce: false, activeOnStart: true, area: enemyHurtbox);
+
+        // --- トゲ（触れるとダメージ） ---
+        var spikes = CreateSprite("Hazard_Spikes", terrain, new Vector2(10.5f, 0.2f), new Vector2(2f, 0.4f), HazardColor, square, 0);
+        AddHitbox(spikes.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
+            knockback: new Vector2(5f, 7f), hitStun: 0.25f, hitOnce: false, activeOnStart: true);
+
+        // --- カメラ ---
+        var camGo = new GameObject("Main Camera");
+        camGo.tag = "MainCamera";
+        camGo.transform.position = new Vector3(0f, 2f, -10f);
+        var cam = camGo.AddComponent<Camera>();
+        cam.orthographic = true;
+        cam.orthographicSize = 6f;
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = BackgroundColor;
+        camGo.AddComponent<AudioListener>();
+        var follow = camGo.AddComponent<CameraFollow2D>();
+        var followSo = new SerializedObject(follow);
+        followSo.FindProperty("_target").objectReferenceValue = player.transform;
+        followSo.ApplyModifiedPropertiesWithoutUndo();
+
+        EnsureFolder(Path.GetDirectoryName(ScenePath).Replace('\\', '/'));
+        EditorSceneManager.SaveScene(scene, ScenePath);
+        Selection.activeGameObject = player;
+        Debug.Log($"プレイヤー操作テストシーンを作成しました: {ScenePath}");
+    }
+
+    /// <summary>
+    /// プレイヤーを作る（ボス用テストシーンでも使う）。原点＝足元。
+    /// meleeAttack を渡すと、【仮】近接（J キー）の数値をその攻撃データから読む。null なら今までの値のまま
+    /// </summary>
+    internal static GameObject CreatePlayer(Sprite square, Vector3 position, AttackData meleeAttack, out SkillDefinition[] testSkills)
+    {
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int ground = LayerMask.NameToLayer("Ground");
+        int oneWay = LayerMask.NameToLayer("OneWayPlatform");
+
         var player = new GameObject("Player");
         player.layer = playerLayer;
-        player.transform.position = new Vector3(-3f, 0.5f, 0f);
+        player.transform.position = position;
 
         var rb = player.AddComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
@@ -147,81 +217,40 @@ public static class PlayerTestSceneBuilder
         {
             so.FindProperty("_hitbox").objectReferenceValue = attackHitbox;
             so.FindProperty("_effect").objectReferenceValue = attackSprite;
+            so.FindProperty("_attack").objectReferenceValue = meleeAttack;
         });
 
         // --- スキル枠（3枠・捨てる・満杯時の入れ替え） ---
         var playerSkills = player.AddComponent<PlayerSkills>();
-        SkillDefinition[] testSkills = GetOrCreateTestSkills(square);
+        // 能力の実行（攻撃データ）とクールタイム。能力は同時に使えるようにする
+        var playerRunner = player.AddComponent<AttackRunner>();
+        SetProps(playerRunner, so =>
+        {
+            so.FindProperty("_team").enumValueIndex = (int)Team.Player;
+            so.FindProperty("_targetLayers").intValue = 1 << enemyLayer;
+            so.FindProperty("_solidMask").intValue = 1 << ground;
+            so.FindProperty("_groundMask").intValue = (1 << ground) | (1 << oneWay);
+            so.FindProperty("_allowConcurrent").boolValue = true;
+        });
+        player.AddComponent<PlayerSkillExecutor>();
+        SkillDefinition[] skills = GetOrCreateTestSkills(square);
+        testSkills = skills;
         // 【仮】G キーでテスト用スキルを順番に獲得（ボスができたら消す）
         var skillGiver = player.AddComponent<SkillDebugGiver>();
         SetProps(skillGiver, so =>
         {
             var arr = so.FindProperty("_skills");
-            arr.arraySize = testSkills.Length;
-            for (int i = 0; i < testSkills.Length; i++) arr.GetArrayElementAtIndex(i).objectReferenceValue = testSkills[i];
+            arr.arraySize = skills.Length;
+            for (int i = 0; i < skills.Length; i++) arr.GetArrayElementAtIndex(i).objectReferenceValue = skills[i];
         });
         // 【仮】スキル枠と届いたイベントの文字表示
         var skillLabel = player.AddComponent<SkillSlotsDebugLabel>();
         SetProps(skillLabel, so => so.FindProperty("_skills").objectReferenceValue = playerSkills);
 
-        // 拾えるスキル（ボスの代わり）。最後の1つは、同じスキルを拾えないことの確認用
-        var pickups = new GameObject("SkillPickups").transform;
-        CreateSkillPickup(testSkills[0], new Vector2(-5f, 0f), TestSkillColors[0], pickups, square, playerLayer);
-        CreateSkillPickup(testSkills[1], new Vector2(-8f, 1f), TestSkillColors[1], pickups, square, playerLayer);   // 低い段の上
-        CreateSkillPickup(testSkills[2], new Vector2(-13f, 3f), TestSkillColors[2], pickups, square, playerLayer);  // 高い段の上
-        CreateSkillPickup(testSkills[3], new Vector2(-17f, 0f), TestSkillColors[3], pickups, square, playerLayer);
-        CreateSkillPickup(testSkills[0], new Vector2(-19.5f, 0f), TestSkillColors[0], pickups, square, playerLayer, "_Duplicate");
-
-        // --- 的になる敵（HP3、触れるとダメージ） ---
-        var enemy = new GameObject("Enemy_Dummy");
-        enemy.layer = enemyLayer;
-        enemy.transform.position = new Vector3(4f, 0f, 0f);
-        var enemyHealth = enemy.AddComponent<Health>();
-        SetProps(enemyHealth, so =>
-        {
-            so.FindProperty("_team").enumValueIndex = (int)Team.Enemy;
-            so.FindProperty("_max").intValue = 3;
-            so.FindProperty("_oneDamagePerHit").boolValue = false;
-            so.FindProperty("_invincibleTimeAfterHit").floatValue = 0f;
-        });
-        enemy.AddComponent<DamageBlink>();
-        enemy.AddComponent<DisableOnDeath>();
-        var enemyLabel = enemy.AddComponent<HealthDebugLabel>();
-        SetProps(enemyLabel, so => so.FindProperty("_offset").vector3Value = new Vector3(0f, 1.7f, 0f));
-        var enemyBody = CreateSprite("Body", enemy.transform, new Vector2(0f, 0.6f), new Vector2(0.9f, 1.2f), EnemyColor, square, 0);
-        enemyBody.gameObject.layer = enemyLayer;
-        var enemyHurtbox = AddHurtbox(enemyBody.gameObject);
-        // 体当たり：被弾範囲と同じ形で、プレイヤーに当たり続ける（連続ヒットはプレイヤーの無敵時間で防ぐ）
-        AddHitbox(enemyBody.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
-            knockback: new Vector2(6f, 5f), hitStun: 0.25f, hitOnce: false, activeOnStart: true, area: enemyHurtbox);
-
-        // --- トゲ（触れるとダメージ） ---
-        var spikes = CreateSprite("Hazard_Spikes", terrain, new Vector2(10.5f, 0.2f), new Vector2(2f, 0.4f), HazardColor, square, 0);
-        AddHitbox(spikes.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
-            knockback: new Vector2(5f, 7f), hitStun: 0.25f, hitOnce: false, activeOnStart: true);
-
-        // --- カメラ ---
-        var camGo = new GameObject("Main Camera");
-        camGo.tag = "MainCamera";
-        camGo.transform.position = new Vector3(0f, 2f, -10f);
-        var cam = camGo.AddComponent<Camera>();
-        cam.orthographic = true;
-        cam.orthographicSize = 6f;
-        cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = BackgroundColor;
-        camGo.AddComponent<AudioListener>();
-        var follow = camGo.AddComponent<CameraFollow2D>();
-        var followSo = new SerializedObject(follow);
-        followSo.FindProperty("_target").objectReferenceValue = player.transform;
-        followSo.ApplyModifiedPropertiesWithoutUndo();
-
-        EnsureFolder(Path.GetDirectoryName(ScenePath).Replace('\\', '/'));
-        EditorSceneManager.SaveScene(scene, ScenePath);
-        Selection.activeGameObject = player;
-        Debug.Log($"プレイヤー操作テストシーンを作成しました: {ScenePath}");
+        return player;
     }
 
-    static void CreateBlock(string name, Vector2 center, Vector2 size, int layer, Color color, Sprite sprite, Transform parent)
+    internal static void CreateBlock(string name, Vector2 center, Vector2 size, int layer, Color color, Sprite sprite, Transform parent)
     {
         var go = new GameObject(name);
         go.layer = layer;
@@ -234,7 +263,7 @@ public static class PlayerTestSceneBuilder
         go.AddComponent<BoxCollider2D>().size = Vector2.one;
     }
 
-    static void SetProps(Object target, System.Action<SerializedObject> edit)
+    internal static void SetProps(Object target, System.Action<SerializedObject> edit)
     {
         var so = new SerializedObject(target);
         edit(so);
@@ -242,7 +271,7 @@ public static class PlayerTestSceneBuilder
     }
 
     /// <summary>絵と同じ大きさのトリガーを付けて被弾範囲にする（絵は 1×1 ユニットの四角）</summary>
-    static BoxCollider2D AddHurtbox(GameObject go)
+    internal static BoxCollider2D AddHurtbox(GameObject go)
     {
         var col = go.AddComponent<BoxCollider2D>();
         col.size = Vector2.one;
@@ -252,7 +281,7 @@ public static class PlayerTestSceneBuilder
         return col;
     }
 
-    static Hitbox AddHitbox(GameObject go, Team team, int targetMask, int damage, Vector2 knockback, float hitStun,
+    internal static Hitbox AddHitbox(GameObject go, Team team, int targetMask, int damage, Vector2 knockback, float hitStun,
         bool hitOnce, bool activeOnStart, Collider2D area = null)
     {
         if (area == null)
@@ -278,7 +307,7 @@ public static class PlayerTestSceneBuilder
     }
 
     /// <summary>テスト用のスキル定義を作る（すでにあれば、それを使う）</summary>
-    static SkillDefinition[] GetOrCreateTestSkills(Sprite icon)
+    internal static SkillDefinition[] GetOrCreateTestSkills(Sprite icon)
     {
         EnsureFolder(SkillAssetFolder);
         var result = new SkillDefinition[TestSkills.Length];
@@ -306,7 +335,7 @@ public static class PlayerTestSceneBuilder
     }
 
     /// <summary>触れると拾えるスキル。surface は置く床の上面の位置</summary>
-    static void CreateSkillPickup(SkillDefinition skill, Vector2 surface, Color color, Transform parent, Sprite sprite, int playerLayer, string suffix = "")
+    internal static void CreateSkillPickup(SkillDefinition skill, Vector2 surface, Color color, Transform parent, Sprite sprite, int playerLayer, string suffix = "")
     {
         var go = new GameObject($"SkillPickup_{skill.name}{suffix}");
         go.transform.SetParent(parent, false);
@@ -329,7 +358,7 @@ public static class PlayerTestSceneBuilder
         });
     }
 
-    static SpriteRenderer CreateSprite(string name, Transform parent, Vector2 localPos, Vector2 size, Color color, Sprite sprite, int order)
+    internal static SpriteRenderer CreateSprite(string name, Transform parent, Vector2 localPos, Vector2 size, Color color, Sprite sprite, int order)
     {
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
@@ -342,7 +371,7 @@ public static class PlayerTestSceneBuilder
         return sr;
     }
 
-    static Sprite GetOrCreateSquareSprite()
+    internal static Sprite GetOrCreateSquareSprite()
     {
         var existing = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
         if (existing != null) return existing;
@@ -368,7 +397,7 @@ public static class PlayerTestSceneBuilder
         return AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
     }
 
-    static void EnsureFolder(string path)
+    internal static void EnsureFolder(string path)
     {
         if (AssetDatabase.IsValidFolder(path)) return;
         string parent = Path.GetDirectoryName(path).Replace('\\', '/');
