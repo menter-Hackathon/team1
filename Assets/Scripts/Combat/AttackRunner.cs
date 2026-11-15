@@ -24,6 +24,9 @@ public class AttackRunner : MonoBehaviour
     [SerializeField] LayerMask _solidMask;
     [Tooltip("上に乗れる地形（床・すり抜け床）。予告や柱を置く床、落下物が着地する床")]
     [SerializeField] LayerMask _groundMask;
+    [Tooltip("【仮】弾だけを止める物（盾ウィンドウ。レイヤー BulletBlocker）。敵の AttackRunner にだけ入れる。\n" +
+             "止めた弾は追撃（赤い波線など）を出さずに消える。瞬間移動の壁止めには使わない（地形は上の「弾が当たって止まる地形」）")]
+    [SerializeField] LayerMask _projectileBlockerMask;
 
     [Header("位置")]
     [Tooltip("弾を撃つ位置。空ならこの GameObject の位置")]
@@ -44,6 +47,8 @@ public class AttackRunner : MonoBehaviour
     public LayerMask TargetLayers => _targetLayers;
     public LayerMask SolidMask => _solidMask;
     public LayerMask GroundMask => _groundMask;
+    /// <summary>【仮】弾だけを止める物（盾ウィンドウ）のレイヤー。弾の判定にだけ使う</summary>
+    public LayerMask ProjectileBlockerMask => _projectileBlockerMask;
     /// <summary>狙う相手</summary>
     public Transform Target { get => _target; set => _target = value; }
     /// <summary>向き（右 1／左 -1）。PlayerController があればそちらの向きを使う</summary>
@@ -298,6 +303,7 @@ public class AttackRunner : MonoBehaviour
         else
         {
             // 画面の上端に、左から一定間隔で並べる → 並べ終えて少し待つ → 左から順に落とす
+            // 【仮】並んでから落ち始めるまでの間は、クリックで消せる（DismissableTab。時間・間隔は変えない）
             int n = data.SpawnCount;
             float width = (n - 1) * data.PlaceSpacing;
             float startX = arena.center.x - width * 0.5f;
@@ -307,7 +313,7 @@ public class AttackRunner : MonoBehaviour
             {
                 float appearAt = now + i * data.PlaceInterval;
                 float fallAt = lastPlace + data.DropHoldTime + i * data.DropInterval;
-                objects.Add(FallingObject.Spawn(this, data, new Vector2(startX + i * data.PlaceSpacing, hangInside), appearAt, fallAt, false));
+                objects.Add(FallingObject.Spawn(this, data, new Vector2(startX + i * data.PlaceSpacing, hangInside), appearAt, fallAt, false, dismissable: true));
             }
             Released?.Invoke(data);
         }

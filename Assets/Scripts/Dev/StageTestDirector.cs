@@ -89,7 +89,7 @@ public class StageTestDirector : MonoBehaviour
         }
 
         GUI.Label(new Rect(10f, Screen.height - 24f, Screen.width - 20f, 22f),
-            "【仮】J：近接　K／左Shift：ダッシュ　1/2/3：能力　（やり直すときは再生し直す）", _smallStyle);
+            "【仮】J／F：近接　K／左Shift：ダッシュ　1/2/3：能力　マウス：盾ウィンドウを動かす・落ちる前のタブを消す　（やり直すときは再生し直す）", _smallStyle);
     }
 
     static void DrawBar(Rect r, float ratio, Color fill)

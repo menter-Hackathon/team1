@@ -7,7 +7,8 @@ using UnityEngine.InputSystem;
 /// Input System からプレイヤーの入力を読み取る。
 /// キー割り当てはコード内で定義している（.inputactions アセット不要で、マージ時に衝突しにくい）。
 /// ・移動：WASD／矢印、左スティック／十字キー　・ジャンプ：Space、A
-/// ・近接：J（ゲームパッドは左のボタン）　・ダッシュ：K／左 Shift、RT
+/// ・近接：J／F（ゲームパッドは左のボタン）　・ダッシュ：K／左 Shift、RT
+/// 　F は【仮】右手でマウスを持ったまま左手だけで遊べるように足した（2026-11-16 まさぴ〜）
 /// ・スキル：1／2／3（Y／B／RB）、選択 Q／E（LB）、捨てる X 長押し（LT 長押し）
 /// </summary>
 public class PlayerInputReader : MonoBehaviour
@@ -26,7 +27,7 @@ public class PlayerInputReader : MonoBehaviour
     public bool JumpHeld => _jump != null && _jump.IsPressed();
     /// <summary>ジャンプボタンが押された瞬間に呼ばれる</summary>
     public event Action JumpPressed;
-    /// <summary>近接のボタン（J）が押された瞬間</summary>
+    /// <summary>近接のボタン（J／F）が押された瞬間</summary>
     public event Action AttackPressed;
     /// <summary>ダッシュのボタン（K／左 Shift）が押された瞬間</summary>
     public event Action DashPressed;
@@ -61,9 +62,10 @@ public class PlayerInputReader : MonoBehaviour
         _jump.performed += OnJumpPerformed;
         _actions.Add(_jump);
 
-        // 近接：J（ゲームパッドは左のボタン）
+        // 近接：J／F（ゲームパッドは左のボタン）。F は【仮】右手でマウスを持つときに、左手だけで届くように
         var attack = new InputAction("Attack", InputActionType.Button);
         attack.AddBinding("<Keyboard>/j");
+        attack.AddBinding("<Keyboard>/f");
         attack.AddBinding("<Gamepad>/buttonWest");
         attack.performed += _ => AttackPressed?.Invoke();
         _actions.Add(attack);
