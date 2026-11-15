@@ -32,8 +32,9 @@ public class ShieldWindow : MonoBehaviour
     [Tooltip("弾が当たったときに光らせる色")]
     [SerializeField] Color _hitFlashColor = Color.white;
     [SerializeField, Min(0f)] float _hitFlashTime = 0.08f;
-    [Tooltip("割れている間、最初の位置に薄く出す濃さ（戻ってくる場所の目印）。0なら何も出さない")]
-    [SerializeField, Range(0f, 1f)] float _ghostAlpha = 0.2f;
+    [Tooltip("割れている間、最初の位置に薄く出す濃さ（戻ってくる場所の目印）。0なら何も出さない（仕様どおり「割れて消える」）。\n" +
+             "【仮】0.2 くらいにすると、薄い枠と、戻るまでの残り時間（タイトルバーの棒）が見える")]
+    [SerializeField, Range(0f, 1f)] float _ghostAlpha;
 
     Rigidbody2D _rb;
     BoxCollider2D _box;
@@ -200,7 +201,7 @@ public class ShieldWindow : MonoBehaviour
         EndDrag();
         _box.enabled = false; // 弾を止めない・つかめない
         _respawnAt = Time.time + _respawnDelay;
-        // 戻ってくる場所に薄く出しておく（判定は無い）
+        // 見えなくして、戻ってくる場所へ移しておく（判定は無い）。_ghostAlpha が 0 より大きければ、そこに薄く出る
         Teleport(_home);
         ApplyColors(0f, _ghostAlpha);
         SetBar(0f);
