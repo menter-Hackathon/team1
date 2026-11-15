@@ -8,6 +8,8 @@ using UnityEngine;
 /// メニュー「Tools/Team1/プレイヤー操作テストシーンを作成」から実行する。
 /// 絵は白い四角の仮素材。デザインが来たら Player の Visual の下を差し替える。
 /// スキル枠の確認用に、テスト用スキルのアセット（Assets/ScriptableObjects/Skills/Test）と、拾えるスキルも置く。
+/// テスト用スキルには攻撃データが無いので、1／2／3 を押しても何も起きない（コンソールに警告が出る）。
+/// 本物の能力（新しいタブ・ブレークポイント）は、右端に拾えるアイテムとして置く（攻撃データはボス戦テストシーンと共通）。
 /// </summary>
 public static class PlayerTestSceneBuilder
 {
@@ -20,6 +22,7 @@ public static class PlayerTestSceneBuilder
     static readonly Color BackgroundColor = new Color(0.10f, 0.08f, 0.20f);
     static readonly Color EnemyColor = new Color(0.95f, 0.35f, 0.30f);
     static readonly Color HazardColor = new Color(1.00f, 0.80f, 0.20f);
+    static readonly Color AbilityPickupColor = new Color(1.00f, 1.00f, 1.00f);
 
     // テスト用スキル（ファイル名, 表示名, カテゴリ）。カテゴリは【提案】の一覧から仮に選んでいる
     const string SkillAssetFolder = "Assets/ScriptableObjects/Skills/Test";
@@ -74,7 +77,8 @@ public static class PlayerTestSceneBuilder
         CreateBlock("OneWay_2", new Vector2(4f, 5f), new Vector2(3f, 0.3f), oneWay, OneWayColor, square, terrain);
 
         // --- プレイヤー（原点＝足元） ---
-        var player = CreatePlayer(square, new Vector3(-3f, 0.5f, 0f), null, out SkillDefinition[] testSkills);
+        var attacks = BossTestSceneBuilder.GetOrCreateAttacks(); // 近接・能力の攻撃データ（無ければ docs の数値で作る）
+        var player = CreatePlayer(square, new Vector3(-3f, 0.5f, 0f), attacks.PlayerMelee, out SkillDefinition[] testSkills);
 
         // 拾えるスキル（ボスの代わり）。最後の1つは、同じスキルを拾えないことの確認用
         var pickups = new GameObject("SkillPickups").transform;
@@ -83,6 +87,9 @@ public static class PlayerTestSceneBuilder
         CreateSkillPickup(testSkills[2], new Vector2(-13f, 3f), TestSkillColors[2], pickups, square, playerLayer);  // 高い段の上
         CreateSkillPickup(testSkills[3], new Vector2(-17f, 0f), TestSkillColors[3], pickups, square, playerLayer);
         CreateSkillPickup(testSkills[0], new Vector2(-19.5f, 0f), TestSkillColors[0], pickups, square, playerLayer, "_Duplicate");
+        // 本物の能力（右端。トゲを飛び越えた先）
+        CreateSkillPickup(attacks.SkillNewTab, new Vector2(19f, 0f), AbilityPickupColor, pickups, square, playerLayer);
+        CreateSkillPickup(attacks.SkillBreakpoint, new Vector2(21f, 0f), AbilityPickupColor, pickups, square, playerLayer);
 
         // --- 的になる敵（HP3、触れるとダメージ） ---
         var enemy = new GameObject("Enemy_Dummy");
