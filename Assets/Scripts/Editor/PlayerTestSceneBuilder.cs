@@ -7,6 +7,7 @@ using UnityEngine;
 /// プレイヤー操作を試すための仮ステージを自動で作るエディタ拡張。
 /// メニュー「Tools/Team1/プレイヤー操作テストシーンを作成」から実行する。
 /// 絵は白い四角の仮素材。デザインが来たら Player の Visual の下を差し替える。
+/// スキル枠の確認用に、テスト用スキルのアセット（Assets/ScriptableObjects/Skills/Test）と、拾えるスキルも置く。
 /// </summary>
 public static class PlayerTestSceneBuilder
 {
@@ -19,6 +20,23 @@ public static class PlayerTestSceneBuilder
     static readonly Color BackgroundColor = new Color(0.10f, 0.08f, 0.20f);
     static readonly Color EnemyColor = new Color(0.95f, 0.35f, 0.30f);
     static readonly Color HazardColor = new Color(1.00f, 0.80f, 0.20f);
+
+    // テスト用スキル（ファイル名, 表示名, カテゴリ）。カテゴリは【提案】の一覧から仮に選んでいる
+    const string SkillAssetFolder = "Assets/ScriptableObjects/Skills/Test";
+    static readonly (string file, string displayName, SkillCategory category)[] TestSkills =
+    {
+        ("TestSkill_Browser", "テスト：ブラウザ", SkillCategory.Browser),
+        ("TestSkill_Chat", "テスト：チャット", SkillCategory.SocialChat),
+        ("TestSkill_Dev", "テスト：開発", SkillCategory.Dev),
+        ("TestSkill_AI", "テスト：AI", SkillCategory.AI),
+    };
+    static readonly Color[] TestSkillColors =
+    {
+        new Color(0.35f, 0.65f, 1.00f),
+        new Color(0.40f, 0.90f, 0.45f),
+        new Color(1.00f, 0.60f, 0.25f),
+        new Color(0.85f, 0.55f, 1.00f),
+    };
 
     [MenuItem("Tools/Team1/プレイヤー操作テストシーンを作成")]
     public static void BuildFromMenu()
@@ -131,6 +149,29 @@ public static class PlayerTestSceneBuilder
             so.FindProperty("_effect").objectReferenceValue = attackSprite;
         });
 
+        // --- スキル枠（3枠・捨てる・満杯時の入れ替え） ---
+        var playerSkills = player.AddComponent<PlayerSkills>();
+        SkillDefinition[] testSkills = GetOrCreateTestSkills(square);
+        // 【仮】G キーでテスト用スキルを順番に獲得（ボスができたら消す）
+        var skillGiver = player.AddComponent<SkillDebugGiver>();
+        SetProps(skillGiver, so =>
+        {
+            var arr = so.FindProperty("_skills");
+            arr.arraySize = testSkills.Length;
+            for (int i = 0; i < testSkills.Length; i++) arr.GetArrayElementAtIndex(i).objectReferenceValue = testSkills[i];
+        });
+        // 【仮】スキル枠と届いたイベントの文字表示
+        var skillLabel = player.AddComponent<SkillSlotsDebugLabel>();
+        SetProps(skillLabel, so => so.FindProperty("_skills").objectReferenceValue = playerSkills);
+
+        // 拾えるスキル（ボスの代わり）。最後の1つは、同じスキルを拾えないことの確認用
+        var pickups = new GameObject("SkillPickups").transform;
+        CreateSkillPickup(testSkills[0], new Vector2(-5f, 0f), TestSkillColors[0], pickups, square, playerLayer);
+        CreateSkillPickup(testSkills[1], new Vector2(-8f, 1f), TestSkillColors[1], pickups, square, playerLayer);   // 低い段の上
+        CreateSkillPickup(testSkills[2], new Vector2(-13f, 3f), TestSkillColors[2], pickups, square, playerLayer);  // 高い段の上
+        CreateSkillPickup(testSkills[3], new Vector2(-17f, 0f), TestSkillColors[3], pickups, square, playerLayer);
+        CreateSkillPickup(testSkills[0], new Vector2(-19.5f, 0f), TestSkillColors[0], pickups, square, playerLayer, "_Duplicate");
+
         // --- 的になる敵（HP3、触れるとダメージ） ---
         var enemy = new GameObject("Enemy_Dummy");
         enemy.layer = enemyLayer;
@@ -234,6 +275,58 @@ public static class PlayerTestSceneBuilder
             so.FindProperty("_activeOnStart").boolValue = activeOnStart;
         });
         return hitbox;
+    }
+
+    /// <summary>テスト用のスキル定義を作る（すでにあれば、それを使う）</summary>
+    static SkillDefinition[] GetOrCreateTestSkills(Sprite icon)
+    {
+        EnsureFolder(SkillAssetFolder);
+        var result = new SkillDefinition[TestSkills.Length];
+        for (int i = 0; i < TestSkills.Length; i++)
+        {
+            var (file, displayName, category) = TestSkills[i];
+            string path = $"{SkillAssetFolder}/{file}.asset";
+            var skill = AssetDatabase.LoadAssetAtPath<SkillDefinition>(path);
+            if (skill == null)
+            {
+                skill = ScriptableObject.CreateInstance<SkillDefinition>();
+                AssetDatabase.CreateAsset(skill, path);
+                SetProps(skill, so =>
+                {
+                    so.FindProperty("_displayName").stringValue = displayName;
+                    so.FindProperty("_icon").objectReferenceValue = icon;
+                    so.FindProperty("_category").intValue = (int)category; // 値を明示した enum なので、番号ではなく値で入れる
+                });
+                EditorUtility.SetDirty(skill);
+            }
+            result[i] = skill;
+        }
+        AssetDatabase.SaveAssets();
+        return result;
+    }
+
+    /// <summary>触れると拾えるスキル。surface は置く床の上面の位置</summary>
+    static void CreateSkillPickup(SkillDefinition skill, Vector2 surface, Color color, Transform parent, Sprite sprite, int playerLayer, string suffix = "")
+    {
+        var go = new GameObject($"SkillPickup_{skill.name}{suffix}");
+        go.transform.SetParent(parent, false);
+        go.transform.position = surface + new Vector2(0f, 0.5f);
+        go.transform.rotation = Quaternion.Euler(0f, 0f, 45f); // ひし形に見せる
+        go.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = sprite;
+        sr.color = color;
+        sr.sortingOrder = 5;
+        var col = go.AddComponent<BoxCollider2D>();
+        col.size = Vector2.one;
+        col.isTrigger = true;
+        var pickup = go.AddComponent<SkillPickup>();
+        SetProps(pickup, so =>
+        {
+            so.FindProperty("_skill").objectReferenceValue = skill;
+            so.FindProperty("_area").objectReferenceValue = col;
+            so.FindProperty("_targetLayers").intValue = 1 << playerLayer;
+        });
     }
 
     static SpriteRenderer CreateSprite(string name, Transform parent, Vector2 localPos, Vector2 size, Color color, Sprite sprite, int order)
