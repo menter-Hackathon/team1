@@ -10,6 +10,8 @@ using UnityEngine;
 public class SkillSlotsDebugLabel : MonoBehaviour
 {
     [SerializeField] PlayerSkills _skills;
+    [Tooltip("クールタイムの表示用。空なら同じ GameObject から探す")]
+    [SerializeField] PlayerSkillExecutor _executor;
     [Tooltip("画面に残すイベントの行数")]
     [SerializeField, Min(1)] int _logLines = 8;
 
@@ -25,6 +27,7 @@ public class SkillSlotsDebugLabel : MonoBehaviour
     void Awake()
     {
         if (_skills == null) _skills = GetComponent<PlayerSkills>();
+        if (_executor == null) _executor = GetComponent<PlayerSkillExecutor>();
     }
 
     void OnEnable()
@@ -88,7 +91,7 @@ public class SkillSlotsDebugLabel : MonoBehaviour
 
     void OnSkillUseRequested(int index, SkillDefinition skill)
     {
-        AddLog($"SkillUseRequested 枠{index + 1}：{skill.DisplayName}（攻撃の中身は M3）");
+        AddLog($"SkillUseRequested 枠{index + 1}：{skill.DisplayName}");
     }
 
     void OnAcquireAttempted(SkillDefinition skill, SkillAcquireResult result)
@@ -139,7 +142,14 @@ public class SkillSlotsDebugLabel : MonoBehaviour
         for (int i = 0; i < _slotNames.Length; i++)
         {
             string mark = i == _selected ? "▶" : "　";
-            lines.AppendLine($"{mark} [{i + 1}] {_slotNames[i]}");
+            string cooldown = "";
+            SkillDefinition skill = _skills.GetSkill(i);
+            if (_executor != null && skill != null)
+            {
+                float remain = _executor.GetCooldownRemaining(skill);
+                cooldown = remain > 0f ? $"　<color=#9aa0ff>（あと{remain:0.0}秒）</color>" : "　<color=#7dff9a>使える</color>";
+            }
+            lines.AppendLine($"{mark} [{i + 1}] {_slotNames[i]}{cooldown}");
         }
         if (_pendingName != null)
         {

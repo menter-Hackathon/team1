@@ -1,0 +1,71 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// スキル枠のボタン（1／2／3）が押されたら、そのスキルの攻撃データを実行する。クールタイムもここで数える。
+/// ・クールタイムは攻撃データの「間隔」。使った瞬間から数える
+/// ・クールタイムは能力ごとに覚える。捨てて拾い直しても、別の枠に入れ直しても、残り時間はそのまま
+/// ・使えるかどうか（のけぞり中・入れ替え待ち中は使えない）は PlayerSkills が判断して SkillUseRequested を出す
+/// </summary>
+[RequireComponent(typeof(PlayerSkills), typeof(AttackRunner))]
+public class PlayerSkillExecutor : MonoBehaviour
+{
+    PlayerSkills _skills;
+    AttackRunner _runner;
+    readonly Dictionary<SkillDefinition, float> _readyAt = new Dictionary<SkillDefinition, float>();
+
+    /// <summary>スキルを使ったとき（枠の番号, スキル）。SE・エフェクト・UI 用</summary>
+    public event Action<int, SkillDefinition> SkillUsed;
+    /// <summary>クールタイム中で使えなかったとき（枠の番号, スキル, 残り秒数）。UI の「まだ使えない」表示用</summary>
+    public event Action<int, SkillDefinition, float> SkillOnCooldown;
+
+    void Awake()
+    {
+        _skills = GetComponent<PlayerSkills>();
+        _runner = GetComponent<AttackRunner>();
+    }
+
+    void OnEnable() => _skills.SkillUseRequested += OnSkillUseRequested;
+    void OnDisable() => _skills.SkillUseRequested -= OnSkillUseRequested;
+
+    void OnSkillUseRequested(int index, SkillDefinition skill) => TryUse(index, skill);
+
+    /// <summary>スキルを使う。使えたら true</summary>
+    public bool TryUse(int index, SkillDefinition skill)
+    {
+        if (skill == null) return false;
+        AttackData attack = skill.Attack;
+        if (attack == null)
+        {
+            Debug.LogWarning($"{skill.DisplayName}: 攻撃データが設定されていないので使えません", skill);
+            return false;
+        }
+
+        float remain = GetCooldownRemaining(skill);
+        if (remain > 0f)
+        {
+            SkillOnCooldown?.Invoke(index, skill, remain);
+            return false;
+        }
+        if (!_runner.Run(attack)) return false;
+
+        _readyAt[skill] = Time.time + attack.Cooldown;
+        SkillUsed?.Invoke(index, skill);
+        return true;
+    }
+
+    /// <summary>クールタイムの残り秒数（使えるなら 0）</summary>
+    public float GetCooldownRemaining(SkillDefinition skill)
+    {
+        if (skill == null || !_readyAt.TryGetValue(skill, out float t)) return 0f;
+        return Mathf.Max(0f, t - Time.time);
+    }
+
+    /// <summary>クールタイムの残りの割合（1＝使った直後、0＝使える）。UI のゲージ用</summary>
+    public float GetCooldownRatio(SkillDefinition skill)
+    {
+        if (skill == null || skill.Attack == null || skill.Attack.Cooldown <= 0f) return 0f;
+        return Mathf.Clamp01(GetCooldownRemaining(skill) / skill.Attack.Cooldown);
+    }
+}

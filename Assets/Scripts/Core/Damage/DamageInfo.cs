@@ -2,12 +2,14 @@ using UnityEngine;
 
 /// <summary>
 /// 1回の攻撃で相手に渡す情報。
-/// M3 では攻撃データ（ScriptableObject）からこの値を埋める想定。
+/// 値は Hitbox が持っている（AttackData から Hitbox.Setup で設定する）。
 /// </summary>
 public struct DamageInfo
 {
     /// <summary>ダメージ量。プレイヤー（ライフ制）は量に関係なく1減る</summary>
     public int Amount;
+    /// <summary>ボスのウイルス解除ゲージを増やす量（HPを持たないボスは Amount ではなくこちらを見る）</summary>
+    public int GaugeGain;
     /// <summary>攻撃した側の陣営</summary>
     public Team SourceTeam;
     /// <summary>吹き飛ばす速度（向きを含む）。ボスなど吹き飛ばない相手は無視する</summary>
