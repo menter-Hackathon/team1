@@ -73,4 +73,17 @@ public class BossProfile : ScriptableObject
 
     /// <summary>形態の設定（1 か 2）</summary>
     public BossPhaseSettings GetPhase(int phase) => phase >= 2 ? _phase2 : _phase1;
+
+    /// <summary>
+    /// 使用時間で強さを変えた複製を作る（ゲージの最大値・第2形態の待ち時間・手に入る能力）。アセットそのものは書き換えない
+    /// </summary>
+    public BossProfile CreateScaledCopy(int gaugeMax, float phase2Wait, SkillDefinition reward)
+    {
+        var copy = Instantiate(this); // 形態ごとの設定（クラス）も複製される
+        copy.name = name;
+        copy._gaugeMax = Mathf.Max(1, gaugeMax);
+        copy._phase2.WaitAfterAttack = Mathf.Max(0f, phase2Wait);
+        copy._reward = reward;
+        return copy;
+    }
 }

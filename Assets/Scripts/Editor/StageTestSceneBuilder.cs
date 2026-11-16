@@ -112,7 +112,7 @@ public static class StageTestSceneBuilder
     }
 
     /// <summary>撃つ雑魚の弾：1発、毎秒6マス、プレイヤーを狙う、予備動作0.6秒（ダメージ1・ノックバックはボスと同じ）</summary>
-    static AttackData GetOrCreateZakoShot()
+    internal static AttackData GetOrCreateZakoShot()
     {
         return BossTestSceneBuilder.GetOrCreateAttack("Zako/Attack_Zako_Shot", so =>
         {
@@ -168,7 +168,7 @@ public static class StageTestSceneBuilder
         return go;
     }
 
-    static void CreateWalker(string name, Vector2 feet, int direction, Transform parent, Sprite square)
+    internal static void CreateWalker(string name, Vector2 feet, int direction, Transform parent, Sprite square)
     {
         int ground = LayerMask.NameToLayer("Ground");
         int oneWay = LayerMask.NameToLayer("OneWayPlatform");
@@ -197,7 +197,7 @@ public static class StageTestSceneBuilder
         });
     }
 
-    static void CreateShooter(string name, Vector2 feet, AttackData shot, Transform player, Transform parent, Sprite square)
+    internal static void CreateShooter(string name, Vector2 feet, AttackData shot, Transform player, Transform parent, Sprite square)
     {
         int playerLayer = LayerMask.NameToLayer("Player");
         var size = new Vector2(0.8f, 1.0f);

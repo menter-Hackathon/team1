@@ -36,6 +36,13 @@ public class BossEntrance : MonoBehaviour
         if (_boss != null) _boss.gameObject.SetActive(false);
     }
 
+    /// <summary>出すボスを決める（M5：ステージごとにプレハブから作ったボスを渡す）。雑魚を全員倒す前に呼ぶ</summary>
+    public void SetBoss(BossController boss)
+    {
+        _boss = boss;
+        if (_boss != null && !_triggered) _boss.gameObject.SetActive(false);
+    }
+
     void OnEnable()
     {
         if (_wave != null) _wave.Cleared += OnCleared;

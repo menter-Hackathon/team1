@@ -65,3 +65,16 @@ public enum WarpDestination
     /// <summary>戦う部屋の反対側（VS Code）</summary>
     Opposite = 1,
 }
+
+/// <summary>使用時間で強くする、攻撃データの数値（M5。docs 6章「使用時間で変えるつまみ」）</summary>
+public enum AttackStat
+{
+    /// <summary>変えない</summary>
+    None = 0,
+    /// <summary>瞬間移動の距離（能力「新しいタブ」）</summary>
+    WarpDistance = 1,
+    /// <summary>ボスへのゲージ増加量（能力「ブレークポイント」）</summary>
+    GaugeGain = 2,
+    /// <summary>雑魚へのダメージ</summary>
+    Damage = 3,
+}

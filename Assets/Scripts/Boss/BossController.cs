@@ -127,6 +127,17 @@ public class BossController : MonoBehaviour, IWarpable
         }
     }
 
+    /// <summary>
+    /// 設定を差し替える（M5：使用時間で強さを変えた複製を渡す）。
+    /// 出てくる前（非表示のうち）に呼ぶのが基本。戦闘中に呼んだら最初からやり直す
+    /// </summary>
+    public void SetProfile(BossProfile profile)
+    {
+        _profile = profile;
+        if (_gauge != null && profile != null) _gauge.SetMax(profile.GaugeMax);
+        if (_started && isActiveAndEnabled) ResetBoss();
+    }
+
     /// <summary>最初の状態に戻して、戦闘を始め直す（ゲージ0、第1形態、最初の位置）</summary>
     public void ResetBoss()
     {
