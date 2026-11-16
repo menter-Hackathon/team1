@@ -5,12 +5,16 @@ using UnityEngine;
 /// 流れ：（見えない）→ 現れる → 落ち始める → 床に着く → すぐ消える／すり抜け床として残ってから消える。
 /// ・判定は落下中だけ
 /// ・影（予告）を出す設定なら、作った瞬間から着地するまで、落ちる場所の床に影を出す
+/// 出現型（SpawnInPlace。ポップアップ出現）は落とさない：出る場所に薄い枠（予告）→ その場にパッと現れる →
+/// 判定は現れてから判定時間（AttackData の判定時間）だけ → 現れた時刻から「着地後に残る秒数」だけ足場として残る。
+/// どちらも、足場は消える1秒前から点滅する。
 /// 出したあとは自分で進むので、攻撃した人が攻撃を止めても最後まで残る。
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 public class FallingObject : MonoBehaviour
 {
     static readonly Color ShadowColor = new Color(0f, 0f, 0f, 0.45f);
+    static readonly Color FrameColor = new Color(1f, 1f, 1f, 0.7f);
 
     AttackRunner _owner;
     AttackData _data;
@@ -23,6 +27,10 @@ public class FallingObject : MonoBehaviour
     float _fallAt;
     float _groundY;
     float _removeAt = float.PositiveInfinity;
+    bool _appearInPlace;  // 出現型（落とさない）
+    bool _appeared;
+    float _hitEnd;
+    SpriteRenderer _frame; // 出現型の予告（出る場所の薄い枠）
 
     public AttackData Data => _data;
     /// <summary>見た目の絵</summary>
@@ -38,6 +46,28 @@ public class FallingObject : MonoBehaviour
     public float LandedTime { get; private set; } = -1f;
     /// <summary>落ち始めた時刻（テスト用）</summary>
     public float FallStartTime => _fallAt;
+    /// <summary>出現型（落とさずにその場に出す）なら true</summary>
+    public bool IsAppearInPlace => _appearInPlace;
+    /// <summary>出現型が現れた時刻。まだなら -1（テスト用）</summary>
+    public float AppearedTime { get; private set; } = -1f;
+    /// <summary>攻撃判定が出ているか（テスト用）</summary>
+    public bool IsHitActive => _hitbox != null && _hitbox.IsActive;
+
+    /// <summary>
+    /// 出現型の落下物を1つ作る（ポップアップ出現）。center は出る位置（中心）。
+    /// 今から appearAt（Time.time）まで出る場所に薄い枠を出し、appearAt にその場へパッと現れる
+    /// </summary>
+    public static FallingObject SpawnInPlace(AttackRunner owner, AttackData data, Vector2 center, float appearAt)
+    {
+        FallingObject f = Spawn(owner, data, center, appearAt, appearAt, false);
+        f._appearInPlace = true;
+        f.gameObject.name = $"Appear_{data.name}";
+        var frame = new GameObject("Frame");
+        frame.layer = f.gameObject.layer;
+        frame.transform.SetParent(f.transform, false);
+        f._frame = AttackRunner.AddVisual(frame.transform, PlaceholderSprites.Frame, FrameColor, data.ObjectSize, 18, "Frame");
+        return f;
+    }
 
     /// <summary>
     /// 落下物を1つ作る。hangPosition は現れる位置（中心）。appearAt に現れ、fallAt に落ち始める（どちらも Time.time）。
@@ -108,6 +138,12 @@ public class FallingObject : MonoBehaviour
             return;
         }
 
+        if (_appearInPlace)
+        {
+            UpdateAppear(now);
+            return;
+        }
+
         if (!_visual.enabled && now >= _appearAt) _visual.enabled = true;
         if (!IsFalling && now >= _fallAt)
         {
@@ -127,6 +163,35 @@ public class FallingObject : MonoBehaviour
             return;
         }
         _rb.MovePosition(new Vector2(pos.x, nextY));
+    }
+
+    /// <summary>出現型：枠（予告）→ パッと現れる → 判定時間だけ判定 → あとは足場として残る（HasLanded のあとの処理は落下型と同じ）</summary>
+    void UpdateAppear(float now)
+    {
+        if (!_appeared)
+        {
+            if (now < _appearAt)
+            {
+                // 予告の枠。最後の0.3秒は点滅させる
+                if (_frame != null) _frame.enabled = _appearAt - now > 0.3f || Mathf.FloorToInt(now / 0.08f) % 2 == 0;
+                return;
+            }
+            _appeared = true;
+            AppearedTime = now;
+            if (_frame != null) Destroy(_frame.transform.parent.gameObject);
+            _visual.enabled = true;
+            _hitbox.Activate();
+            if (_platform != null) _platform.enabled = true; // 現れた瞬間から足場
+            _hitEnd = now + _data.ActiveTime;
+            _removeAt = now + _data.LandRemainTime;
+        }
+        if (now < _hitEnd) return;
+
+        // 判定はここまで。あとは足場として残る（残る秒数が0ならすぐ消える）
+        HasLanded = true;
+        LandedTime = now;
+        _hitbox.Deactivate();
+        if (_data.LandRemainTime <= 0f) Destroy(gameObject);
     }
 
     void Land(float now)

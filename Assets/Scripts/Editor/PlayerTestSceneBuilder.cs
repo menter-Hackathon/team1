@@ -171,7 +171,7 @@ public static class PlayerTestSceneBuilder
             so.FindProperty("_team").enumValueIndex = (int)Team.Player;
             so.FindProperty("_max").intValue = 3;
             so.FindProperty("_oneDamagePerHit").boolValue = true;
-            so.FindProperty("_invincibleTimeAfterHit").floatValue = 1.5f;
+            so.FindProperty("_invincibleTimeAfterHit").floatValue = 1.0f; // 2026-11-16 まさぴ〜決定（1.5秒だと無敵の間に敵を倒せてしまう）
         });
         player.AddComponent<PlayerDamageReaction>();
         var playerBlink = player.AddComponent<DamageBlink>();
