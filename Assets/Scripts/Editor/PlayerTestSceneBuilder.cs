@@ -119,7 +119,7 @@ public static class PlayerTestSceneBuilder
 
     /// <summary>
     /// プレイヤーを作る（ボス用テストシーンでも使う）。原点＝足元。
-    /// meleeAttack を渡すと、【仮】近接（J キー）の数値をその攻撃データから読む。null なら今までの値のまま。
+    /// meleeAttack を渡すと、近接（J キー）の数値をその攻撃データから読む。null なら PlayerMeleeAttack の値のまま。
     /// debugSkills は【仮】G キーで順番にもらえる能力
     /// </summary>
     internal static GameObject CreatePlayer(Sprite square, Vector3 position, AttackData meleeAttack, SkillDefinition[] debugSkills)
@@ -171,7 +171,7 @@ public static class PlayerTestSceneBuilder
             so.FindProperty("_team").enumValueIndex = (int)Team.Player;
             so.FindProperty("_max").intValue = 3;
             so.FindProperty("_oneDamagePerHit").boolValue = true;
-            so.FindProperty("_invincibleTimeAfterHit").floatValue = 1.5f;
+            so.FindProperty("_invincibleTimeAfterHit").floatValue = 1.0f; // 2026-11-16 まさぴ〜決定（1.5秒だと無敵の間に敵を倒せてしまう）
         });
         player.AddComponent<PlayerDamageReaction>();
         var playerBlink = player.AddComponent<DamageBlink>();
@@ -192,13 +192,13 @@ public static class PlayerTestSceneBuilder
         // 被弾範囲＝体の絵と同じ大きさ
         AddHurtbox(bodySprite.gameObject);
 
-        // 【仮】J キーの攻撃（M3 で本番の攻撃に置き換える）
-        var attackSprite = CreateSprite("DebugAttack", visual, new Vector2(0.75f, 0.5f), new Vector2(0.8f, 0.6f), new Color(1f, 1f, 1f, 0.5f), square, 2);
+        // 近接（J キー）。攻撃判定は Visual の子なので向きに合わせて反転する。数値は攻撃データから読む
+        var attackSprite = CreateSprite("MeleeAttack", visual, new Vector2(0.75f, 0.5f), new Vector2(0.8f, 0.6f), new Color(1f, 1f, 1f, 0.5f), square, 2);
         attackSprite.gameObject.layer = playerLayer;
         var attackHitbox = AddHitbox(attackSprite.gameObject, Team.Player, 1 << enemyLayer, damage: 1,
             knockback: new Vector2(4f, 3f), hitStun: 0.2f, hitOnce: true, activeOnStart: false);
-        var debugAttack = player.AddComponent<PlayerDebugAttack>();
-        SetProps(debugAttack, so =>
+        var melee = player.AddComponent<PlayerMeleeAttack>();
+        SetProps(melee, so =>
         {
             so.FindProperty("_hitbox").objectReferenceValue = attackHitbox;
             so.FindProperty("_effect").objectReferenceValue = attackSprite;

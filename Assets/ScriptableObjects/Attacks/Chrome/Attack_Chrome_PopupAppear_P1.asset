@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 32015ae998734b8a83700e2a1c61f820, type: 3}
-  m_Name: Attack_Chrome_PopupFall_P2
+  m_Name: Attack_Chrome_PopupAppear_P1
   m_EditorClassIdentifier: 
   _kind: 2
   _windup: 0
-  _activeTime: 0.3
+  _activeTime: 0.1
   _cooldown: 0
   _damage: 1
   _gaugeGain: 0
@@ -46,8 +46,8 @@ MonoBehaviour:
   _telegraphTime: 0.8
   _persistDuration: 0
   _tickInterval: 0.5
-  _placement: 0
-  _spawnCount: 4
+  _placement: 2
+  _spawnCount: 2
   _minDistanceFromTarget: 3
   _objectSize: {x: 3, y: 2}
   _fallSpeed: 12

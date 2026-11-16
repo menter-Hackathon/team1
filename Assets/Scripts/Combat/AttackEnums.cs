@@ -12,7 +12,7 @@ public enum AttackKind
     Spawn = 2,
     /// <summary>瞬間移動（新しい種類）。ボスの移動と、能力「新しいタブ」で共用</summary>
     Warp = 3,
-    /// <summary>【仮】プレイヤーの近接。持ち主に付けた Hitbox を使うので、AttackRunner では実行しない（PlayerDebugAttack が使う）</summary>
+    /// <summary>プレイヤーの近接。持ち主に付けた Hitbox を使うので、AttackRunner では実行しない（PlayerMeleeAttack が使う）</summary>
     Melee = 4,
 }
 
@@ -46,10 +46,15 @@ public enum AreaShape
 /// <summary>落下物・設置物の置き方</summary>
 public enum SpawnPlacement
 {
-    /// <summary>1つ目は狙う相手の真上、残りは狙う相手から一定以上離れたランダムな位置（ポップアップ落下）</summary>
+    /// <summary>1つ目は狙う相手の真上、残りは狙う相手から一定以上離れたランダムな位置から落とす（VS Code のエラーウィンドウ）</summary>
     AroundTarget = 0,
     /// <summary>画面の上端に、左から一定間隔で並べてから、順番に落とす（タブ増殖）</summary>
     TopRow = 1,
+    /// <summary>
+    /// 落とさずに、その場にパッと出す（ポップアップ出現）。予告は出る場所の薄い枠。
+    /// 1つ目は狙う相手の体に重なる位置、残りは狙う相手から一定以上離れた空中のランダムな位置
+    /// </summary>
+    AppearAroundTarget = 2,
 }
 
 /// <summary>瞬間移動の行き先</summary>

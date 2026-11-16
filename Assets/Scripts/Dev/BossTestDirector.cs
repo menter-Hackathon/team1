@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// 【仮】ボス戦テストシーンの進行と、画面の仮表示。UI 担当の本番表示・ステージ進行（M5）ができたら消す。
 /// ・B：ボスを切り替える（切り替えたボスは最初から）。持っている能力はそのまま
-/// ・R：今のボスとプレイヤーのライフ・位置を最初に戻す
+/// ・R：今のボスとプレイヤーのライフ・位置を最初に戻す（【仮】盾ウィンドウも最初の位置・耐久に戻す）
 /// ・N：今のボスのゲージを +10（デバッグ用。無敵中でも増える）
 /// 画面の右上にゲージと形態、形態変化中は画面の中央に「アップデート中…」のバーを出す。
 /// </summary>
@@ -87,6 +87,7 @@ public class BossTestDirector : MonoBehaviour
     {
         if (Current != null) Current.ResetBoss();
         ResetPlayer();
+        foreach (var shield in FindObjectsOfType<ShieldWindow>()) shield.ResetWindow();
     }
 
     void ResetPlayer()
@@ -145,7 +146,7 @@ public class BossTestDirector : MonoBehaviour
         }
 
         GUI.Label(new Rect(10f, Screen.height - 24f, Screen.width - 20f, 22f),
-            "【仮】B：ボス切替　R：やり直し　N：ゲージ+10　J：近接　1/2/3：能力", _smallStyle);
+            "【仮】B：ボス切替　R：やり直し　N：ゲージ+10　J／F：近接　K：ダッシュ　1/2/3：能力　マウス：盾ウィンドウを動かす・落ちる前のタブを消す", _smallStyle);
     }
 
     static void DrawBar(Rect r, float ratio, Color fill)

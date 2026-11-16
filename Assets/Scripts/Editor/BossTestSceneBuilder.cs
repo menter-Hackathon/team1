@@ -10,6 +10,7 @@ using UnityEngine;
 /// 部屋の形は docs/app-boss-and-ability-design.md の2章（【要確認】ステージ担当と相談）：
 ///   1画面（約21×12マス）、床あり、高さ3マスにすり抜け床（フォルダ）2枚。カメラは固定。
 /// 攻撃データのアセット（Assets/ScriptableObjects/Attacks）は、無ければ docs の数値で作る。あれば作り直さない。
+/// 【仮】マウスで動かせる盾ウィンドウを1枚置く（ShieldWindowSceneBuilder。レイヤー BulletBlocker が必要）。
 /// </summary>
 public static class BossTestSceneBuilder
 {
@@ -42,6 +43,7 @@ public static class BossTestSceneBuilder
             Debug.LogError("レイヤー Ground / OneWayPlatform / Player / Enemy が見つかりません。Project Settings > Tags and Layers を確認してください。");
             return;
         }
+        if (!ShieldWindowSceneBuilder.CheckLayer()) return;
 
         Sprite square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
         Attacks attacks = GetOrCreateAttacks();
@@ -59,6 +61,9 @@ public static class BossTestSceneBuilder
 
         var arena = new GameObject("BattleArena").AddComponent<BattleArena>();
         PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
+
+        // 【仮】盾ウィンドウ（マウスでドラッグ。敵の弾だけを止める）
+        ShieldWindowSceneBuilder.Create(square, ShieldWindowSceneBuilder.DefaultPosition);
 
         // --- プレイヤー ---
         // 【仮】G キーで本物の能力2つを順番にもらえる（ボスを倒さずに能力を試せる）
@@ -142,7 +147,7 @@ public static class BossTestSceneBuilder
         return controller;
     }
 
-    /// <summary>攻撃する人に AttackRunner を付ける</summary>
+    /// <summary>攻撃する人に AttackRunner を付ける。【仮】敵の弾は盾ウィンドウ（BulletBlocker）で止まるようにする</summary>
     internal static AttackRunner AddAttackRunner(GameObject go, Team team, int targetMask, Transform target)
     {
         int ground = LayerMask.NameToLayer("Ground");
@@ -154,6 +159,8 @@ public static class BossTestSceneBuilder
             so.FindProperty("_targetLayers").intValue = targetMask;
             so.FindProperty("_solidMask").intValue = 1 << ground;
             so.FindProperty("_groundMask").intValue = (1 << ground) | (1 << oneWay);
+            // 弾の判定にだけ使う（_solidMask に入れると、瞬間移動も盾で止まってしまう）
+            so.FindProperty("_projectileBlockerMask").intValue = team == Team.Enemy ? ShieldWindowSceneBuilder.BlockerMask : 0;
             so.FindProperty("_target").objectReferenceValue = target;
         });
         return runner;
@@ -177,8 +184,8 @@ public static class BossTestSceneBuilder
         public AttackData VSCodeWarp;
         public BossProfile VSCodeProfile;
 
-        public AttackData ChromePopupFallP1;
-        public AttackData ChromePopupFallP2;
+        public AttackData ChromePopupAppearP1;
+        public AttackData ChromePopupAppearP2;
         public AttackData ChromeTabMultiply;
         public BossProfile ChromeProfile;
 
@@ -349,33 +356,11 @@ public static class BossTestSceneBuilder
         });
 
         // ───── Chrome（docs 4章） ─────
-        // ポップアップ落下：影0.8秒 → 2枚（1枚はプレイヤーの真上、残りは3マス以上離れる）、3×2、毎秒12マス。着地後4秒すり抜け床
-        a.ChromePopupFallP1 = GetOrCreateAttack("Chrome/Attack_Chrome_PopupFall_P1", so =>
-        {
-            BossCommon(so, AttackKind.Spawn, PopupColor);
-            F(so, "_windup", 0f);
-            E(so, "_placement", (int)SpawnPlacement.AroundTarget);
-            I(so, "_spawnCount", 2);
-            F(so, "_minDistanceFromTarget", 3f);
-            V(so, "_objectSize", new Vector2(3f, 2f));
-            F(so, "_fallSpeed", 12f);
-            F(so, "_telegraphTime", 0.8f);
-            F(so, "_landRemainTime", 4f);
-            B(so, "_becomesPlatform", true);
-        });
-        a.ChromePopupFallP2 = GetOrCreateAttack("Chrome/Attack_Chrome_PopupFall_P2", so =>
-        {
-            BossCommon(so, AttackKind.Spawn, PopupColor);
-            F(so, "_windup", 0f);
-            E(so, "_placement", (int)SpawnPlacement.AroundTarget);
-            I(so, "_spawnCount", 4);
-            F(so, "_minDistanceFromTarget", 3f);
-            V(so, "_objectSize", new Vector2(3f, 2f));
-            F(so, "_fallSpeed", 12f);
-            F(so, "_telegraphTime", 0.8f);
-            F(so, "_landRemainTime", 4f);
-            B(so, "_becomesPlatform", true);
-        });
+        // ポップアップ出現（2026-11-16 に「落下」から変更）：出る場所に薄い枠（3×2）を0.8秒 → 空中にパッと2枚
+        // （1枚はプレイヤーの体に重なる位置、残りはプレイヤーから3マス以上離れた空中）。判定は出てから0.1秒【仮】。
+        // 出てから4秒すり抜け床（最後の1秒は点滅）。高さの範囲と「乗れる高さ」は【仮】
+        a.ChromePopupAppearP1 = GetOrCreateAttack("Chrome/Attack_Chrome_PopupAppear_P1", so => PopupAppear(so, 2));
+        a.ChromePopupAppearP2 = GetOrCreateAttack("Chrome/Attack_Chrome_PopupAppear_P2", so => PopupAppear(so, 4));
         // タブ増殖（第2形態）：画面の上端に0.3秒ごとに1枚（最大6枚、3マス間隔）→ 0.5秒後、左から0.25秒おきに落とす（毎秒10マス）。床で消える
         // タブの大きさ 1.5×0.6 は 2026-11-15 にまさぴ〜が選んだ値（docs には未記載）
         a.ChromeTabMultiply = GetOrCreateAttack("Chrome/Attack_Chrome_TabMultiply", so =>
@@ -435,8 +420,8 @@ public static class BossTestSceneBuilder
         a.ChromeProfile = GetOrCreateProfile("Boss_Chrome", so =>
         {
             so.FindProperty("_displayName").stringValue = "Chrome";
-            Moves(so, "_phase1", 1.2f, 2, a.ChromeTabShurikenP1, a.ChromePopupFallP1);
-            Moves(so, "_phase2", 0.8f, 2, a.ChromeTabShurikenP2, a.ChromePopupFallP2, a.ChromeTabMultiply);
+            Moves(so, "_phase1", 1.2f, 2, a.ChromeTabShurikenP1, a.ChromePopupAppearP1);
+            Moves(so, "_phase2", 0.8f, 2, a.ChromeTabShurikenP2, a.ChromePopupAppearP2, a.ChromeTabMultiply);
             E(so, "_movement", (int)BossMovement.Hover);
             F(so, "_hoverSpeed", 3f);
             var pts = so.FindProperty("_hoverPointsX");
@@ -459,6 +444,22 @@ public static class BossTestSceneBuilder
 
         AssetDatabase.SaveAssets();
         return a;
+    }
+
+    static void PopupAppear(SerializedObject so, int count)
+    {
+        BossCommon(so, AttackKind.Spawn, PopupColor);
+        F(so, "_windup", 0f);
+        E(so, "_placement", (int)SpawnPlacement.AppearAroundTarget);
+        I(so, "_spawnCount", count);
+        F(so, "_minDistanceFromTarget", 3f);
+        V(so, "_objectSize", new Vector2(3f, 2f));
+        F(so, "_telegraphTime", 0.8f);
+        F(so, "_activeTime", 0.1f);
+        F(so, "_landRemainTime", 4f);
+        B(so, "_becomesPlatform", true);
+        V(so, "_appearTopRange", new Vector2(2.5f, 6f));
+        F(so, "_reachHeight", 3f);
     }
 
     static void Moves(SerializedObject so, string phase, float wait, int attacksPerMove, params AttackData[] moves)
@@ -503,7 +504,7 @@ public static class BossTestSceneBuilder
     }
 
     /// <summary>ボスの攻撃の共通値（docs 3章：ダメージ1、ノックバック (6,5)、のけぞり0.25秒）</summary>
-    static void BossCommon(SerializedObject so, AttackKind kind, Color color)
+    internal static void BossCommon(SerializedObject so, AttackKind kind, Color color)
     {
         Kind(so, kind);
         I(so, "_damage", 1);
@@ -514,7 +515,7 @@ public static class BossTestSceneBuilder
     }
 
     /// <summary>攻撃データを作る（すでにあれば、それを使う。値は上書きしない）</summary>
-    static AttackData GetOrCreateAttack(string relativePath, Action<SerializedObject> init)
+    internal static AttackData GetOrCreateAttack(string relativePath, Action<SerializedObject> init)
     {
         string path = $"{AttackFolder}/{relativePath}.asset";
         var data = AssetDatabase.LoadAssetAtPath<AttackData>(path);

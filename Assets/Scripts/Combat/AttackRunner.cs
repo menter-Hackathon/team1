@@ -24,6 +24,9 @@ public class AttackRunner : MonoBehaviour
     [SerializeField] LayerMask _solidMask;
     [Tooltip("上に乗れる地形（床・すり抜け床）。予告や柱を置く床、落下物が着地する床")]
     [SerializeField] LayerMask _groundMask;
+    [Tooltip("【仮】弾だけを止める物（盾ウィンドウ。レイヤー BulletBlocker）。敵の AttackRunner にだけ入れる。\n" +
+             "止めた弾は追撃（赤い波線など）を出さずに消える。瞬間移動の壁止めには使わない（地形は上の「弾が当たって止まる地形」）")]
+    [SerializeField] LayerMask _projectileBlockerMask;
 
     [Header("位置")]
     [Tooltip("弾を撃つ位置。空ならこの GameObject の位置")]
@@ -44,6 +47,8 @@ public class AttackRunner : MonoBehaviour
     public LayerMask TargetLayers => _targetLayers;
     public LayerMask SolidMask => _solidMask;
     public LayerMask GroundMask => _groundMask;
+    /// <summary>【仮】弾だけを止める物（盾ウィンドウ）のレイヤー。弾の判定にだけ使う</summary>
+    public LayerMask ProjectileBlockerMask => _projectileBlockerMask;
     /// <summary>狙う相手</summary>
     public Transform Target { get => _target; set => _target = value; }
     /// <summary>向き（右 1／左 -1）。PlayerController があればそちらの向きを使う</summary>
@@ -79,7 +84,7 @@ public class AttackRunner : MonoBehaviour
         if (IsRunning && !_allowConcurrent) return false;
         if (data.Kind == AttackKind.Melee)
         {
-            Debug.LogWarning($"{name}: 近接（{data.name}）は AttackRunner では実行しません。PlayerDebugAttack に設定してください", this);
+            Debug.LogWarning($"{name}: 近接（{data.name}）は AttackRunner では実行しません。PlayerMeleeAttack に設定してください", this);
             return false;
         }
         Current = data;
@@ -282,7 +287,17 @@ public class AttackRunner : MonoBehaviour
         float hangY = arena.yMax + data.ObjectSize.y * 0.5f; // 画面の上端のすぐ外から落とす
         float now = Time.time;
 
-        if (data.Placement == SpawnPlacement.AroundTarget)
+        if (data.Placement == SpawnPlacement.AppearAroundTarget)
+        {
+            // 落とさない：出る場所に薄い枠（予告）を出し、予告時間のあとにその場へパッと出す
+            float appearAt = now + data.TelegraphTime;
+            foreach (Vector2 c in PickAppearPositions(data))
+            {
+                objects.Add(FallingObject.SpawnInPlace(this, data, c, appearAt));
+            }
+            Released?.Invoke(data);
+        }
+        else if (data.Placement == SpawnPlacement.AroundTarget)
         {
             // 影（予告）を出してから、画面の上から落とす。影は落ち終わるまで残す
             float targetX = Mathf.Clamp((TargetPoint ?? OriginPoint).x, minX, maxX);
@@ -298,6 +313,7 @@ public class AttackRunner : MonoBehaviour
         else
         {
             // 画面の上端に、左から一定間隔で並べる → 並べ終えて少し待つ → 左から順に落とす
+            // 【仮】並んでから落ち始めるまでの間は、クリックで消せる（DismissableTab。時間・間隔は変えない）
             int n = data.SpawnCount;
             float width = (n - 1) * data.PlaceSpacing;
             float startX = arena.center.x - width * 0.5f;
@@ -307,7 +323,7 @@ public class AttackRunner : MonoBehaviour
             {
                 float appearAt = now + i * data.PlaceInterval;
                 float fallAt = lastPlace + data.DropHoldTime + i * data.DropInterval;
-                objects.Add(FallingObject.Spawn(this, data, new Vector2(startX + i * data.PlaceSpacing, hangInside), appearAt, fallAt, false));
+                objects.Add(FallingObject.Spawn(this, data, new Vector2(startX + i * data.PlaceSpacing, hangInside), appearAt, fallAt, false, dismissable: true));
             }
             Released?.Invoke(data);
         }
@@ -340,6 +356,137 @@ public class AttackRunner : MonoBehaviour
             best = left >= minX ? left : Mathf.Min(right, maxX);
         }
         return best;
+    }
+
+    // ───────── 出現型の置き方（ポップアップ出現） ─────────
+
+    /// <summary>【仮】上の端に乗れるかを調べるとき、横にどこまでの床・足場を見るか（マス）。ジャンプの頂点までに横へ進める距離くらい</summary>
+    const float ReachHorizontal = 2.5f;
+
+    /// <summary>
+    /// 出現型の位置（中心）を決める。
+    /// ・1つ目：狙う相手の体に重なる位置。床にめり込むなら床の上まで上げる。ボスの体に重なるなら、相手に重なったまま横へずらす
+    /// ・残り：狙う相手（体の中心）から一定以上離れた空中のランダムな位置。
+    ///   高さは「上の端の高さの範囲」の中で、近くの床・足場からジャンプで上の端に乗れる所。地形・ボスの体には重ねない。
+    ///   ほかの出現物とは、なるべく重ねない（場所が無ければ、重なりが一番少ない所）
+    /// </summary>
+    List<Vector2> PickAppearPositions(AttackData data)
+    {
+        var result = new List<Vector2>();
+        Rect arena = BattleArena.GetBounds();
+        Vector2 size = data.ObjectSize;
+        Vector2 half = size * 0.5f;
+        Bounds? boss = OwnBodyBounds();
+        Vector2 target = TargetPoint ?? OriginPoint;
+        float targetHalfWidth = TargetBodyBounds()?.extents.x ?? 0.35f;
+
+        // 1つ目：相手の体に重ねる
+        Vector2 first = target;
+        first.x = Mathf.Clamp(first.x, arena.xMin + half.x, arena.xMax - half.x);
+        TryFindGround(target.x, target.y, out float groundY);
+        if (first.y - half.y < groundY) first.y = groundY + half.y; // 床にめり込むなら、床の上まで上げる
+        first.y = Mathf.Min(first.y, arena.yMax - half.y);           // 天井（画面の上端）は越えない
+        if (boss is Bounds b && Overlaps(first, size, b, 0f))
+        {
+            float dir = first.x >= b.center.x ? 1f : -1f;
+            float need = dir > 0f ? b.max.x - (first.x - half.x) : (first.x + half.x) - b.min.x;
+            float maxShift = half.x + targetHalfWidth - 0.05f; // ここまでなら相手の体に重なったまま
+            first.x = Mathf.Clamp(first.x + dir * Mathf.Min(need + 0.05f, maxShift), arena.xMin + half.x, arena.xMax - half.x);
+        }
+        result.Add(first);
+
+        for (int i = 1; i < data.SpawnCount; i++) result.Add(PickAppearRandom(data, arena, target, boss, result));
+        return result;
+    }
+
+    Vector2 PickAppearRandom(AttackData data, Rect arena, Vector2 target, Bounds? boss, List<Vector2> taken)
+    {
+        Vector2 size = data.ObjectSize;
+        Vector2 half = size * 0.5f;
+        float topMin = arena.yMin + data.AppearTopRange.x;
+        float topMax = Mathf.Min(arena.yMin + data.AppearTopRange.y, arena.yMax);
+        Vector2? best = null;
+        float bestOverlap = float.PositiveInfinity;
+        for (int attempt = 0; attempt < 120; attempt++)
+        {
+            float x = UnityEngine.Random.Range(arena.xMin + half.x, arena.xMax - half.x);
+            float top = UnityEngine.Random.Range(topMin, topMax);
+            var c = new Vector2(x, top - half.y);
+            if (Vector2.Distance(c, target) < data.MinDistanceFromTarget) continue;
+            if (boss is Bounds b && Overlaps(c, size, b, 0.2f)) continue;
+            if (OverlapsTerrain(c, size)) continue;
+            if (!CanReachTop(c, size, data.ReachHeight, arena)) continue;
+
+            float overlap = 0f;
+            foreach (Vector2 t in taken) overlap += OverlapArea(c, t, size);
+            if (overlap <= 0f) return c;
+            if (overlap < bestOverlap)
+            {
+                bestOverlap = overlap;
+                best = c;
+            }
+        }
+        if (best is Vector2 found) return found;
+        // 条件に合う場所が無いとき：相手から離れた低い位置に置く（ここに来ることは、ふつうは無い）
+        float side = target.x <= arena.center.x ? 1f : -1f;
+        float fx = Mathf.Clamp(target.x + side * (data.MinDistanceFromTarget + half.x), arena.xMin + half.x, arena.xMax - half.x);
+        return new Vector2(fx, topMin - half.y);
+    }
+
+    /// <summary>近くの床・足場から、ジャンプで上の端に乗れるか</summary>
+    bool CanReachTop(Vector2 center, Vector2 size, float reachHeight, Rect arena)
+    {
+        Vector2 half = size * 0.5f;
+        float top = center.y + half.y, bottom = center.y - half.y;
+        float highest = arena.yMin;
+        for (float x = center.x - half.x - ReachHorizontal; x <= center.x + half.x + ReachHorizontal + 0.01f; x += 0.5f)
+        {
+            if (x < arena.xMin || x > arena.xMax) continue;
+            bool under = x >= center.x - half.x && x <= center.x + half.x;
+            // 真下は自分の下の端より下の床、横は上の端より下の床を探す
+            if (TryFindGround(x, under ? bottom - 0.05f : top - 0.1f, out float y)) highest = Mathf.Max(highest, y);
+        }
+        return top - highest <= reachHeight;
+    }
+
+    bool OverlapsTerrain(Vector2 center, Vector2 size)
+    {
+        var filter = new ContactFilter2D { useTriggers = false, useLayerMask = true };
+        filter.SetLayerMask(_groundMask | _solidMask);
+        var results = new Collider2D[4];
+        return Physics2D.OverlapBox(center, size - Vector2.one * 0.05f, 0f, filter, results) > 0;
+    }
+
+    static bool Overlaps(Vector2 center, Vector2 size, Bounds b, float margin)
+    {
+        Vector2 half = size * 0.5f;
+        return center.x - half.x < b.max.x + margin && center.x + half.x > b.min.x - margin
+            && center.y - half.y < b.max.y + margin && center.y + half.y > b.min.y - margin;
+    }
+
+    static float OverlapArea(Vector2 a, Vector2 b, Vector2 size)
+    {
+        float ox = Mathf.Max(0f, size.x - Mathf.Abs(a.x - b.x));
+        float oy = Mathf.Max(0f, size.y - Mathf.Abs(a.y - b.y));
+        return ox * oy;
+    }
+
+    /// <summary>自分（攻撃する人）の体の範囲。瞬間移動できる持ち主（ボス）だけ。無ければ null</summary>
+    Bounds? OwnBodyBounds()
+    {
+        var w = GetComponent<IWarpable>();
+        return w != null ? w.BodyBounds : (Bounds?)null;
+    }
+
+    /// <summary>狙う相手の体（移動用の当たり判定）の範囲。無ければ null</summary>
+    Bounds? TargetBodyBounds()
+    {
+        if (_target == null) return null;
+        foreach (var col in _target.GetComponents<Collider2D>())
+        {
+            if (!col.isTrigger && col.enabled) return col.bounds;
+        }
+        return null;
     }
 
     // ───────── Warp ─────────

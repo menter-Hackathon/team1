@@ -15,7 +15,7 @@ public class AttackData : ScriptableObject
     [SerializeField] AttackKind _kind = AttackKind.Projectile;
     [Tooltip("予備動作（秒）。この間に構えを見せてから攻撃が出る。床に予告（影・赤丸）を出す技は、予告時間の方を使い、ここは0にする")]
     [SerializeField, Min(0f)] float _windup;
-    [Tooltip("判定時間（秒）。指定位置の判定・近接で、攻撃判定を出している時間")]
+    [Tooltip("判定時間（秒）。指定位置の判定・近接で、攻撃判定を出している時間。出現型の落下物（ポップアップ出現）では、現れてから判定を出している時間")]
     [SerializeField, Min(0f)] float _activeTime = 0.3f;
     [Tooltip("間隔（クールタイム、秒）。プレイヤーの能力・近接で、次に使えるまでの時間")]
     [SerializeField, Min(0f)] float _cooldown;
@@ -79,7 +79,7 @@ public class AttackData : ScriptableObject
     [SerializeField, Min(0f)] float _areaStagger;
 
     [Header("予告（Area・Spawn のとき）")]
-    [Tooltip("予告（赤丸・影）を出してから判定・落下を始めるまでの秒数")]
+    [Tooltip("予告（赤丸・影・出現の枠）を出してから判定・落下・出現を始めるまでの秒数")]
     [SerializeField, Min(0f)] float _telegraphTime = 1f;
 
     [Header("持続（Area のとき。残り続けるダメージ床）")]
@@ -111,6 +111,10 @@ public class AttackData : ScriptableObject
     [SerializeField, Min(0f)] float _dropHoldTime = 0.5f;
     [Tooltip("落とす間隔（秒）。置き方が TopRow のとき、左から順に落とす")]
     [SerializeField, Min(0f)] float _dropInterval = 0.25f;
+    [Tooltip("【仮】出す高さの範囲。上の端の、部屋の床からの高さ（マス）。置き方が AppearAroundTarget のとき（1つ目を除く）")]
+    [SerializeField] Vector2 _appearTopRange = new Vector2(2.5f, 6f);
+    [Tooltip("【仮】上の端に乗れるとみなす高さ（マス）。近くの床・足場から上の端までがこれ以下の位置にだけ出す。ジャンプの高さ3.2より少し低くしてある。置き方が AppearAroundTarget のとき（1つ目を除く）")]
+    [SerializeField, Min(0.5f)] float _reachHeight = 3f;
 
     // ───────── Warp ─────────
     [Header("Warp のとき")]
@@ -177,6 +181,8 @@ public class AttackData : ScriptableObject
     public float PlaceSpacing => _placeSpacing;
     public float DropHoldTime => _dropHoldTime;
     public float DropInterval => _dropInterval;
+    public Vector2 AppearTopRange => _appearTopRange;
+    public float ReachHeight => _reachHeight;
 
     public WarpDestination WarpDestination => _warpDestination;
     public float WarpDistance => _warpDistance;
