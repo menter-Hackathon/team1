@@ -20,6 +20,7 @@ public static class StageTestSceneBuilder
     static readonly Color WalkerColor = new Color(0.45f, 0.85f, 0.35f);
     static readonly Color ShooterColor = new Color(0.75f, 0.40f, 0.95f);
     static readonly Color ZakoShotColor = new Color(0.85f, 0.55f, 1.00f);
+    static readonly Color WindupMarkColor = new Color(1.00f, 0.85f, 0.20f);
     static readonly Color ChromeBodyColor = new Color(0.92f, 0.92f, 0.95f);
     static readonly Rect ArenaBounds = new Rect(-10f, 0f, 20f, 11.5f);
 
@@ -122,7 +123,10 @@ public static class StageTestSceneBuilder
         });
     }
 
-    /// <summary>雑魚の共通部分：HP3、体の被弾範囲と同じ形の体当たり、点滅、倒れたら消える、HP の仮表示。原点＝足元</summary>
+    /// <summary>
+    /// 雑魚の共通部分：HP5、体の被弾範囲と同じ形の体当たり、点滅、倒れたら消える、HP の仮表示。原点＝足元。
+    /// HP5 は 2026-11-16 まさぴ〜決定（近接なら5回、ブレークポイントなら2回で倒れる）
+    /// </summary>
     static GameObject CreateZakoBase(string name, Vector2 feet, Vector2 size, Color color, Transform parent, Sprite square, out SpriteRenderer body)
     {
         int playerLayer = LayerMask.NameToLayer("Player");
@@ -137,7 +141,7 @@ public static class StageTestSceneBuilder
         PlayerTestSceneBuilder.SetProps(health, so =>
         {
             so.FindProperty("_team").enumValueIndex = (int)Team.Enemy;
-            so.FindProperty("_max").intValue = 3;
+            so.FindProperty("_max").intValue = 5;
             so.FindProperty("_oneDamagePerHit").boolValue = false;
             so.FindProperty("_invincibleTimeAfterHit").floatValue = 0f;
         });
@@ -197,10 +201,19 @@ public static class StageTestSceneBuilder
         var runner = BossTestSceneBuilder.AddAttackRunner(go, Team.Enemy, 1 << playerLayer, player);
         // 弾は体の真ん中から出す（足元から出すと床に当たって消える）
         PlayerTestSceneBuilder.SetProps(runner, so => so.FindProperty("_origin").objectReferenceValue = body.transform);
+        // 【仮】ため始めてから撃つまで頭の上に出す「!」（黄色い縦棒と点）。HP の仮表示より上に置く
+        var mark = new GameObject("WindupMark").transform;
+        mark.SetParent(go.transform, false);
+        mark.localPosition = new Vector3(0f, size.y + 0.75f, 0f);
+        PlayerTestSceneBuilder.CreateSprite("Bar", mark, new Vector2(0f, 0.4f), new Vector2(0.16f, 0.45f), WindupMarkColor, square, 20);
+        PlayerTestSceneBuilder.CreateSprite("Dot", mark, Vector2.zero, new Vector2(0.16f, 0.16f), WindupMarkColor, square, 20);
+        mark.gameObject.SetActive(false);
+
         var shooter = go.AddComponent<ZakoShooter>();
         PlayerTestSceneBuilder.SetProps(shooter, so =>
         {
             so.FindProperty("_attack").objectReferenceValue = shot;
+            so.FindProperty("_windupIndicator").objectReferenceValue = mark.gameObject;
             so.FindProperty("_visualRoot").objectReferenceValue = go.transform.Find("Visual");
             var arr = so.FindProperty("_renderers");
             arr.arraySize = 1;

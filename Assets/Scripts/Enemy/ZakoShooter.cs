@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// 撃つ雑魚ウイルス（仕様書 4.1）。その場に留まり、一定の間隔でプレイヤーに弾を撃つ。
-/// 弾は攻撃データ（AttackData、種類 Projectile）で決める。撃つ前の予備動作の間、体が光る。
+/// 弾は攻撃データ（AttackData、種類 Projectile）で決める。撃つ前の予備動作の間、体が光り、頭の上に「!」が出る。
 /// 倒れたら撃つのをやめる（消すのは DisableOnDeath）。
 /// </summary>
 [RequireComponent(typeof(AttackRunner), typeof(Health))]
@@ -21,6 +21,8 @@ public class ZakoShooter : MonoBehaviour
     [Tooltip("予備動作中に光らせる絵。空なら子のスプライトすべて")]
     [SerializeField] SpriteRenderer[] _renderers;
     [SerializeField] Color _windupColor = Color.white;
+    [Tooltip("【仮】ため始めてから撃つまで表示する目印（頭の上の「!」）。無くてもよい")]
+    [SerializeField] GameObject _windupIndicator;
     [Tooltip("向きに合わせて左右反転させる見た目（無くてもよい）")]
     [SerializeField] Transform _visualRoot;
 
@@ -91,6 +93,7 @@ public class ZakoShooter : MonoBehaviour
     void SetWindup(bool on)
     {
         _windingUp = on;
+        if (_windupIndicator != null) _windupIndicator.SetActive(on);
         if (_renderers == null) return;
         for (int i = 0; i < _renderers.Length; i++)
         {

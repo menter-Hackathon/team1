@@ -9,6 +9,8 @@ using UnityEngine;
 /// ・着地の少し前に押したジャンプも受け付ける（先行入力）
 /// ・ダッシュ：向いている方向へ短く高速移動（仕様書 3.2：無敵なし）。ダッシュ中は重力なし。空中では着地までに1回。
 ///   ジャンプするとダッシュは終わる
+/// ・近接の攻撃判定が出ている間（PlayerMeleeAttack.IsAttacking）は、向きを変えない（判定が反対側へ移らないように）。
+///   移動の入力はそのまま効くので、後ずさりになる。ダッシュも入力の方向へ進むが、向きはそのまま
 /// </summary>
 [RequireComponent(typeof(KinematicBody2D), typeof(PlayerInputReader))]
 public class PlayerController : MonoBehaviour
@@ -55,6 +57,7 @@ public class PlayerController : MonoBehaviour
 
     KinematicBody2D _body;
     PlayerInputReader _input;
+    PlayerMeleeAttack _melee; // 無くてもよい。振っている間は向きを固定する
     Vector2 _velocity;
     float _lastGroundedTime = float.NegativeInfinity;
     float _lastJumpPressedTime = float.NegativeInfinity;
@@ -79,6 +82,8 @@ public class PlayerController : MonoBehaviour
     public bool IsControllable => CanControl && !IsStunned;
     /// <summary>ダッシュ中か</summary>
     public bool IsDashing => Time.time < _dashUntil;
+    /// <summary>向きを変えられない間 true（近接の攻撃判定が出ている間）</summary>
+    public bool IsFacingLocked => _melee != null && _melee.IsAttacking;
 
     /// <summary>ジャンプした瞬間（SE・エフェクト用）</summary>
     public event Action Jumped;
@@ -94,6 +99,7 @@ public class PlayerController : MonoBehaviour
     {
         _body = GetComponent<KinematicBody2D>();
         _input = GetComponent<PlayerInputReader>();
+        _melee = GetComponent<PlayerMeleeAttack>();
     }
 
     void OnEnable()
@@ -120,7 +126,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        float x = IsControllable ? _input.Move.x : 0f;
+        float x = IsControllable && !IsFacingLocked ? _input.Move.x : 0f;
         if (x > 0f) FacingDirection = 1;
         else if (x < 0f) FacingDirection = -1;
 
@@ -238,7 +244,7 @@ public class PlayerController : MonoBehaviour
         }
         float x = _input.Move.x;
         _dashDirection = x > 0f ? 1 : x < 0f ? -1 : FacingDirection;
-        FacingDirection = _dashDirection;
+        if (!IsFacingLocked) FacingDirection = _dashDirection; // 振っている間は、後ろへダッシュしても前を向いたまま
         _dashUntil = now + _dashDuration;
         _nextDashTime = now + _dashCooldown;
         _isJumpRising = false;
