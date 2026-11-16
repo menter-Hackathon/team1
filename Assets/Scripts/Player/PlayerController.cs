@@ -33,6 +33,10 @@ public class PlayerController : MonoBehaviour
     [Tooltip("着地前に押したジャンプを覚えておく時間（秒）")]
     [SerializeField] float _jumpBufferTime = 0.12f;
 
+    [Header("被弾")]
+    [Tooltip("のけぞり中の横方向の減速。小さいほど遠くまで吹き飛ぶ")]
+    [SerializeField] float _knockbackDeceleration = 12f;
+
     [Header("見た目")]
     [Tooltip("左右反転させる見た目のルート（当たり判定は反転させない）")]
     [SerializeField] Transform _visualRoot;
@@ -44,6 +48,7 @@ public class PlayerController : MonoBehaviour
     float _lastJumpPressedTime = float.NegativeInfinity;
     bool _isJumpRising; // ジャンプで上昇中（可変ジャンプの判定用）
     bool _wasGrounded;
+    float _stunUntil = float.NegativeInfinity;
 
     public Vector2 Velocity => _velocity;
     public bool IsGrounded => _body.IsGrounded;
@@ -51,6 +56,10 @@ public class PlayerController : MonoBehaviour
     public int FacingDirection { get; private set; } = 1;
     /// <summary>false の間は入力を受け付けない（被弾のけぞり・ステージ遷移中など）</summary>
     public bool CanControl { get; set; } = true;
+    /// <summary>被弾でのけぞっている間 true（入力を受け付けない）</summary>
+    public bool IsStunned => Time.time < _stunUntil;
+    /// <summary>今プレイヤーが操作できるか（CanControl かつ のけぞり中でない）</summary>
+    public bool IsControllable => CanControl && !IsStunned;
 
     /// <summary>ジャンプした瞬間（SE・エフェクト用）</summary>
     public event Action Jumped;
@@ -76,7 +85,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        float x = CanControl ? _input.Move.x : 0f;
+        float x = IsControllable ? _input.Move.x : 0f;
         if (x > 0f) FacingDirection = 1;
         else if (x < 0f) FacingDirection = -1;
 
@@ -94,20 +103,23 @@ public class PlayerController : MonoBehaviour
         float now = Time.time;
         bool grounded = _body.IsGrounded; // 前回の Move の結果
         if (grounded) _lastGroundedTime = now;
+        bool stunned = IsStunned;
+        bool controllable = CanControl && !stunned;
 
         // --- 横移動 ---
-        float inputX = CanControl ? _input.Move.x : 0f;
+        float inputX = controllable ? _input.Move.x : 0f;
         float targetX = inputX * _moveSpeed;
         bool hasInput = Mathf.Abs(targetX) > 0.01f;
-        float accel = grounded
-            ? (hasInput ? _groundAcceleration : _groundDeceleration)
-            : (hasInput ? _airAcceleration : _airDeceleration);
+        float accel;
+        if (stunned) accel = _knockbackDeceleration; // のけぞり中は弱い減速で吹き飛ばす
+        else if (grounded) accel = hasInput ? _groundAcceleration : _groundDeceleration;
+        else accel = hasInput ? _airAcceleration : _airDeceleration;
         _velocity.x = Mathf.MoveTowards(_velocity.x, targetX, accel * dt);
 
         // --- ジャンプ（先行入力 × コヨーテタイム） ---
         bool jumpBuffered = now - _lastJumpPressedTime <= _jumpBufferTime;
         bool canJump = now - _lastGroundedTime <= _coyoteTime;
-        if (CanControl && jumpBuffered && canJump)
+        if (controllable && jumpBuffered && canJump)
         {
             _velocity.y = JumpVelocity;
             _isJumpRising = true;
@@ -124,7 +136,7 @@ public class PlayerController : MonoBehaviour
             {
                 _isJumpRising = false;
             }
-            else if (!(CanControl && _input.JumpHeld))
+            else if (!(controllable && _input.JumpHeld))
             {
                 _velocity.y *= _jumpCutMultiplier;
                 _isJumpRising = false;
@@ -153,10 +165,18 @@ public class PlayerController : MonoBehaviour
         _wasGrounded = _body.IsGrounded;
     }
 
-    /// <summary>速度を直接上書きする（ノックバックなど。ダメージ処理から使う想定）</summary>
+    /// <summary>速度を直接上書きする（スキルの移動など）</summary>
     public void SetVelocity(Vector2 velocity)
     {
         _velocity = velocity;
         _isJumpRising = false;
+    }
+
+    /// <summary>吹き飛ばして、stunTime 秒のあいだ操作できなくする（被弾時）</summary>
+    public void ApplyKnockback(Vector2 velocity, float stunTime)
+    {
+        SetVelocity(velocity);
+        _stunUntil = Mathf.Max(_stunUntil, Time.time + stunTime);
+        _lastJumpPressedTime = float.NegativeInfinity; // 被弾前に押したジャンプを持ち越さない
     }
 }

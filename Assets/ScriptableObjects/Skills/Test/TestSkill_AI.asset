@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3dd5947c20f542efa401be9630a1460c, type: 3}
+  m_Name: TestSkill_AI
+  m_EditorClassIdentifier: 
+  _displayName: "\u30C6\u30B9\u30C8\uFF1AAI"
+  _icon: {fileID: 21300000, guid: a27fa7d6166f94c8aa8109e427d578d2, type: 3}
+  _category: 4
