@@ -10,6 +10,7 @@ using UnityEngine;
 /// 部屋の形は docs/app-boss-and-ability-design.md の2章（【要確認】ステージ担当と相談）：
 ///   1画面（約21×12マス）、床あり、高さ3マスにすり抜け床（フォルダ）2枚。カメラは固定。
 /// 攻撃データのアセット（Assets/ScriptableObjects/Attacks）は、無ければ docs の数値で作る。あれば作り直さない。
+/// 【仮】マウスで動かせる盾ウィンドウを1枚置く（ShieldWindowSceneBuilder。レイヤー BulletBlocker が必要）。
 /// </summary>
 public static class BossTestSceneBuilder
 {
@@ -42,6 +43,7 @@ public static class BossTestSceneBuilder
             Debug.LogError("レイヤー Ground / OneWayPlatform / Player / Enemy が見つかりません。Project Settings > Tags and Layers を確認してください。");
             return;
         }
+        if (!ShieldWindowSceneBuilder.CheckLayer()) return;
 
         Sprite square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
         Attacks attacks = GetOrCreateAttacks();
@@ -59,6 +61,9 @@ public static class BossTestSceneBuilder
 
         var arena = new GameObject("BattleArena").AddComponent<BattleArena>();
         PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
+
+        // 【仮】盾ウィンドウ（マウスでドラッグ。敵の弾だけを止める）
+        ShieldWindowSceneBuilder.Create(square, ShieldWindowSceneBuilder.DefaultPosition);
 
         // --- プレイヤー ---
         // 【仮】G キーで本物の能力2つを順番にもらえる（ボスを倒さずに能力を試せる）
@@ -142,7 +147,7 @@ public static class BossTestSceneBuilder
         return controller;
     }
 
-    /// <summary>攻撃する人に AttackRunner を付ける</summary>
+    /// <summary>攻撃する人に AttackRunner を付ける。【仮】敵の弾は盾ウィンドウ（BulletBlocker）で止まるようにする</summary>
     internal static AttackRunner AddAttackRunner(GameObject go, Team team, int targetMask, Transform target)
     {
         int ground = LayerMask.NameToLayer("Ground");
@@ -154,6 +159,8 @@ public static class BossTestSceneBuilder
             so.FindProperty("_targetLayers").intValue = targetMask;
             so.FindProperty("_solidMask").intValue = 1 << ground;
             so.FindProperty("_groundMask").intValue = (1 << ground) | (1 << oneWay);
+            // 弾の判定にだけ使う（_solidMask に入れると、瞬間移動も盾で止まってしまう）
+            so.FindProperty("_projectileBlockerMask").intValue = team == Team.Enemy ? ShieldWindowSceneBuilder.BlockerMask : 0;
             so.FindProperty("_target").objectReferenceValue = target;
         });
         return runner;

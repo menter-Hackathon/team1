@@ -9,6 +9,7 @@ using UnityEngine;
 /// 部屋はボス戦テストシーンと同じ形（床・左右の壁・高さ3の足場2枚）。
 /// 雑魚：歩く×2（床と右の足場）、撃つ×2（左の足場と床の右端）。全員倒すと Chrome が出てくる。
 /// 数値はすべて【仮】。
+/// 【仮】マウスで動かせる盾ウィンドウを1枚置く（ShieldWindowSceneBuilder。レイヤー BulletBlocker が必要）。
 /// </summary>
 public static class StageTestSceneBuilder
 {
@@ -43,6 +44,7 @@ public static class StageTestSceneBuilder
             Debug.LogError("レイヤー Ground / OneWayPlatform / Player / Enemy が見つかりません。Project Settings > Tags and Layers を確認してください。");
             return;
         }
+        if (!ShieldWindowSceneBuilder.CheckLayer()) return;
 
         Sprite square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
         var attacks = BossTestSceneBuilder.GetOrCreateAttacks();
@@ -59,6 +61,9 @@ public static class StageTestSceneBuilder
 
         var arena = new GameObject("BattleArena").AddComponent<BattleArena>();
         PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
+
+        // 【仮】盾ウィンドウ（マウスでドラッグ。敵の弾だけを止める）
+        ShieldWindowSceneBuilder.Create(square, ShieldWindowSceneBuilder.DefaultPosition);
 
         // --- プレイヤー（左端から始める） ---
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-8.5f, 0.05f, 0f), attacks.PlayerMelee,

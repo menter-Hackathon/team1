@@ -5,6 +5,7 @@ using UnityEngine;
 /// ・決まった速さで飛び、重力があれば落ちていく。進む向きに回転する
 /// ・寿命が来たら消える。地形（床・壁）に当たったら消える／追撃を出す。相手に当たったら消える（設定による）
 /// ・すり抜け床（フォルダ）は通り抜ける
+/// ・【仮】敵の弾は、盾ウィンドウ（AttackRunner の「弾だけを止める物」）に当たると消える。追撃は出さない
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 public class Projectile : MonoBehaviour
@@ -79,14 +80,29 @@ public class Projectile : MonoBehaviour
 
         // 進む先に地形があるか調べる（すり抜け床は通る）
         float dist = delta.magnitude;
-        if (dist > 0f && TryHitTerrain(pos, delta / dist, dist, out RaycastHit2D hit))
+        if (dist > 0f)
         {
-            if (_data.OnTerrainHit != null) _owner.SpawnFollowUp(_data.OnTerrainHit, hit.point, hit.normal);
-            if (_data.DestroyOnTerrain)
+            Vector2 dir = delta / dist;
+            bool hitTerrain = TryHitTerrain(pos, dir, dist, out RaycastHit2D hit);
+
+            // 【仮】弾だけを止める物（盾ウィンドウ）が地形より手前にあれば、そこで消える。
+            // 地形ではないので、追撃（赤い波線など）は出さない。「地形に当たったら消えるか」の設定にも関係なく消える
+            if (TryHitBlocker(pos, dir, hitTerrain ? hit.distance : dist, out RaycastHit2D block))
             {
-                _rb.position = hit.centroid;
+                _rb.position = block.centroid;
                 Die();
                 return;
+            }
+
+            if (hitTerrain)
+            {
+                if (_data.OnTerrainHit != null) _owner.SpawnFollowUp(_data.OnTerrainHit, hit.point, hit.normal);
+                if (_data.DestroyOnTerrain)
+                {
+                    _rb.position = hit.centroid;
+                    Die();
+                    return;
+                }
             }
         }
 
@@ -101,6 +117,29 @@ public class Projectile : MonoBehaviour
         int count = Physics2D.CircleCast(pos, _castRadius, dir, filter, _hits, distance);
         result = count > 0 ? _hits[0] : default;
         return count > 0;
+    }
+
+    /// <summary>
+    /// 【仮】弾だけを止める物に当たるか調べる。持ち主の AttackRunner に止める物のレイヤーが無ければ（プレイヤーの弾）、何もしない。
+    /// 盾ウィンドウなら、当たった数を数えてもらう（割れている盾は通り抜ける）
+    /// </summary>
+    bool TryHitBlocker(Vector2 pos, Vector2 dir, float distance, out RaycastHit2D result)
+    {
+        result = default;
+        int mask = _owner.ProjectileBlockerMask.value;
+        if (mask == 0) return false;
+
+        var filter = new ContactFilter2D { useTriggers = false, useLayerMask = true };
+        filter.SetLayerMask(mask);
+        int count = Physics2D.CircleCast(pos, _castRadius, dir, filter, _hits, distance);
+        for (int i = 0; i < count; i++)
+        {
+            var shield = _hits[i].collider.GetComponentInParent<ShieldWindow>();
+            if (shield != null && !shield.TryBlock(this)) continue;
+            result = _hits[i];
+            return true;
+        }
+        return false;
     }
 
     void FaceVelocity()

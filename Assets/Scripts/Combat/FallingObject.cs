@@ -33,6 +33,8 @@ public class FallingObject : MonoBehaviour
     SpriteRenderer _frame; // 出現型の予告（出る場所の薄い枠）
 
     public AttackData Data => _data;
+    /// <summary>見た目の絵</summary>
+    public SpriteRenderer Visual => _visual;
     public bool IsVisible => _visual != null && _visual.enabled;
     public bool IsFalling { get; private set; }
     public bool HasLanded { get; private set; }
@@ -69,9 +71,10 @@ public class FallingObject : MonoBehaviour
 
     /// <summary>
     /// 落下物を1つ作る。hangPosition は現れる位置（中心）。appearAt に現れ、fallAt に落ち始める（どちらも Time.time）。
-    /// showShadow なら、落ちる場所の床に今から影を出す
+    /// showShadow なら、落ちる場所の床に今から影を出す。
+    /// 【仮】dismissable なら、落ち始めるまでの間、クリックで消せる（タブ増殖のタブ。DismissableTab）
     /// </summary>
-    public static FallingObject Spawn(AttackRunner owner, AttackData data, Vector2 hangPosition, float appearAt, float fallAt, bool showShadow)
+    public static FallingObject Spawn(AttackRunner owner, AttackData data, Vector2 hangPosition, float appearAt, float fallAt, bool showShadow, bool dismissable = false)
     {
         GameObject go = owner.CreateSpawnedObject($"Falling_{data.name}", hangPosition);
         var rb = go.AddComponent<Rigidbody2D>();
@@ -116,6 +119,7 @@ public class FallingObject : MonoBehaviour
             s.transform.position = new Vector2(hangPosition.x, f._groundY + 0.12f);
             f._shadow = AttackRunner.AddVisual(s.transform, PlaceholderSprites.Circle, ShadowColor, new Vector2(size.x, 0.35f), 16, "Ellipse");
         }
+        if (dismissable) go.AddComponent<DismissableTab>();
         return f;
     }
 
