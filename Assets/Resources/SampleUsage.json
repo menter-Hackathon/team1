@@ -1,0 +1,20 @@
+[
+        {
+            "id": "com.google.Chrome",
+            "displayName": "Google Chrome",
+            "usageSeconds": 28800.0,
+            "iconPath": ""
+        },
+        {
+            "id": "com.microsoft.VSCode",
+            "displayName": "Visual Studio Code",
+            "usageSeconds": 90000.0,
+            "iconPath": ""
+        },
+        {
+            "id": "com.apple.finder",
+            "displayName": "Finder",
+            "usageSeconds": 36000.0,
+            "iconPath": ""
+        }
+    ]

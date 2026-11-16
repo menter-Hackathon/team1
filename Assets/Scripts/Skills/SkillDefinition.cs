@@ -20,4 +20,13 @@ public class SkillDefinition : ScriptableObject
     public Sprite Icon => _icon;
     public SkillCategory Category => _category;
     public AttackData Attack => _attack;
+
+    /// <summary>攻撃データだけを差し替えた複製を作る（使用時間で強くした能力を渡すとき用）。アセットは書き換えない</summary>
+    public SkillDefinition CreateCopy(AttackData attack)
+    {
+        var copy = Instantiate(this);
+        copy.name = name;
+        copy._attack = attack;
+        return copy;
+    }
 }

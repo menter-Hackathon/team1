@@ -194,4 +194,20 @@ public class AttackData : ScriptableObject
 
     /// <summary>判定を出し続ける時間（持続があれば持続時間）</summary>
     public float HitWindow => _persistDuration > 0f ? _persistDuration : _activeTime;
+
+    /// <summary>
+    /// 数値を1つだけ変えた複製を作る（使用時間による強化用）。アセットそのものは書き換えない
+    /// </summary>
+    public AttackData CreateScaledCopy(AttackStat stat, float value)
+    {
+        var copy = Instantiate(this);
+        copy.name = name;
+        switch (stat)
+        {
+            case AttackStat.WarpDistance: copy._warpDistance = Mathf.Max(0f, value); break;
+            case AttackStat.GaugeGain: copy._gaugeGain = Mathf.Max(0, Mathf.RoundToInt(value)); break;
+            case AttackStat.Damage: copy._damage = Mathf.Max(0, Mathf.RoundToInt(value)); break;
+        }
+        return copy;
+    }
 }

@@ -175,6 +175,20 @@ public class SkillLoadout
         }
     }
 
+    /// <summary>今の枠の中身を写し取る（ステージ開始時に覚えておき、リトライで戻すため）。入れ替え待ちは含まない</summary>
+    public SkillDefinition[] Snapshot() => (SkillDefinition[])Slots.Clone();
+
+    /// <summary>写し取った中身に戻す。入れ替え待ちは取り消す</summary>
+    public void Restore(SkillDefinition[] slots)
+    {
+        DeclinePending();
+        for (int i = 0; i < Slots.Length; i++)
+        {
+            SkillDefinition s = slots != null && i < slots.Length ? slots[i] : null;
+            if (Slots[i] != s) SetSlot(i, s, SkillSlotChangeReason.Loaded);
+        }
+    }
+
     int FirstEmptyIndex() => Array.IndexOf(Slots, null);
 
     void SetSlot(int index, SkillDefinition skill, SkillSlotChangeReason reason)
