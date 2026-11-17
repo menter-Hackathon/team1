@@ -107,10 +107,10 @@ public static class RunScenesBuilder
             var apps = so.FindProperty("_apps");
             apps.arraySize = 2;
             // Chrome：手に入る能力は「新しいタブ」。使用時間で瞬間移動の距離 5〜8マス
-            SetEntry(apps.GetArrayElementAtIndex(0), "Chrome", "com.google.Chrome", SkillCategory.Browser, chromePrefab, chromeProfile, ChromeSpawn,
+            SetEntry(apps.GetArrayElementAtIndex(0), "Chrome", "Google Chrome", "com.google.Chrome", SkillCategory.Browser, chromePrefab, chromeProfile, ChromeSpawn,
                 AttackStat.WarpDistance, 5f, 8f);
             // VS Code：手に入る能力は「ブレークポイント」。使用時間でゲージ増加量 10〜16
-            SetEntry(apps.GetArrayElementAtIndex(1), "VS Code", "com.microsoft.VSCode", SkillCategory.Dev, vscodePrefab, vscodeProfile, VSCodeSpawn,
+            SetEntry(apps.GetArrayElementAtIndex(1), "VS Code", "Visual Studio Code", "com.microsoft.VSCode", SkillCategory.Dev, vscodePrefab, vscodeProfile, VSCodeSpawn,
                 AttackStat.GaugeGain, 10f, 16f);
         });
         EditorUtility.SetDirty(catalog);
@@ -137,13 +137,16 @@ public static class RunScenesBuilder
         if (so.ApplyModifiedPropertiesWithoutUndo()) EditorUtility.SetDirty(catalog);
     }
 
-    static void SetEntry(SerializedProperty e, string displayName, string bundleId, SkillCategory category, BossController prefab, BossProfile profile,
+    static void SetEntry(SerializedProperty e, string displayName, string screenTimeName, string bundleId, SkillCategory category, BossController prefab, BossProfile profile,
         Vector2 spawn, AttackStat stat, float abilityMin, float abilityMax)
     {
         e.FindPropertyRelative("DisplayName").stringValue = displayName;
         var ids = e.FindPropertyRelative("BundleIdPrefixes");
         ids.arraySize = 1;
         ids.GetArrayElementAtIndex(0).stringValue = bundleId;
+        var names = e.FindPropertyRelative("ScreenTimeNames");
+        names.arraySize = 1;
+        names.GetArrayElementAtIndex(0).stringValue = screenTimeName;
         e.FindPropertyRelative("Category").intValue = (int)category; // 値を明示した enum なので値で入れる
         e.FindPropertyRelative("BossPrefab").objectReferenceValue = prefab;
         e.FindPropertyRelative("Profile").objectReferenceValue = profile;

@@ -17,6 +17,8 @@ MonoBehaviour:
   - DisplayName: Chrome
     BundleIdPrefixes:
     - com.google.Chrome
+    ScreenTimeNames:
+    - Google Chrome
     Category: 1
     BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
     Profile: {fileID: 11400000, guid: 451941f9f7b9c40f0be4c59c27738911, type: 2}
@@ -36,6 +38,8 @@ MonoBehaviour:
   - DisplayName: VS Code
     BundleIdPrefixes:
     - com.microsoft.VSCode
+    ScreenTimeNames:
+    - Visual Studio Code
     Category: 3
     BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
     Profile: {fileID: 11400000, guid: 55c53859d0c654d339917667508f8ca2, type: 2}
