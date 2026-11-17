@@ -35,7 +35,7 @@ final class ScreenTimeCapture: NSObject, NSApplicationDelegate, NSWindowDelegate
 
     private func showGuide() {
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 360, height: 134),
+            contentRect: NSRect(x: 0, y: 0, width: 360, height: 154),
             styleMask: [.titled, .closable, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -47,7 +47,7 @@ final class ScreenTimeCapture: NSObject, NSApplicationDelegate, NSWindowDelegate
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.appearance = NSAppearance(named: .aqua)
 
-        let instructions = NSTextField(wrappingLabelWithString: "このMacの「先週」のアプリ一覧を表示してください。準備ができたら、「痕跡を読み取る」を押します。")
+        let instructions = NSTextField(wrappingLabelWithString: "このMacの「先週」のアプリ一覧を表示してください。\n「痕跡を読み取る」を押したら、共有画面で「システム設定」を選びます。")
         let scan = NSButton(title: "痕跡を読み取る", target: self, action: #selector(showPicker))
         scan.bezelStyle = .rounded
         scan.bezelColor = NSColor(srgbRed: 0.76, green: 0.09, blue: 0.17, alpha: 1)

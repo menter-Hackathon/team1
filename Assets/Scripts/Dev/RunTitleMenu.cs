@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// 【仮】タイトル画面：使用データの読み込み方を選んでランを始める（仕様書 8.3）。UI 担当の本番画面ができたら消す。
-/// スクリーンタイムのスキャン、サンプルでの訓練、利用時間の手入力からランを始める。
+/// スクリーンタイムのスキャン、またはサンプルでの訓練からランを始める。
 /// </summary>
 public class RunTitleMenu : MonoBehaviour
 {
@@ -20,12 +20,10 @@ public class RunTitleMenu : MonoBehaviour
     [Tooltip("GameSession が無いとき（このシーンを最初に開いたとき）に使う対応アプリ表")]
     [SerializeField] AppCatalog _catalog;
 
-    bool _manual;
     bool _scan;
     bool _scanning;
     List<AppUsage> _detectedApps;
     List<(string Name, int Seconds)> _topApps;
-    readonly Dictionary<AppEntry, float> _hours = new Dictionary<AppEntry, float>();
     string _error;
     Texture2D _background;
     Texture2D _scanIcon;
@@ -52,15 +50,34 @@ public class RunTitleMenu : MonoBehaviour
         if (_title == null) CreateStyles();
 
         GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), _background, ScaleMode.StretchToFill);
-        float width = Mathf.Min(624f, Screen.width - 32f);
-        bool wide = width >= 520f;
-        float preferredHeight = wide ? 398f : 446f;
+        float scale = Mathf.Max(1f, Mathf.Min(Screen.width / 752f, Screen.height / 528f));
+        float viewportWidth = Screen.width / scale;
+        float viewportHeight = Screen.height / scale;
+        float width = Mathf.Min(664f, viewportWidth - 24f);
+        bool canScan = MacScreenTime.CanScan;
+        float preferredHeight = canScan ? 424f : 240f;
         if (_topApps != null) preferredHeight = 424f;
-        else if (_manual) preferredHeight = 324f;
-        else if (_scan) preferredHeight = 264f;
-        float height = Mathf.Min(preferredHeight, Screen.height - 32f);
+        else if (_scan) preferredHeight = 284f;
+        float height = Mathf.Min(preferredHeight, viewportHeight - 24f);
         if (width <= 64f || height <= 100f) return;
-        var frame = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+        var frame = new Rect((viewportWidth - width) * 0.5f, (viewportHeight - height) * 0.5f, width, height);
+
+        Matrix4x4 previousMatrix = GUI.matrix;
+        GUI.matrix = previousMatrix * Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+        try
+        {
+            DrawWindow(session, frame, canScan);
+        }
+        finally
+        {
+            GUI.matrix = previousMatrix;
+        }
+    }
+
+    void DrawWindow(GameSession session, Rect frame, bool canScan)
+    {
+        float width = frame.width;
+        float height = frame.height;
         Fill(new Rect(frame.x - 3f, frame.y + 9f, width + 6f, height + 3f), new Color(0.14f, 0.16f, 0.22f, 0.12f), 11f);
         Fill(frame, Border, 10f);
         Fill(new Rect(frame.x + 1f, frame.y + 1f, width - 2f, height - 2f), Panel, 9f);
@@ -69,11 +86,11 @@ public class RunTitleMenu : MonoBehaviour
         GUI.Label(new Rect(frame.x + 52f, frame.y + 12f, width - 72f, 24f), "Team1", _brand);
         Fill(new Rect(frame.x + 1f, frame.y + 47f, width - 2f, 1f), Border);
 
-        GUILayout.BeginArea(new Rect(frame.x + 22f, frame.y + 62f, width - 44f, height - 80f));
+        float contentWidth = width - 44f;
+        GUILayout.BeginArea(new Rect(frame.x + 22f, frame.y + 62f, contentWidth, height - 80f));
         _scroll = GUILayout.BeginScrollView(_scroll);
         if (_scan) DrawScanPanel(session);
-        else if (_manual) DrawManualPanel(session);
-        else DrawStartPanel(session, wide);
+        else DrawStartPanel(session, canScan, contentWidth);
 
         if (!string.IsNullOrEmpty(_error))
         {
@@ -84,12 +101,12 @@ public class RunTitleMenu : MonoBehaviour
         GUILayout.EndArea();
     }
 
-    void DrawStartPanel(GameSession session, bool wide)
+    void DrawStartPanel(GameSession session, bool canScan, float contentWidth)
     {
-        bool canScan = MacScreenTime.CanScan;
         GUILayout.Space(8f);
-        GUILayout.Label(canScan ? "感染の痕跡を探す" : "駆除を開始する", _heroTitle);
-        GUILayout.Label(canScan ? "先週の利用記録から、この端末の駆除対象を見つけます。" : "訓練するか、先週の利用時間を入力して駆除を始めます。", _heroCaption);
+        GUILayout.Label(canScan ? "感染の痕跡を探す" : "駆除の訓練を始める", _heroTitle);
+        GUILayout.Label(canScan ? "先週の利用記録から、この端末の駆除対象を見つけます。" : "サンプルの利用記録で駆除を体験できます。", _heroCaption);
+        if (canScan) GUILayout.Label("共有したウィンドウを読み取り、画像は保存しません。", _heroCaption);
         GUILayout.Space(12f);
         if (canScan && ScanButton())
         {
@@ -98,39 +115,12 @@ public class RunTitleMenu : MonoBehaviour
         }
         if (canScan) GUILayout.Space(13f);
 
-        if (wide) GUILayout.BeginHorizontal();
-        if (ActionButton("訓練モード", primary: !canScan)) Begin(new SampleUsageProvider());
-        GUILayout.Space(8f);
-        if (ActionButton("記録を手入力"))
-        {
-            _manual = true;
-            _error = null;
-            _scroll = Vector2.zero;
-        }
-        if (wide) GUILayout.EndHorizontal();
-    }
-
-    void DrawManualPanel(GameSession session)
-    {
-        GUILayout.Label("記録を手入力", _title);
-        GUILayout.Label("アプリごとに、先週の利用時間を入力してください。", _caption);
-        GUILayout.Space(12f);
-        foreach (var app in session.Catalog != null ? session.Catalog.Apps : System.Array.Empty<AppEntry>())
-        {
-            if (app == null) continue;
-            _hours.TryGetValue(app, out float hours);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(app.DisplayName, _label, GUILayout.Width(110f));
-            _hours[app] = Mathf.Round(GUILayout.HorizontalSlider(hours, 0f, 40f, GUILayout.ExpandWidth(true)));
-            GUILayout.Label($"{_hours[app]:0}時間", _time, GUILayout.Width(68f));
-            GUILayout.EndHorizontal();
-        }
-        GUILayout.Space(14f);
         GUILayout.BeginHorizontal();
-        if (ActionButton("戻る", width: 100f)) ReturnToMenu();
-        GUILayout.Space(8f);
-        if (ActionButton("駆除を開始", primary: true)) BeginManual();
+        GUILayout.FlexibleSpace();
+        if (ActionButton("訓練モード", primary: !canScan, width: Mathf.Min(196f, contentWidth - 16f))) Begin(new SampleUsageProvider());
+        GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
+        if (canScan) GUILayout.Label("訓練モードではサンプルの利用記録ですぐに遊べます。", _heroCaption);
     }
 
     void DrawScanPanel(GameSession session)
@@ -138,7 +128,9 @@ public class RunTitleMenu : MonoBehaviour
         if (_topApps == null)
         {
             GUILayout.Label(_scanning ? "スクリーンタイムを確認中" : "端末をスキャン", _title);
-            GUILayout.Label("システム設定で「先週」を選び、端末スキャンの案内に進んでください。", _caption);
+            GUILayout.Space(6f);
+            GUILayout.Label("1. システム設定のスクリーンタイムで、このMacと「先週」を選びます。", _caption);
+            GUILayout.Label("2. 案内パネルの「痕跡を読み取る」を押し、共有画面で「システム設定」を選びます。", _caption);
         }
         else
         {
@@ -168,6 +160,8 @@ public class RunTitleMenu : MonoBehaviour
                 : "駆除対象のアプリは見つかりませんでした。";
             GUILayout.Space(3f);
             GUILayout.Label(targets, _caption);
+            if (_detectedApps.Count > 0)
+                GUILayout.Label("利用時間は、ボスの強さと駆除後に手に入る能力の性能に反映されます。", _caption);
         }
 
         if (_scanning) return;
@@ -187,7 +181,6 @@ public class RunTitleMenu : MonoBehaviour
     void ReturnToMenu()
     {
         _scan = false;
-        _manual = false;
         _error = null;
         _detectedApps = null;
         _topApps = null;
@@ -353,17 +346,6 @@ public class RunTitleMenu : MonoBehaviour
         {
             _scanning = false;
         }
-    }
-
-    void BeginManual()
-    {
-        var usages = new List<AppUsage>();
-        foreach (var pair in _hours)
-        {
-            if (pair.Value <= 0f || pair.Key.BundleIdPrefixes == null || pair.Key.BundleIdPrefixes.Length == 0) continue;
-            usages.Add(new AppUsage(pair.Key.BundleIdPrefixes[0], pair.Key.DisplayName, pair.Value * 3600.0));
-        }
-        Begin(new ManualUsageProvider(usages));
     }
 
     void Begin(IAppUsageProvider provider)
