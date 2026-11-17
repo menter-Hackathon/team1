@@ -219,8 +219,14 @@ public class AttackRunner : MonoBehaviour
     /// <summary>1回分（扇状にまとめて）撃つ。連射のたびに狙い直す</summary>
     void FireVolley(AttackData data)
     {
-        Vector2 origin = OriginPoint;
+        Vector2 origin = OriginPoint + new Vector2(Facing * data.SpawnOffset.x, data.SpawnOffset.y);
         Vector2 baseDir = new Vector2(Facing, 0f);
+        if (data.Aim == AimMode.Forward && data.LaunchAngle > 0f)
+        {
+            // 正面の上へ傾けて投げる（放物線）
+            float rad = data.LaunchAngle * Mathf.Deg2Rad;
+            baseDir = new Vector2(Facing * Mathf.Cos(rad), Mathf.Sin(rad));
+        }
         if (data.Aim == AimMode.Target && TargetPoint is Vector2 target)
         {
             Vector2 d = target - origin;
@@ -254,7 +260,9 @@ public class AttackRunner : MonoBehaviour
         {
             int step = (i + 1) / 2;
             float sign = i % 2 == 1 ? -1f : 1f;
-            Vector2 point = anchor + new Vector2(sign * step * data.AreaSpacing, 0f);
+            Vector2 point = data.AreaForwardOrder
+                ? anchor + new Vector2(Facing * i * data.AreaSpacing, 0f) // 前へ順に並べる
+                : anchor + new Vector2(sign * step * data.AreaSpacing, 0f);
             AreaStrike.Spawn(this, data, point, Vector2.up, i * data.AreaStagger);
         }
         Released?.Invoke(data);

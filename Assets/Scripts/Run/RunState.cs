@@ -37,6 +37,8 @@ public class RunState
 
     /// <summary>今のステージを始めたときの能力（リトライで戻す）</summary>
     public SkillDefinition[] StageStartSlots;
+    /// <summary>能力えらびのカード（使用時間の上位アプリの能力。2026-11-17：ゲームの流れ）</summary>
+    public List<AbilityCandidate> Candidates = new List<AbilityCandidate>();
     public int CurrentIndex;
     public int RetryCount;
 
@@ -54,7 +56,8 @@ public class RunState
 /// ・対応アプリ表に無いアプリは捨てる（仕様書 6.2）
 /// ・同じ対応アプリに当たるデータが複数あれば、使用時間を足す
 /// ・1アプリ＝1ステージ。使用時間の短い順に並べる（一番使ったアプリが最後の一番手強いボス）
-/// ・強さ t ＝ 使用時間 ÷ 最大の時間（0〜1）。ボスのゲージ最大値・第2形態の待ち時間・能力の数値を t で決める
+/// ・強さ t ＝ 使用時間 ÷ 最大の時間（0〜1）。ボスのゲージ最大値・第2形態の待ち時間を t で決める
+///   （能力の強さは、使用時間ではなくレベルで決める。2026-11-17 決定。対応アプリ表の「能力の数値」の欄は使わない）
 /// </summary>
 public static class RunPlanner
 {
@@ -84,11 +87,7 @@ public static class RunPlanner
     {
         float t = catalog.StrengthFromSeconds(usageSeconds);
 
-        SkillDefinition reward = app.Profile.Reward;
-        if (reward != null && reward.Attack != null && app.AbilityStat != AttackStat.None)
-        {
-            reward = reward.CreateCopy(reward.Attack.CreateScaledCopy(app.AbilityStat, app.AbilityValue.Lerp(t)));
-        }
+        SkillDefinition reward = app.Profile.Reward; // 複製しない（能力ごとのレベル・クールタイムを、同じ能力として数えるため）
 
         return new StagePlan
         {

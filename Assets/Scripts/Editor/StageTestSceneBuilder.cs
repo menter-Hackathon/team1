@@ -44,6 +44,7 @@ public static class StageTestSceneBuilder
 
         BossTestSceneBuilder.GetOrCreateAttacks(); // 無ければ作る
         GetOrCreateZakoShot();
+        AbilitiesBuilder.GetOrCreate(); // カテゴリの能力（無ければ作る）
         ArtAssets.Apply(); // 絵の取り込み設定と、攻撃データ・能力・ボスへの割り当て
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         // アセットは新しいシーンを開いたあとに読み込む（取り込みやシーンの切り替えで、前に読んだ物が使えなくなることがある）
@@ -67,7 +68,7 @@ public static class StageTestSceneBuilder
 
         // --- プレイヤー（左端から始める） ---
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-8.5f, 0.05f, 0f), attacks.PlayerMelee,
-            new[] { attacks.SkillNewTab, attacks.SkillBreakpoint });
+            AbilitiesBuilder.GetOrCreate().All);
 
         // --- 雑魚ウイルス ---
         var wave = new GameObject("EnemyWave").AddComponent<EnemyWave>();

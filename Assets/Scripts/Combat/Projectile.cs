@@ -61,6 +61,9 @@ public class Projectile : MonoBehaviour
 
     void OnHit(IDamageable target, DamageInfo info)
     {
+        if (_dead) return;
+        // 相手に当たったときも追撃を出す（ボムの爆発）
+        if (_data.FollowUpOnHit && _data.OnTerrainHit != null) _owner.SpawnFollowUp(_data.OnTerrainHit, _rb.position, Vector2.up);
         if (_data.DestroyOnHit) Die();
     }
 

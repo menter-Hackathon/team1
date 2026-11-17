@@ -53,7 +53,7 @@ public class AppEntry
     public IntRange GaugeMax = new IntRange(80, 140);
     [Tooltip("第2形態の、攻撃の後の待ち時間（秒）")]
     public FloatRange Phase2Wait = new FloatRange(0.8f, 0.6f);
-    [Tooltip("手に入る能力の、使用時間で変える数値")]
+    [Tooltip("（使わない）能力の強さは、使用時間ではなくレベルで決める（2026-11-17 決定）。項目だけ残している")]
     public AttackStat AbilityStat = AttackStat.None;
     public FloatRange AbilityValue;
 

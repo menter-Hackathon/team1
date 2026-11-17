@@ -43,6 +43,7 @@ public static class BossTestSceneBuilder
         if (!ShieldWindowSceneBuilder.CheckLayer()) return;
 
         GetOrCreateAttacks(); // 無ければ docs の数値で作る
+        AbilitiesBuilder.GetOrCreate(); // カテゴリの能力（無ければ作る）
         ArtAssets.Apply(); // 絵の取り込み設定と、攻撃データ・能力・ボスへの割り当て
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         // アセットは新しいシーンを開いたあとに読み込む（取り込みやシーンの切り替えで、前に読んだ物が使えなくなることがある）
@@ -66,9 +67,9 @@ public static class BossTestSceneBuilder
         ShieldWindowSceneBuilder.Create(square, ShieldWindowSceneBuilder.DefaultPosition);
 
         // --- プレイヤー ---
-        // 【仮】G キーで本物の能力2つを順番にもらえる（ボスを倒さずに能力を試せる）
+        // 【仮】G キーでカテゴリの能力5つを順番にもらえる（ボスを倒さずに能力を試せる）
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-6f, 0.05f, 0f), attacks.PlayerMelee,
-            new[] { attacks.SkillNewTab, attacks.SkillBreakpoint });
+            AbilitiesBuilder.GetOrCreate().All);
 
         // --- ボス（B キーで切り替え。最初は Chrome） ---
         // Chrome：空中に浮く（下の端が床から2.5マス）。VS Code：床に立つ
@@ -556,7 +557,7 @@ public static class BossTestSceneBuilder
         return profile;
     }
 
-    static SkillDefinition GetOrCreateSkill(string file, string displayName, SkillCategory category, AttackData attack)
+    internal static SkillDefinition GetOrCreateSkill(string file, string displayName, SkillCategory category, AttackData attack)
     {
         string path = $"{SkillFolder}/{file}.asset";
         var skill = AssetDatabase.LoadAssetAtPath<SkillDefinition>(path);

@@ -1,12 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 1回のプレイ（ラン）の進行。シーンをまたいで残る（DontDestroyOnLoad）。
-/// ・タイトル：StartRun(読み込み方) → 使用データを読み、ステージの計画を作って、最初のステージへ
+/// ・タイトル：StartRun(読み込み方) → 使用データを読み、ステージの計画と能力えらびのカードを作って、能力えらびの画面へ
+/// ・能力えらび：ConfirmLoadout(選んだ能力) → 持っている能力にして、最初のステージへ（2026-11-17：ゲームの流れ）
 /// ・ステージ：StageDirector がボスを出し、正常化したら CompleteStage、ライフ0なら FailStage を呼ぶ
 /// ・CompleteStage：次のステージへ。最後ならリザルトへ
 /// ・FailStage：今のステージを最初からやり直す（仕様書 2.4）。ライフは全快、能力はステージを始めたときの状態、クールタイムはリセット
@@ -18,6 +20,10 @@ public class GameSession : MonoBehaviour
     [SerializeField] AppCatalog _catalog;
     [SerializeField] string _titleScene = "RunTitle";
     [SerializeField] string _resultScene = "RunResult";
+    [Tooltip("カテゴリごとの能力の表（能力えらびのカードを作る）。空なら能力えらびをしない")]
+    [SerializeField] AbilityCatalog _abilities;
+    [Tooltip("能力えらびのシーン。空なら能力えらびをせず、上から順に自動で選ぶ")]
+    [SerializeField] string _loadoutScene = "RunLoadout";
     [Tooltip("画面を暗くする・明るくする秒数")]
     [SerializeField, Min(0f)] float _fadeTime = 0.4f;
 
@@ -26,6 +32,7 @@ public class GameSession : MonoBehaviour
 
     public static GameSession Instance { get; private set; }
     public AppCatalog Catalog => _catalog;
+    public AbilityCatalog Abilities => _abilities;
     public RunState Run { get; private set; }
     /// <summary>シーンを切り替えている途中か</summary>
     public bool IsTransitioning { get; private set; }
@@ -58,12 +65,14 @@ public class GameSession : MonoBehaviour
     }
 
     /// <summary>無ければ作る（ステージのシーンを直接再生したときの開発用）</summary>
-    public static GameSession EnsureExists(AppCatalog catalog)
+    public static GameSession EnsureExists(AppCatalog catalog, AbilityCatalog abilities = null)
     {
         if (Instance != null) return Instance;
         var go = new GameObject("GameSession");
         var session = go.AddComponent<GameSession>();
         session._catalog = catalog;
+        session._abilities = abilities;
+        session._loadoutScene = null; // ステージを直接再生したとき（開発用）は、能力えらびの画面を出さない
         return session;
     }
 
@@ -71,8 +80,41 @@ public class GameSession : MonoBehaviour
     public bool StartRun(IAppUsageProvider provider, out string error)
     {
         if (!PrepareRun(provider, out error)) return false;
-        LoadCurrentStage();
+        int pick = _abilities != null ? _abilities.PickCount : 0;
+        if (!string.IsNullOrEmpty(_loadoutScene) && pick > 0 && Run.Candidates.Count >= pick)
+        {
+            StartCoroutine(Transition(_loadoutScene)); // 能力えらびの画面へ
+        }
+        else
+        {
+            AutoPickLoadout();
+            LoadCurrentStage();
+        }
         return true;
+    }
+
+    /// <summary>能力えらびの画面から：選んだ能力を持って、最初のステージへ（選んだ順に 1・2・3 の枠）</summary>
+    public void ConfirmLoadout(IList<SkillDefinition> picks)
+    {
+        if (IsTransitioning || Run == null) return;
+        Run.Loadout.Clear();
+        if (picks != null)
+        {
+            foreach (var s in picks)
+            {
+                if (s != null) Run.Loadout.TryAcquire(s);
+            }
+        }
+        LoadCurrentStage();
+    }
+
+    /// <summary>能力えらびをしないとき（ステージを直接再生したときなど）：カードの上から順に選ぶ</summary>
+    public void AutoPickLoadout()
+    {
+        if (Run == null || Run.Loadout.Count > 0) return;
+        int pick = _abilities != null ? _abilities.PickCount : 0;
+        foreach (var c in Run.Candidates.Take(pick)) Run.Loadout.TryAcquire(c.Skill);
+        Run.StageStartSlots = Run.Loadout.Snapshot();
     }
 
     /// <summary>ランの計画だけを作る（シーンは切り替えない）。ステージを直接再生したときに使う</summary>
@@ -91,6 +133,12 @@ public class GameSession : MonoBehaviour
         }
 
         Run = new RunState(plans);
+        // 能力えらびのカード：使用時間の長いアプリから、カテゴリの能力を出す（足りなければ、まだ出ていないカテゴリで埋める）
+        if (_abilities != null)
+        {
+            var rows = usages.Select(u => new AppUsageRow { Name = u.DisplayName, BundleId = u.Id, Seconds = u.UsageSeconds });
+            Run.Candidates = _abilities.BuildCandidates(rows);
+        }
         Run.StageStartSlots = Run.Loadout.Snapshot();
         error = null;
         RunStarted?.Invoke(Run);
@@ -150,6 +198,7 @@ public class GameSession : MonoBehaviour
     IEnumerator Transition(string sceneName)
     {
         IsTransitioning = true;
+        Time.timeScale = 1f; // レベルアップの選択などで止めていても、戻してから切り替える
         for (float t = 0f; t < _fadeTime; t += Time.unscaledDeltaTime)
         {
             _fade = t / _fadeTime;

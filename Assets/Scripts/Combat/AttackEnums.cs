@@ -77,4 +77,10 @@ public enum AttackStat
     GaugeGain = 2,
     /// <summary>雑魚へのダメージ</summary>
     Damage = 3,
+    /// <summary>指定位置の判定を同時に出す数（能力のレベル用）</summary>
+    AreaCount = 4,
+    /// <summary>残り続ける判定の秒数（能力のレベル用）</summary>
+    PersistDuration = 5,
+    /// <summary>間隔（クールタイム）の秒数（能力のレベル用）</summary>
+    Cooldown = 6,
 }

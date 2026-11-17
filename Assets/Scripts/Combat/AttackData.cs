@@ -52,12 +52,18 @@ public class AttackData : ScriptableObject
     [Tooltip("判定の大きさ（マス）。弾は進む向きに回転する。x が進む向きの長さ")]
     [SerializeField] Vector2 _hitSize = new Vector2(0.5f, 0.5f);
     [SerializeField] AimMode _aim = AimMode.Target;
+    [Tooltip("正面に撃つとき、上へ傾ける角度（度）。放物線で投げる弾（ボム）に使う")]
+    [SerializeField, Range(0f, 85f)] float _launchAngle;
+    [Tooltip("弾を出す位置のずれ（x は向きに合わせて左右を反転）。足元が原点の持ち主（プレイヤー）が、体の中ほどから投げるときに使う")]
+    [SerializeField] Vector2 _spawnOffset;
     [Tooltip("地形（床・壁）に当たったら消えるか")]
     [SerializeField] bool _destroyOnTerrain = true;
     [Tooltip("相手に当たったら消えるか")]
     [SerializeField] bool _destroyOnHit = true;
     [Tooltip("地形に当たった位置に出す追撃（赤い波線など）。無ければ空")]
     [SerializeField] AttackData _onTerrainHit;
+    [Tooltip("オン：相手に当たったときも、当たった位置に追撃を出す（ボムの爆発）")]
+    [SerializeField] bool _followUpOnHit;
 
     // ───────── 指定位置の判定（Area） ─────────
     [Header("指定位置の判定（Area のとき）")]
@@ -77,6 +83,8 @@ public class AttackData : ScriptableObject
     [SerializeField, Min(0f)] float _areaSpacing = 4f;
     [Tooltip("2つ目以降をずらす時間（秒）")]
     [SerializeField, Min(0f)] float _areaStagger;
+    [Tooltip("オン：2つ目以降を前へ順に並べる（棒グラフ）。オフ：左→右→さらに左…の順")]
+    [SerializeField] bool _areaForwardOrder;
 
     [Header("予告（Area・Spawn のとき）")]
     [Tooltip("予告（赤丸・影・出現の枠）を出してから判定・落下・出現を始めるまでの秒数")]
@@ -153,9 +161,12 @@ public class AttackData : ScriptableObject
     public float Lifetime => _lifetime;
     public Vector2 HitSize => _hitSize;
     public AimMode Aim => _aim;
+    public float LaunchAngle => _launchAngle;
+    public Vector2 SpawnOffset => _spawnOffset;
     public bool DestroyOnTerrain => _destroyOnTerrain;
     public bool DestroyOnHit => _destroyOnHit;
     public AttackData OnTerrainHit => _onTerrainHit;
+    public bool FollowUpOnHit => _followUpOnHit;
 
     public AreaAnchor Anchor => _anchor;
     public float ForwardDistance => _forwardDistance;
@@ -166,6 +177,7 @@ public class AttackData : ScriptableObject
     public int AreaCount => _areaCount;
     public float AreaSpacing => _areaSpacing;
     public float AreaStagger => _areaStagger;
+    public bool AreaForwardOrder => _areaForwardOrder;
     public float TelegraphTime => _telegraphTime;
     public float PersistDuration => _persistDuration;
     public float TickInterval => _tickInterval;
@@ -207,6 +219,9 @@ public class AttackData : ScriptableObject
             case AttackStat.WarpDistance: copy._warpDistance = Mathf.Max(0f, value); break;
             case AttackStat.GaugeGain: copy._gaugeGain = Mathf.Max(0, Mathf.RoundToInt(value)); break;
             case AttackStat.Damage: copy._damage = Mathf.Max(0, Mathf.RoundToInt(value)); break;
+            case AttackStat.AreaCount: copy._areaCount = Mathf.Max(1, Mathf.RoundToInt(value)); break;
+            case AttackStat.PersistDuration: copy._persistDuration = Mathf.Max(0f, value); break;
+            case AttackStat.Cooldown: copy._cooldown = Mathf.Max(0f, value); break;
         }
         return copy;
     }

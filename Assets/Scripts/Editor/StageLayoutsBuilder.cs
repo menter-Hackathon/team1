@@ -214,6 +214,7 @@ public static class StageLayoutsBuilder
     class Context
     {
         public readonly AppCatalog Catalog;
+        public readonly AbilityCatalog Abilities;
         public readonly Sprite Square;
         public readonly BossTestSceneBuilder.Attacks Attacks;
         public readonly AttackData ZakoShot;
@@ -223,6 +224,7 @@ public static class StageLayoutsBuilder
         {
             // 新しいシーンを開いたあとに読み込む（前のシーンで読んだ物は使えなくなることがある）
             Catalog = AssetDatabase.LoadAssetAtPath<AppCatalog>("Assets/ScriptableObjects/Run/AppCatalog.asset");
+            Abilities = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(AbilitiesBuilder.CatalogPath);
             Square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
             Attacks = BossTestSceneBuilder.GetOrCreateAttacks();
             ZakoShot = StageTestSceneBuilder.GetOrCreateZakoShot();
@@ -251,6 +253,7 @@ public static class StageLayoutsBuilder
             PlayerTestSceneBuilder.SetProps(director, so =>
             {
                 so.FindProperty("_catalog").objectReferenceValue = Catalog;
+                so.FindProperty("_abilities").objectReferenceValue = Abilities;
                 so.FindProperty("_wave").objectReferenceValue = wave;
                 so.FindProperty("_entrance").objectReferenceValue = entrance;
                 so.FindProperty("_player").objectReferenceValue = Player.GetComponent<PlayerSkills>();
