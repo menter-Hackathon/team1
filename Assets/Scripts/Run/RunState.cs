@@ -44,6 +44,8 @@ public class RunState
     public List<AbilityCandidate> Candidates = new List<AbilityCandidate>();
     public int CurrentIndex;
     public int RetryCount;
+    /// <summary>このランで初めて正常化したアプリ（図鑑のキー）。リザルトで光らせる</summary>
+    public readonly HashSet<string> NewDex = new HashSet<string>();
 
     public RunState(IEnumerable<StagePlan> stages)
     {
@@ -121,22 +123,7 @@ public static class RunPlanner
         if (catalog == null || usages == null) return plans;
         var templates = catalog.Apps.Where(a => a != null && a.BossPrefab != null && a.Profile != null).ToList();
         if (templates.Count == 0) return plans;
-
-        // 同じアプリをまとめる（対応表のアプリは対応表の行で、ほかは名前で）
-        var pool = new List<(AppEntry entry, AppUsageRow row, double seconds)>();
-        foreach (var u in usages)
-        {
-            if (u.UsageSeconds <= 0) continue;
-            var row = new AppUsageRow { Name = u.DisplayName, BundleId = u.Id, Seconds = u.UsageSeconds };
-            if (abilities != null && abilities.IsExcluded(row)) continue;
-            AppEntry entry = catalog.Find(u.Id) ?? catalog.FindByName(u.DisplayName);
-            if (entry != null && (entry.BossPrefab == null || entry.Profile == null)) entry = null;
-            int i = pool.FindIndex(p => entry != null ? p.entry == entry
-                : p.entry == null && string.Equals(p.row.Name, row.Name, System.StringComparison.OrdinalIgnoreCase));
-            if (i >= 0) pool[i] = (pool[i].entry, pool[i].row, pool[i].seconds + u.UsageSeconds);
-            else pool.Add((entry, row, u.UsageSeconds));
-        }
-        var top = pool.OrderByDescending(p => p.seconds).Take(poolSize).ToList();
+        var top = BossPool(catalog, abilities, usages, poolSize);
 
         // ランダムに選ぶ（フィッシャー–イェーツ）
         for (int i = 0; i < top.Count; i++)
@@ -161,7 +148,7 @@ public static class RunPlanner
             var standIn = new AppEntry
             {
                 DisplayName = row.Name,
-                BundleIdPrefixes = System.Array.Empty<string>(),
+                BundleIdPrefixes = string.IsNullOrEmpty(row.BundleId) ? System.Array.Empty<string>() : new[] { row.BundleId }, // 図鑑のアイコン用
                 Category = category != null ? category.Category : SkillCategory.Unknown,
                 BossPrefab = template.BossPrefab,
                 Profile = template.Profile,
@@ -174,5 +161,28 @@ public static class RunPlanner
             plans.Add(CreatePlan(catalog, standIn, p.seconds, reward, visual));
         }
         return plans;
+    }
+
+    /// <summary>
+    /// ボスの候補：使用時間の上位 poolSize 個のアプリ（除外を除く）。同じアプリはまとめる（対応表のアプリは表の行で、ほかは名前で）。
+    /// アプリ図鑑にも、この候補を載せる
+    /// </summary>
+    public static List<(AppEntry entry, AppUsageRow row, double seconds)> BossPool(AppCatalog catalog, AbilityCatalog abilities, IEnumerable<AppUsage> usages, int poolSize = 10)
+    {
+        var pool = new List<(AppEntry entry, AppUsageRow row, double seconds)>();
+        if (catalog == null || usages == null) return pool;
+        foreach (var u in usages)
+        {
+            if (u.UsageSeconds <= 0) continue;
+            var row = new AppUsageRow { Name = u.DisplayName, BundleId = u.Id, Seconds = u.UsageSeconds };
+            if (abilities != null && abilities.IsExcluded(row)) continue;
+            AppEntry entry = catalog.Find(u.Id) ?? catalog.FindByName(u.DisplayName);
+            if (entry != null && (entry.BossPrefab == null || entry.Profile == null)) entry = null;
+            int i = pool.FindIndex(p => entry != null ? p.entry == entry
+                : p.entry == null && string.Equals(p.row.Name, row.Name, System.StringComparison.OrdinalIgnoreCase));
+            if (i >= 0) pool[i] = (pool[i].entry, pool[i].row, pool[i].seconds + u.UsageSeconds);
+            else pool.Add((entry, row, u.UsageSeconds));
+        }
+        return pool.OrderByDescending(p => p.seconds).Take(poolSize).ToList();
     }
 }

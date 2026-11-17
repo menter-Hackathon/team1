@@ -111,6 +111,36 @@ public static class PixelIcon
         accents = picked.Count >= 4 ? picked.ToArray() : new[] { main }; // 4色そろわなければ、枠は代表の色1つで塗る
     }
 
+    static readonly Dictionary<int, Sprite> GrayCache = new Dictionary<int, Sprite>();
+
+    /// <summary>グレーにした複製（図鑑の、まだ正常化していないアプリ。2026-11-17）。少し明るめの灰色にする</summary>
+    public static Sprite Grayscale(Sprite icon)
+    {
+        if (icon == null || !icon.texture.isReadable) return icon;
+        if (GrayCache.TryGetValue(icon.GetInstanceID(), out Sprite cached) && cached != null) return cached;
+        Rect r = icon.textureRect;
+        int w = (int)r.width, h = (int)r.height;
+        Color32[] src = icon.texture.GetPixels32();
+        int texW = icon.texture.width;
+        var px = new Color32[w * h];
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                Color32 c = src[((int)r.y + y) * texW + (int)r.x + x];
+                byte v = (byte)Mathf.Clamp(Mathf.RoundToInt((0.299f * c.r + 0.587f * c.g + 0.114f * c.b) * 0.55f + 40f), 0, 255);
+                px[y * w + x] = new Color32(v, v, (byte)Mathf.Min(255, v + 6), c.a);
+            }
+        }
+        var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { name = icon.name + "_Gray", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+        tex.SetPixels32(px);
+        tex.Apply();
+        var sprite = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), icon.pixelsPerUnit, 0, SpriteMeshType.FullRect);
+        sprite.name = tex.name;
+        GrayCache[icon.GetInstanceID()] = sprite;
+        return sprite;
+    }
+
     /// <summary>名前から決まる色（同じ名前なら、いつも同じ色）</summary>
     public static Color ColorFromName(string name)
     {
