@@ -23,6 +23,8 @@ public class BossEntrance : MonoBehaviour
     bool _triggered;
 
     public BossController Boss => _boss;
+    /// <summary>雑魚ではなく、ボス部屋の入口で出てくるか（横スクロール・ウィンドウ移動）</summary>
+    public bool WaitsForGate => _waitForGate;
     /// <summary>雑魚を全員倒して、ボスの登場が始まったか</summary>
     public bool IsTriggered => _triggered;
     /// <summary>ボスが出てきて、戦える状態になったか</summary>

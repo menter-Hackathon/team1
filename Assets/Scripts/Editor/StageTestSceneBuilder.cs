@@ -77,8 +77,8 @@ public static class StageTestSceneBuilder
         CreateWalker("Zako_Walker_Folder", new Vector2(3.5f, 3f), 1, wave.transform, square, debugLabel: true);
         CreateShooter("Zako_Shooter_Folder", new Vector2(-3.5f, 3f), zakoShot, player.transform, wave.transform, square, debugLabel: true);
         CreateShooter("Zako_Shooter_Floor", new Vector2(8.5f, 0f), zakoShot, player.transform, wave.transform, square, debugLabel: true);
-        // 【仮】部屋の中に雑魚を出し続ける。14体出し終えて、全員倒すと Chrome が出る
-        CreateSpawner(player.transform, zakoShot, square, wave, 14, new Vector2(2.2f, 1f), new Vector2Int(3, 6), 45f, ArenaBounds, false);
+        // 【仮】部屋の中に雑魚を出し続ける。8体出し終えて、全員倒すと Chrome が出る（最初の4体と合わせて12体）
+        CreateSpawner(player.transform, zakoShot, square, wave, 8, new Vector2(2.2f, 1f), new Vector2Int(3, 6), 45f, ArenaBounds, false);
 
         // --- ボス（雑魚を全員倒すと出てくる） ---
         var chrome = BossTestSceneBuilder.CreateBoss("Chrome", attacks.ChromeProfile, new Vector2(0f, 2.5f + 1.5f), new Vector2(4f, 3f), ChromeBodyColor, square, player.transform);
