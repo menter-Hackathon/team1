@@ -11,8 +11,11 @@ public class StagePlan
     public float Strength;
     /// <summary>強さを反映したボスの設定（複製）</summary>
     public BossProfile Profile;
-    /// <summary>強さを反映した、手に入る能力（複製）。無ければ null</summary>
+    /// <summary>手に入る能力。無ければ null</summary>
     public SkillDefinition Reward;
+    /// <summary>代用ボス（対応表に無いアプリ）の見た目（アイコン・色）。対応表のボスは null</summary>
+    public AppVisual Visual;
+    public bool IsStandIn => Visual != null;
 
     public double UsageHours => UsageSeconds / 3600.0;
     public string DisplayName => App != null ? App.DisplayName : "?";
@@ -83,19 +86,93 @@ public static class RunPlanner
         return plans;
     }
 
-    public static StagePlan CreatePlan(AppCatalog catalog, AppEntry app, double usageSeconds)
+    public static StagePlan CreatePlan(AppCatalog catalog, AppEntry app, double usageSeconds, SkillDefinition rewardOverride = null, AppVisual visual = null)
     {
         float t = catalog.StrengthFromSeconds(usageSeconds);
 
-        SkillDefinition reward = app.Profile.Reward; // 複製しない（能力ごとのレベル・クールタイムを、同じ能力として数えるため）
+        // 複製しない（能力ごとのレベル・クールタイムを、同じ能力として数えるため）
+        SkillDefinition reward = rewardOverride != null ? rewardOverride : app.Profile.Reward;
+        BossProfile profile = app.Profile.CreateScaledCopy(app.GaugeMax.Lerp(t), app.Phase2Wait.Lerp(t), reward);
+        if (visual != null) profile.SetLook(app.DisplayName, visual.Icon12);
 
         return new StagePlan
         {
             App = app,
             UsageSeconds = usageSeconds,
             Strength = t,
-            Profile = app.Profile.CreateScaledCopy(app.GaugeMax.Lerp(t), app.Phase2Wait.Lerp(t), reward),
+            Profile = profile,
             Reward = reward,
+            Visual = visual,
         };
+    }
+
+    /// <summary>
+    /// スクリーンタイムの上位 poolSize 個のアプリから、ランダムに stageCount 個を選んで、それぞれのステージのボスにする（2026-11-17 まさぴ〜決定）。
+    /// ・対応表のアプリ（Chrome・VS Code）は、そのアプリのボス
+    /// ・対応表に無いアプリは代用ボス：見た目はアイコンから、技はカテゴリの近いボス（ブラウザ → Chrome、開発 → VS Code、ほかは名前で決める）。
+    ///   ステージは1画面（AppCatalog の「代用ボスのステージ」）。倒すと、そのアプリの能力（カテゴリの能力か、その場で作った能力）が手に入る
+    /// ・カードにもボスにもしないアプリ（Finder・設定・iPhone のアプリなど）は選ばない
+    /// ・並びは使用時間の短い順（一番使ったアプリが最後）
+    /// </summary>
+    public static List<StagePlan> PlanRandom(AppCatalog catalog, AbilityCatalog abilities, IEnumerable<AppUsage> usages, System.Random rng,
+        int poolSize = 10, int stageCount = 3)
+    {
+        var plans = new List<StagePlan>();
+        if (catalog == null || usages == null) return plans;
+        var templates = catalog.Apps.Where(a => a != null && a.BossPrefab != null && a.Profile != null).ToList();
+        if (templates.Count == 0) return plans;
+
+        // 同じアプリをまとめる（対応表のアプリは対応表の行で、ほかは名前で）
+        var pool = new List<(AppEntry entry, AppUsageRow row, double seconds)>();
+        foreach (var u in usages)
+        {
+            if (u.UsageSeconds <= 0) continue;
+            var row = new AppUsageRow { Name = u.DisplayName, BundleId = u.Id, Seconds = u.UsageSeconds };
+            if (abilities != null && abilities.IsExcluded(row)) continue;
+            AppEntry entry = catalog.Find(u.Id) ?? catalog.FindByName(u.DisplayName);
+            if (entry != null && (entry.BossPrefab == null || entry.Profile == null)) entry = null;
+            int i = pool.FindIndex(p => entry != null ? p.entry == entry
+                : p.entry == null && string.Equals(p.row.Name, row.Name, System.StringComparison.OrdinalIgnoreCase));
+            if (i >= 0) pool[i] = (pool[i].entry, pool[i].row, pool[i].seconds + u.UsageSeconds);
+            else pool.Add((entry, row, u.UsageSeconds));
+        }
+        var top = pool.OrderByDescending(p => p.seconds).Take(poolSize).ToList();
+
+        // ランダムに選ぶ（フィッシャー–イェーツ）
+        for (int i = 0; i < top.Count; i++)
+        {
+            int j = rng.Next(i, top.Count);
+            (top[i], top[j]) = (top[j], top[i]);
+        }
+        foreach (var p in top.Take(stageCount).OrderBy(p => p.seconds))
+        {
+            if (p.entry != null)
+            {
+                plans.Add(CreatePlan(catalog, p.entry, p.seconds));
+                continue;
+            }
+            AppUsageRow row = p.row;
+            row.Seconds = p.seconds;
+            AbilityCategoryEntry category = abilities != null ? abilities.Find(row) : null;
+            AppEntry template = templates.FirstOrDefault(a => category != null && a.Category == category.Category)
+                ?? templates[(int)(PixelIcon.Hash(row.Name) % (uint)templates.Count)];
+            AppVisual visual = AppVisuals.Get(row);
+            SkillDefinition reward = category != null ? category.Skill : AppVisuals.Generate(row, abilities, null);
+            var standIn = new AppEntry
+            {
+                DisplayName = row.Name,
+                BundleIdPrefixes = System.Array.Empty<string>(),
+                Category = category != null ? category.Category : SkillCategory.Unknown,
+                BossPrefab = template.BossPrefab,
+                Profile = template.Profile,
+                SpawnPosition = template.SpawnPosition,
+                StageScene = catalog.StandInStageScene,
+                Theme = visual != null ? visual.Theme : template.Theme,
+                GaugeMax = template.GaugeMax,
+                Phase2Wait = template.Phase2Wait,
+            };
+            plans.Add(CreatePlan(catalog, standIn, p.seconds, reward, visual));
+        }
+        return plans;
     }
 }

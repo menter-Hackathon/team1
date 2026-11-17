@@ -4,6 +4,7 @@ using UnityEngine;
 /// <summary>
 /// 部屋の雑魚ウイルスの集まり（仕様書 2.2：雑魚との戦闘 → 全員倒すとアプリボスが出現）。
 /// 全員倒したら Cleared を出す。ボスの登場（BossEntrance）や、M5 のステージ進行はこれを見る。
+/// あとから出てくる雑魚（ZakoSpawner）は AddEnemy で数に入れる。出し終えるまでは Hold で、クリアを待たせる（2026-11-17）
 /// </summary>
 public class EnemyWave : MonoBehaviour
 {
@@ -11,8 +12,10 @@ public class EnemyWave : MonoBehaviour
     [SerializeField] Health[] _enemies;
 
     bool _cleared;
+    int _holds;
+    int _total;
 
-    public int Total => _enemies != null ? _enemies.Length : 0;
+    public int Total => _total;
     /// <summary>まだ倒していない敵の数</summary>
     public int Remaining { get; private set; }
     public bool IsCleared => _cleared;
@@ -30,6 +33,27 @@ public class EnemyWave : MonoBehaviour
         {
             if (e != null && !e.IsDead) Remaining++;
         }
+        _total = _enemies.Length;
+    }
+
+    /// <summary>あとから出てきた雑魚を数に入れる</summary>
+    public void AddEnemy(Health enemy)
+    {
+        if (enemy == null || _cleared || enemy.IsDead) return;
+        enemy.Died += OnEnemyDied;
+        _total++;
+        Remaining++;
+        RemainingChanged?.Invoke(Remaining, Total);
+    }
+
+    /// <summary>クリアを待たせる（雑魚を出し終えるまで）。Release と組で呼ぶ</summary>
+    public void Hold() => _holds++;
+
+    /// <summary>待たせるのをやめる。残りが0なら、ここでクリア</summary>
+    public void Release()
+    {
+        _holds = Mathf.Max(0, _holds - 1);
+        if (_holds == 0 && Remaining == 0) Clear();
     }
 
     void OnEnable()
@@ -50,7 +74,7 @@ public class EnemyWave : MonoBehaviour
 
     void Start()
     {
-        if (Remaining == 0) Clear(); // 敵がいない部屋は最初からクリア
+        if (Remaining == 0 && _holds == 0) Clear(); // 敵がいない部屋は最初からクリア
     }
 
     void OnEnemyDied()
@@ -58,7 +82,7 @@ public class EnemyWave : MonoBehaviour
         if (_cleared) return;
         Remaining = Mathf.Max(0, Remaining - 1);
         RemainingChanged?.Invoke(Remaining, Total);
-        if (Remaining == 0) Clear();
+        if (Remaining == 0 && _holds == 0) Clear();
     }
 
     void Clear()

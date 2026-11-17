@@ -29,6 +29,46 @@ public static class ThemeRecolor
     static readonly Dictionary<(int, int, int), Sprite> Cache = new Dictionary<(int, int, int), Sprite>();
     static readonly Dictionary<(int, bool), Sprite> SlotCache = new Dictionary<(int, bool), Sprite>();
     static readonly Dictionary<int, Sprite[]> TabOpenCache = new Dictionary<int, Sprite[]>();
+    static readonly Dictionary<(int, int), Sprite> EffectCache = new Dictionary<(int, int), Sprite>();
+
+    /// <summary>
+    /// 能力の効果の絵（柱・爆発・弾など）を、アプリの色に塗り替えた複製（2026-11-17：その場で作る能力）。
+    /// 元の絵の明るさを4段に分けて、暗い色・代表の色・明るい色・ほぼ白に置き換える（ドット絵の陰影は残る）。
+    /// 塗り替えられなければ元の絵
+    /// </summary>
+    public static Sprite Effect(Sprite src, AppTheme theme)
+    {
+        if (src == null || theme == null) return src;
+        var key = (src.GetInstanceID(), theme.GetInstanceID());
+        if (EffectCache.TryGetValue(key, out Sprite cached) && cached != null) return cached;
+        Color32[] px = Read(src, out int w, out int h);
+        if (px == null) return src;
+        float lo = float.MaxValue, hi = float.MinValue;
+        foreach (var c in px)
+        {
+            if (c.a == 0) continue;
+            float l = Lum(c);
+            lo = Mathf.Min(lo, l);
+            hi = Mathf.Max(hi, l);
+        }
+        Color main = theme.Main;
+        Color32 dark = Mix(main, Color.black, 0.5f);
+        Color32 mid = Mix(main, Color.black, 0f);
+        Color32 light = Mix(main, Color.white, 0.45f);
+        Color32 top = Mix(main, Color.white, 0.8f);
+        for (int i = 0; i < px.Length; i++)
+        {
+            Color32 c = px[i];
+            if (c.a == 0) continue;
+            float t = hi > lo ? (Lum(c) - lo) / (hi - lo) : 0.5f;
+            Color32 to = t < 0.3f ? dark : t < 0.65f ? mid : t < 0.9f ? light : top;
+            to.a = c.a;
+            px[i] = to;
+        }
+        Sprite made = Make(px, w, h, src, $"{src.name}_{theme.name}");
+        EffectCache[key] = made;
+        return made;
+    }
 
     /// <summary>ステージの絵をアプリの色に塗り替えた複製。塗り替えられなければ元の絵</summary>
     public static Sprite Stage(Sprite src, AppTheme theme, Kind kind)

@@ -24,6 +24,19 @@ public class SkillDefinition : ScriptableObject
     public AttackData Attack => _attack;
     public AppTheme Theme => _theme;
 
+    /// <summary>ゲームの中で能力を作る（対応表に無いアプリの能力。2026-11-17）。アセットにはしない</summary>
+    public static SkillDefinition CreateRuntime(string displayName, Sprite icon, SkillCategory category, AttackData attack, AppTheme theme)
+    {
+        var skill = CreateInstance<SkillDefinition>();
+        skill.name = displayName;
+        skill._displayName = displayName;
+        skill._icon = icon;
+        skill._category = category;
+        skill._attack = attack;
+        skill._theme = theme;
+        return skill;
+    }
+
     /// <summary>攻撃データだけを差し替えた複製を作る（使用時間で強くした能力を渡すとき用）。アセットは書き換えない</summary>
     public SkillDefinition CreateCopy(AttackData attack)
     {

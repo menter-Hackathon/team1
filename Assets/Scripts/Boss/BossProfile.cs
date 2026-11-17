@@ -89,4 +89,11 @@ public class BossProfile : ScriptableObject
         copy._reward = reward;
         return copy;
     }
+
+    /// <summary>代用ボス用：名前とアイコンを差し替える（CreateScaledCopy で作った複製にだけ使う。2026-11-17）</summary>
+    public void SetLook(string displayName, Sprite icon)
+    {
+        _displayName = displayName;
+        if (icon != null) _icon = icon;
+    }
 }

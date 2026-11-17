@@ -1217,6 +1217,14 @@ def make_category_abilities():
             hline(bar, 2, 15, y, C("2a8a52"))
     save(bar, "Attacks/Fx_Bar.png")
 
+    # その場で作る能力の弾（8×8、灰色。ゲームの中でアプリの色に塗り替える）
+    orb = new(8, 8)
+    ellipse(orb, 4.0, 4.0, 3.6, 3.6, C("3a3a3a"))
+    ellipse(orb, 4.0, 4.0, 2.7, 2.7, C("9a9a9a"))
+    ellipse(orb, 3.6, 3.6, 1.4, 1.4, C("e6e6e6"))
+    put(orb, 3, 2, WHITE)
+    save(orb, "Attacks/Bullet_Orb.png")
+
 
 def main():
     make_background()
