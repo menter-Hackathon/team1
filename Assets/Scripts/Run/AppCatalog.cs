@@ -32,6 +32,8 @@ public class AppEntry
     public string DisplayName;
     [Tooltip("バンドルID。前方一致で照合する（例：com.adobe.PremierePro は com.adobe.PremierePro.26 にも当たる）")]
     public string[] BundleIdPrefixes;
+    [Tooltip("スクリーンタイム上での別名。Display Name と異なる名前があるときに追加する")]
+    public string[] ScreenTimeNames;
     public SkillCategory Category = SkillCategory.Unknown;
 
     [Header("ボス")]
