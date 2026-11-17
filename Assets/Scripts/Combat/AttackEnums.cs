@@ -83,4 +83,8 @@ public enum AttackStat
     PersistDuration = 5,
     /// <summary>間隔（クールタイム）の秒数（能力のレベル用）</summary>
     Cooldown = 6,
+    /// <summary>指定位置の判定の大きさの倍率（1＝元の大きさ。その場で作る能力の違いに使う）</summary>
+    AreaScale = 7,
+    /// <summary>1回に撃つ弾の数</summary>
+    ProjectileCount = 8,
 }

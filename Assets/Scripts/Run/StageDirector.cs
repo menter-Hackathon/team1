@@ -62,6 +62,13 @@ public class StageDirector : MonoBehaviour
         Boss.name = Plan.App.BossPrefab.name;
         Boss.gameObject.SetActive(false); // プレハブは非表示で保存してあるが、念のため
         Boss.SetProfile(Plan.Profile);
+        // 代用ボス（対応表に無いアプリ）：着ているウィンドウを、そのアプリのアイコンから作ったものにする
+        if (Plan.Visual != null)
+        {
+            Boss.name = $"StandIn_{Plan.App.DisplayName}";
+            var armor = Boss.GetComponentInChildren<BossArmorVisual>(true);
+            if (armor != null) armor.SetWindowStages(BossWindowArt.Create(Plan.Visual.Icon24, Plan.App.Theme, $"BossWindow_{Plan.App.DisplayName}"));
+        }
         if (_player != null && Boss.TryGetComponent(out AttackRunner runner)) runner.Target = _player.transform;
         if (_entrance != null) _entrance.SetBoss(Boss);
     }

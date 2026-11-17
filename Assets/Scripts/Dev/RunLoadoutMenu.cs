@@ -4,9 +4,11 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// 【仮】能力えらびの画面（2026-11-17：ゲームの流れ）。UI 担当の本番画面ができたら消す。
-/// 使用時間の長いアプリから作った5枚のカード（GameSession.Run.Candidates）から、3つ選んでステージへ進む。
-/// ・カード：アプリの色の帯・能力のアイコン・能力の名前・元のアプリと使用時間
-/// ・下の3つの枠：選んだ順に入る（ステージでの 1・2・3 の枠になる）。3つそろうと ▶ が押せる
+/// 使用時間の長いアプリから作った5枚のカード（GameSession.Run.Candidates）から、決まった数（今は1つ。2026-11-17 まさぴ〜決定）選んでステージへ進む。
+/// 能力はボスを倒すと増え、3枠がうまっていれば入れ替えられる。
+/// ・カード：アプリの色の帯・能力のアイコン・能力の名前・元のアプリ（アイコンのドット絵と名前）と使用時間。
+///   対応表に無いアプリの能力（その場で作った能力）は、能力のアイコンもアプリのアイコンになる
+/// ・下の枠（選ぶ数だけ）：選んだ順に入る（ステージでの 1・2・3 の枠になる）。そろうと ▶ が押せる。1つだけ選ぶときは、ほかのカードを押すと選び直す
 /// 操作：カードをクリック、または 1〜5 キーで選ぶ／外す。Enter・Space で決定
 /// このシーンを直接再生したときは、サンプルの使用データでランを作る（開発用）。
 /// </summary>
@@ -19,7 +21,7 @@ public class RunLoadoutMenu : MonoBehaviour
 
     readonly List<int> _picked = new List<int>(); // 選んだカードの番号（選んだ順）
     Texture2D _white;
-    GUIStyle _name, _app, _rank, _order;
+    GUIStyle _name, _app, _appLeft, _rank, _order;
 
     GameSession Session => GameSession.Instance;
     IReadOnlyList<AbilityCandidate> Cards => Session != null && Session.Run != null ? Session.Run.Candidates : (IReadOnlyList<AbilityCandidate>)System.Array.Empty<AbilityCandidate>();
@@ -43,6 +45,7 @@ public class RunLoadoutMenu : MonoBehaviour
         if (Session == null || Session.IsTransitioning || index < 0 || index >= Cards.Count) return;
         if (_picked.Remove(index)) return;
         if (_picked.Count < PickCount) _picked.Add(index);
+        else if (PickCount == 1) _picked[0] = index; // 1つだけ選ぶときは、押したカードに選び直す
     }
 
     /// <summary>決定：選んだ能力を持って、最初のステージへ</summary>
@@ -141,7 +144,15 @@ public class RunLoadoutMenu : MonoBehaviour
         GUI.Label(new Rect(r.x + 2f, r.y + 82f, r.width - 4f, 20f), c.Skill != null ? c.Skill.DisplayName : "-", _name);
         if (!c.IsFiller)
         {
-            GUI.Label(new Rect(r.x + 2f, r.y + 104f, r.width - 4f, 16f), c.AppName, _app);
+            if (c.AppIcon != null)
+            {
+                PixelGui.DrawSprite(new Rect(r.x + 6f, r.y + 102f, 16f, 16f), c.AppIcon);
+                GUI.Label(new Rect(r.x + 24f, r.y + 102f, r.width - 28f, 16f), c.AppName, _appLeft);
+            }
+            else
+            {
+                GUI.Label(new Rect(r.x + 2f, r.y + 104f, r.width - 4f, 16f), c.AppName, _app);
+            }
             GUI.Label(new Rect(r.x + 2f, r.y + 120f, r.width - 4f, 16f), $"{c.Seconds / 3600.0:0.#} h", _app);
         }
 
@@ -164,6 +175,7 @@ public class RunLoadoutMenu : MonoBehaviour
         _name.normal.textColor = dark;
         _app = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 10, clipping = TextClipping.Clip };
         _app.normal.textColor = new Color32(0x51, 0x51, 0x51, 0xff);
+        _appLeft = new GUIStyle(_app) { alignment = TextAnchor.MiddleLeft };
         _rank = new GUIStyle(GUI.skin.label) { fontSize = 11, fontStyle = FontStyle.Bold };
         _rank.normal.textColor = Color.white;
         _order = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 13, fontStyle = FontStyle.Bold };

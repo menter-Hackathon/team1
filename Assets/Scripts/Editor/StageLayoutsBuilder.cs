@@ -54,6 +54,8 @@ public static class StageLayoutsBuilder
         StageTestSceneBuilder.CreateWalker("Walker_3", new Vector2(40f, 0f), -1, wave.transform, ctx.Square);
         StageTestSceneBuilder.CreateShooter("Shooter_2", new Vector2(52f, 3f), ctx.ZakoShot, ctx.Player.transform, wave.transform, ctx.Square);
         StageTestSceneBuilder.CreateWalker("Walker_4", new Vector2(57f, 0f), -1, wave.transform, ctx.Square);
+        // 【仮】道中は、画面の中に雑魚を出し続ける（ボス部屋に入るまで。だんだん増える）
+        StageTestSceneBuilder.CreateSpawner(ctx.Player.transform, ctx.ZakoShot, ctx.Square, null, 0, new Vector2(3f, 1.4f), new Vector2Int(3, 6), 60f, default, true);
 
         // 降ってくる通知（x 28〜62）
         NotificationDropper(ctx, 28f, 62f);
@@ -107,6 +109,8 @@ public static class StageLayoutsBuilder
         StageTestSceneBuilder.CreateShooter("Shooter_2", new Vector2(24.5f, 3f), ctx.ZakoShot, ctx.Player.transform, wave.transform, ctx.Square);
         StageTestSceneBuilder.CreateWalker("Walker_3", new Vector2(42f, 0f), -1, wave.transform, ctx.Square);
         StageTestSceneBuilder.CreateShooter("Shooter_3", new Vector2(49.5f, 0f), ctx.ZakoShot, ctx.Player.transform, wave.transform, ctx.Square);
+        // 【仮】部屋の中に雑魚を出し続ける（ボス部屋に入るまで。だんだん増える）
+        StageTestSceneBuilder.CreateSpawner(ctx.Player.transform, ctx.ZakoShot, ctx.Square, null, 0, new Vector2(3.2f, 1.6f), new Vector2Int(2, 5), 60f, default, true);
 
         ctx.BossRoom(terrain, arena, wave, StageCamera.Mode.Rooms, 0f, 0f, rooms,
             gateX: 52.5f, gateBottom: 0f, gateTop: 3.5f, triggerX: arena.xMin + 1.5f);

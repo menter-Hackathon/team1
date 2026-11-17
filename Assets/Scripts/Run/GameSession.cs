@@ -7,8 +7,8 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 1回のプレイ（ラン）の進行。シーンをまたいで残る（DontDestroyOnLoad）。
-/// ・タイトル：StartRun(読み込み方) → 使用データを読み、ステージの計画と能力えらびのカードを作って、能力えらびの画面へ
-/// ・能力えらび：ConfirmLoadout(選んだ能力) → 持っている能力にして、最初のステージへ（2026-11-17：ゲームの流れ）
+/// ・タイトル：StartRun(読み込み方) → 使用データを読み、能力えらびのカードとステージの計画（上位10アプリからランダムに3つのボス）を作って、能力えらびの画面へ
+/// ・能力えらび：ConfirmLoadout(選んだ能力) → 持っている能力にして、最初のステージへ（2026-11-17：ゲームの流れ。最初は1つ）
 /// ・ステージ：StageDirector がボスを出し、正常化したら CompleteStage、ライフ0なら FailStage を呼ぶ
 /// ・CompleteStage：次のステージへ。最後ならリザルトへ
 /// ・FailStage：今のステージを最初からやり直す（仕様書 2.4）。ライフは全快、能力はステージを始めたときの状態、クールタイムはリセット
@@ -24,8 +24,17 @@ public class GameSession : MonoBehaviour
     [SerializeField] AbilityCatalog _abilities;
     [Tooltip("能力えらびのシーン。空なら能力えらびをせず、上から順に自動で選ぶ")]
     [SerializeField] string _loadoutScene = "RunLoadout";
+    [Tooltip("ボスの候補にするアプリの数（使用時間の上位）")]
+    [SerializeField, Min(1)] int _bossPool = 10;
+    [Tooltip("ステージの数（候補からランダムに選ぶ）")]
+    [SerializeField, Min(1)] int _stageCount = 3;
+    [Tooltip("ボスを選ぶ乱数の種（0＝毎回ちがう。確認用）")]
+    [SerializeField] int _randomSeed;
     [Tooltip("画面を暗くする・明るくする秒数")]
     [SerializeField, Min(0f)] float _fadeTime = 0.4f;
+
+    /// <summary>アイコンを読み込むアプリの数（使用時間の長い順）</summary>
+    const int MaxIconApps = 12;
 
     float _fade; // 0＝見える、1＝真っ暗
     Texture2D _black;
@@ -63,6 +72,9 @@ public class GameSession : MonoBehaviour
     {
         if (Instance == this) Instance = null;
     }
+
+    /// <summary>確認用：ボスを選ぶ乱数の種（0＝毎回ちがう）</summary>
+    public int RandomSeed { get => _randomSeed; set => _randomSeed = value; }
 
     /// <summary>無ければ作る（ステージのシーンを直接再生したときの開発用）</summary>
     public static GameSession EnsureExists(AppCatalog catalog, AbilityCatalog abilities = null)
@@ -125,20 +137,33 @@ public class GameSession : MonoBehaviour
         if (provider == null) { error = "読み込み方が指定されていません"; return false; }
         if (!provider.TryLoad(out List<AppUsage> usages, out error)) return false;
 
-        List<StagePlan> plans = RunPlanner.Plan(_catalog, usages);
+        // 能力えらびのカード：使用時間の長いアプリから、カテゴリの能力を出す（足りなければ、まだ出ていないカテゴリで埋める）。
+        // カテゴリの分からないアプリは、ひな形から能力をその場で作り、アイコンの色に塗る（2026-11-17）。
+        // 使用データのアプリはすべてここに来る（対応表に無いアプリも）。スキャンで全部のアプリを渡せば、そのままカードになる。
+        // カードを先に作る（ボスの報酬と、同じ能力を使うため）
+        var candidates = new List<AbilityCandidate>();
+        if (_abilities != null)
+        {
+            var rows = usages.Select(u => new AppUsageRow { Name = u.DisplayName, BundleId = u.Id, Seconds = u.UsageSeconds }).ToList();
+            AppVisuals.Prepare(rows.Where(r => r.Seconds > 0 && !_abilities.IsExcluded(r)).OrderByDescending(r => r.Seconds).Take(MaxIconApps));
+            candidates = _abilities.BuildCandidates(rows,
+                r => AppVisuals.Get(r)?.Icon16,
+                (r, usedTemplates) => AppVisuals.Generate(r, _abilities, usedTemplates));
+        }
+
+        // ステージ：上位10アプリから、ランダムに3つをボスにする（2026-11-17 まさぴ〜決定）。能力えらびの表が無いときは、今までどおり対応アプリだけ
+        var rng = new System.Random(_randomSeed != 0 ? _randomSeed : Environment.TickCount);
+        List<StagePlan> plans = _abilities != null
+            ? RunPlanner.PlanRandom(_catalog, _abilities, usages, rng, _bossPool, _stageCount)
+            : RunPlanner.Plan(_catalog, usages);
         if (plans.Count == 0)
         {
-            error = "対応アプリが見つかりません";
+            error = "駆除対象のアプリが見つかりません";
             return false;
         }
 
         Run = new RunState(plans);
-        // 能力えらびのカード：使用時間の長いアプリから、カテゴリの能力を出す（足りなければ、まだ出ていないカテゴリで埋める）
-        if (_abilities != null)
-        {
-            var rows = usages.Select(u => new AppUsageRow { Name = u.DisplayName, BundleId = u.Id, Seconds = u.UsageSeconds });
-            Run.Candidates = _abilities.BuildCandidates(rows);
-        }
+        Run.Candidates = candidates;
         Run.StageStartSlots = Run.Loadout.Snapshot();
         error = null;
         RunStarted?.Invoke(Run);

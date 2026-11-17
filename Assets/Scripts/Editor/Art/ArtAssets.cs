@@ -69,14 +69,16 @@ public static class ArtAssets
         R("Generated/Attacks/Fx_TelegraphFrame.png", border: new Vector4(3, 3, 3, 3)),
         R("Generated/Attacks/Fx_Cursor.png", border: new Vector4(0, 1, 0, 1)),
         R("Generated/Attacks/Fx_Pillar.png", border: new Vector4(4, 0, 4, 0)),
-        R("Generated/Attacks/Fx_PillarNeutral.png", border: new Vector4(4, 0, 4, 0)),
+        R("Generated/Attacks/Fx_PillarNeutral.png", border: new Vector4(4, 0, 4, 0), readable: true), // その場で作る能力で、アプリの色に塗り替える
         R("Generated/Attacks/Fx_RedWave.png", border: new Vector4(1, 0, 1, 0)),
         R("Generated/Attacks/Fx_BreakpointMark.png"),
         // カテゴリの能力（2026-11-17：ゲームの流れ）
-        R("Generated/Attacks/Bullet_Bomb.png"),
-        R("Generated/Attacks/Fx_Blast.png"),
-        R("Generated/Attacks/Fx_Paint.png", border: new Vector4(2, 2, 2, 4)),
-        R("Generated/Attacks/Fx_Bar.png", border: new Vector4(2, 0, 2, 0)),
+        // その場で作る能力（2026-11-17）で、アプリの色に塗り替えるので、読み書きできる設定にする
+        R("Generated/Attacks/Bullet_Bomb.png", readable: true),
+        R("Generated/Attacks/Fx_Blast.png", readable: true),
+        R("Generated/Attacks/Fx_Paint.png", border: new Vector4(2, 2, 2, 4), readable: true),
+        R("Generated/Attacks/Fx_Bar.png", border: new Vector4(2, 0, 2, 0), readable: true),
+        R("Generated/Attacks/Bullet_Orb.png", readable: true),
         R("Generated/Attacks/Fx_Shadow.png"),
         R("Generated/Attacks/Fx_Alert.png"),
         R("Generated/Attacks/Popup_Ad.png"),
@@ -351,6 +353,11 @@ public static class ArtAssets
         ("Player/Attack_Ability_PaintBucket", "Generated/Attacks/Fx_Paint.png"),
         ("Player/Attack_Ability_Bomb", "Generated/Attacks/Bullet_Bomb.png"),
         ("Player/Attack_Ability_Bomb_Blast", "Generated/Attacks/Fx_Blast.png"),
+        // その場で作る能力のひな形（ゲームの中で、アプリの色に塗り替える）
+        ("Player/Gen/Attack_Gen_Spread", "Generated/Attacks/Bullet_Orb.png"),
+        ("Player/Gen/Attack_Gen_Trap", "Generated/Attacks/Bullet_Orb.png"),
+        ("Player/Gen/Attack_Gen_TrapFloor", "Generated/Attacks/Fx_Paint.png"),
+        ("Player/Gen/Attack_Gen_Nova", "Generated/Attacks/Fx_Blast.png"),
     };
 
     static void ApplyToData()

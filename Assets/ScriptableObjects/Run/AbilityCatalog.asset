@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AbilityCatalog
   m_EditorClassIdentifier: 
   _cardCount: 5
-  _pickCount: 3
+  _pickCount: 1
   _categories:
   - Category: 1
     Skill: {fileID: 11400000, guid: 9ef23ca1ac7b9443c8b04fa55802f50b, type: 2}
@@ -138,3 +138,51 @@ MonoBehaviour:
     - com.valvesoftware.steam
     - com.mojang.
     - com.epicgames.
+  _templates:
+  - Name: "\u30D4\u30E9\u30FC"
+    Attack: {fileID: 11400000, guid: 9eb594a4112d143cf9c37b3bdd2c56d7, type: 2}
+    VaryStat: 7
+    VaryMin: 0.8
+    VaryMax: 1.25
+  - Name: "\u9023\u7D9A\u30D4\u30E9\u30FC"
+    Attack: {fileID: 11400000, guid: b3440960dfc954b22a6474f201e406c3, type: 2}
+    VaryStat: 4
+    VaryMin: 2
+    VaryMax: 4
+  - Name: "\u30DA\u30A4\u30F3\u30C8"
+    Attack: {fileID: 11400000, guid: 6547ad23dc034499c97d7f1ddda4ab88, type: 2}
+    VaryStat: 5
+    VaryMin: 1.5
+    VaryMax: 2.5
+  - Name: "\u30ED\u30D6\u5F3E"
+    Attack: {fileID: 11400000, guid: 70cad16550f2e4f35bd09facc08c57cf, type: 2}
+    VaryStat: 0
+    VaryMin: 1
+    VaryMax: 1
+  - Name: "\u62E1\u6563\u30B7\u30E7\u30C3\u30C8"
+    Attack: {fileID: 11400000, guid: 9e3ac19eedc0748fd859af4802427844, type: 2}
+    VaryStat: 8
+    VaryMin: 3
+    VaryMax: 5
+  - Name: "\u30C8\u30E9\u30C3\u30D7\u5F3E"
+    Attack: {fileID: 11400000, guid: 3c17c55f24cfe4e9d8c98f55297a95de, type: 2}
+    VaryStat: 0
+    VaryMin: 1
+    VaryMax: 1
+  - Name: "\u30CE\u30F4\u30A1"
+    Attack: {fileID: 11400000, guid: a97781af2355e46be926c8eaca961d2e, type: 2}
+    VaryStat: 7
+    VaryMin: 0.9
+    VaryMax: 1.2
+  _gaugePerSecond: 4
+  _cooldownRange: {x: 2.5, y: 6}
+  _excludedNames:
+  - Finder
+  - System Settings
+  - System Preferences
+  - "\u30B7\u30B9\u30C6\u30E0\u8A2D\u5B9A"
+  - "\u8A2D\u5B9A"
+  - Team1
+  _excludedBundleIds:
+  - com.apple.finder
+  - com.apple.systempreferences

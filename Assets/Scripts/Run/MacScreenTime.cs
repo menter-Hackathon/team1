@@ -50,6 +50,7 @@ public static class MacScreenTime
         topApps = new List<(string Name, int Seconds)>(3);
         var usages = new List<AppUsage>();
         var seen = new HashSet<AppEntry>();
+        var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var apps = catalog == null ? Array.Empty<AppEntry>() : catalog.Apps;
 
         var result = JsonUtility.FromJson<ScanResult>("{\"items\":" + json + "}");
@@ -59,6 +60,7 @@ public static class MacScreenTime
         {
             string name = row.name.Trim();
             if (topApps.Count < 3) topApps.Add((name, row.seconds));
+            bool matched = false;
             foreach (var app in apps)
             {
                 if (app == null || app.BossPrefab == null || app.Profile == null || app.BundleIdPrefixes == null) continue;
@@ -66,8 +68,12 @@ public static class MacScreenTime
                     (app.ScreenTimeNames == null || !Array.Exists(app.ScreenTimeNames, alias => MatchesDisplayName(name, alias)))) continue;
                 string id = Array.Find(app.BundleIdPrefixes, prefix => !string.IsNullOrWhiteSpace(prefix));
                 if (id != null && seen.Add(app)) usages.Add(new AppUsage(id, app.DisplayName, row.seconds));
+                matched = true;
                 break;
             }
+            // 2026-11-17（まさぴ〜）：対応表に無いアプリも、名前だけで渡す（上位10アプリからランダムに3つをボスにするため）。
+            // 除外（Finder・設定・iPhone のアプリなど）と代用ボスは、ゲーム側（AbilityCatalog・RunPlanner）で決める
+            if (!matched && seenNames.Add(name)) usages.Add(new AppUsage("", name, row.seconds));
         }
         return usages;
     }

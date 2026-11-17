@@ -49,4 +49,38 @@ public class AppTheme : ScriptableObject
     public Color Main => _main;
     /// <summary>アクセントの色。空なら代表の色1つ</summary>
     public Color[] Accents => _accents != null && _accents.Length > 0 ? _accents : new[] { _main };
+
+    /// <summary>
+    /// アイコンの色から、ゲームの中で色の組み合わせを作る（対応表に無いアプリ用。2026-11-17）。アセットにはしない。
+    /// 代表の色から、空・丘・床・足場の色を決める（手で決めた Chrome・VS Code の色の作り方に合わせる）
+    /// </summary>
+    public static AppTheme CreateRuntime(string themeName, Color main, Color[] accents)
+    {
+        var t = CreateInstance<AppTheme>();
+        t.name = themeName;
+        main.a = 1f;
+        Color.RGBToHSV(main, out float h, out float s, out float v);
+        t._main = main;
+        t._accents = accents != null && accents.Length > 0 ? accents : new[] { main };
+        t._sky = Color.HSVToRGB(h, Mathf.Min(s, 0.55f) * 0.9f, 0.32f);
+        t._cloud = Color.Lerp(t._sky, Color.white, 0.25f);
+        t._hills = new[]
+        {
+            Color.Lerp(main, Color.black, 0.75f),
+            Color.Lerp(main, Color.black, 0.55f),
+            Color.Lerp(main, Color.black, 0.3f),
+            main,
+            Color.Lerp(main, Color.white, 0.35f),
+        };
+        t._floor = new Color32(0x3d, 0x41, 0x4a, 0xff);
+        t._floorTop = main;
+        t._wall = new Color32(0x24, 0x27, 0x2e, 0xff);
+        t._wallHighlight = new Color32(0x3d, 0x41, 0x4a, 0xff);
+        Color folder = t._accents.Length > 1 ? t._accents[1] : Color.Lerp(main, Color.white, 0.3f);
+        folder.a = 1f;
+        t._folder = folder;
+        t._folderShade = Color.Lerp(folder, Color.black, 0.25f);
+        t._folderTab = main;
+        return t;
+    }
 }

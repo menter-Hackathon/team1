@@ -68,6 +68,14 @@ public class BossArmorVisual : MonoBehaviour
         if (_boss != null) _boss.Ejected -= OnEjected;
     }
 
+    /// <summary>着ているウィンドウの絵を差し替える（代用ボス：アプリのアイコンから作ったウィンドウ。2026-11-17）</summary>
+    public void SetWindowStages(Sprite[] stages)
+    {
+        if (stages == null || stages.Length == 0) return;
+        _windowStages = stages;
+        if (_window != null) _window.sprite = _windowStages[Mathf.Clamp(_stage, 0, _windowStages.Length - 1)];
+    }
+
     void ResetLook()
     {
         _stage = 0;

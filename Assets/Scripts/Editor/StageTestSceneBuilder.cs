@@ -77,6 +77,8 @@ public static class StageTestSceneBuilder
         CreateWalker("Zako_Walker_Folder", new Vector2(3.5f, 3f), 1, wave.transform, square, debugLabel: true);
         CreateShooter("Zako_Shooter_Folder", new Vector2(-3.5f, 3f), zakoShot, player.transform, wave.transform, square, debugLabel: true);
         CreateShooter("Zako_Shooter_Floor", new Vector2(8.5f, 0f), zakoShot, player.transform, wave.transform, square, debugLabel: true);
+        // 【仮】部屋の中に雑魚を出し続ける。14体出し終えて、全員倒すと Chrome が出る
+        CreateSpawner(player.transform, zakoShot, square, wave, 14, new Vector2(2.2f, 1f), new Vector2Int(3, 6), 45f, ArenaBounds, false);
 
         // --- ボス（雑魚を全員倒すと出てくる） ---
         var chrome = BossTestSceneBuilder.CreateBoss("Chrome", attacks.ChromeProfile, new Vector2(0f, 2.5f + 1.5f), new Vector2(4f, 3f), ChromeBodyColor, square, player.transform);
@@ -132,8 +134,8 @@ public static class StageTestSceneBuilder
     }
 
     /// <summary>
-    /// 雑魚の共通部分：HP5、体の被弾範囲と同じ形の体当たり、点滅、倒れたら煙を出して消える。原点＝足元。
-    /// HP5 は 2026-11-16 まさぴ〜決定（近接なら5回、ブレークポイントなら2回で倒れる）
+    /// 雑魚の共通部分：HP1、体の被弾範囲と同じ形の体当たり、点滅、倒れたら煙を出して消える。原点＝足元。
+    /// HP1 は 2026-11-17 まさぴ〜決定（近接1回で倒れる。その代わり ZakoSpawner で数を増やす。前は HP5）
     /// 見た目はウイルスの煙の絵（コマ送り）。判定は体の大きさの四角（絵は外してある）。debugLabel なら HP の仮表示を出す
     /// </summary>
     static GameObject CreateZakoBase(string name, Vector2 feet, Vector2 size, Color color, Transform parent, Sprite square,
@@ -151,7 +153,7 @@ public static class StageTestSceneBuilder
         PlayerTestSceneBuilder.SetProps(health, so =>
         {
             so.FindProperty("_team").enumValueIndex = (int)Team.Enemy;
-            so.FindProperty("_max").intValue = 5;
+            so.FindProperty("_max").intValue = 1;
             so.FindProperty("_oneDamagePerHit").boolValue = false;
             so.FindProperty("_invincibleTimeAfterHit").floatValue = 0f;
         });
@@ -187,6 +189,43 @@ public static class StageTestSceneBuilder
         PlayerTestSceneBuilder.AddHitbox(bodyTransform.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
             knockback: new Vector2(6f, 5f), hitStun: 0.25f, hitOnce: false, activeOnStart: true, area: hurtCol);
         return go;
+    }
+
+    /// <summary>
+    /// 雑魚を出し続ける部品を作る（2026-11-17）。歩く雑魚と撃つ雑魚のひな形を子に置く（非表示）。
+    /// wave と quota を渡すと、ノルマを出し終えるまで wave をクリアにしない（1画面のステージ）。数値はすべて【仮】
+    /// </summary>
+    internal static ZakoSpawner CreateSpawner(Transform player, AttackData shot, Sprite square, EnemyWave wave, int quota,
+        Vector2 interval, Vector2Int alive, float rampSeconds, Rect area, bool avoidBossRoom)
+    {
+        var spawner = new GameObject("ZakoSpawner").AddComponent<ZakoSpawner>();
+        CreateWalker("Template_Walker", Vector2.zero, -1, spawner.transform, square);
+        CreateShooter("Template_Shooter", Vector2.zero, shot, player, spawner.transform, square);
+        var walker = spawner.transform.Find("Template_Walker").gameObject;
+        var shooter = spawner.transform.Find("Template_Shooter").gameObject;
+        walker.SetActive(false);
+        shooter.SetActive(false);
+        PlayerTestSceneBuilder.SetProps(spawner, so =>
+        {
+            var t = so.FindProperty("_templates");
+            t.arraySize = 2;
+            t.GetArrayElementAtIndex(0).objectReferenceValue = walker;
+            t.GetArrayElementAtIndex(1).objectReferenceValue = shooter;
+            var w = so.FindProperty("_weights");
+            w.arraySize = 2;
+            w.GetArrayElementAtIndex(0).floatValue = 0.7f; // 歩く雑魚を多めに
+            w.GetArrayElementAtIndex(1).floatValue = 0.3f;
+            so.FindProperty("_player").objectReferenceValue = player;
+            so.FindProperty("_wave").objectReferenceValue = wave;
+            so.FindProperty("_quota").intValue = quota;
+            so.FindProperty("_interval").vector2Value = interval;
+            so.FindProperty("_alive").vector2IntValue = alive;
+            so.FindProperty("_rampSeconds").floatValue = rampSeconds;
+            so.FindProperty("_area").rectValue = area;
+            so.FindProperty("_avoidBossRoom").boolValue = avoidBossRoom;
+            so.FindProperty("_groundMask").intValue = LayerMask.GetMask("Ground", "OneWayPlatform");
+        });
+        return spawner;
     }
 
     internal static void CreateWalker(string name, Vector2 feet, int direction, Transform parent, Sprite square, bool debugLabel = false)

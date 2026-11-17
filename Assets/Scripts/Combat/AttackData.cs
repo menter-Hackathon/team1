@@ -222,7 +222,23 @@ public class AttackData : ScriptableObject
             case AttackStat.AreaCount: copy._areaCount = Mathf.Max(1, Mathf.RoundToInt(value)); break;
             case AttackStat.PersistDuration: copy._persistDuration = Mathf.Max(0f, value); break;
             case AttackStat.Cooldown: copy._cooldown = Mathf.Max(0f, value); break;
+            case AttackStat.AreaScale: copy._areaSize = _areaSize * Mathf.Max(0.1f, value); break;
+            case AttackStat.ProjectileCount: copy._projectileCount = Mathf.Max(1, Mathf.RoundToInt(value)); break;
         }
+        return copy;
+    }
+
+    /// <summary>
+    /// 絵を塗り替えた複製を作る（その場で作る能力を、アプリの色にするとき用）。追撃も同じように塗り替える。
+    /// 色（掛ける色）は白にして、塗り替えた絵の色をそのまま出す。アセットそのものは書き換えない
+    /// </summary>
+    public AttackData CreateRecoloredCopy(System.Func<Sprite, Sprite> recolor)
+    {
+        var copy = Instantiate(this);
+        copy.name = name;
+        if (recolor != null && _sprite != null) copy._sprite = recolor(_sprite);
+        copy._color = new Color(1f, 1f, 1f, _color.a);
+        if (_onTerrainHit != null) copy._onTerrainHit = _onTerrainHit.CreateRecoloredCopy(recolor);
         return copy;
     }
 }

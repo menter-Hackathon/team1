@@ -155,8 +155,9 @@ public class RunTitleMenu : MonoBehaviour
                 Fill(new Rect(row.x + 12f, row.yMax - 6f, trackWidth * app.Seconds / _topApps[0].Seconds, 2f), Accent, 1f);
                 GUILayout.Space(5f);
             }
+            // 2026-11-17（まさぴ〜）：上位10アプリが、ボスの候補（この中からランダムに3つ）
             string targets = _detectedApps.Count > 0
-                ? $"駆除対象   {string.Join("、", _detectedApps.Select(app => app.DisplayName))}"
+                ? $"ボスの候補   {string.Join("、", _detectedApps.Where(app => !IsExcluded(session, app)).OrderByDescending(app => app.UsageSeconds).Take(10).Select(app => app.DisplayName))}"
                 : "駆除対象のアプリは見つかりませんでした。";
             GUILayout.Space(3f);
             GUILayout.Label(targets, _caption);
@@ -186,6 +187,10 @@ public class RunTitleMenu : MonoBehaviour
         _topApps = null;
         _scroll = Vector2.zero;
     }
+
+    // 2026-11-17（まさぴ〜）：ゲームがボスにしないアプリ（Finder・設定・iPhone のアプリなど）は、候補に出さない
+    static bool IsExcluded(GameSession session, AppUsage app) => session.Abilities != null &&
+        session.Abilities.IsExcluded(new AppUsageRow { Name = app.DisplayName, BundleId = app.Id, Seconds = app.UsageSeconds });
 
     bool ActionButton(string text, bool primary = false, float width = 0f)
     {

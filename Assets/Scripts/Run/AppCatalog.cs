@@ -80,9 +80,27 @@ public class AppCatalog : ScriptableObject
     [Tooltip("この時間（過去7日間の合計）以上使っていれば、強さが最大になる")]
     [SerializeField, Min(0.1f)] float _fullStrengthHours = 20f;
     [SerializeField] AppEntry[] _apps;
+    [Tooltip("代用ボス（表に無いアプリのボス）のステージのシーン（2026-11-17）")]
+    [SerializeField] string _standInStageScene = "Stage_Desktop";
 
     public float FullStrengthHours => _fullStrengthHours;
     public AppEntry[] Apps => _apps ?? Array.Empty<AppEntry>();
+    public string StandInStageScene => _standInStageScene;
+
+    /// <summary>名前に当たる対応アプリ（表示名・スクリーンタイムでの別名。「名前 - 説明」の形も当たる）。無ければ null</summary>
+    public AppEntry FindByName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+        string n = name.Trim();
+        bool Same(string label) => !string.IsNullOrWhiteSpace(label) &&
+            (n.Equals(label, StringComparison.OrdinalIgnoreCase) || n.StartsWith(label + " -", StringComparison.OrdinalIgnoreCase));
+        foreach (var app in Apps)
+        {
+            if (app == null) continue;
+            if (Same(app.DisplayName) || (app.ScreenTimeNames != null && Array.Exists(app.ScreenTimeNames, Same))) return app;
+        }
+        return null;
+    }
 
     /// <summary>バンドルIDに当たる対応アプリ。無ければ null（対応外のアプリは登場しない）</summary>
     public AppEntry Find(string bundleId)
