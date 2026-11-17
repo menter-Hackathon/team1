@@ -256,8 +256,8 @@ public static class RunScenesBuilder
         StageTestSceneBuilder.CreateWalker("Zako_Walker_Folder", new Vector2(3.5f, 3f), 1, wave.transform, square);
         StageTestSceneBuilder.CreateShooter("Zako_Shooter_Folder", new Vector2(-3.5f, 3f), zakoShot, player.transform, wave.transform, square);
         StageTestSceneBuilder.CreateShooter("Zako_Shooter_Floor", new Vector2(8.5f, 0f), zakoShot, player.transform, wave.transform, square);
-        // 【仮】雑魚は近接1回で倒れるので、部屋の中に出し続ける。14体出し終えて、全員倒すとボスが出る（2026-11-17）
-        StageTestSceneBuilder.CreateSpawner(player.transform, zakoShot, square, wave, 14, new Vector2(2.2f, 1f), new Vector2Int(3, 6), 45f, ArenaBounds, false);
+        // 【仮】雑魚は近接1回で倒れるので、部屋の中に出し続ける。8体出し終えて、全員倒すとボスが出る（最初の4体と合わせて12体。2026-11-17）
+        StageTestSceneBuilder.CreateSpawner(player.transform, zakoShot, square, wave, 8, new Vector2(2.2f, 1f), new Vector2Int(3, 6), 45f, ArenaBounds, false);
 
         // --- ボスの登場と、ステージの進行（どのボスが出るかは実行時に決まる） ---
         var entrance = new GameObject("BossEntrance").AddComponent<BossEntrance>();

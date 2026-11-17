@@ -24,6 +24,8 @@ public class PixelHud : MonoBehaviour
     const float Ppu = GameArt.PixelsPerUnit;
     static readonly Color GaugeColor = new Color32(0x2a, 0xb1, 0x1a, 0xff);
     static readonly Color GaugeDoneColor = Color.white; // 正常化：きれいになった（白）
+    static readonly Color PreBossColor = new Color32(0xc8, 0x24, 0x32, 0xff); // ボスが出るまでのゲージ（ウイルスの赤）
+    static readonly Color PreBossIconColor = new Color(0.22f, 0.22f, 0.26f, 1f); // まだ来ていないボスのアイコンは暗い影
     static readonly Color GaugeAngryColor = new Color32(0xff, 0x40, 0x40, 0xff);
     static readonly Color CooldownColor = new Color(0f, 0f, 0f, 0.62f);
     static readonly Color DiscardColor = new Color32(0xff, 0x00, 0x00, 0xff);
@@ -247,10 +249,17 @@ public class PixelHud : MonoBehaviour
     void UpdateBoss()
     {
         BossController boss = FindBoss();
-        bool show = boss != null;
+        EnemyWave wave = boss == null ? PreBossWave() : null;
+        bool show = boss != null || wave != null;
         _bossRoot.gameObject.SetActive(show);
         if (!show) return;
+        if (wave != null)
+        {
+            DrawPreBoss(wave);
+            return;
+        }
 
+        _bossIcon.color = Color.white;
         _bossIcon.sprite = boss.Profile != null ? boss.Profile.Icon : null;
         PlaceTopRight(_bossIcon, 6 + 100 + 3, 5, 12);
         float ratio = boss.Gauge != null ? Mathf.Clamp01(boss.Gauge.Ratio) : 0f;
@@ -279,6 +288,42 @@ public class PixelHud : MonoBehaviour
         _gaugeMark.enabled = boss.State == BossState.Fighting || boss.State == BossState.Transition;
         _gaugeMark.transform.localScale = new Vector3(1f, 6f, 1f);
         PlaceScaledTopLeft(_gaugeMark, ViewWidthPx() - 6 - 100 + 2 + Mathf.Round(threshold * 96f), 8);
+    }
+
+    /// <summary>
+    /// 雑魚を倒すとボスが出るステージ（1画面）で、ボスが出る前なら、その雑魚の集まり（2026-11-17）。
+    /// 横スクロール・ウィンドウ移動（ボス部屋の入口でボスが出る）と、ボスが出たあとは null
+    /// </summary>
+    EnemyWave PreBossWave()
+    {
+        if (_director == null || _director.Plan == null || _director.Entrance == null || _director.Wave == null) return null;
+        if (_director.Entrance.WaitsForGate || _director.Entrance.HasAppeared) return null;
+        return _director.Wave;
+    }
+
+    /// <summary>
+    /// ボスが出るまでのゲージ（文字なし）：右上に、これから出るボスのアイコンを暗い影で出し、雑魚を倒すごとにゲージがたまる。
+    /// 満タンになると点滅し、ボスが出てきたら、そのままボスのゲージに切り替わる
+    /// </summary>
+    void DrawPreBoss(EnemyWave wave)
+    {
+        _bossIcon.sprite = _director.Plan.Profile != null ? _director.Plan.Profile.Icon : null;
+        _bossIcon.color = PreBossIconColor;
+        PlaceTopRight(_bossIcon, 6 + 100 + 3, 5, 12);
+        int fillW = Mathf.RoundToInt(wave.Progress * 96f);
+        float left = ViewWidthPx() - 6 - 100 + 2;
+        bool blink = wave.IsCleared && Mathf.FloorToInt(Time.time / 0.1f) % 2 == 0;
+        for (int i = 0; i < _gaugeFills.Length; i++)
+        {
+            SpriteRenderer fill = _gaugeFills[i];
+            fill.enabled = i == 0 && fillW > 0;
+            if (!fill.enabled) continue;
+            float fillH = fill.sprite != null ? fill.sprite.rect.height : 4f;
+            fill.transform.localScale = new Vector3(fillW, 4f / fillH, 1f);
+            PlaceScaledTopLeft(fill, left, 9);
+            fill.color = blink ? Color.white : PreBossColor;
+        }
+        _gaugeMark.enabled = false;
     }
 
     BossController FindBoss()

@@ -4014,7 +4014,7 @@ MonoBehaviour:
   - 0.3
   _player: {fileID: 1569081432}
   _wave: {fileID: 248805744}
-  _quota: 14
+  _quota: 8
   _startDelay: 1.5
   _interval: {x: 2.2, y: 1}
   _alive: {x: 3, y: 6}

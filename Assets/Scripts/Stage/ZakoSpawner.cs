@@ -69,6 +69,7 @@ public class ZakoSpawner : MonoBehaviour
         if (_wave != null && _quota > 0)
         {
             _wave.Hold(); // ノルマを出し終えるまで、ボスを出さない
+            _wave.Expect(_quota); // 画面右上の「ボスが出るまでのゲージ」に、出す予定の数も入れる
             _holding = true;
         }
     }

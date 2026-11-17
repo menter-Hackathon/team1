@@ -14,8 +14,17 @@ public class EnemyWave : MonoBehaviour
     bool _cleared;
     int _holds;
     int _total;
+    int _initial;
+    int _expectedExtra;
+    int _killed;
 
     public int Total => _total;
+    /// <summary>倒した数</summary>
+    public int Killed => _killed;
+    /// <summary>ボスまでに倒す数（最初の雑魚＋あとから出てくる予定の数）</summary>
+    public int Expected => Mathf.Max(_initial + _expectedExtra, _total);
+    /// <summary>ボスまでの進み具合（0〜1。画面右上の「ボスが出るまでのゲージ」用。2026-11-17）</summary>
+    public float Progress => _cleared ? 1f : Mathf.Clamp01(_killed / (float)Mathf.Max(1, Expected));
     /// <summary>まだ倒していない敵の数</summary>
     public int Remaining { get; private set; }
     public bool IsCleared => _cleared;
@@ -34,7 +43,11 @@ public class EnemyWave : MonoBehaviour
             if (e != null && !e.IsDead) Remaining++;
         }
         _total = _enemies.Length;
+        _initial = _enemies.Length;
     }
+
+    /// <summary>あとから出てくる予定の数を足す（ZakoSpawner のノルマ）</summary>
+    public void Expect(int count) => _expectedExtra += Mathf.Max(0, count);
 
     /// <summary>あとから出てきた雑魚を数に入れる</summary>
     public void AddEnemy(Health enemy)
@@ -80,6 +93,7 @@ public class EnemyWave : MonoBehaviour
     void OnEnemyDied()
     {
         if (_cleared) return;
+        _killed++;
         Remaining = Mathf.Max(0, Remaining - 1);
         RemainingChanged?.Invoke(Remaining, Total);
         if (Remaining == 0 && _holds == 0) Clear();
