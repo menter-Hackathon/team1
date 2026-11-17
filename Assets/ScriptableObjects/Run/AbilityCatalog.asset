@@ -1,0 +1,140 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3aadaca7dcd4cf9a3b07f65b9f369a, type: 3}
+  m_Name: AbilityCatalog
+  m_EditorClassIdentifier: 
+  _cardCount: 5
+  _pickCount: 3
+  _categories:
+  - Category: 1
+    Skill: {fileID: 11400000, guid: 9ef23ca1ac7b9443c8b04fa55802f50b, type: 2}
+    AppNames:
+    - Google Chrome
+    - Chrome
+    - Safari
+    - Arc
+    - Firefox
+    - Microsoft Edge
+    - Brave Browser
+    - Brave
+    BundleIdPrefixes:
+    - com.google.Chrome
+    - com.apple.Safari
+    - company.thebrowser.
+    - org.mozilla.firefox
+    - com.microsoft.edgemac
+    - com.brave.Browser
+  - Category: 3
+    Skill: {fileID: 11400000, guid: 5d1a53a0ac67e4b2b99740e84cca40ea, type: 2}
+    AppNames:
+    - Visual Studio Code
+    - Code
+    - Cursor
+    - Xcode
+    - Simulator
+    - "\u30B7\u30DF\u30E5\u30EC\u30FC\u30BF\u30FC"
+    - Unity
+    - Unity Hub
+    - Terminal
+    - "\u30BF\u30FC\u30DF\u30CA\u30EB"
+    - IntelliJ IDEA
+    - IntelliJ IDEA CE
+    - GitHub Desktop
+    - iTerm
+    - iTerm2
+    - Warp
+    - Rider
+    - Docker Desktop
+    - Postman
+    BundleIdPrefixes:
+    - com.microsoft.VSCode
+    - com.todesktop.230313mzl4w4u92
+    - com.apple.dt.Xcode
+    - com.apple.iphonesimulator
+    - com.unity3d.
+    - com.apple.Terminal
+    - com.jetbrains.
+    - com.github.GitHubClient
+    - com.googlecode.iterm2
+    - dev.warp.
+    - com.docker.
+    - com.postmanlabs.
+  - Category: 5
+    Skill: {fileID: 11400000, guid: dd93de407c1a64504a333365b1e5aebd, type: 2}
+    AppNames:
+    - Notion
+    - Microsoft Word
+    - Word
+    - Microsoft Excel
+    - Excel
+    - Microsoft PowerPoint
+    - PowerPoint
+    - Keynote
+    - Pages
+    - Numbers
+    - Mail
+    - "\u30E1\u30FC\u30EB"
+    - Calendar
+    - "\u30AB\u30EC\u30F3\u30C0\u30FC"
+    - Notes
+    - "\u30E1\u30E2"
+    - Microsoft Outlook
+    - Outlook
+    - Obsidian
+    - Linear
+    BundleIdPrefixes:
+    - notion.id
+    - com.microsoft.Word
+    - com.microsoft.Excel
+    - com.microsoft.Powerpoint
+    - com.microsoft.Outlook
+    - com.apple.iWork.
+    - com.apple.mail
+    - com.apple.iCal
+    - com.apple.Notes
+    - md.obsidian
+    - com.linear
+  - Category: 7
+    Skill: {fileID: 11400000, guid: 77564fb0c47a54a33a68c65785aa34c9, type: 2}
+    AppNames:
+    - Figma
+    - Photoshop
+    - Illustrator
+    - Premiere Pro
+    - After Effects
+    - Blender
+    - OBS
+    - OBS Studio
+    - GarageBand
+    - Aseprite
+    - CLIP STUDIO PAINT
+    - Final Cut Pro
+    BundleIdPrefixes:
+    - com.figma.
+    - com.adobe.
+    - org.blenderfoundation.
+    - com.obsproject.
+    - com.apple.garageband
+    - com.aseprite
+    - jp.co.celsys.
+    - com.apple.FinalCut
+  - Category: 6
+    Skill: {fileID: 11400000, guid: b0494a92fcafb4467bf273b80de2b367, type: 2}
+    AppNames:
+    - Steam
+    - Minecraft Launcher
+    - Minecraft
+    - Epic Games Launcher
+    BundleIdPrefixes:
+    - com.valvesoftware.steam
+    - com.mojang.
+    - com.epicgames.

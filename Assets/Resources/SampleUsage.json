@@ -16,5 +16,29 @@
             "displayName": "Finder",
             "usageSeconds": 36000.0,
             "iconPath": ""
+        },
+        {
+            "id": "com.tinyspeck.slackmacgap",
+            "displayName": "Slack",
+            "usageSeconds": 54000.0,
+            "iconPath": ""
+        },
+        {
+            "id": "com.figma.Desktop",
+            "displayName": "Figma",
+            "usageSeconds": 43200.0,
+            "iconPath": ""
+        },
+        {
+            "id": "com.microsoft.Excel",
+            "displayName": "Microsoft Excel",
+            "usageSeconds": 21600.0,
+            "iconPath": ""
+        },
+        {
+            "id": "com.valvesoftware.steam",
+            "displayName": "Steam",
+            "usageSeconds": 14400.0,
+            "iconPath": ""
         }
     ]

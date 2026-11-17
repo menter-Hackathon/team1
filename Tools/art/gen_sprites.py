@@ -1124,6 +1124,100 @@ def make_stage_gimmicks():
     save(e, "Hazards/Firewall_Emitter.png")
 
 
+# ───────── カテゴリの能力（2026-11-17：ゲームの流れ） ─────────
+
+def make_category_abilities():
+    office, office_l = C("217346"), C("33a565")
+    purple, pink = C("a259ff"), C("f24e1e")
+    # 棒グラフ（Office・仕事）のアイコン
+    im = new(16, 16, WHITE)
+    outline_rect(im, 0, 0, 15, 15, K)
+    hline(im, 2, 13, 13, W68)
+    for x0, h in ((3, 4), (7, 7), (11, 10)):
+        rect(im, x0, 13 - h, x0 + 2, 12, office)
+        vline(im, x0, 13 - h, 12, office_l)
+    save(im, "UI/Icon_BarGraph.png")
+    # バケツ塗り（クリエイティブ）のアイコン
+    im = new(16, 16, WHITE)
+    outline_rect(im, 0, 0, 15, 15, K)
+    for y in range(5, 13):  # バケツ（台形）
+        inset = (y - 5) // 3
+        hline(im, 3 + inset, 9 - inset, y, WA2)
+        put(im, 3 + inset, y, W51); put(im, 9 - inset, y, W51)
+    hline(im, 3, 9, 5, W51)
+    rect(im, 9, 4, 12, 6, purple)  # こぼれる絵の具
+    rect(im, 11, 7, 12, 10, purple)
+    rect(im, 10, 11, 13, 13, purple)
+    put(im, 12, 8, pink)
+    save(im, "UI/Icon_Paint.png")
+    # ボム（ゲーム）のアイコン
+    im = new(16, 16, WHITE)
+    outline_rect(im, 0, 0, 15, 15, K)
+    ellipse(im, 7.0, 9.5, 4.6, 4.6, K)
+    ellipse(im, 7.0, 9.5, 3.6, 3.6, C("2b2b33"))
+    put(im, 5, 7, WHITE); put(im, 6, 7, C("8f8f9a"))
+    rect(im, 9, 4, 10, 5, W68)
+    put(im, 11, 3, ORANGE); put(im, 12, 2, GOLD); put(im, 12, 3, RED)
+    save(im, "UI/Icon_Bomb.png")
+
+    # ボムの弾（9×9）
+    b = new(9, 9)
+    ellipse(b, 4.5, 5.0, 3.6, 3.6, K)
+    ellipse(b, 4.5, 5.0, 2.7, 2.7, C("2b2b33"))
+    put(b, 3, 3, WHITE)
+    put(b, 6, 1, ORANGE); put(b, 7, 0, GOLD)
+    save(b, "Attacks/Bullet_Bomb.png")
+
+    # 爆発（36×36。円の判定に合わせて伸び縮みさせる）
+    e = new(36, 36)
+    for y in range(36):
+        for x in range(36):
+            d = math.hypot(x + 0.5 - 18, y + 0.5 - 18) / 18.0
+            n = 0.06 * math.sin(math.atan2(y - 18, x - 18) * 7)
+            if d + n < 0.45:
+                put(e, x, y, C("fff6c8", 230))
+            elif d + n < 0.72:
+                put(e, x, y, C("ffd23f", 220))
+            elif d + n < 0.92:
+                put(e, x, y, C("ff8a00", 200))
+            elif d + n < 1.0:
+                put(e, x, y, C("e04a00", 160))
+    save(e, "Attacks/Fx_Blast.png")
+
+    # バケツ塗り：塗りつぶした範囲（18×18 をタイルで並べる。上4ドットが表面、左右と下の2ドットが縁）
+    pnt = new(18, 18)
+    deep, light = C("7a3fd0"), C("c99bff")
+    accents = (pink, C("1abcfe"), C("0acf83"))
+    for y in range(18):
+        for x in range(18):
+            c = purple
+            if x <= 1 or x >= 16 or y >= 16:
+                c = deep
+            put(pnt, x, y, c)
+    for x in range(18):  # 表面（波打つ明るい線）
+        top = 1 + (1 if (x // 3) % 2 else 0)
+        for y in range(0, top):
+            put(pnt, x, y, CLEAR)
+        put(pnt, x, top, light)
+        if x in (0, 17):
+            for y in range(0, 4):
+                put(pnt, x, y, CLEAR)
+    for i, (x, y) in enumerate(((5, 7), (12, 10), (8, 13), (3, 11), (14, 6))):  # 混ざった絵の具の粒
+        put(pnt, x, y, accents[i % 3])
+    save(pnt, "Attacks/Fx_Paint.png")
+
+    # 棒グラフの柱（縦に並べる。左右2ドットが縁）
+    bar = new(18, 18)
+    for y in range(18):
+        for x in range(18):
+            e2 = min(x, 17 - x)
+            c = C("1a5c37") if e2 <= 1 else (office_l if e2 <= 3 else office)
+            put(bar, x, y, c)
+        if y % 6 == 0:
+            hline(bar, 2, 15, y, C("2a8a52"))
+    save(bar, "Attacks/Fx_Bar.png")
+
+
 def main():
     make_background()
     make_terrain()
@@ -1137,6 +1231,7 @@ def main():
     make_skill_icons()
     make_boss_b()
     make_stage_gimmicks()
+    make_category_abilities()
     print("done:", GEN)
 
 

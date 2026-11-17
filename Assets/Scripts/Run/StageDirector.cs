@@ -15,6 +15,8 @@ public class StageDirector : MonoBehaviour
 {
     [Tooltip("直接再生したときに使う対応アプリ表")]
     [SerializeField] AppCatalog _catalog;
+    [Tooltip("直接再生したときに使う、カテゴリごとの能力の表（上から3つを自動で持つ）")]
+    [SerializeField] AbilityCatalog _abilities;
     [SerializeField] EnemyWave _wave;
     [SerializeField] BossEntrance _entrance;
     [SerializeField] PlayerSkills _player;
@@ -40,13 +42,14 @@ public class StageDirector : MonoBehaviour
         if (_session == null || _session.Run == null || _session.Run.Current == null)
         {
             // ステージのシーンを直接再生した（開発用）：サンプルデータでランを作る
-            _session = GameSession.EnsureExists(_catalog);
+            _session = GameSession.EnsureExists(_catalog, _abilities);
             if (!_session.PrepareRun(new SampleUsageProvider(), out string error))
             {
                 Debug.LogError($"ステージを始められません：{error}", this);
                 enabled = false;
                 return;
             }
+            _session.AutoPickLoadout(); // 能力えらびの画面は出さず、カードの上から順に持つ
         }
 
         Plan = _session.Run.Current;

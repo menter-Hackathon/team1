@@ -6,14 +6,15 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// <summary>
-/// ラン（タイトル → ステージ → リザルト）を通して遊ぶためのシーンとデータを作るエディタ拡張（M5）。
+/// ラン（タイトル → 能力えらび → ステージ → リザルト）を通して遊ぶためのシーンとデータを作るエディタ拡張（M5）。
 /// メニュー「Tools/Team1/ランのシーンを作成」から実行する。作るもの：
 /// ・ボスのプレハブ（Assets/Prefabs/Bosses。非表示で保存。毎回作り直す。同じパスに上書きするので、対応アプリ表からの参照は切れない）
 /// ・対応アプリ表（Assets/ScriptableObjects/Run/AppCatalog。すでにあれば作らない）：Chrome・VS Code
 /// ・サンプルデータ（Assets/Resources/SampleUsage.json。すでにあれば作らない）
-/// ・シーン（Assets/Scenes/Run）：RunTitle（【仮】タイトル）、Stage_Desktop（【仮】1画面のステージ）、
+/// ・カテゴリの能力と能力えらびの表（AbilitiesBuilder。すでにあれば作らない）
+/// ・シーン（Assets/Scenes/Run）：RunTitle（【仮】タイトル）、RunLoadout（【仮】能力えらび）、Stage_Desktop（【仮】1画面のステージ）、
 ///   Stage_Scroll（横スクロール）・Stage_Windows（ウィンドウ移動）（StageLayoutsBuilder）、RunResult（【仮】リザルト）
-/// ・Build Settings にこの5つを登録する（ほかに登録されているシーンは後ろに残す）
+/// ・Build Settings にこの6つを登録する（ほかに登録されているシーンは後ろに残す）
 /// 数値はすべて【仮】。データ（対応アプリ表・サンプル）は上書きしないので、直したいときはそのアセットを直接直す（作り直すなら消してから実行）。
 /// 絵は ArtAssets（Tools/Team1/グラフィックを適用）が入れる。ボスのプレハブは絵ごと作り直す。
 /// </summary>
@@ -21,6 +22,7 @@ public static class RunScenesBuilder
 {
     const string SceneFolder = "Assets/Scenes/Run";
     const string TitleScene = "RunTitle";
+    const string LoadoutScene = "RunLoadout";
     const string StageScene = "Stage_Desktop";
     const string ResultScene = "RunResult";
     const string PrefabFolder = "Assets/Prefabs/Bosses";
@@ -52,6 +54,7 @@ public static class RunScenesBuilder
 
         BossTestSceneBuilder.GetOrCreateAttacks(); // 無ければ作る
         StageTestSceneBuilder.GetOrCreateZakoShot();
+        AbilitiesBuilder.GetOrCreate(); // カテゴリの能力と能力えらびの表（無ければ作る）
         ArtAssets.Apply(); // 絵の取り込み設定と、攻撃データ・能力・ボスへの割り当て
 
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -68,14 +71,15 @@ public static class RunScenesBuilder
 
         PlayerTestSceneBuilder.EnsureFolder(SceneFolder);
         string titlePath = BuildTitle(catalog);
+        string loadoutPath = BuildLoadout();
         string stagePath = BuildStage(catalog, square, attacks, zakoShot);
         string scrollPath = StageLayoutsBuilder.BuildScroll(SceneFolder, catalog);
         string windowsPath = StageLayoutsBuilder.BuildWindows(SceneFolder, catalog);
         string resultPath = BuildResult();
-        RegisterBuildScenes(titlePath, stagePath, scrollPath, windowsPath, resultPath);
+        RegisterBuildScenes(titlePath, loadoutPath, stagePath, scrollPath, windowsPath, resultPath);
 
         AssetDatabase.SaveAssets();
-        Debug.Log($"ランのシーンを作成しました: {titlePath}, {stagePath}, {resultPath}");
+        Debug.Log($"ランのシーンを作成しました: {titlePath}, {loadoutPath}, {stagePath}, {scrollPath}, {windowsPath}, {resultPath}");
     }
 
     // ───────── ボスのプレハブ・対応アプリ表・サンプル ─────────
@@ -165,12 +169,17 @@ public static class RunScenesBuilder
     {
         if (File.Exists(SamplePath)) return;
         PlayerTestSceneBuilder.EnsureFolder(Path.GetDirectoryName(SamplePath).Replace('\\', '/'));
-        // 【仮】Chrome 8時間・VS Code 25時間（最大）。Finder は対応外なので登場しない
+        // 【仮】Chrome 8時間・VS Code 25時間（最大）。Finder・Slack はボスにも能力にもならない。
+        // Figma・Excel・Steam は能力えらびのカードだけに出る（ボスはまだいない）
         var sample = new[]
         {
             new AppUsage("com.google.Chrome", "Google Chrome", 8 * 3600),
             new AppUsage("com.microsoft.VSCode", "Visual Studio Code", 25 * 3600),
             new AppUsage("com.apple.finder", "Finder", 10 * 3600),
+            new AppUsage("com.tinyspeck.slackmacgap", "Slack", 15 * 3600),
+            new AppUsage("com.figma.Desktop", "Figma", 12 * 3600),
+            new AppUsage("com.microsoft.Excel", "Microsoft Excel", 6 * 3600),
+            new AppUsage("com.valvesoftware.steam", "Steam", 4 * 3600),
         };
         File.WriteAllText(SamplePath, AppUsageJson.ToJson(sample));
         AssetDatabase.ImportAsset(SamplePath);
@@ -183,16 +192,34 @@ public static class RunScenesBuilder
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         catalog = AssetDatabase.LoadAssetAtPath<AppCatalog>(CatalogPath); // 新しいシーンを開いたので読み込み直す
         CreateCamera(new Vector3(0f, 0f, -10f));
+        var abilities = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(AbilitiesBuilder.CatalogPath);
         var session = new GameObject("GameSession").AddComponent<GameSession>();
         PlayerTestSceneBuilder.SetProps(session, so =>
         {
             so.FindProperty("_catalog").objectReferenceValue = catalog;
+            so.FindProperty("_abilities").objectReferenceValue = abilities;
+            so.FindProperty("_loadoutScene").stringValue = LoadoutScene;
             so.FindProperty("_titleScene").stringValue = TitleScene;
             so.FindProperty("_resultScene").stringValue = ResultScene;
         });
         var menu = new GameObject("RunTitleMenu").AddComponent<RunTitleMenu>();
         PlayerTestSceneBuilder.SetProps(menu, so => so.FindProperty("_catalog").objectReferenceValue = catalog);
         string path = $"{SceneFolder}/{TitleScene}.unity";
+        EditorSceneManager.SaveScene(scene, path);
+        return path;
+    }
+
+    static string BuildLoadout()
+    {
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        CreateCamera(new Vector3(0f, 0f, -10f));
+        var menu = new GameObject("RunLoadoutMenu").AddComponent<RunLoadoutMenu>();
+        PlayerTestSceneBuilder.SetProps(menu, so =>
+        {
+            so.FindProperty("_catalog").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AppCatalog>(CatalogPath);
+            so.FindProperty("_abilities").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(AbilitiesBuilder.CatalogPath);
+        });
+        string path = $"{SceneFolder}/{LoadoutScene}.unity";
         EditorSceneManager.SaveScene(scene, path);
         return path;
     }
@@ -207,6 +234,7 @@ public static class RunScenesBuilder
         attacks = BossTestSceneBuilder.GetOrCreateAttacks();
         zakoShot = StageTestSceneBuilder.GetOrCreateZakoShot();
         catalog = AssetDatabase.LoadAssetAtPath<AppCatalog>(CatalogPath);
+        var abilities = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(AbilitiesBuilder.CatalogPath);
 
         // --- 部屋（雑魚戦テストシーンと同じ。床の上面が y=0） ---
         var terrain = new GameObject("Terrain").transform;
@@ -218,7 +246,7 @@ public static class RunScenesBuilder
         var arena = new GameObject("BattleArena").AddComponent<BattleArena>();
         PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
 
-        // --- プレイヤー（能力は G キーではもらえない。ボスを正常化して手に入れる） ---
+        // --- プレイヤー（能力は G キーではもらえない。能力えらびで3つ持ち、ボスを正常化して増やす） ---
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-8.5f, 0.05f, 0f), attacks.PlayerMelee, null);
         Object.DestroyImmediate(player.GetComponent<SkillDebugGiver>());
 
@@ -236,6 +264,7 @@ public static class RunScenesBuilder
         PlayerTestSceneBuilder.SetProps(director, so =>
         {
             so.FindProperty("_catalog").objectReferenceValue = catalog;
+            so.FindProperty("_abilities").objectReferenceValue = abilities;
             so.FindProperty("_wave").objectReferenceValue = wave;
             so.FindProperty("_entrance").objectReferenceValue = entrance;
             so.FindProperty("_player").objectReferenceValue = player.GetComponent<PlayerSkills>();

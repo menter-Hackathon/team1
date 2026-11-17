@@ -72,6 +72,11 @@ public static class ArtAssets
         R("Generated/Attacks/Fx_PillarNeutral.png", border: new Vector4(4, 0, 4, 0)),
         R("Generated/Attacks/Fx_RedWave.png", border: new Vector4(1, 0, 1, 0)),
         R("Generated/Attacks/Fx_BreakpointMark.png"),
+        // カテゴリの能力（2026-11-17：ゲームの流れ）
+        R("Generated/Attacks/Bullet_Bomb.png"),
+        R("Generated/Attacks/Fx_Blast.png"),
+        R("Generated/Attacks/Fx_Paint.png", border: new Vector4(2, 2, 2, 4)),
+        R("Generated/Attacks/Fx_Bar.png", border: new Vector4(2, 0, 2, 0)),
         R("Generated/Attacks/Fx_Shadow.png"),
         R("Generated/Attacks/Fx_Alert.png"),
         R("Generated/Attacks/Popup_Ad.png"),
@@ -117,6 +122,9 @@ public static class ArtAssets
         R("Generated/UI/Hud_GaugeFill.png"),
         R("Generated/UI/Icon_NewTab.png"),
         R("Generated/UI/Icon_Breakpoint.png"),
+        R("Generated/UI/Icon_BarGraph.png"),
+        R("Generated/UI/Icon_Paint.png"),
+        R("Generated/UI/Icon_Bomb.png"),
     };
 
     [MenuItem("Tools/Team1/グラフィックを適用")]
@@ -338,6 +346,11 @@ public static class ArtAssets
         ("Stage/Attack_Stage_Notification", "Generated/Hazards/Hazard_Notification.png"),
         // 能力のブレークポイントは白い柱に、VS Code の色を掛ける（ApplyToData の中で入れる。敵の柱は赤のまま）
         ("Player/Attack_Ability_Breakpoint", "Generated/Attacks/Fx_PillarNeutral.png"),
+        // カテゴリの能力：絵にアプリの色が入っているので、白（絵の色のまま）
+        ("Player/Attack_Ability_BarGraph", "Generated/Attacks/Fx_Bar.png"),
+        ("Player/Attack_Ability_PaintBucket", "Generated/Attacks/Fx_Paint.png"),
+        ("Player/Attack_Ability_Bomb", "Generated/Attacks/Bullet_Bomb.png"),
+        ("Player/Attack_Ability_Bomb_Blast", "Generated/Attacks/Fx_Blast.png"),
     };
 
     static void ApplyToData()
@@ -364,6 +377,13 @@ public static class ArtAssets
         ApplyThemesToCatalog(chrome, vscode);
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_NewTab.asset", "Generated/UI/Icon_NewTab.png");
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Breakpoint.asset", "Generated/UI/Icon_Breakpoint.png");
+        // カテゴリの能力の色とアイコン（Office＝緑、クリエイティブ＝紫、ゲーム＝橙）
+        SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_BarGraph.asset", "_theme", GetOrCreateTheme("Theme_Office", OfficeTheme));
+        SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_PaintBucket.asset", "_theme", GetOrCreateTheme("Theme_Creative", CreativeTheme));
+        SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Bomb.asset", "_theme", GetOrCreateTheme("Theme_Game", GameTheme));
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_BarGraph.asset", "Generated/UI/Icon_BarGraph.png");
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_PaintBucket.asset", "Generated/UI/Icon_Paint.png");
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Bomb.asset", "Generated/UI/Icon_Bomb.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_Chrome.asset", "Generated/Bosses/Icon_Browser.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_VSCode.asset", "Generated/Bosses/Icon_Editor.png");
     }
@@ -457,6 +477,42 @@ public static class ArtAssets
         Col(so, "_folder", "007acc"); Col(so, "_folderShade", "0065a9"); Col(so, "_folderTab", "3ea6ff");
         Col(so, "_main", "007acc");
         Colors(so, "_accents", "007acc");
+    }
+
+    // Office・仕事：Excel の緑。差し色は Word の青・PowerPoint の橙
+    static void OfficeTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "cfe8d6"); Col(so, "_cloud", "ffffff");
+        Colors(so, "_hills", "0e3b22", "15502e", "217346", "33a565", "7fd19b");
+        Col(so, "_floor", "8a8f99"); Col(so, "_floorTop", "217346");
+        Col(so, "_wall", "4a5a50"); Col(so, "_wallHighlight", "6b7d72");
+        Col(so, "_folder", "33a565"); Col(so, "_folderShade", "217346"); Col(so, "_folderTab", "185c37");
+        Col(so, "_main", "217346");
+        Colors(so, "_accents", "217346", "2b579a", "d24726", "33a565");
+    }
+
+    // クリエイティブ：Figma の5色。夕方の紫の空
+    static void CreativeTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "2c1a4d"); Col(so, "_cloud", "4b2f7a");
+        Colors(so, "_hills", "1a0f33", "32206b", "5b3bb0", "a259ff", "c99bff");
+        Col(so, "_floor", "3a3a44"); Col(so, "_floorTop", "a259ff");
+        Col(so, "_wall", "2a2333"); Col(so, "_wallHighlight", "463a55");
+        Col(so, "_folder", "f24e1e"); Col(so, "_folderShade", "b8360f"); Col(so, "_folderTab", "ff7262");
+        Col(so, "_main", "a259ff");
+        Colors(so, "_accents", "f24e1e", "ff7262", "a259ff", "1abcfe", "0acf83");
+    }
+
+    // ゲーム：ゲームランチャーの暗い青に、橙の差し色
+    static void GameTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "1b2838"); Col(so, "_cloud", "2a475e");
+        Colors(so, "_hills", "0f1a24", "1b2838", "2a475e", "66c0f4", "c7d5e0");
+        Col(so, "_floor", "3d4450"); Col(so, "_floorTop", "e4572e");
+        Col(so, "_wall", "171a21"); Col(so, "_wallHighlight", "2a3140");
+        Col(so, "_folder", "e4572e"); Col(so, "_folderShade", "a93a1b"); Col(so, "_folderTab", "ffb000");
+        Col(so, "_main", "e4572e");
+        Colors(so, "_accents", "e4572e", "ffb000", "66c0f4");
     }
 
     static void SetIcon<T>(string assetPath, string sprite) where T : UnityEngine.Object

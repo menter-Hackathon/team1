@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Run/RunTitle.unity
     guid: 0e2d80c3c588d449c8fcb407fdfd0c16
   - enabled: 1
+    path: Assets/Scenes/Run/RunLoadout.unity
+    guid: 27b7d21a8ffef42ca825d1b1f23435c8
+  - enabled: 1
     path: Assets/Scenes/Run/Stage_Desktop.unity
     guid: b56f124b881e34bd8a6a8cb43ba95ada
   - enabled: 1
