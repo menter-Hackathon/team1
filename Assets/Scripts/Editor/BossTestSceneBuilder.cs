@@ -17,9 +17,6 @@ public static class BossTestSceneBuilder
     const string ScenePath = "Assets/Scenes/Test/BossTest.unity";
     const string AttackFolder = "Assets/ScriptableObjects/Attacks";
 
-    static readonly Color GroundColor = new Color(0.36f, 0.30f, 0.62f);
-    static readonly Color OneWayColor = new Color(0.30f, 0.80f, 0.90f);
-    static readonly Color BackgroundColor = new Color(0.10f, 0.08f, 0.20f);
 
     // 部屋の内側：x は -10〜10、y は床の上面 0 から画面の上端 11.5 まで
     static readonly Rect ArenaBounds = new Rect(-10f, 0f, 20f, 11.5f);
@@ -45,19 +42,22 @@ public static class BossTestSceneBuilder
         }
         if (!ShieldWindowSceneBuilder.CheckLayer()) return;
 
+        GetOrCreateAttacks(); // 無ければ docs の数値で作る
+        ArtAssets.Apply(); // 絵の取り込み設定と、攻撃データ・能力・ボスへの割り当て
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        // アセットは新しいシーンを開いたあとに読み込む（取り込みやシーンの切り替えで、前に読んだ物が使えなくなることがある）
         Sprite square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
         Attacks attacks = GetOrCreateAttacks();
-        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         // --- 部屋（床の上面が y=0） ---
         var terrain = new GameObject("Terrain").transform;
-        PlayerTestSceneBuilder.CreateBlock("Floor", new Vector2(0f, -1f), new Vector2(22f, 2f), ground, GroundColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Wall_Left", new Vector2(-10.5f, 6f), new Vector2(1f, 14f), ground, GroundColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Wall_Right", new Vector2(10.5f, 6f), new Vector2(1f, 14f), ground, GroundColor, square, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Floor", new Vector2(0f, -1f), new Vector2(22f, 2f), ground, ArtLib.BlockKind.Ground, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Wall_Left", new Vector2(-10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Wall_Right", new Vector2(10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
         // 【仮】フォルダの足場（上面が高さ3）。Chrome の3か所（x=-7・0・7、幅4）の間に、0.3マスずつ離して置く。
         // 足場の端に立っても Chrome の体には触れず、近接は届く
-        PlayerTestSceneBuilder.CreateBlock("Folder_Left", new Vector2(-3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, OneWayColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Folder_Right", new Vector2(3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, OneWayColor, square, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Folder_Left", new Vector2(-3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Folder_Right", new Vector2(3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
 
         var arena = new GameObject("BattleArena").AddComponent<BattleArena>();
         PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
@@ -93,8 +93,9 @@ public static class BossTestSceneBuilder
         cam.orthographic = true;
         cam.orthographicSize = 6f;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = BackgroundColor;
         camGo.AddComponent<AudioListener>();
+        ArtLib.CreateBackground(cam);
+        ArtLib.CreateHud(cam, player, null);
 
         PlayerTestSceneBuilder.EnsureFolder(Path.GetDirectoryName(ScenePath).Replace('\\', '/'));
         EditorSceneManager.SaveScene(scene, ScenePath);
@@ -104,11 +105,11 @@ public static class BossTestSceneBuilder
 
     static readonly Color VSCodeBodyColor = new Color(0.16f, 0.42f, 0.78f);
     static readonly Color ChromeBodyColor = new Color(0.92f, 0.92f, 0.95f);
-    static readonly Color TitleBarColor = new Color(0.12f, 0.12f, 0.16f);
 
     /// <summary>
     /// ボスを作る（原点＝体の中心）。体の大きさの被弾範囲と、同じ形の体当たり判定を付ける。
-    /// 見た目は仮：体の四角と、上の端のタイトルバー
+    /// 見た目：B「ウイルスがアプリを着ている」（ArtLib.DecorateBossB）。
+    /// ゲージ100%で追い出されて逃げ回る、ウイルス本体（HP1、体当たりなし）を子に非表示で置く
     /// </summary>
     internal static BossController CreateBoss(string bossName, BossProfile profile, Vector2 position, Vector2 bodySize, Color bodyColor, Sprite square, Transform player)
     {
@@ -118,15 +119,16 @@ public static class BossTestSceneBuilder
         boss.layer = enemyLayer;
         boss.transform.position = position;
 
+        // 判定の物（体の大きさの四角）。絵は外して、判定だけにする
         var body = PlayerTestSceneBuilder.CreateSprite("Body", boss.transform, Vector2.zero, bodySize, bodyColor, square, 0);
         body.gameObject.layer = enemyLayer;
-        var titleBar = PlayerTestSceneBuilder.CreateSprite("TitleBar", boss.transform, new Vector2(0f, bodySize.y * 0.5f - 0.2f), new Vector2(bodySize.x, 0.4f), TitleBarColor, square, 1);
-        titleBar.gameObject.layer = enemyLayer;
+        GameObject bodyGo = body.gameObject;
+        ArtLib.RemoveRenderer(bodyGo.transform);
 
-        var hurtCol = PlayerTestSceneBuilder.AddHurtbox(body.gameObject);
-        var hurtbox = body.GetComponent<Hurtbox>();
+        var hurtCol = PlayerTestSceneBuilder.AddHurtbox(bodyGo);
+        var hurtbox = bodyGo.GetComponent<Hurtbox>();
         // 体当たり：被弾範囲と同じ形で、プレイヤーに当たり続ける（連続ヒットはプレイヤーの無敵時間で防ぐ）
-        var contact = PlayerTestSceneBuilder.AddHitbox(body.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
+        var contact = PlayerTestSceneBuilder.AddHitbox(bodyGo, Team.Enemy, 1 << playerLayer, damage: 1,
             knockback: new Vector2(6f, 5f), hitStun: 0.25f, hitOnce: false, activeOnStart: true, area: hurtCol);
 
         var gauge = boss.AddComponent<VirusGauge>();
@@ -134,17 +136,87 @@ public static class BossTestSceneBuilder
         AddAttackRunner(boss, Team.Enemy, 1 << playerLayer, player);
 
         var controller = boss.AddComponent<BossController>();
+        BossArmorVisual visual = ArtLib.DecorateBossB(controller, bossName);
+        Health ejected = CreateEjectedVirus(boss.transform, square);
         PlayerTestSceneBuilder.SetProps(controller, so =>
         {
             so.FindProperty("_profile").objectReferenceValue = profile;
             so.FindProperty("_contactHitbox").objectReferenceValue = contact;
             so.FindProperty("_hurtbox").objectReferenceValue = hurtbox;
+            // 色（点滅・消える演出・当たったときの光）は BossArmorVisual が受け持つ
+            so.FindProperty("_externalVisuals").boolValue = true;
             var arr = so.FindProperty("_renderers");
-            arr.arraySize = 2;
-            arr.GetArrayElementAtIndex(0).objectReferenceValue = body;
-            arr.GetArrayElementAtIndex(1).objectReferenceValue = titleBar;
+            arr.arraySize = 0;
+            so.FindProperty("_normalizedColor").colorValue = Color.white;
+            so.FindProperty("_ejectedVirus").objectReferenceValue = ejected;
         });
         return controller;
+    }
+
+    /// <summary>
+    /// ゲージ100%で追い出されるウイルス本体（docs 3章、11/17 決定。細かい所は【提案】のとおり）。
+    /// 逃げるだけで攻撃しない・触れてもダメージなし・時間切れなし。動きは歩く雑魚と同じで、少し速い（毎秒4.5マス）。
+    /// HP1：近接でも能力でも、1回当てるとはじけて消える。原点＝足元。ボスの子に非表示で置き、BossController が追い出すときに表示する
+    /// </summary>
+    static Health CreateEjectedVirus(Transform boss, Sprite square)
+    {
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int ground = LayerMask.NameToLayer("Ground");
+        int oneWay = LayerMask.NameToLayer("OneWayPlatform");
+        var go = new GameObject("EjectedVirus");
+        go.layer = enemyLayer;
+        go.transform.SetParent(boss, false);
+        var size = new Vector2(0.6f, 0.55f);
+
+        var rb = go.AddComponent<Rigidbody2D>();
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.useFullKinematicContacts = true;
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        var box = go.AddComponent<BoxCollider2D>();
+        box.size = size;
+        box.offset = new Vector2(0f, size.y * 0.5f);
+        var body = go.AddComponent<KinematicBody2D>();
+        PlayerTestSceneBuilder.SetProps(body, so =>
+        {
+            so.FindProperty("_solidMask").intValue = 1 << ground;
+            so.FindProperty("_oneWayMask").intValue = 1 << oneWay;
+        });
+        var health = go.AddComponent<Health>();
+        PlayerTestSceneBuilder.SetProps(health, so =>
+        {
+            so.FindProperty("_team").enumValueIndex = (int)Team.Enemy;
+            so.FindProperty("_max").intValue = 1;
+            so.FindProperty("_oneDamagePerHit").boolValue = false;
+            so.FindProperty("_invincibleTimeAfterHit").floatValue = 0f;
+        });
+        go.AddComponent<DisableOnDeath>();
+        var death = go.AddComponent<DeathVfx>();
+        PlayerTestSceneBuilder.SetProps(death, so =>
+        {
+            so.FindProperty("_big").boolValue = true;
+            so.FindProperty("_offset").vector2Value = new Vector2(0f, 0.4f);
+        });
+
+        var visual = new GameObject("Visual").transform;
+        visual.SetParent(go.transform, false);
+        var art = ArtLib.AddArt(visual, "Art", null, Vector3.zero, 15, enemyLayer);
+        ArtLib.Animate(art, ArtAssets.LoadFrames("Generated/Enemies/Virus_Fleeing.png"), 12f);
+        // 被弾範囲（体当たりの Hitbox は付けない＝触れてもダメージなし）
+        var hurt = PlayerTestSceneBuilder.CreateSprite("Body", visual, new Vector2(0f, 0.32f), new Vector2(0.7f, 0.65f), Color.white, square, 0);
+        hurt.gameObject.layer = enemyLayer;
+        GameObject hurtGo = hurt.gameObject;
+        ArtLib.RemoveRenderer(hurtGo.transform);
+        PlayerTestSceneBuilder.AddHurtbox(hurtGo);
+
+        var walker = go.AddComponent<ZakoWalker>();
+        PlayerTestSceneBuilder.SetProps(walker, so =>
+        {
+            so.FindProperty("_speed").floatValue = 4.5f;
+            so.FindProperty("_groundMask").intValue = (1 << ground) | (1 << oneWay);
+            so.FindProperty("_visualRoot").objectReferenceValue = visual;
+        });
+        go.SetActive(false);
+        return health;
     }
 
     /// <summary>攻撃する人に AttackRunner を付ける。【仮】敵の弾は盾ウィンドウ（BulletBlocker）で止まるようにする</summary>

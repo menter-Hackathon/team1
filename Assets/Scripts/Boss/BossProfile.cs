@@ -32,6 +32,8 @@ public class BossPhaseSettings
 public class BossProfile : ScriptableObject
 {
     [SerializeField] string _displayName;
+    [Tooltip("画面のゲージの横に出す、アプリの小さなアイコン（仮）")]
+    [SerializeField] Sprite _icon;
 
     [Header("ウイルス解除ゲージ（docs 3章）")]
     [SerializeField, Min(1)] int _gaugeMax = 100;
@@ -59,6 +61,7 @@ public class BossProfile : ScriptableObject
     [SerializeField] SkillDefinition _reward;
 
     public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
+    public Sprite Icon => _icon;
     public int GaugeMax => _gaugeMax;
     public float Phase2Threshold => _phase2Threshold;
     public float TransitionTime => _transitionTime;

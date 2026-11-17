@@ -6,10 +6,6 @@ using UnityEngine;
 /// </summary>
 public class RunResultScreen : MonoBehaviour
 {
-    GUIStyle _title;
-    GUIStyle _label;
-    GUIStyle _button;
-
     void Update()
     {
         var kb = UnityEngine.InputSystem.Keyboard.current;
@@ -20,36 +16,31 @@ public class RunResultScreen : MonoBehaviour
     {
         GameSession session = GameSession.Instance;
         if (session == null || session.IsTransitioning) return;
-        if (_title == null)
-        {
-            _title = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 36, fontStyle = FontStyle.Bold };
-            _title.normal.textColor = Color.white;
-            _label = new GUIStyle(GUI.skin.label) { fontSize = 20 };
-            _label.normal.textColor = Color.white;
-            _button = new GUIStyle(GUI.skin.button) { fontSize = 20 };
-        }
+        PixelGui.Begin();
 
-        float w = 520f;
-        float x = (Screen.width - w) * 0.5f;
-        float y = Screen.height * 0.15f;
-        GUI.Label(new Rect(0f, y, Screen.width, 50f), "RESULT", _title);
-        y += 80f;
+        int rows = session.Run != null ? session.Run.Cleared.Count : 0;
+        float w = 340f;
+        float panelH = 64f + rows * 30f + 30f + 44f;
+        float x = (PixelGui.Width - w) * 0.5f;
+        float y = Mathf.Max(8f, (PixelGui.Height - panelH) * 0.5f);
+        GUI.Box(new Rect(x, y, w, panelH), GUIContent.none, PixelGui.Panel);
+        GUI.Label(new Rect(x, y + 10f, w, 40f), "RESULT", PixelGui.Title);
+        float cy = y + 60f;
 
         if (session.Run != null)
         {
             foreach (var record in session.Run.Cleared)
             {
-                Sprite icon = record.Reward != null ? record.Reward.Icon : null;
-                if (icon != null) GUI.DrawTexture(new Rect(x, y, 32f, 32f), icon.texture, ScaleMode.ScaleToFit);
+                // 能力のアイコン（16×16 ドット）を等倍で
+                if (record.Reward != null) PixelGui.DrawSpriteAt(x + 20f, cy + 2f, record.Reward.Icon);
                 string ability = record.Reward != null ? record.Reward.DisplayName : "-";
-                GUI.Label(new Rect(x + 44f, y, w - 44f, 34f), $"{record.Stage.DisplayName}　{record.Stage.UsageHours:0.#} h　→　{ability}", _label);
-                y += 42f;
+                GUI.Label(new Rect(x + 44f, cy, w - 60f, 24f), $"{record.Stage.DisplayName}　{record.Stage.UsageHours:0.#} h　→　{ability}", PixelGui.Label);
+                cy += 30f;
             }
-            y += 10f;
-            GUI.Label(new Rect(x, y, w, 30f), $"リトライ {session.Run.RetryCount}", _label);
-            y += 50f;
+            GUI.Label(new Rect(x + 20f, cy, w - 40f, 24f), $"リトライ {session.Run.RetryCount}", PixelGui.Label);
+            cy += 30f;
         }
-
-        if (GUI.Button(new Rect(x + w * 0.25f, y, w * 0.5f, 44f), "タイトルへ", _button)) session.ReturnToTitle();
+        if (GUI.Button(new Rect(x + w * 0.25f, cy + 4f, w * 0.5f, 28f), "タイトルへ", PixelGui.Button)) session.ReturnToTitle();
+        PixelGui.End();
     }
 }

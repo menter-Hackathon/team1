@@ -8,6 +8,7 @@ using UnityEngine;
 /// ・ボスが正常化したら、少し待って次へ（GameSession.CompleteStage）
 /// ・ライフが0になったら、少し待ってやり直し（GameSession.FailStage）
 /// ・プレイヤーの能力は、ラン状態の所持スキルにつなぐ（ステージをまたいで残る）
+/// ・ステージの色を、そのアプリの色（AppTheme）に塗り替える（同じ GameObject の StageTheme）
 /// ステージのシーンを直接再生したときは、サンプルデータでランを作って始める（開発用）。
 /// </summary>
 public class StageDirector : MonoBehaviour
@@ -49,7 +50,12 @@ public class StageDirector : MonoBehaviour
         }
 
         Plan = _session.Run.Current;
-        Boss = Instantiate(Plan.App.BossPrefab, Plan.App.SpawnPosition, Quaternion.identity);
+        // ステージの色を、そのアプリのアイコンの色にする（壁紙・床・壁・足場）
+        if (TryGetComponent(out StageTheme theme)) theme.Apply(Plan.App.Theme);
+        // 出てくる位置は、ボス部屋（BattleArena）の床の真ん中からのずれ（ボス部屋がステージの端にあるステージもあるため）
+        var arena = FindObjectOfType<BattleArena>();
+        Vector2 roomFloor = arena != null ? new Vector2(arena.Bounds.center.x, arena.Bounds.yMin) : Vector2.zero;
+        Boss = Instantiate(Plan.App.BossPrefab, roomFloor + Plan.App.SpawnPosition, Quaternion.identity);
         Boss.name = Plan.App.BossPrefab.name;
         Boss.gameObject.SetActive(false); // プレハブは非表示で保存してあるが、念のため
         Boss.SetProfile(Plan.Profile);

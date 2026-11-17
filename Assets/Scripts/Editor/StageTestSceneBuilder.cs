@@ -15,13 +15,9 @@ public static class StageTestSceneBuilder
 {
     const string ScenePath = "Assets/Scenes/Test/StageTest.unity";
 
-    static readonly Color GroundColor = new Color(0.36f, 0.30f, 0.62f);
-    static readonly Color OneWayColor = new Color(0.30f, 0.80f, 0.90f);
-    static readonly Color BackgroundColor = new Color(0.10f, 0.08f, 0.20f);
     static readonly Color WalkerColor = new Color(0.45f, 0.85f, 0.35f);
     static readonly Color ShooterColor = new Color(0.75f, 0.40f, 0.95f);
     static readonly Color ZakoShotColor = new Color(0.85f, 0.55f, 1.00f);
-    static readonly Color WindupMarkColor = new Color(1.00f, 0.85f, 0.20f);
     static readonly Color ChromeBodyColor = new Color(0.92f, 0.92f, 0.95f);
     static readonly Rect ArenaBounds = new Rect(-10f, 0f, 20f, 11.5f);
 
@@ -46,18 +42,22 @@ public static class StageTestSceneBuilder
         }
         if (!ShieldWindowSceneBuilder.CheckLayer()) return;
 
+        BossTestSceneBuilder.GetOrCreateAttacks(); // 無ければ作る
+        GetOrCreateZakoShot();
+        ArtAssets.Apply(); // 絵の取り込み設定と、攻撃データ・能力・ボスへの割り当て
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        // アセットは新しいシーンを開いたあとに読み込む（取り込みやシーンの切り替えで、前に読んだ物が使えなくなることがある）
         Sprite square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
         var attacks = BossTestSceneBuilder.GetOrCreateAttacks();
         AttackData zakoShot = GetOrCreateZakoShot();
-        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         // --- 部屋（ボス戦テストシーンと同じ。床の上面が y=0） ---
         var terrain = new GameObject("Terrain").transform;
-        PlayerTestSceneBuilder.CreateBlock("Floor", new Vector2(0f, -1f), new Vector2(22f, 2f), ground, GroundColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Wall_Left", new Vector2(-10.5f, 6f), new Vector2(1f, 14f), ground, GroundColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Wall_Right", new Vector2(10.5f, 6f), new Vector2(1f, 14f), ground, GroundColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Folder_Left", new Vector2(-3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, OneWayColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Folder_Right", new Vector2(3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, OneWayColor, square, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Floor", new Vector2(0f, -1f), new Vector2(22f, 2f), ground, ArtLib.BlockKind.Ground, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Wall_Left", new Vector2(-10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Wall_Right", new Vector2(10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Folder_Left", new Vector2(-3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Folder_Right", new Vector2(3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
 
         var arena = new GameObject("BattleArena").AddComponent<BattleArena>();
         PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
@@ -71,10 +71,11 @@ public static class StageTestSceneBuilder
 
         // --- 雑魚ウイルス ---
         var wave = new GameObject("EnemyWave").AddComponent<EnemyWave>();
-        CreateWalker("Zako_Walker_Floor", new Vector2(2f, 0f), -1, wave.transform, square);
-        CreateWalker("Zako_Walker_Folder", new Vector2(3.5f, 3f), 1, wave.transform, square);
-        CreateShooter("Zako_Shooter_Folder", new Vector2(-3.5f, 3f), zakoShot, player.transform, wave.transform, square);
-        CreateShooter("Zako_Shooter_Floor", new Vector2(8.5f, 0f), zakoShot, player.transform, wave.transform, square);
+        // テストシーンなので、HP の仮表示（頭の上の文字）を出す
+        CreateWalker("Zako_Walker_Floor", new Vector2(2f, 0f), -1, wave.transform, square, debugLabel: true);
+        CreateWalker("Zako_Walker_Folder", new Vector2(3.5f, 3f), 1, wave.transform, square, debugLabel: true);
+        CreateShooter("Zako_Shooter_Folder", new Vector2(-3.5f, 3f), zakoShot, player.transform, wave.transform, square, debugLabel: true);
+        CreateShooter("Zako_Shooter_Floor", new Vector2(8.5f, 0f), zakoShot, player.transform, wave.transform, square, debugLabel: true);
 
         // --- ボス（雑魚を全員倒すと出てくる） ---
         var chrome = BossTestSceneBuilder.CreateBoss("Chrome", attacks.ChromeProfile, new Vector2(0f, 2.5f + 1.5f), new Vector2(4f, 3f), ChromeBodyColor, square, player.transform);
@@ -102,8 +103,9 @@ public static class StageTestSceneBuilder
         cam.orthographic = true;
         cam.orthographicSize = 6f;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = BackgroundColor;
         camGo.AddComponent<AudioListener>();
+        ArtLib.CreateBackground(cam);
+        ArtLib.CreateHud(cam, player, null);
 
         PlayerTestSceneBuilder.EnsureFolder(Path.GetDirectoryName(ScenePath).Replace('\\', '/'));
         EditorSceneManager.SaveScene(scene, ScenePath);
@@ -129,10 +131,12 @@ public static class StageTestSceneBuilder
     }
 
     /// <summary>
-    /// 雑魚の共通部分：HP5、体の被弾範囲と同じ形の体当たり、点滅、倒れたら消える、HP の仮表示。原点＝足元。
+    /// 雑魚の共通部分：HP5、体の被弾範囲と同じ形の体当たり、点滅、倒れたら煙を出して消える。原点＝足元。
     /// HP5 は 2026-11-16 まさぴ〜決定（近接なら5回、ブレークポイントなら2回で倒れる）
+    /// 見た目はウイルスの煙の絵（コマ送り）。判定は体の大きさの四角（絵は外してある）。debugLabel なら HP の仮表示を出す
     /// </summary>
-    static GameObject CreateZakoBase(string name, Vector2 feet, Vector2 size, Color color, Transform parent, Sprite square, out SpriteRenderer body)
+    static GameObject CreateZakoBase(string name, Vector2 feet, Vector2 size, Color color, Transform parent, Sprite square,
+        Sprite[] frames, bool debugLabel, out Transform bodyTransform, out SpriteRenderer art)
     {
         int playerLayer = LayerMask.NameToLayer("Player");
         int enemyLayer = LayerMask.NameToLayer("Enemy");
@@ -150,30 +154,47 @@ public static class StageTestSceneBuilder
             so.FindProperty("_oneDamagePerHit").boolValue = false;
             so.FindProperty("_invincibleTimeAfterHit").floatValue = 0f;
         });
-        go.AddComponent<DamageBlink>();
+        var blink = go.AddComponent<DamageBlink>();
         go.AddComponent<DisableOnDeath>();
-        var label = go.AddComponent<HealthDebugLabel>();
-        PlayerTestSceneBuilder.SetProps(label, so => so.FindProperty("_offset").vector3Value = new Vector3(0f, size.y + 0.4f, 0f));
+        var death = go.AddComponent<DeathVfx>();
+        PlayerTestSceneBuilder.SetProps(death, so => so.FindProperty("_offset").vector2Value = new Vector2(0f, size.y * 0.5f));
+        if (debugLabel)
+        {
+            var label = go.AddComponent<HealthDebugLabel>();
+            PlayerTestSceneBuilder.SetProps(label, so => so.FindProperty("_offset").vector3Value = new Vector3(0f, size.y + 0.4f, 0f));
+        }
 
         var visual = new GameObject("Visual").transform;
         visual.SetParent(go.transform, false);
-        body = PlayerTestSceneBuilder.CreateSprite("Body", visual, new Vector2(0f, size.y * 0.5f), size, color, square, 0);
+        var body = PlayerTestSceneBuilder.CreateSprite("Body", visual, new Vector2(0f, size.y * 0.5f), size, color, square, 0);
         body.gameObject.layer = enemyLayer;
-        var eye = PlayerTestSceneBuilder.CreateSprite("Eye", visual, new Vector2(size.x * 0.22f, size.y * 0.7f), new Vector2(0.14f, 0.18f), Color.white, square, 1);
-        eye.gameObject.layer = enemyLayer;
+        bodyTransform = body.transform;
+        ArtLib.RemoveRenderer(bodyTransform);
+        // 絵（右向き。Visual ごと左右反転する）
+        art = ArtLib.AddArt(visual, "Art", null, Vector3.zero, 11, enemyLayer);
+        ArtLib.Animate(art, frames, 7f);
+        // 点滅させるのは絵だけ
+        SpriteRenderer artRef = art;
+        PlayerTestSceneBuilder.SetProps(blink, so =>
+        {
+            var arr = so.FindProperty("_renderers");
+            arr.arraySize = 1;
+            arr.GetArrayElementAtIndex(0).objectReferenceValue = artRef;
+        });
 
-        var hurtCol = PlayerTestSceneBuilder.AddHurtbox(body.gameObject);
-        PlayerTestSceneBuilder.AddHitbox(body.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
+        var hurtCol = PlayerTestSceneBuilder.AddHurtbox(bodyTransform.gameObject);
+        PlayerTestSceneBuilder.AddHitbox(bodyTransform.gameObject, Team.Enemy, 1 << playerLayer, damage: 1,
             knockback: new Vector2(6f, 5f), hitStun: 0.25f, hitOnce: false, activeOnStart: true, area: hurtCol);
         return go;
     }
 
-    internal static void CreateWalker(string name, Vector2 feet, int direction, Transform parent, Sprite square)
+    internal static void CreateWalker(string name, Vector2 feet, int direction, Transform parent, Sprite square, bool debugLabel = false)
     {
         int ground = LayerMask.NameToLayer("Ground");
         int oneWay = LayerMask.NameToLayer("OneWayPlatform");
         var size = new Vector2(0.8f, 0.8f);
-        var go = CreateZakoBase(name, feet, size, WalkerColor, parent, square, out _);
+        var go = CreateZakoBase(name, feet, size, WalkerColor, parent, square,
+            ArtAssets.LoadFrames("Generated/Enemies/Zako_Walker.png"), debugLabel, out _, out _);
 
         var rb = go.AddComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
@@ -197,21 +218,21 @@ public static class StageTestSceneBuilder
         });
     }
 
-    internal static void CreateShooter(string name, Vector2 feet, AttackData shot, Transform player, Transform parent, Sprite square)
+    internal static void CreateShooter(string name, Vector2 feet, AttackData shot, Transform player, Transform parent, Sprite square, bool debugLabel = false)
     {
         int playerLayer = LayerMask.NameToLayer("Player");
         var size = new Vector2(0.8f, 1.0f);
-        var go = CreateZakoBase(name, feet, size, ShooterColor, parent, square, out SpriteRenderer body);
+        var go = CreateZakoBase(name, feet, size, ShooterColor, parent, square,
+            ArtAssets.LoadFrames("Generated/Enemies/Zako_Shooter.png"), debugLabel, out Transform bodyTransform, out SpriteRenderer body);
 
         var runner = BossTestSceneBuilder.AddAttackRunner(go, Team.Enemy, 1 << playerLayer, player);
         // 弾は体の真ん中から出す（足元から出すと床に当たって消える）
-        PlayerTestSceneBuilder.SetProps(runner, so => so.FindProperty("_origin").objectReferenceValue = body.transform);
-        // 【仮】ため始めてから撃つまで頭の上に出す「!」（黄色い縦棒と点）。HP の仮表示より上に置く
+        PlayerTestSceneBuilder.SetProps(runner, so => so.FindProperty("_origin").objectReferenceValue = bodyTransform);
+        // 【仮】ため始めてから撃つまで頭の上に出す「!」。HP の仮表示より上に置く
         var mark = new GameObject("WindupMark").transform;
         mark.SetParent(go.transform, false);
         mark.localPosition = new Vector3(0f, size.y + 0.75f, 0f);
-        PlayerTestSceneBuilder.CreateSprite("Bar", mark, new Vector2(0f, 0.4f), new Vector2(0.16f, 0.45f), WindupMarkColor, square, 20);
-        PlayerTestSceneBuilder.CreateSprite("Dot", mark, Vector2.zero, new Vector2(0.16f, 0.16f), WindupMarkColor, square, 20);
+        ArtLib.AddArt(mark, "Alert", ArtAssets.LoadSprite("Generated/Attacks/Fx_Alert.png"), new Vector3(0f, 0.2f, 0f), 30, go.layer);
         mark.gameObject.SetActive(false);
 
         var shooter = go.AddComponent<ZakoShooter>();

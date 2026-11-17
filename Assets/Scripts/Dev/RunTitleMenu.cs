@@ -14,9 +14,6 @@ public class RunTitleMenu : MonoBehaviour
     bool _manual;
     readonly Dictionary<AppEntry, float> _hours = new Dictionary<AppEntry, float>();
     string _error;
-    GUIStyle _title;
-    GUIStyle _label;
-    GUIStyle _button;
 
     GameSession Session => GameSession.Instance != null ? GameSession.Instance : GameSession.EnsureExists(_catalog);
 
@@ -24,51 +21,58 @@ public class RunTitleMenu : MonoBehaviour
     {
         GameSession session = Session;
         if (session.IsTransitioning) return;
-        if (_title == null)
-        {
-            _title = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 40, fontStyle = FontStyle.Bold };
-            _title.normal.textColor = Color.white;
-            _label = new GUIStyle(GUI.skin.label) { fontSize = 18 };
-            _label.normal.textColor = Color.white;
-            _button = new GUIStyle(GUI.skin.button) { fontSize = 20 };
-        }
+        PixelGui.Begin();
 
-        float w = 420f;
-        float x = (Screen.width - w) * 0.5f;
-        float y = Screen.height * 0.18f;
-        GUI.Label(new Rect(0f, y, Screen.width, 60f), "Team1", _title);
-        y += 90f;
+        AppEntry[] apps = session.Catalog != null ? session.Catalog.Apps : new AppEntry[0];
+        float w = 300f;
+        float contentH = _manual ? apps.Length * 30f + 44f : 3 * 36f;
+        float panelH = 70f + contentH + (string.IsNullOrEmpty(_error) ? 0f : 40f) + 16f;
+        float x = (PixelGui.Width - w) * 0.5f;
+        float y = Mathf.Max(8f, (PixelGui.Height - panelH) * 0.5f);
+        GUI.Box(new Rect(x, y, w, panelH), GUIContent.none, PixelGui.Panel);
+
+        // タイトルと、歩くプレイヤー
+        GameArt art = GameArt.Instance;
+        if (art != null && art.PlayerWalk != null && art.PlayerWalk.Length > 0)
+        {
+            Sprite frame = art.PlayerWalk[Mathf.FloorToInt(Time.unscaledTime * 8f) % art.PlayerWalk.Length];
+            PixelGui.DrawSpriteAt(x + 18f, y + 10f, frame, 2f / 3f); // 3倍の絵を 2/3 にして、1ドット＝仮想の2ドット
+        }
+        GUI.Label(new Rect(x, y + 12f, w, 40f), "Team1", PixelGui.Title);
+        float cy = y + 70f;
+        float bx = x + 20f, bw = w - 40f;
 
         if (!_manual)
         {
-            if (GUI.Button(new Rect(x, y, w, 44f), "自動", _button)) Begin(new FileUsageProvider());
-            y += 54f;
-            if (GUI.Button(new Rect(x, y, w, 44f), "サンプル", _button)) Begin(new SampleUsageProvider());
-            y += 54f;
-            if (GUI.Button(new Rect(x, y, w, 44f), "手入力", _button)) { _manual = true; _error = null; }
-            y += 54f;
+            if (GUI.Button(new Rect(bx, cy, bw, 28f), "自動", PixelGui.Button)) Begin(new FileUsageProvider());
+            cy += 36f;
+            if (GUI.Button(new Rect(bx, cy, bw, 28f), "サンプル", PixelGui.Button)) Begin(new SampleUsageProvider());
+            cy += 36f;
+            if (GUI.Button(new Rect(bx, cy, bw, 28f), "手入力", PixelGui.Button)) { _manual = true; _error = null; }
+            cy += 36f;
         }
         else
         {
-            foreach (var app in session.Catalog != null ? session.Catalog.Apps : new AppEntry[0])
+            foreach (var app in apps)
             {
                 if (app == null) continue;
                 if (!_hours.ContainsKey(app)) _hours[app] = 0f;
-                GUI.Label(new Rect(x, y, 160f, 30f), app.DisplayName, _label);
-                _hours[app] = Mathf.Round(GUI.HorizontalSlider(new Rect(x + 160f, y + 10f, 180f, 20f), _hours[app], 0f, 40f));
-                GUI.Label(new Rect(x + 350f, y, 70f, 30f), $"{_hours[app]:0} h", _label);
-                y += 38f;
+                GUI.Label(new Rect(bx, cy, 90f, 24f), app.DisplayName, PixelGui.Label);
+                _hours[app] = Mathf.Round(GUI.HorizontalSlider(new Rect(bx + 92f, cy + 8f, bw - 92f - 44f, 16f), _hours[app], 0f, 40f));
+                GUI.Label(new Rect(bx + bw - 40f, cy, 40f, 24f), $"{_hours[app]:0} h", PixelGui.Label);
+                cy += 30f;
             }
-            y += 10f;
-            if (GUI.Button(new Rect(x, y, w * 0.5f - 5f, 44f), "戻る", _button)) { _manual = false; _error = null; }
-            if (GUI.Button(new Rect(x + w * 0.5f + 5f, y, w * 0.5f - 5f, 44f), "開始", _button)) BeginManual();
-            y += 54f;
+            cy += 8f;
+            if (GUI.Button(new Rect(bx, cy, bw * 0.5f - 4f, 28f), "戻る", PixelGui.Button)) { _manual = false; _error = null; }
+            if (GUI.Button(new Rect(bx + bw * 0.5f + 4f, cy, bw * 0.5f - 4f, 28f), "開始", PixelGui.Button)) BeginManual();
+            cy += 36f;
         }
 
         if (!string.IsNullOrEmpty(_error))
         {
-            GUI.Label(new Rect(x - 100f, y + 10f, w + 200f, 60f), _error, _label);
+            GUI.Label(new Rect(bx, cy, bw, 40f), _error, PixelGui.Small);
         }
+        PixelGui.End();
     }
 
     void BeginManual()

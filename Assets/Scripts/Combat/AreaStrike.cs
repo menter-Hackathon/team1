@@ -98,7 +98,11 @@ public class AreaStrike : MonoBehaviour
             tg.transform.SetParent(go.transform, false);
             tg.transform.position = surface + up * 0.15f;
             tg.transform.rotation = go.transform.rotation;
-            strike._telegraph = AttackRunner.AddVisual(tg.transform, PlaceholderSprites.Circle, TelegraphColor, new Vector2(size.x, 0.5f), 17, "Circle");
+            // 絵があれば（GameArt）その色のまま、無ければ仮の赤丸
+            Sprite mark = GameArt.Instance != null ? GameArt.Instance.BreakpointMark : null;
+            strike._telegraph = mark != null
+                ? AttackRunner.AddVisual(tg.transform, mark, new Color(1f, 1f, 1f, 0.9f), new Vector2(size.x, 0.5f), 17, "Circle")
+                : AttackRunner.AddVisual(tg.transform, PlaceholderSprites.Circle, TelegraphColor, new Vector2(size.x, 0.5f), 17, "Circle");
             strike._telegraph.enabled = false;
         }
 

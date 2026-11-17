@@ -69,6 +69,8 @@ public class AttackRunner : MonoBehaviour
     public event Action<AttackData> Finished;
     /// <summary>弾・判定・落下物を出したとき（テスト・エフェクト用）</summary>
     public event Action<GameObject> Spawned;
+    /// <summary>瞬間移動した瞬間（攻撃データ, 元の位置, 移った先）。エフェクト用</summary>
+    public event Action<AttackData, Vector2, Vector2> Warped;
 
     void Awake()
     {
@@ -516,6 +518,7 @@ public class AttackRunner : MonoBehaviour
         if (warpable != null) warpable.Teleport(to);
         else if (body != null) body.Warp(to);
         else transform.position = to;
+        Warped?.Invoke(data, from, (Vector2)transform.position);
 
         yield return Fade(warpable, 0f, 1f, data.AppearTime);
         if (hideContact) warpable.SetContactEnabled(true);
@@ -609,7 +612,11 @@ public class AttackRunner : MonoBehaviour
         return hitbox;
     }
 
-    /// <summary>仮の絵（子の SpriteRenderer）を付ける</summary>
+    /// <summary>
+    /// 絵（子の SpriteRenderer）を付ける。
+    /// ・縁（9スライスの境界）がある絵：縁はそのままの大きさで、間を並べて指定の大きさにする（柱・波線・点線の枠。ドットが伸びない）
+    /// ・縁が無い絵：指定した大きさに合わせて伸び縮みさせる
+    /// </summary>
     public static SpriteRenderer AddVisual(Transform parent, Sprite sprite, Color color, Vector2 size, int sortingOrder = 20, string objectName = "Visual")
     {
         var go = new GameObject(objectName);
@@ -617,8 +624,17 @@ public class AttackRunner : MonoBehaviour
         go.transform.SetParent(parent, false);
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = sprite != null ? sprite : PlaceholderSprites.Square;
-        Vector2 native = sr.sprite.bounds.size; // 絵の元の大きさに関係なく、指定した大きさに合わせる
-        go.transform.localScale = new Vector3(size.x / Mathf.Max(native.x, 0.001f), size.y / Mathf.Max(native.y, 0.001f), 1f);
+        if (sr.sprite.border != Vector4.zero)
+        {
+            sr.drawMode = SpriteDrawMode.Tiled;
+            sr.tileMode = SpriteTileMode.Continuous;
+            sr.size = size;
+        }
+        else
+        {
+            Vector2 native = sr.sprite.bounds.size; // 絵の元の大きさに関係なく、指定した大きさに合わせる
+            go.transform.localScale = new Vector3(size.x / Mathf.Max(native.x, 0.001f), size.y / Mathf.Max(native.y, 0.001f), 1f);
+        }
         sr.color = color;
         sr.sortingOrder = sortingOrder;
         return sr;

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Boss_VSCode
   m_EditorClassIdentifier: 
   _displayName: VS Code
+  _icon: {fileID: 21300000, guid: 2e8cceb07611046c6bd5ef954c59b758, type: 3}
   _gaugeMax: 100
   _phase2Threshold: 0.5
   _transitionTime: 1.5
