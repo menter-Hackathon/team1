@@ -23,7 +23,8 @@ MonoBehaviour:
     BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
     Profile: {fileID: 11400000, guid: 451941f9f7b9c40f0be4c59c27738911, type: 2}
     SpawnPosition: {x: 0, y: 4}
-    StageScene: Stage_Desktop
+    StageScene: Stage_Scroll
+    Theme: {fileID: 11400000, guid: 43f55ffefecd84a6285d0683844392f5, type: 2}
     GaugeMax:
       Min: 80
       Max: 140
@@ -43,7 +44,8 @@ MonoBehaviour:
     BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
     Profile: {fileID: 11400000, guid: 55c53859d0c654d339917667508f8ca2, type: 2}
     SpawnPosition: {x: 7, y: 1.5}
-    StageScene: Stage_Desktop
+    StageScene: Stage_Windows
+    Theme: {fileID: 11400000, guid: 658b324a784274529b268639fab29fda, type: 2}
     GaugeMax:
       Min: 80
       Max: 140

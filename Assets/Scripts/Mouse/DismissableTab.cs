@@ -14,8 +14,8 @@ public class DismissableTab : MonoBehaviour
 {
     [Tooltip("【仮】クリックを受ける範囲を、タブの大きさより広げる量（マス）。小さいタブでも押しやすくする")]
     [SerializeField, Min(0f)] float _clickPadding = 0.2f;
-    [Tooltip("マウスの下にあるときの色")]
-    [SerializeField] Color _hoverColor = Color.white;
+    [Tooltip("マウスの下にあるときの色（タブの絵は白いので、閉じるボタンのオレンジ寄りにして、消せることを見せる）")]
+    [SerializeField] Color _hoverColor = new Color(1f, 0.55f, 0.25f);
 
     FallingObject _falling;
     Color _baseColor;

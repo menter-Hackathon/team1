@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d289ebf5820d4741bf2a19f61fbc465, type: 3}
+  m_Name: GameArt
+  m_EditorClassIdentifier: 
+  _telegraphFrame: {fileID: 21300000, guid: ebbc08fcd0fae4618b6fff79c225397d, type: 3}
+  _shadow: {fileID: 21300000, guid: 6e940741e5c62433fbdf95a5b9693169, type: 3}
+  _breakpointMark: {fileID: 21300000, guid: 356b3e937333b47dc9c71d4b5839f6ee, type: 3}
+  _warpCursor: {fileID: 21300000, guid: 32929522040a34740beb56163f6cb756, type: 3}
+  _smoke:
+  - {fileID: -2882344434963867798, guid: 0aed599991e364a408ce211270fddaac, type: 3}
+  - {fileID: 7390538666901032467, guid: 0aed599991e364a408ce211270fddaac, type: 3}
+  - {fileID: -5158293495704373656, guid: 0aed599991e364a408ce211270fddaac, type: 3}
+  - {fileID: 7272478014275281361, guid: 0aed599991e364a408ce211270fddaac, type: 3}
+  - {fileID: 2916357576893082457, guid: 0aed599991e364a408ce211270fddaac, type: 3}
+  _smokeSmall:
+  - {fileID: -6255888993699589134, guid: a7e7a471aaa994549b16029664a20d59, type: 3}
+  - {fileID: 6791147147458743815, guid: a7e7a471aaa994549b16029664a20d59, type: 3}
+  - {fileID: 2902587347306487629, guid: a7e7a471aaa994549b16029664a20d59, type: 3}
+  - {fileID: -2640644130183046897, guid: a7e7a471aaa994549b16029664a20d59, type: 3}
+  - {fileID: -6771565139309644803, guid: a7e7a471aaa994549b16029664a20d59, type: 3}
+  _hitSpark:
+  - {fileID: -7997406943608632526, guid: 8bc229c7bbb6f4367ad0996aa7606e4b, type: 3}
+  - {fileID: -7098738567918035943, guid: 8bc229c7bbb6f4367ad0996aa7606e4b, type: 3}
+  - {fileID: 2005780798064505930, guid: 8bc229c7bbb6f4367ad0996aa7606e4b, type: 3}
+  - {fileID: -8542910680798308908, guid: 8bc229c7bbb6f4367ad0996aa7606e4b, type: 3}
+  _tabOpen:
+  - {fileID: 6974792029539736845, guid: 5121e05341d6b496b81469e8dbb8b2d6, type: 3}
+  - {fileID: 7975491797653897130, guid: 5121e05341d6b496b81469e8dbb8b2d6, type: 3}
+  - {fileID: -4957530892439903435, guid: 5121e05341d6b496b81469e8dbb8b2d6, type: 3}
+  - {fileID: -227460518435013144, guid: 5121e05341d6b496b81469e8dbb8b2d6, type: 3}
+  _shards:
+  - {fileID: -2740657570623929741, guid: 859da06bcd86f49e19ee9c31a676aa29, type: 3}
+  - {fileID: -4069943351254629189, guid: 859da06bcd86f49e19ee9c31a676aa29, type: 3}
+  - {fileID: -7010138832407179751, guid: 859da06bcd86f49e19ee9c31a676aa29, type: 3}
+  - {fileID: -2412203219138063395, guid: 859da06bcd86f49e19ee9c31a676aa29, type: 3}
+  _sparkle:
+  - {fileID: 587315207279695402, guid: a69fd7f2d9935478b90df80ab46e293e, type: 3}
+  - {fileID: -3570785488452232603, guid: a69fd7f2d9935478b90df80ab46e293e, type: 3}
+  - {fileID: -7922169632505220559, guid: a69fd7f2d9935478b90df80ab46e293e, type: 3}
+  - {fileID: 4456320471082109295, guid: a69fd7f2d9935478b90df80ab46e293e, type: 3}
+  _heart: {fileID: 21300000, guid: 7ea290c9875a7426f84563ed461158b9, type: 3}
+  _heartEmpty: {fileID: 21300000, guid: 96e13c66729314d91b814cdfdc77abd9, type: 3}
+  _slot: {fileID: 21300000, guid: 943328ae5f9894613b4f56a631f8ddb4, type: 3}
+  _slotSelected: {fileID: 21300000, guid: 5cec57f4352ec4265a7e5a4c5b5193ab, type: 3}
+  _digits:
+  - {fileID: 21300000, guid: 1b2950185d0f84d86be5853864825a09, type: 3}
+  - {fileID: 21300000, guid: eb701868c09094e5eadee02bda54cdf4, type: 3}
+  - {fileID: 21300000, guid: 4b200333be0c3424d881192cb0993314, type: 3}
+  _pixel: {fileID: 21300000, guid: 4bed5e7979f514c7ea2725ff5509d8c9, type: 3}
+  _gaugeFrame: {fileID: 21300000, guid: a1ee2f684b283434eb9f0c3e3d81dd51, type: 3}
+  _gaugeFill: {fileID: 21300000, guid: 0dd5b7bdeb80e4728a0265c5df4a5408, type: 3}
+  _background: {fileID: 21300000, guid: 07e3e9e6ad25343d8b48d934095c5afe, type: 3}
+  _windowFrame: {fileID: 21300000, guid: 19f8405f82fff4b7b81f4cc50589f12b, type: 3}
+  _button: {fileID: 21300000, guid: ff6de87e6a36d42908076104ad77414c, type: 3}
+  _buttonHover: {fileID: 21300000, guid: b7a1445b740c449e698a1d851c2fc9de, type: 3}
+  _playerWalk:
+  - {fileID: 6271674672454095231, guid: 9ca8bac1218c74593863deed876286ee, type: 3}
+  - {fileID: -5472852325172983002, guid: 9ca8bac1218c74593863deed876286ee, type: 3}
+  - {fileID: 6740012380587470751, guid: 9ca8bac1218c74593863deed876286ee, type: 3}
+  - {fileID: 2027882306579495052, guid: 9ca8bac1218c74593863deed876286ee, type: 3}
+  - {fileID: -4198330706962942397, guid: 9ca8bac1218c74593863deed876286ee, type: 3}

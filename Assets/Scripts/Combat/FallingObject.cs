@@ -65,7 +65,8 @@ public class FallingObject : MonoBehaviour
         var frame = new GameObject("Frame");
         frame.layer = f.gameObject.layer;
         frame.transform.SetParent(f.transform, false);
-        f._frame = AttackRunner.AddVisual(frame.transform, PlaceholderSprites.Frame, FrameColor, data.ObjectSize, 18, "Frame");
+        Sprite frameSprite = GameArt.Instance != null && GameArt.Instance.TelegraphFrame != null ? GameArt.Instance.TelegraphFrame : PlaceholderSprites.Frame;
+        f._frame = AttackRunner.AddVisual(frame.transform, frameSprite, FrameColor, data.ObjectSize, 18, "Frame");
         return f;
     }
 
@@ -117,7 +118,8 @@ public class FallingObject : MonoBehaviour
             s.layer = go.layer;
             s.transform.SetParent(go.transform, false);
             s.transform.position = new Vector2(hangPosition.x, f._groundY + 0.12f);
-            f._shadow = AttackRunner.AddVisual(s.transform, PlaceholderSprites.Circle, ShadowColor, new Vector2(size.x, 0.35f), 16, "Ellipse");
+            Sprite shadowSprite = GameArt.Instance != null && GameArt.Instance.Shadow != null ? GameArt.Instance.Shadow : PlaceholderSprites.Circle;
+            f._shadow = AttackRunner.AddVisual(s.transform, shadowSprite, ShadowColor, new Vector2(size.x, 0.35f), 16, "Ellipse");
         }
         if (dismissable) go.AddComponent<DismissableTab>();
         return f;

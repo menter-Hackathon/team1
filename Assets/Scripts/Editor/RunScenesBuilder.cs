@@ -8,12 +8,14 @@ using UnityEngine;
 /// <summary>
 /// ラン（タイトル → ステージ → リザルト）を通して遊ぶためのシーンとデータを作るエディタ拡張（M5）。
 /// メニュー「Tools/Team1/ランのシーンを作成」から実行する。作るもの：
-/// ・ボスのプレハブ（Assets/Prefabs/Bosses。非表示で保存。すでにあれば作らない）
+/// ・ボスのプレハブ（Assets/Prefabs/Bosses。非表示で保存。毎回作り直す。同じパスに上書きするので、対応アプリ表からの参照は切れない）
 /// ・対応アプリ表（Assets/ScriptableObjects/Run/AppCatalog。すでにあれば作らない）：Chrome・VS Code
 /// ・サンプルデータ（Assets/Resources/SampleUsage.json。すでにあれば作らない）
-/// ・シーン（Assets/Scenes/Run）：RunTitle（【仮】タイトル）、Stage_Desktop（【仮】ステージ）、RunResult（【仮】リザルト）
-/// ・Build Settings にこの3つを登録する（ほかに登録されているシーンは後ろに残す）
-/// 数値はすべて【仮】。データとプレハブは上書きしないので、直したいときはそのアセットを直接直す（作り直すなら消してから実行）。
+/// ・シーン（Assets/Scenes/Run）：RunTitle（【仮】タイトル）、Stage_Desktop（【仮】1画面のステージ）、
+///   Stage_Scroll（横スクロール）・Stage_Windows（ウィンドウ移動）（StageLayoutsBuilder）、RunResult（【仮】リザルト）
+/// ・Build Settings にこの5つを登録する（ほかに登録されているシーンは後ろに残す）
+/// 数値はすべて【仮】。データ（対応アプリ表・サンプル）は上書きしないので、直したいときはそのアセットを直接直す（作り直すなら消してから実行）。
+/// 絵は ArtAssets（Tools/Team1/グラフィックを適用）が入れる。ボスのプレハブは絵ごと作り直す。
 /// </summary>
 public static class RunScenesBuilder
 {
@@ -25,9 +27,6 @@ public static class RunScenesBuilder
     const string CatalogPath = "Assets/ScriptableObjects/Run/AppCatalog.asset";
     const string SamplePath = "Assets/Resources/SampleUsage.json";
 
-    static readonly Color GroundColor = new Color(0.36f, 0.30f, 0.62f);
-    static readonly Color OneWayColor = new Color(0.30f, 0.80f, 0.90f);
-    static readonly Color BackgroundColor = new Color(0.10f, 0.08f, 0.20f);
     static readonly Color ChromeBodyColor = new Color(0.92f, 0.92f, 0.95f);
     static readonly Color VSCodeBodyColor = new Color(0.16f, 0.42f, 0.78f);
     static readonly Rect ArenaBounds = new Rect(-10f, 0f, 20f, 11.5f);
@@ -51,21 +50,29 @@ public static class RunScenesBuilder
             return;
         }
 
+        BossTestSceneBuilder.GetOrCreateAttacks(); // 無ければ作る
+        StageTestSceneBuilder.GetOrCreateZakoShot();
+        ArtAssets.Apply(); // 絵の取り込み設定と、攻撃データ・能力・ボスへの割り当て
+
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        // アセットは新しいシーンを開いたあとに読み込む（取り込みやシーンの切り替えで、前に読んだ物が使えなくなることがある）
         Sprite square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
         var attacks = BossTestSceneBuilder.GetOrCreateAttacks();
         AttackData zakoShot = StageTestSceneBuilder.GetOrCreateZakoShot();
-
-        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-        BossController chromePrefab = GetOrCreateBossPrefab("Chrome", attacks.ChromeProfile, ChromeSpawn, ChromeBodyColor, square);
-        BossController vscodePrefab = GetOrCreateBossPrefab("VSCode", attacks.VSCodeProfile, VSCodeSpawn, VSCodeBodyColor, square);
+        BossController chromePrefab = BuildBossPrefab("Chrome", attacks.ChromeProfile, ChromeSpawn, ChromeBodyColor, square);
+        BossController vscodePrefab = BuildBossPrefab("VSCode", attacks.VSCodeProfile, VSCodeSpawn, VSCodeBodyColor, square);
         AppCatalog catalog = GetOrCreateCatalog(chromePrefab, attacks.ChromeProfile, vscodePrefab, attacks.VSCodeProfile);
+        ArtAssets.ApplyThemesToCatalog(); // 各アプリの色（新しく表を作ったときにも入れる）
+        ApplyStageScenes(); // 各アプリのステージの種類（Chrome＝横スクロール、VS Code＝ウィンドウ移動）
         GetOrCreateSample();
 
         PlayerTestSceneBuilder.EnsureFolder(SceneFolder);
         string titlePath = BuildTitle(catalog);
         string stagePath = BuildStage(catalog, square, attacks, zakoShot);
+        string scrollPath = StageLayoutsBuilder.BuildScroll(SceneFolder, catalog);
+        string windowsPath = StageLayoutsBuilder.BuildWindows(SceneFolder, catalog);
         string resultPath = BuildResult();
-        RegisterBuildScenes(titlePath, stagePath, resultPath);
+        RegisterBuildScenes(titlePath, stagePath, scrollPath, windowsPath, resultPath);
 
         AssetDatabase.SaveAssets();
         Debug.Log($"ランのシーンを作成しました: {titlePath}, {stagePath}, {resultPath}");
@@ -73,12 +80,10 @@ public static class RunScenesBuilder
 
     // ───────── ボスのプレハブ・対応アプリ表・サンプル ─────────
 
-    static BossController GetOrCreateBossPrefab(string bossName, BossProfile profile, Vector2 position, Color color, Sprite square)
+    /// <summary>ボスのプレハブを作る（あれば同じパスに上書きする。GUID は変わらない）</summary>
+    static BossController BuildBossPrefab(string bossName, BossProfile profile, Vector2 position, Color color, Sprite square)
     {
         string path = $"{PrefabFolder}/Boss_{bossName}.prefab";
-        var existing = AssetDatabase.LoadAssetAtPath<BossController>(path);
-        if (existing != null) return existing;
-
         PlayerTestSceneBuilder.EnsureFolder(PrefabFolder);
         // 狙う相手（プレイヤー）は、ステージで作ったときに StageDirector が入れる
         BossController boss = BossTestSceneBuilder.CreateBoss(bossName, profile, position, new Vector2(4f, 3f), color, square, null);
@@ -110,6 +115,26 @@ public static class RunScenesBuilder
         });
         EditorUtility.SetDirty(catalog);
         return catalog;
+    }
+
+    /// <summary>
+    /// 各アプリのステージの種類（2026-11-17 決定）。Chrome＝横スクロール、VS Code＝ウィンドウ移動、それ以外＝1画面（Stage_Desktop）。
+    /// 対応アプリ表がすでにあっても、この欄だけ入れる
+    /// </summary>
+    static void ApplyStageScenes()
+    {
+        var catalog = AssetDatabase.LoadAssetAtPath<AppCatalog>(CatalogPath);
+        if (catalog == null) return;
+        var so = new SerializedObject(catalog);
+        var apps = so.FindProperty("_apps");
+        for (int i = 0; i < apps.arraySize; i++)
+        {
+            var e = apps.GetArrayElementAtIndex(i);
+            string name = e.FindPropertyRelative("DisplayName").stringValue;
+            string scene = name == "Chrome" ? StageLayoutsBuilder.ScrollScene : name == "VS Code" ? StageLayoutsBuilder.WindowsScene : StageScene;
+            e.FindPropertyRelative("StageScene").stringValue = scene;
+        }
+        if (so.ApplyModifiedPropertiesWithoutUndo()) EditorUtility.SetDirty(catalog);
     }
 
     static void SetEntry(SerializedProperty e, string displayName, string screenTimeName, string bundleId, SkillCategory category, BossController prefab, BossProfile profile,
@@ -156,6 +181,7 @@ public static class RunScenesBuilder
     static string BuildTitle(AppCatalog catalog)
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        catalog = AssetDatabase.LoadAssetAtPath<AppCatalog>(CatalogPath); // 新しいシーンを開いたので読み込み直す
         CreateCamera(new Vector3(0f, 0f, -10f));
         var session = new GameObject("GameSession").AddComponent<GameSession>();
         PlayerTestSceneBuilder.SetProps(session, so =>
@@ -176,21 +202,25 @@ public static class RunScenesBuilder
         int ground = LayerMask.NameToLayer("Ground");
         int oneWay = LayerMask.NameToLayer("OneWayPlatform");
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        // 新しいシーンを開いたので、アセットを読み込み直す
+        square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
+        attacks = BossTestSceneBuilder.GetOrCreateAttacks();
+        zakoShot = StageTestSceneBuilder.GetOrCreateZakoShot();
+        catalog = AssetDatabase.LoadAssetAtPath<AppCatalog>(CatalogPath);
 
         // --- 部屋（雑魚戦テストシーンと同じ。床の上面が y=0） ---
         var terrain = new GameObject("Terrain").transform;
-        PlayerTestSceneBuilder.CreateBlock("Floor", new Vector2(0f, -1f), new Vector2(22f, 2f), ground, GroundColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Wall_Left", new Vector2(-10.5f, 6f), new Vector2(1f, 14f), ground, GroundColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Wall_Right", new Vector2(10.5f, 6f), new Vector2(1f, 14f), ground, GroundColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Folder_Left", new Vector2(-3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, OneWayColor, square, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Folder_Right", new Vector2(3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, OneWayColor, square, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Floor", new Vector2(0f, -1f), new Vector2(22f, 2f), ground, ArtLib.BlockKind.Ground, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Wall_Left", new Vector2(-10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Wall_Right", new Vector2(10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Folder_Left", new Vector2(-3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
+        PlayerTestSceneBuilder.CreateBlock("Folder_Right", new Vector2(3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
         var arena = new GameObject("BattleArena").AddComponent<BattleArena>();
         PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
 
         // --- プレイヤー（能力は G キーではもらえない。ボスを正常化して手に入れる） ---
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-8.5f, 0.05f, 0f), attacks.PlayerMelee, null);
         Object.DestroyImmediate(player.GetComponent<SkillDebugGiver>());
-        PlayerTestSceneBuilder.SetProps(player.GetComponent<HealthDebugLabel>(), so => so.FindProperty("_showGameOver").boolValue = false);
 
         // --- 雑魚ウイルス ---
         var wave = new GameObject("EnemyWave").AddComponent<EnemyWave>();
@@ -210,10 +240,19 @@ public static class RunScenesBuilder
             so.FindProperty("_entrance").objectReferenceValue = entrance;
             so.FindProperty("_player").objectReferenceValue = player.GetComponent<PlayerSkills>();
         });
-        var hud = new GameObject("RunHud").AddComponent<RunHud>();
-        PlayerTestSceneBuilder.SetProps(hud, so => so.FindProperty("_director").objectReferenceValue = director);
-
-        CreateCamera(new Vector3(0f, 5.5f, -10f));
+        // ステージの色をアプリの色にする（StageDirector が Apply を呼ぶ）。元の絵を覚えさせる
+        var stageTheme = director.gameObject.AddComponent<StageTheme>();
+        PlayerTestSceneBuilder.SetProps(stageTheme, so =>
+        {
+            so.FindProperty("_wallpaper").objectReferenceValue = ArtAssets.LoadSprite("Generated/Background/Bg_Desktop.png");
+            so.FindProperty("_floor").objectReferenceValue = ArtAssets.LoadSprite("Generated/Stage/Tile_Floor.png");
+            so.FindProperty("_wall").objectReferenceValue = ArtAssets.LoadSprite("Generated/Stage/Tile_Wall.png");
+            so.FindProperty("_folder").objectReferenceValue = ArtAssets.LoadSprite("Generated/Stage/Platform_Folder.png");
+        });
+        // 画面表示：ハート・能力の枠・ボスのゲージ（文字なし）。背景はデスクトップの壁紙
+        Camera cam = CreateCamera(new Vector3(0f, 5.5f, -10f));
+        ArtLib.CreateBackground(cam);
+        ArtLib.CreateHud(cam, player, director);
         string path = $"{SceneFolder}/{StageScene}.unity";
         EditorSceneManager.SaveScene(scene, path);
         return path;
@@ -229,7 +268,7 @@ public static class RunScenesBuilder
         return path;
     }
 
-    static void CreateCamera(Vector3 position)
+    static Camera CreateCamera(Vector3 position)
     {
         var camGo = new GameObject("Main Camera");
         camGo.tag = "MainCamera";
@@ -238,8 +277,9 @@ public static class RunScenesBuilder
         cam.orthographic = true;
         cam.orthographicSize = 6f;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = BackgroundColor;
+        cam.backgroundColor = ArtLib.Sky;
         camGo.AddComponent<AudioListener>();
+        return cam;
     }
 
     /// <summary>Build Settings の先頭に、タイトル・ステージ・リザルトを登録する（ほかのシーンは後ろに残す）</summary>

@@ -22,8 +22,8 @@ MonoBehaviour:
   _hitStun: 0.25
   _repeatCount: 1
   _repeatInterval: 0
-  _sprite: {fileID: 0}
-  _color: {r: 0.85, g: 0.55, b: 1, a: 1}
+  _sprite: {fileID: 21300000, guid: ce8d2bc84f6aa46fca7aced659ac0dd4, type: 3}
+  _color: {r: 1, g: 1, b: 1, a: 1}
   _projectileCount: 1
   _spreadAngle: 0
   _speed: 6
@@ -57,6 +57,8 @@ MonoBehaviour:
   _placeSpacing: 3
   _dropHoldTime: 0.5
   _dropInterval: 0.25
+  _appearTopRange: {x: 2.5, y: 6}
+  _reachHeight: 3
   _warpDestination: 0
   _warpDistance: 6
   _vanishTime: 0

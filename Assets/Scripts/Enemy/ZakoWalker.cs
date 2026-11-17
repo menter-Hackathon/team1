@@ -86,6 +86,13 @@ public class ZakoWalker : MonoBehaviour
         _visualRoot.localScale = s;
     }
 
+    /// <summary>進む向きを決める（右 1／左 -1）。ボスから追い出されたウイルスが、プレイヤーから離れる向きに走り出すとき用</summary>
+    public void SetDirection(int direction)
+    {
+        Direction = direction >= 0 ? 1 : -1;
+        _velocity = Vector2.zero;
+    }
+
     void Turn()
     {
         Direction = -Direction;

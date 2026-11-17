@@ -125,7 +125,7 @@ public class BossTestDirector : MonoBehaviour
             // ゲージ（画面の右上。左上はスキル枠の仮表示）
             float w = Mathf.Min(400f, Screen.width - 40f);
             var bar = new Rect(Screen.width - w - 12f, 34f, w, 18f);
-            string state = boss.State == BossState.Normalized ? "正常化" : $"第{boss.Phase}形態";
+            string state = boss.State == BossState.Normalized ? "正常化" : boss.State == BossState.Ejected ? "とどめ待ち" : $"第{boss.Phase}形態";
             GUI.Label(new Rect(bar.x, 6f, w, 26f), $"{boss.Profile.DisplayName}　ウイルス解除 {boss.Gauge.Current}/{boss.Gauge.Max}　{state}", _style);
             DrawBar(bar, boss.Gauge.Ratio, new Color(0.3f, 0.95f, 0.5f));
             // 形態変化の位置（50%）

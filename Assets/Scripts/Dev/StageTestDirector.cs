@@ -64,7 +64,7 @@ public class StageTestDirector : MonoBehaviour
 
         if (_entrance != null && _entrance.HasAppeared && boss != null)
         {
-            string state = boss.State == BossState.Normalized ? "正常化" : $"第{boss.Phase}形態";
+            string state = boss.State == BossState.Normalized ? "正常化" : boss.State == BossState.Ejected ? "とどめ待ち" : $"第{boss.Phase}形態";
             GUI.Label(new Rect(bar.x, 6f, w, 26f), $"{boss.Profile.DisplayName}　ウイルス解除 {boss.Gauge.Current}/{boss.Gauge.Max}　{state}", _style);
             DrawBar(bar, boss.Gauge.Ratio, new Color(0.3f, 0.95f, 0.5f));
             if (boss.State == BossState.Transition)

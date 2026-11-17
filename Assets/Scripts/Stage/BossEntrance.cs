@@ -17,6 +17,8 @@ public class BossEntrance : MonoBehaviour
     [SerializeField, Min(0f)] float _delay = 1f;
     [Tooltip("出てくるときに点滅する秒数（この間は体当たりなし）")]
     [SerializeField, Min(0f)] float _blinkTime = 0.8f;
+    [Tooltip("オン：雑魚ではなく、ボス部屋の入口（BossRoomGate）が Trigger を呼んだら出てくる（横スクロール・ウィンドウ移動のステージ）")]
+    [SerializeField] bool _waitForGate;
 
     bool _triggered;
 
@@ -55,8 +57,12 @@ public class BossEntrance : MonoBehaviour
 
     void Start()
     {
+        if (_waitForGate) return;
         if (_wave == null || _wave.IsCleared) OnCleared();
     }
+
+    /// <summary>ボスの登場を始める（ボス部屋の入口から呼ぶ）</summary>
+    public void Trigger() => OnCleared();
 
     void OnCleared()
     {

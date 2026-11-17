@@ -10,8 +10,10 @@ public enum BossState
     Fighting = 0,
     /// <summary>形態変化の演出中（アップデート中…）。無敵</summary>
     Transition = 1,
-    /// <summary>正常化した（ゲージ100%）。もう攻撃しない</summary>
+    /// <summary>正常化した（ウイルス本体にとどめを刺した。追い出しを使わないボスは、ゲージ100%ですぐこれになる）。もう攻撃しない</summary>
     Normalized = 2,
+    /// <summary>ゲージ100%でウイルス本体が追い出され、逃げ回っている（とどめ待ち）。ボスは攻撃しない（docs 3章、11/17 決定）</summary>
+    Ejected = 3,
 }
 
 /// <summary>
@@ -19,8 +21,10 @@ public enum BossState
 /// ・技を順番に出す。同じ技は2回続けない（技が2つなら交互）。攻撃が終わったら待ち時間（第1形態1.2秒、第2形態0.8秒）
 /// ・決まった回数攻撃するごとに移動する（飛んで移動／瞬間移動）
 /// ・ゲージが50%になったら形態変化：1.5秒の演出（アップデート中…）、その間は無敵、画面上のボスの弾を消す
-/// ・ゲージが100%になったら正常化：攻撃をやめ、出ている攻撃を消し、体当たりもなくなる。そのアプリの能力をプレイヤーに渡す
-///   （空き枠があれば入る。満杯なら入れ替え待ち）
+/// ・ゲージが100%になったら：攻撃をやめ、出ている攻撃を消し、体当たりもなくなる。
+///   ウイルス本体（子の「追い出されるウイルス」）がアプリから追い出されて逃げ回る（State＝Ejected）。
+///   プレイヤーが1回当てるとはじけて消え、そこで正常化：そのアプリの能力をプレイヤーに渡す（空き枠があれば入る。満杯なら入れ替え待ち）
+///   （docs 3章、2026-11-17 決定。追い出されるウイルスが設定されていなければ、今までどおりゲージ100%ですぐ正常化）
 /// 必要なもの：AttackRunner（攻撃）、VirusGauge（ゲージ）、体当たりの Hitbox、被弾範囲の Hurtbox
 /// </summary>
 [RequireComponent(typeof(AttackRunner), typeof(VirusGauge))]
@@ -35,6 +39,10 @@ public class BossController : MonoBehaviour, IWarpable
     [SerializeField] SpriteRenderer[] _renderers;
     [Tooltip("【仮】正常化したときの色")]
     [SerializeField] Color _normalizedColor = new Color(0.55f, 0.95f, 0.6f);
+    [Tooltip("オン：見た目の色（点滅・消える演出・当たったときの光）は別の部品（BossArmorVisual）が受け持つ。ここでは色を変えない")]
+    [SerializeField] bool _externalVisuals;
+    [Tooltip("ゲージ100%で追い出されて逃げ回るウイルス本体（子に非表示で置く。HP1、体当たりなし）。空なら、ゲージ100%ですぐ正常化")]
+    [SerializeField] Health _ejectedVirus;
 
     AttackRunner _runner;
     VirusGauge _gauge;
@@ -59,6 +67,8 @@ public class BossController : MonoBehaviour, IWarpable
     public float TransitionProgress { get; private set; }
     /// <summary>移動中なら true</summary>
     public bool IsMoving { get; private set; }
+    /// <summary>見え方（1＝見える、0＝消えている）。瞬間移動・登場の点滅で変わる。ウイルスの煙など、別に描く絵が合わせる</summary>
+    public float Visibility => _visibility;
 
     /// <summary>技を出し始めたとき（技のデータ）</summary>
     public event Action<AttackData> MoveStarted;
@@ -70,6 +80,10 @@ public class BossController : MonoBehaviour, IWarpable
     public event Action<int> PhaseChanged;
     /// <summary>正常化したとき（手に入った能力。設定が無ければ null）</summary>
     public event Action<SkillDefinition> Normalized;
+    /// <summary>ゲージ100%で、ウイルス本体が追い出されたとき（このあと、とどめを待つ）</summary>
+    public event Action Ejected;
+    /// <summary>追い出されたウイルス本体（逃げている間だけ表示）</summary>
+    public Health EjectedVirus => _ejectedVirus;
 
     void Awake()
     {
@@ -94,6 +108,7 @@ public class BossController : MonoBehaviour, IWarpable
     {
         _gauge.Changed -= OnGaugeChanged;
         _gauge.Gained -= OnGaugeGained;
+        if (_ejectedVirus != null) _ejectedVirus.Died -= OnEjectedVirusDied;
         StopAll();
         _runner.ClearSpawned();
     }
@@ -112,6 +127,7 @@ public class BossController : MonoBehaviour, IWarpable
 
     void LateUpdate()
     {
+        if (_externalVisuals) return;
         // 色はここでまとめて決める（正常化の色・被弾の点滅・形態変化中の点滅・消える途中の薄さ）
         float now = Time.time;
         bool flash = now < _flashUntil;
@@ -154,6 +170,7 @@ public class BossController : MonoBehaviour, IWarpable
         _attackCount = 0;
         SetVisibility(1f);
         SetContactEnabled(true);
+        HideEjectedVirus();
         if (_profile != null && isActiveAndEnabled) _brain = StartCoroutine(Brain(_profile.StartDelay));
     }
 
@@ -263,10 +280,11 @@ public class BossController : MonoBehaviour, IWarpable
 
     void OnGaugeChanged(int current, int max)
     {
-        if (State == BossState.Normalized || _profile == null) return;
+        if (State == BossState.Normalized || State == BossState.Ejected || _profile == null) return;
         if (current >= max)
         {
-            Normalize();
+            if (_ejectedVirus != null) Eject();
+            else Normalize();
             return;
         }
         if (Phase == 1 && State == BossState.Fighting && current >= max * _profile.Phase2Threshold)
@@ -305,6 +323,49 @@ public class BossController : MonoBehaviour, IWarpable
         _transition = null;
         PhaseChanged?.Invoke(Phase);
         _brain = StartCoroutine(Brain(_profile.Phase2.WaitAfterAttack));
+    }
+
+    /// <summary>ゲージ100%：攻撃をやめ、ウイルス本体を追い出す。本体にとどめを刺したら正常化</summary>
+    void Eject()
+    {
+        StopAll();
+        _runner.ClearSpawned();
+        SetVisibility(1f);
+        SetContactEnabled(false); // 体当たりも被弾もなし（State を変える前に呼ぶと、体当たりが切れる）
+        State = BossState.Ejected;
+        TransitionProgress = 0f;
+
+        // ボスの真ん中から、プレイヤーと反対の向きへ走り出す
+        Transform v = _ejectedVirus.transform;
+        v.SetParent(null, true);
+        v.position = BodyBounds.center;
+        _ejectedVirus.ResetHealth();
+        _ejectedVirus.gameObject.SetActive(true);
+        if (v.TryGetComponent(out ZakoWalker walker))
+        {
+            float px = _runner.Target != null ? _runner.Target.position.x : transform.position.x - 1f;
+            walker.SetDirection(v.position.x >= px ? 1 : -1);
+        }
+        _ejectedVirus.Died -= OnEjectedVirusDied;
+        _ejectedVirus.Died += OnEjectedVirusDied;
+        Ejected?.Invoke();
+    }
+
+    void OnEjectedVirusDied()
+    {
+        _ejectedVirus.Died -= OnEjectedVirusDied;
+        if (State == BossState.Ejected) Normalize();
+    }
+
+    /// <summary>
+    /// 追い出されるウイルスを隠す（やり直し用）。親には戻さない（ボスを表示する途中で親を変えるとエラーになるため）。
+    /// 次に追い出すときは、Eject がボスの真ん中へ動かす
+    /// </summary>
+    void HideEjectedVirus()
+    {
+        if (_ejectedVirus == null) return;
+        _ejectedVirus.Died -= OnEjectedVirusDied;
+        if (_ejectedVirus.gameObject.activeSelf) _ejectedVirus.gameObject.SetActive(false);
     }
 
     void Normalize()

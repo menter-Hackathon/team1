@@ -45,6 +45,8 @@ public class AppEntry
     public Vector2 SpawnPosition;
     [Tooltip("このアプリのステージのシーン名（Build Settings に登録しておく）")]
     public string StageScene = "Stage_Desktop";
+    [Tooltip("アイコンの色から作った色の組み合わせ。ステージの壁紙・床・足場・ゲージを、この色に塗り替える。空なら元の色のまま")]
+    public AppTheme Theme;
 
     [Header("使用時間で変えるつまみ（docs 6章）")]
     [Tooltip("ボスのウイルス解除ゲージの最大値")]
