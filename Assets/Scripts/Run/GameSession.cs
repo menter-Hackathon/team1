@@ -164,11 +164,19 @@ public class GameSession : MonoBehaviour
 
         Run = new RunState(plans);
         Run.Candidates = candidates;
+        // アプリ図鑑：ボスの候補（上位10アプリ）を載せる（最初はグレー。2026-11-17）
+        if (_abilities != null)
+        {
+            AppDex.RecordSeen(RunPlanner.BossPool(_catalog, _abilities, usages, _bossPool)
+                .Select(p => (p.entry != null ? p.entry.DisplayName : p.row.Name, p.entry != null ? FirstBundle(p.entry) : p.row.BundleId)));
+        }
         Run.StageStartSlots = Run.Loadout.Snapshot();
         error = null;
         RunStarted?.Invoke(Run);
         return true;
     }
+
+    static string FirstBundle(AppEntry app) => app.BundleIdPrefixes?.FirstOrDefault(b => !string.IsNullOrEmpty(b)) ?? "";
 
     /// <summary>StageDirector が呼ぶ：ステージが始まった</summary>
     public void NotifyStageStarted()
@@ -182,6 +190,8 @@ public class GameSession : MonoBehaviour
         if (IsTransitioning || Run?.Current == null) return;
         StagePlan stage = Run.Current;
         Run.Cleared.Add(new ClearRecord { Stage = stage, Reward = reward });
+        // アプリ図鑑：正常化したアプリに色を付ける。初めてなら、リザルトで光らせる
+        if (AppDex.RecordDefeat(stage.App.DisplayName, FirstBundle(stage.App), reward)) Run.NewDex.Add(AppDex.KeyOf(stage.App.DisplayName));
         StageCleared?.Invoke(stage, reward);
 
         Run.CurrentIndex++;

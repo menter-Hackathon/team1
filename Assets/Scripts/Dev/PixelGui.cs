@@ -21,11 +21,11 @@ public static class PixelGui
     public static GUIStyle Label => _label;
     public static GUIStyle Small => _small;
 
-    /// <summary>壁紙を画面いっぱいに描いて、拡大を始める</summary>
-    public static void Begin()
+    /// <summary>壁紙を画面いっぱいに描いて（drawBackground＝false なら描かずに）、拡大を始める</summary>
+    public static void Begin(bool drawBackground = true)
     {
         GameArt art = GameArt.Instance;
-        if (art != null && art.Background != null) DrawCover(art.Background);
+        if (drawBackground && art != null && art.Background != null) DrawCover(art.Background);
         Scale = Mathf.Max(1f, Mathf.Round(Screen.height / 360f));
         _saved = GUI.matrix;
         GUI.matrix = Matrix4x4.Scale(new Vector3(Scale, Scale, 1f));
