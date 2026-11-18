@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 実績解除の通知（画面の隅）。Steam_ToastBG の上に Steam_Trophy のコマ送りを置き、「実績解除」と実績名を UI Text で出す。
+/// 実績解除の通知（画面の隅）。Steam_ToastBG の上に Steam_Trophy のコマ送りを置き、「実績解除」・実績名・得たパラメータを UI Text で出す。
 /// 下からスライドインして、AchievementPassive の「通知を出しておく秒数」（約3秒）で消える。
 /// 続けて解除したときは、上に積んで出す。キャンバスは最初の通知のときに作る（シーンに置かなくてよい）。
 /// </summary>
@@ -32,7 +32,7 @@ public class AchievementToast : MonoBehaviour
     }
 
     /// <summary>通知を出す</summary>
-    public static AchievementToast Show(AchievementPassive passive, string achievementName)
+    public static AchievementToast Show(AchievementPassive passive, string achievementName, string detail = null)
     {
         if (passive == null) return null;
         EnsureCanvas();
@@ -72,8 +72,18 @@ public class AchievementToast : MonoBehaviour
 
         // 文字（右側の空き）
         float textLeft = size.y + 4f;
-        AddText(go.transform, "Title", passive.ToastTitle, passive.TitleColor, Mathf.RoundToInt(size.y * 0.2f), textLeft, new Vector2(0f, 0.5f), new Vector2(1f, 0.95f), FontStyle.Normal);
-        AddText(go.transform, "Name", achievementName, passive.NameColor, Mathf.RoundToInt(size.y * 0.26f), textLeft, new Vector2(0f, 0.05f), new Vector2(1f, 0.55f), FontStyle.Bold);
+        if (string.IsNullOrEmpty(detail))
+        {
+            AddText(go.transform, "Title", passive.ToastTitle, passive.TitleColor, Mathf.RoundToInt(size.y * 0.2f), textLeft, new Vector2(0f, 0.5f), new Vector2(1f, 0.95f), FontStyle.Normal);
+            AddText(go.transform, "Name", achievementName, passive.NameColor, Mathf.RoundToInt(size.y * 0.26f), textLeft, new Vector2(0f, 0.05f), new Vector2(1f, 0.55f), FontStyle.Bold);
+        }
+        else
+        {
+            // 3行：「実績解除」／実績名／得たパラメータ
+            AddText(go.transform, "Title", passive.ToastTitle, passive.TitleColor, Mathf.RoundToInt(size.y * 0.17f), textLeft, new Vector2(0f, 0.68f), new Vector2(1f, 0.96f), FontStyle.Normal);
+            AddText(go.transform, "Name", achievementName, passive.NameColor, Mathf.RoundToInt(size.y * 0.22f), textLeft, new Vector2(0f, 0.36f), new Vector2(1f, 0.70f), FontStyle.Bold);
+            AddText(go.transform, "Detail", detail, passive.DetailColor, Mathf.RoundToInt(size.y * 0.16f), textLeft, new Vector2(0f, 0.06f), new Vector2(1f, 0.38f), FontStyle.Bold);
+        }
 
         var toast = go.AddComponent<AchievementToast>();
         toast._rect = rect;
@@ -116,6 +126,22 @@ public class AchievementToast : MonoBehaviour
         }
         return f;
     }
+
+    /// <summary>
+    /// 得たパラメータの文（例：「攻撃力+30% 移動速度+15% 8秒」）。延長したときは「8秒延長（残り12秒）」。
+    /// ボス版（味方にもかかる）は頭に「ボスと雑魚：」を付ける
+    /// </summary>
+    public static string FormatBuff(BuffSpec spec, bool extended, float remaining, bool allies)
+    {
+        var parts = new List<string>();
+        if (spec.AttackBonus != 0f) parts.Add($"攻撃力{Signed(spec.AttackBonus)}");
+        if (spec.SpeedBonus != 0f) parts.Add($"移動速度{Signed(spec.SpeedBonus)}");
+        string time = extended ? $"{spec.Duration:0.#}秒延長（残り{remaining:0}秒）" : $"{spec.Duration:0.#}秒";
+        string text = string.Join(" ", parts) + " " + time;
+        return allies ? "ボスと雑魚：" + text : text;
+    }
+
+    static string Signed(float ratio) => (ratio >= 0f ? "+" : "") + Mathf.RoundToInt(ratio * 100f) + "%";
 
     static void EnsureCanvas()
     {

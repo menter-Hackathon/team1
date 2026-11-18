@@ -115,11 +115,14 @@ public class AchievementRunner : MonoBehaviour, IDisposable
         AchievementDefinition def = _passive.Achievements[index];
         string title = def != null ? def.DisplayName : _tracker.Get(index).Name;
 
-        AchievementToast.Show(_passive, title);
         Bounds body = BodyBounds(gameObject);
         Vfx.Play(_passive.BurstFrames, body.center, _passive.BurstFrameRate, 40);
 
+        bool extended = _passive.Buff.StackMode == BuffStackMode.Extend && _stats.Has(_passive.BuffId);
         _stats.Apply(_passive.BuffId, _passive.Buff);
+        // 通知に、得たパラメータも出す（2026-11-18）
+        string detail = AchievementToast.FormatBuff(_passive.Buff, extended, _stats.Remaining(_passive.BuffId), _passive.Targets == BuffTargets.SelfAndAllies);
+        AchievementToast.Show(_passive, title, detail);
         if (_passive.Targets == BuffTargets.SelfAndAllies)
         {
             // 同じ陣営で、ステージに出ている物（ボス版：雑魚ウイルス）にも同じバフ

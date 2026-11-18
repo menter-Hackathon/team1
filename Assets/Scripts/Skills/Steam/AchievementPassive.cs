@@ -36,6 +36,8 @@ public class AchievementPassive : SkillPassive
     [SerializeField] string _toastTitle = "実績解除";
     [SerializeField] Color _titleColor = new Color(0.75f, 0.85f, 1f);
     [SerializeField] Color _nameColor = Color.white;
+    [Tooltip("得たパラメータの文字の色")]
+    [SerializeField] Color _detailColor = new Color(1f, 0.85f, 0.35f);
     [Tooltip("通知を出しておく秒数（スライドイン・アウトを含む）")]
     [SerializeField, Min(0.5f)] float _toastDuration = 3f;
     [Tooltip("通知の位置：オンで右下、オフで左下")]
@@ -59,6 +61,7 @@ public class AchievementPassive : SkillPassive
     public string ToastTitle => _toastTitle;
     public Color TitleColor => _titleColor;
     public Color NameColor => _nameColor;
+    public Color DetailColor => _detailColor;
     public float ToastDuration => _toastDuration;
     public bool ToastOnRight => _toastOnRight;
     public Sprite[] BurstFrames => _burstFrames;
