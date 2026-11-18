@@ -197,6 +197,9 @@ public class AttackRunner : MonoBehaviour
             case AttackKind.Summon:
                 yield return SummonRoutine(data);
                 break;
+            case AttackKind.Beam:
+                yield return BeamRoutine(data);
+                break;
             default:
                 Debug.LogWarning($"{name}: 攻撃の種類 {data.Kind} はまだ実行できません（{data.name}）", this);
                 break;
@@ -585,12 +588,124 @@ public class AttackRunner : MonoBehaviour
 
     // ───────── 召喚（AI アシスタント） ─────────
 
-    /// <summary>味方を出して、消えるまで待つ（消えたときに Finished が出る。能力のクールタイムはそこから数える）</summary>
+    /// <summary>
+    /// 召喚。Assistant：味方を出して、消えるまで待つ（消えたときに Finished が出る。能力のクールタイムはそこから数える）。
+    /// Chaser：敵のミニロボットを少しずつ時間をずらして出し、出し終えたら終わる（ロボットは自分で動く）
+    /// </summary>
     IEnumerator SummonRoutine(AttackData data)
     {
+        if (data.SummonType == SummonType.Chaser)
+        {
+            int n = data.SummonCount;
+            for (int i = 0; i < n; i++)
+            {
+                // 持ち主のまわりに、左右へ広げて出す（数が多いほど広く。最大で左右 2.5 マス）
+                float width = Mathf.Min(5f, 0.6f * (n - 1));
+                float spread = n > 1 ? (i / (float)(n - 1) - 0.5f) * width : 0f;
+                ChaserBot.Spawn(this, data, OriginPoint + new Vector2(spread, -0.6f));
+                Released?.Invoke(data);
+                if (i < n - 1) yield return new WaitForSeconds(0.1f);
+            }
+            yield break;
+        }
+
         AssistantDrone drone = AssistantDrone.Spawn(this, data);
         Released?.Invoke(data);
         while (drone != null) yield return null;
+    }
+
+    // ───────── 直線のレーザー（AI チャットのボス） ─────────
+
+    /// <summary>
+    /// レーザーを撃つ。撃つ位置が ArenaLeft なら、先に部屋の左端へ寄る（寄っている間と撃っている間は、体当たり・被弾なし）。
+    /// 撃ったレーザー（予告 → 太くなって細くなる）が消えるまで待つ
+    /// </summary>
+    IEnumerator BeamRoutine(AttackData data)
+    {
+        var warpable = GetComponent<IWarpable>();
+        bool moved = data.BeamOrigin == BeamOrigin.ArenaLeft;
+        if (moved)
+        {
+            if (warpable != null) warpable.SetContactEnabled(false);
+            yield return MoveToArenaLeft(data, warpable);
+        }
+
+        float lastEnd = 0f;
+        for (int r = 0; r < data.RepeatCount; r++)
+        {
+            if (r > 0 && data.RepeatInterval > 0f) yield return new WaitForSeconds(data.RepeatInterval);
+            FireBeams(data);
+            lastEnd = Time.time + data.TelegraphTime + data.ActiveTime;
+        }
+        while (Time.time < lastEnd) yield return null;
+        if (moved && warpable != null) warpable.SetContactEnabled(true);
+    }
+
+    /// <summary>大技の前に、部屋の左端（高さは撃つ高さ）へ飛んでいく</summary>
+    IEnumerator MoveToArenaLeft(AttackData data, IWarpable warpable)
+    {
+        Rect arena = BattleArena.GetBounds();
+        float halfW = warpable != null ? warpable.BodyBounds.extents.x : 1f;
+        Vector2 from = transform.position;
+        var to = new Vector2(arena.xMin + halfW + 0.3f, BeamCenterY(data, arena));
+        float start = Time.time;
+        while (Time.time - start < data.BeamMoveTime)
+        {
+            float t = Mathf.SmoothStep(0f, 1f, (Time.time - start) / data.BeamMoveTime);
+            Vector2 p = Vector2.Lerp(from, to, t);
+            if (warpable != null) warpable.Teleport(p);
+            else transform.position = p;
+            yield return null;
+        }
+        if (warpable != null) warpable.Teleport(to);
+        else transform.position = to;
+    }
+
+    /// <summary>部屋の左端から撃つレーザーの高さ：狙う相手の高さ（レーザーが部屋からはみ出さないように寄せる）</summary>
+    float BeamCenterY(AttackData data, Rect arena)
+    {
+        float y = (TargetPoint ?? OriginPoint).y;
+        float half = Mathf.Min(data.BeamWidth * 0.5f, arena.height * 0.5f);
+        return Mathf.Clamp(y, arena.yMin + half, arena.yMax - half);
+    }
+
+    void FireBeams(AttackData data)
+    {
+        Rect arena = BattleArena.GetBounds();
+        if (data.BeamOrigin == BeamOrigin.ArenaLeft)
+        {
+            var origin = new Vector2(arena.xMin, BeamCenterY(data, arena));
+            BeamStrike.Spawn(this, data, origin, Vector2.right, arena.width);
+            Released?.Invoke(data);
+            return;
+        }
+
+        Vector2 from = OriginPoint;
+        Vector2 baseDir = new Vector2(Facing, 0f);
+        if (data.Aim == AimMode.Target && TargetPoint is Vector2 target)
+        {
+            Vector2 d = target - from;
+            if (d.sqrMagnitude > 0.0001f) baseDir = d.normalized;
+        }
+        int n = data.ProjectileCount;
+        for (int i = 0; i < n; i++)
+        {
+            float angle = n > 1 ? -data.SpreadAngle * 0.5f + data.SpreadAngle * i / (n - 1) : 0f;
+            Vector2 dir = Quaternion.Euler(0f, 0f, angle) * baseDir;
+            BeamStrike.Spawn(this, data, from, dir, RayLengthInRect(from, dir, arena));
+        }
+        Released?.Invoke(data);
+    }
+
+    /// <summary>from から dir の向きに進んで、部屋の端に着くまでの長さ（レーザーは地形を通り抜け、部屋の端で止まる）</summary>
+    static float RayLengthInRect(Vector2 from, Vector2 dir, Rect r)
+    {
+        float t = 100f;
+        if (dir.x > 0.0001f) t = Mathf.Min(t, (r.xMax - from.x) / dir.x);
+        else if (dir.x < -0.0001f) t = Mathf.Min(t, (r.xMin - from.x) / dir.x);
+        if (dir.y > 0.0001f) t = Mathf.Min(t, (r.yMax - from.y) / dir.y);
+        else if (dir.y < -0.0001f) t = Mathf.Min(t, (r.yMin - from.y) / dir.y);
+        return Mathf.Max(0.5f, t);
     }
 
     // ───────── 共通の道具 ─────────

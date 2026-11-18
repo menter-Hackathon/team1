@@ -1328,6 +1328,110 @@ def make_ai_assistant():
     save(im, "UI/Icon_AiAssistant.png")
 
 
+# ───────── AI チャットのボス（2026-11-19） ─────────
+# 技の絵（レーザー・電流・ミニロボット）は、ゲームの中でアプリの色に塗り替える（ThemeRecolor.Effect：明るさを4段に分けて置き換える）。
+# なので、色ではなく明るさの差で描く（暗い線・中間・明るい・ほぼ白）
+
+PIX3 = {  # 3×5 の小さな文字（ERROR 用）
+    "E": ["###", "#..", "##.", "#..", "###"],
+    "R": ["##.", "#.#", "##.", "#.#", "#.#"],
+    "O": [".#.", "#.#", "#.#", "#.#", ".#."],
+}
+
+
+def text3(im, x, y, s, c):
+    for ch in s:
+        rows = PIX3.get(ch)
+        if rows:
+            for yy, r in enumerate(rows):
+                for xx, v in enumerate(r):
+                    if v == "#":
+                        put(im, x + xx, y + yy, c)
+        x += 4
+
+
+def ai_mini_bot(frame):
+    """ミニロボット（12×10、線込みで 14×12）。四角い体に1つ目、小さな羽"""
+    im = new(12, 10)
+    up = frame % 2 == 0
+    # 羽
+    for x, y in ((0, 2 if up else 4), (1, 3 if up else 4)):
+        put(im, x, y, C("cfcfcf"))
+    for x, y in ((11, 2 if up else 4), (10, 3 if up else 4)):
+        put(im, x, y, C("cfcfcf"))
+    rect(im, 2, 2, 9, 8, C("9a9a9a"))
+    hline(im, 3, 8, 2, WHITE)
+    rect(im, 3, 4, 8, 6, C("3a3a3a"))
+    rect(im, 5, 4, 6, 5, WHITE)      # 目
+    put(im, 5, 9, C("cfcfcf")); put(im, 6, 9, C("cfcfcf"))  # 浮かぶ光
+    put(im, 6, 0, WHITE); put(im, 6, 1, C("6a6a6a"))         # アンテナ
+    return outline_alpha(im, C("1a1a1a"))
+
+
+def make_ai_boss():
+    # ミニロボット（2コマ）
+    save(sheet([ai_mini_bot(i) for i in range(2)]), "Attacks/Summon_AiMini.png")
+
+    # レーザー（4×16。横のどの列も同じ。外側ほど暗く、芯は白。太さは実行中に伸び縮みさせる）
+    beam = new(4, 16)
+    prof = [(0x50, 90), (0x70, 150), (0x90, 200), (0xa8, 230), (0xc8, 255), (0xe0, 255), (0xf4, 255), (0xff, 255)]
+    for y in range(16):
+        v, a = prof[min(y, 15 - y)]
+        hline(beam, 0, 3, y, (v, v, v, a))
+    save(beam, "Attacks/Fx_AiLaser.png")
+
+    # 電流（3コマ、18×10。左右の端は真ん中の高さなので、横に並べるとつながる）
+    rng = random.Random(1119)
+    frames = []
+    for f in range(3):
+        im = new(18, 10)
+        ys = [5] + [rng.randint(2, 7) for _ in range(5)] + [5]
+        xs = [0, 3, 6, 9, 12, 15, 17]
+        for i in range(len(xs) - 1):
+            for (x, y) in line_points(xs[i], ys[i], xs[i + 1], ys[i + 1]):
+                put(im, x, y, WHITE)
+                if im.getpixel((x, max(0, y - 1)))[3] == 0:
+                    put(im, x, y - 1, (0x9a, 0x9a, 0x9a, 150))
+                if im.getpixel((x, min(9, y + 1)))[3] == 0:
+                    put(im, x, y + 1, (0x9a, 0x9a, 0x9a, 150))
+        # 枝分かれの小さな火花
+        for _ in range(2):
+            bx = rng.randint(2, 15)
+            by = rng.choice([1, 8])
+            put(im, bx, by, (0xcf, 0xcf, 0xcf, 220))
+        frames.append(im)
+    save(sheet(frames), "Attacks/Fx_AiSpark.png")
+
+    # ERROR のウィンドウ（34×16）：赤いタイトルバー・閉じるボタン・白い中に「!」と赤い「ERROR」
+    im = new(34, 16, WHITE)
+    outline_rect(im, 0, 0, 33, 15, K)
+    rect(im, 1, 1, 32, 4, C("d32f2f"))
+    rect(im, 28, 1, 32, 4, ORANGE)
+    put(im, 29, 2, WHITE); put(im, 31, 2, WHITE); put(im, 30, 3, WHITE)
+    rect(im, 1, 5, 32, 14, C("fff3f3"))
+    # 「!」のマーク（黄色の丸に黒い !）
+    ellipse(im, 6.0, 10.0, 3.2, 3.2, C("ffd23f"))
+    vline(im, 5, 8, 10, K); vline(im, 6, 8, 10, K)
+    put(im, 5, 12, K); put(im, 6, 12, K)
+    text3(im, 12, 8, "ERROR", C("c00000"))
+    save(im, "Attacks/Fx_AiError.png")
+
+    # アイコンが無いときの体（40×40）：角の丸い紺の四角に、白い吹き出しと考え中の点
+    im = new(40, 40)
+    for y in range(40):
+        for x in range(40):
+            dx = max(0, abs(x - 19.5) - 14.5)
+            dy = max(0, abs(y - 19.5) - 14.5)
+            if dx * dx + dy * dy <= 25:
+                put(im, x, y, AI_NAVY)
+    ellipse(im, 20, 18, 12.5, 9.5, WHITE)
+    for (x, y) in line_points(12, 24, 9, 31):
+        put(im, x, y, WHITE); put(im, x + 1, y, WHITE); put(im, x + 2, y - 1, WHITE)
+    for cx in (14, 20, 26):
+        rect(im, cx - 1, 17, cx + 1, 19, AI_CYAN_D)
+    save(outline_alpha(im), "Bosses/Boss_AiDefaultIcon.png")
+
+
 SECTIONS = {
     "background": lambda: make_background(),
     "terrain": lambda: make_terrain(),
@@ -1343,6 +1447,7 @@ SECTIONS = {
     "stage_gimmicks": lambda: make_stage_gimmicks(),
     "category_abilities": lambda: make_category_abilities(),
     "ai_assistant": lambda: make_ai_assistant(),
+    "ai_boss": lambda: make_ai_boss(),
 }
 
 

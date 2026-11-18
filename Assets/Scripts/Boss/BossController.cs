@@ -56,6 +56,9 @@ public class BossController : MonoBehaviour, IWarpable
     float _visibility = 1f;
     float _flashUntil = float.NegativeInfinity;
     bool _started;
+    bool _openingDone;    // 第2形態の大技を出したか（1回の戦いで1回だけ）
+    bool _inSpecial;      // 大技を出している途中（エラーで止まらない）
+    float _nextErrorAt;   // 次にエラーが起きうる時刻
 
     public BossProfile Profile => _profile;
     public AttackRunner Runner => _runner;
@@ -84,6 +87,12 @@ public class BossController : MonoBehaviour, IWarpable
     public event Action Ejected;
     /// <summary>追い出されたウイルス本体（逃げている間だけ表示）</summary>
     public Health EjectedVirus => _ejectedVirus;
+    /// <summary>エラーで止まっている間 true（2026-11-19）</summary>
+    public bool IsStunned { get; private set; }
+    /// <summary>第2形態の大技を出している途中なら true</summary>
+    public bool IsUsingSpecial => _inSpecial;
+    /// <summary>エラーで止まったとき（止まる秒数）。「error」の表示用</summary>
+    public event Action<float> ErrorRaised;
 
     void Awake()
     {
@@ -116,6 +125,12 @@ public class BossController : MonoBehaviour, IWarpable
     void Start()
     {
         _started = true;
+        // 狙う相手が空なら、シーンのプレイヤーを狙う（プレハブをそのままシーンに置いたとき用。2026-11-19）
+        if (_runner.Target == null)
+        {
+            var player = FindObjectOfType<PlayerController>();
+            if (player != null) _runner.Target = player.transform;
+        }
         ResetBoss();
     }
 
@@ -168,6 +183,8 @@ public class BossController : MonoBehaviour, IWarpable
         _hoverIndex = NearestHoverIndex();
         _lastMove = null;
         _attackCount = 0;
+        _openingDone = false;
+        _nextErrorAt = 0f;
         SetVisibility(1f);
         SetContactEnabled(true);
         HideEjectedVirus();
@@ -180,6 +197,8 @@ public class BossController : MonoBehaviour, IWarpable
         StopAllCoroutines();
         _brain = _transition = null;
         IsMoving = false;
+        IsStunned = false;
+        _inSpecial = false;
         if (_runner != null) _runner.Cancel();
     }
 
@@ -191,16 +210,23 @@ public class BossController : MonoBehaviour, IWarpable
         while (true)
         {
             BossPhaseSettings phase = _profile.GetPhase(Phase);
-            AttackData move = PickMove(phase.Moves);
+            // 第2形態になって最初の1回は、大技（設定されていれば。1回の戦いで1回だけ）
+            bool special = Phase >= 2 && !_openingDone && _profile.Phase2OpeningMove != null;
+            AttackData move = special ? _profile.Phase2OpeningMove : PickMove(phase.Moves);
+            if (special) _openingDone = true;
             if (move != null)
             {
-                _lastMove = move;
+                if (!special) _lastMove = move;
+                _inSpecial = special;
                 MoveStarted?.Invoke(move);
                 if (_runner.Run(move))
                 {
                     while (_runner.IsRunning) yield return null;
                 }
+                _inSpecial = false;
                 _attackCount++;
+                // 大技のあとは、いつもの場所へ戻る（大技で部屋の端へ寄ることがあるため）
+                if (special) yield return Reposition();
             }
 
             if (phase.AttacksPerMove > 0 && _attackCount > 0 && _attackCount % phase.AttacksPerMove == 0)
@@ -247,14 +273,18 @@ public class BossController : MonoBehaviour, IWarpable
                 int next = UnityEngine.Random.Range(0, points.Length - 1);
                 if (next >= _hoverIndex) next++;
                 _hoverIndex = next;
-                float targetX = BattleArena.GetBounds().center.x + points[next];
+                // 高さ：設定があればその高さ（部屋の床から）、無ければ最初の高さへ戻す
+                // （大技で部屋の端へ寄ったあとも、元の高さに戻る。2026-11-19。高さの設定が無いボスは今までどおり）
+                Rect arena = BattleArena.GetBounds();
+                float[] ys = _profile.HoverPointsY;
+                float targetY = ys != null && next < ys.Length ? arena.yMin + ys[next] : _startPosition.y;
+                var target = new Vector2(arena.center.x + points[next], targetY);
                 IsMoving = true;
                 MovementStarted?.Invoke();
-                while (!Mathf.Approximately(transform.position.x, targetX))
+                while (((Vector2)transform.position - target).sqrMagnitude > 0.0001f)
                 {
-                    Vector3 p = transform.position;
-                    p.x = Mathf.MoveTowards(p.x, targetX, _profile.HoverSpeed * Time.deltaTime);
-                    transform.position = p;
+                    Vector2 p = Vector2.MoveTowards(transform.position, target, _profile.HoverSpeed * Time.deltaTime);
+                    transform.position = new Vector3(p.x, p.y, transform.position.z);
                     yield return null;
                 }
                 IsMoving = false;
@@ -276,7 +306,38 @@ public class BossController : MonoBehaviour, IWarpable
 
     // ───────── ゲージ・形態変化・正常化 ─────────
 
-    void OnGaugeGained(DamageInfo _) => _flashUntil = Time.time + 0.1f;
+    void OnGaugeGained(DamageInfo _)
+    {
+        _flashUntil = Time.time + 0.1f;
+        TryRaiseError();
+    }
+
+    /// <summary>
+    /// ダメージ（ゲージが増える攻撃）を受けたとき、設定の確率でエラーになって少し止まる（2026-11-19：AI チャットのボス）。
+    /// 戦闘中だけ。大技の途中・エラーの直後（次に起きうるまでの秒数）は起きない。出している途中の技は止まり、出した弾・予告は残る
+    /// </summary>
+    void TryRaiseError()
+    {
+        if (_profile == null || _profile.ErrorChance <= 0f || State != BossState.Fighting) return;
+        if (IsStunned || _inSpecial || Time.time < _nextErrorAt) return;
+        if (UnityEngine.Random.value >= _profile.ErrorChance) return;
+
+        StopAll();
+        _runner.ClearSpawnedWith<WarpTelegraph>(); // 止めた瞬間移動の予告も消す（現れないので）
+        SetVisibility(1f);                         // 瞬間移動の途中で止まっても、元の姿に戻す
+        SetContactEnabled(true);
+        _brain = StartCoroutine(ErrorRoutine(_profile.ErrorStunTime));
+    }
+
+    IEnumerator ErrorRoutine(float duration)
+    {
+        IsStunned = true;
+        ErrorRaised?.Invoke(duration);
+        if (duration > 0f) yield return new WaitForSeconds(duration);
+        IsStunned = false;
+        _nextErrorAt = Time.time + _profile.ErrorCooldown;
+        yield return Brain(_profile.GetPhase(Phase).WaitAfterAttack * 0.5f);
+    }
 
     void OnGaugeChanged(int current, int max)
     {

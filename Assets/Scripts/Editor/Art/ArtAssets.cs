@@ -45,7 +45,8 @@ public static class ArtAssets
     {
         // デザイン担当の絵（3倍に拡大して描かれているので 18×3＝54）
         R("Provided/Player_Walk.png", 54f, 39, Feet),
-        R("Provided/Fx_VirusSmoke.png", 54f, 147),
+        // 煙は、AI チャットのボスの後ろでアプリの色味に塗り替えるので、読み書きできる設定にする（2026-11-19）
+        R("Provided/Fx_VirusSmoke.png", 54f, 147, readable: true),
         R("Provided/Bg_Wallpaper.png", 15f),
         R("Provided/Mockup_Desktop.png", 15f),
         // 背景（デザイン担当の壁紙から、下の道路を消したもの。画面いっぱい：320×180 ÷ 15 ＝ 21.33×12 マス）
@@ -82,6 +83,12 @@ public static class ArtAssets
         // AI の能力「AIアシスタント」（2026-11-18）：ロボット（羽ばたき4コマ）とレーザー（横に伸ばす）
         R("Generated/Attacks/Summon_AiDrone.png", frame: 26),
         R("Generated/Attacks/Fx_Laser.png"),
+        // AI チャットのボス（2026-11-19）：技の絵は、ゲームの中でアプリの色に塗り替えるので、読み書きできる設定にする
+        R("Generated/Attacks/Fx_AiLaser.png", readable: true),
+        R("Generated/Attacks/Fx_AiSpark.png", frame: 18, readable: true),
+        R("Generated/Attacks/Summon_AiMini.png", frame: 14, readable: true),
+        R("Generated/Attacks/Fx_AiError.png"),
+        R("Generated/Bosses/Boss_AiDefaultIcon.png"),
         R("Generated/Attacks/Fx_Shadow.png"),
         R("Generated/Attacks/Fx_Alert.png"),
         R("Generated/Attacks/Popup_Ad.png"),
@@ -380,6 +387,14 @@ public static class ArtAssets
         ("Player/Attack_Ability_Bomb", "Generated/Attacks/Bullet_Bomb.png"),
         ("Player/Attack_Ability_Bomb_Blast", "Generated/Attacks/Fx_Blast.png"),
         ("Player/Attack_Ability_AiAssistant", "Generated/Attacks/Fx_Laser.png"), // レーザー。ロボットの絵は ApplyToData で入れる
+        // AI チャットのボス（2026-11-19）：灰色の絵。ゲームの中でアプリの色に塗り替える
+        ("AIChat/Attack_AIChat_Laser_P1", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_LaserDouble_P1", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_LaserFan_P2", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_LaserBurst_P2", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_CodeStream", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_MiniBots_P1", "Generated/Attacks/Summon_AiMini.png"),
+        ("AIChat/Attack_AIChat_MiniBots_P2", "Generated/Attacks/Summon_AiMini.png"),
         // その場で作る能力のひな形（ゲームの中で、アプリの色に塗り替える）
         ("Player/Gen/Attack_Gen_Spread", "Generated/Attacks/Bullet_Orb.png"),
         ("Player/Gen/Attack_Gen_Trap", "Generated/Attacks/Bullet_Orb.png"),
@@ -420,6 +435,12 @@ public static class ArtAssets
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Bomb.asset", "Generated/UI/Icon_Bomb.png");
         // AI の能力「AIアシスタント」（2026-11-18）：ロボットの絵・色・アイコン
         SetSummonFrames($"{AttackFolder}/Player/Attack_Ability_AiAssistant.asset", "Generated/Attacks/Summon_AiDrone.png");
+        // AI チャットのボス（2026-11-19）：ミニロボットのコマと、レーザーの予告（電流）のコマ
+        foreach (string a in new[] { "AIChat/Attack_AIChat_MiniBots_P1", "AIChat/Attack_AIChat_MiniBots_P2" })
+            SetFrames($"{AttackFolder}/{a}.asset", "_summonFrames", "Generated/Attacks/Summon_AiMini.png");
+        foreach (string a in new[] { "AIChat/Attack_AIChat_Laser_P1", "AIChat/Attack_AIChat_LaserDouble_P1", "AIChat/Attack_AIChat_LaserFan_P2", "AIChat/Attack_AIChat_LaserBurst_P2" })
+            SetFrames($"{AttackFolder}/{a}.asset", "_telegraphFrames", "Generated/Attacks/Fx_AiSpark.png");
+        SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_AIChat.asset", "Generated/Bosses/Boss_AiDefaultIcon.png");
         SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "_theme", GetOrCreateTheme("Theme_AI", AiTheme));
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "Generated/UI/Icon_AiAssistant.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_Chrome.asset", "Generated/Bosses/Icon_Browser.png");
@@ -427,13 +448,21 @@ public static class ArtAssets
     }
 
     /// <summary>召喚する味方の絵（コマ）を、攻撃データに入れる。同じなら書き換えない</summary>
-    static void SetSummonFrames(string assetPath, string sprite)
+    static void SetSummonFrames(string assetPath, string sprite) => SetFrames(assetPath, "_summonFrames", sprite);
+
+    /// <summary>攻撃データのコマの欄（召喚する物の絵・予告のコマ）に絵を入れる。同じなら書き換えない</summary>
+    static void SetFrames(string assetPath, string prop, string sprite)
     {
         var data = AssetDatabase.LoadAssetAtPath<AttackData>(assetPath);
         if (data == null) return;
         Sprite[] frames = LoadFrames(sprite);
-        if (frames.Length == 0 || data.SummonFrames.SequenceEqual(frames)) return;
-        PlayerTestSceneBuilder.SetProps(data, so => SetArray(so, "_summonFrames", frames));
+        if (frames.Length == 0) return;
+        var so0 = new SerializedObject(data);
+        var arr = so0.FindProperty(prop);
+        bool same = arr.arraySize == frames.Length;
+        for (int i = 0; same && i < frames.Length; i++) same = arr.GetArrayElementAtIndex(i).objectReferenceValue == frames[i];
+        if (same) return;
+        PlayerTestSceneBuilder.SetProps(data, so => SetArray(so, prop, frames));
         EditorUtility.SetDirty(data);
     }
 

@@ -173,8 +173,8 @@ public static class RunPlanner
     /// <summary>
     /// スクリーンタイムの上位 poolSize 個のアプリから、ランダムに stageCount 個を選んで、それぞれのステージのボスにする（2026-11-17 まさぴ〜決定）。
     /// ・対応表のアプリ（Chrome・VS Code）は、そのアプリのボス
-    /// ・対応表に無いアプリは代用ボス：見た目はアイコンから、技はカテゴリの近いボス（ブラウザ → Chrome、開発 → VS Code、ほかは名前で決める）。
-    ///   ステージは1画面（AppCatalog の「代用ボスのステージ」）。倒すと、そのアプリの能力が手に入る
+    /// ・対応表に無いアプリは代用ボス：見た目はアイコンから、技はカテゴリの近いボス（ブラウザ → Chrome、開発 → VS Code、AI → AI チャットのボス、ほかは名前で決める）。
+    ///   ステージは1画面（AppCatalog の「代用ボスのステージ」。ひな形に専用のステージがあればそれ）。倒すと、そのアプリの能力が手に入る
     ///   （アプリ専用の能力 → カテゴリの能力 → その場で作った能力の順。2026-11-18：Zoom・Finder・Premiere Pro は専用の能力）
     /// ・カードにもボスにもしないアプリ（設定・iPhone のアプリなど）と、ラスボスのアプリ（Terminal）は選ばない
     /// ・並びは使用時間の短い順（一番使ったアプリが最後）
@@ -205,8 +205,14 @@ public static class RunPlanner
             AppUsageRow row = p.row;
             row.Seconds = p.seconds;
             AbilityCategoryEntry category = abilities != null ? abilities.Find(row) : null;
-            AppEntry template = templates.FirstOrDefault(a => category != null && a.Category == category.Category)
-                ?? templates[(int)(PixelIcon.Hash(row.Name) % (uint)templates.Count)];
+            AppEntry template = templates.FirstOrDefault(a => category != null && a.Category == category.Category);
+            if (template == null)
+            {
+                // カテゴリの近いボスが無ければ、名前で決める（同じカテゴリ専用のひな形＝AI チャットのボスは選ばない。2026-11-19）
+                var general = templates.Where(a => !a.StandInSameCategoryOnly).ToList();
+                if (general.Count == 0) general = templates;
+                template = general[(int)(PixelIcon.Hash(row.Name) % (uint)general.Count)];
+            }
             AppVisual visual = AppVisuals.Get(row);
             SkillDefinition reward = abilities != null ? abilities.SkillFor(row) : null;
             if (reward == null) reward = AppVisuals.Generate(row, abilities, null);
@@ -218,7 +224,7 @@ public static class RunPlanner
                 BossPrefab = template.BossPrefab,
                 Profile = template.Profile,
                 SpawnPosition = template.SpawnPosition,
-                StageScene = catalog.StandInStageScene,
+                StageScene = !string.IsNullOrEmpty(template.StandInStageScene) ? template.StandInStageScene : catalog.StandInStageScene,
                 Theme = visual != null ? visual.Theme : template.Theme,
                 GaugeMax = template.GaugeMax,
                 Phase2Wait = template.Phase2Wait,

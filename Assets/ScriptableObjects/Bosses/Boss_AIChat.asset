@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_AIChat
+  m_EditorClassIdentifier: 
+  _displayName: "AI\u30C1\u30E3\u30C3\u30C8"
+  _icon: {fileID: 21300000, guid: 18bec3d3a422c4f9d8998e23f1319d5f, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1.2
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: 6516b911004fb422bbbed9cef333a4a3, type: 2}
+    - {fileID: 11400000, guid: 83461e8929a974d26a336a8cf03cb2b4, type: 2}
+    - {fileID: 11400000, guid: db54330aaa42f410fbf650e940a99901, type: 2}
+    WaitAfterAttack: 1.3
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 6733867ee31e74d4ab7490579daa2cd1, type: 2}
+    - {fileID: 11400000, guid: 90451b9fd61094eaca1848553b93bb30, type: 2}
+    - {fileID: 11400000, guid: 971730e82054b44499a397dd8b7e78a7, type: 2}
+    WaitAfterAttack: 0.9
+    AttacksPerMove: 2
+  _phase2OpeningMove: {fileID: 11400000, guid: a6814cc5a631545ac9fbe634fa067fae, type: 2}
+  _errorChance: 0.2
+  _errorStunTime: 1.2
+  _errorCooldown: 4
+  _movement: 1
+  _warpAttack: {fileID: 0}
+  _hoverSpeed: 4.5
+  _hoverPointsX:
+  - -3
+  - 0
+  - 3
+  - -3.3
+  - 3.3
+  - 0
+  _hoverPointsY:
+  - 8.6
+  - 8.6
+  - 8.6
+  - 4.2
+  - 4.2
+  - 1.3
+  _reward: {fileID: 11400000, guid: b389f8d5ffc4843a29da8e439f9af54b, type: 2}

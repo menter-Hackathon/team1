@@ -4,17 +4,17 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// <summary>
-/// AI の能力「AIアシスタント」を試すテストシーンを作るエディタ拡張（2026-11-18）。
+/// AI の能力「AIアシスタント」と、AI チャットのボスを試すテストシーン（2026-11-19 にボス戦へ書き換え）。
 /// メニュー「Tools/Team1/AIアシスタントのテストシーンを作成」から実行する。ほかのテストシーンは変えない。
-/// ・部屋は雑魚戦テストシーンと同じ形（床・左右の壁・高さ3の足場2枚）に、壁越しの敵を狙わないかを見る仕切り（x=5、高さ3）を足した
+/// ・部屋は AI チャットのボスのステージと同じ形（すり抜け床の多い1画面。AiChatBossBuilder.BuildPlatforms）
 /// ・プレイヤーは最初から AIアシスタントを1枠目に持っている（1 キーで使う。G キーでもう一度もらえる）
-/// ・雑魚：歩く×2（床・右の足場）、撃つ×1（左の足場）、仕切りの向こうに歩く×1。そのあとも雑魚を出し続ける（ボスは出ない）
+/// ・ボスは AI チャットのボス。見た目は C キーで ChatGPT → Claude → Perplexity → Codex と切り替わる（Mac に入っていればそのアイコン）
+/// ・R：やり直し、N：ゲージ +10（BossTestDirector）
 /// 数値はすべて【仮】。
 /// </summary>
 public static class AiAssistantTestSceneBuilder
 {
     const string ScenePath = "Assets/Scenes/Test/AiAssistantTest.unity";
-    static readonly Rect ArenaBounds = new Rect(-10f, 0f, 20f, 11.5f);
 
     [MenuItem("Tools/Team1/AIアシスタントのテストシーンを作成")]
     public static void BuildFromMenu()
@@ -37,41 +37,41 @@ public static class AiAssistantTestSceneBuilder
         }
 
         BossTestSceneBuilder.GetOrCreateAttacks(); // 無ければ作る
-        StageTestSceneBuilder.GetOrCreateZakoShot();
         AbilitiesBuilder.EnsureAiCategory(AbilitiesBuilder.GetOrCreateAiAssistant());
-        ArtAssets.Apply(); // 絵の取り込み設定と、ロボット・レーザーの絵の割り当て
+        AiChatBossBuilder.GetOrCreateProfile();
+        ArtAssets.Apply(); // 絵の取り込み設定と、ロボット・レーザー・ボスの技の絵の割り当て
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         // アセットは新しいシーンを開いたあとに読み込む（取り込みやシーンの切り替えで、前に読んだ物が使えなくなることがある）
         Sprite square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
         var attacks = BossTestSceneBuilder.GetOrCreateAttacks();
-        AttackData zakoShot = StageTestSceneBuilder.GetOrCreateZakoShot();
         SkillDefinition ai = AbilitiesBuilder.GetOrCreateAiAssistant();
+        Rect arenaBounds = AiChatBossBuilder.ArenaBounds;
 
-        // --- 部屋（雑魚戦テストシーンと同じ。床の上面が y=0）＋仕切り ---
+        // --- 部屋（床の上面が y=0）。すり抜け床の多い形 ---
         var terrain = new GameObject("Terrain").transform;
         PlayerTestSceneBuilder.CreateBlock("Floor", new Vector2(0f, -1f), new Vector2(22f, 2f), ground, ArtLib.BlockKind.Ground, terrain);
         PlayerTestSceneBuilder.CreateBlock("Wall_Left", new Vector2(-10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
         PlayerTestSceneBuilder.CreateBlock("Wall_Right", new Vector2(10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Folder_Left", new Vector2(-3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Folder_Right", new Vector2(3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
-        // 仕切り：この向こうの雑魚は、レーザーの通り道が壁にさえぎられるあいだは狙わない
-        PlayerTestSceneBuilder.CreateBlock("Wall_Divider", new Vector2(5.5f, 1.5f), new Vector2(0.6f, 3f), ground, ArtLib.BlockKind.Wall, terrain);
-
+        AiChatBossBuilder.BuildPlatforms(terrain);
         var arena = new GameObject("BattleArena").AddComponent<BattleArena>();
-        PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
+        PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = arenaBounds);
 
         // --- プレイヤー（最初から AIアシスタントを持つ） ---
-        var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-6f, 0.05f, 0f), attacks.PlayerMelee, new[] { ai });
+        var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-8f, 0.05f, 0f), attacks.PlayerMelee, new[] { ai });
         PlayerTestSceneBuilder.SetProps(player.GetComponent<SkillDebugGiver>(), so => so.FindProperty("_giveOnStart").boolValue = true);
 
-        // --- 雑魚ウイルス（HP の仮表示つき） ---
-        var enemies = new GameObject("Enemies").transform;
-        StageTestSceneBuilder.CreateWalker("Zako_Walker_Floor", new Vector2(1f, 0f), -1, enemies, square, debugLabel: true);
-        StageTestSceneBuilder.CreateWalker("Zako_Walker_Folder", new Vector2(3.5f, 3f), 1, enemies, square, debugLabel: true);
-        StageTestSceneBuilder.CreateShooter("Zako_Shooter_Folder", new Vector2(-3.5f, 3f), zakoShot, player.transform, enemies, square, debugLabel: true);
-        StageTestSceneBuilder.CreateWalker("Zako_Walker_BehindWall", new Vector2(8f, 0f), 1, enemies, square, debugLabel: true);
-        // 【仮】雑魚を出し続ける（ノルマなし。同時に2〜4体）
-        StageTestSceneBuilder.CreateSpawner(player.transform, zakoShot, square, null, 0, new Vector2(2.5f, 4f), new Vector2Int(2, 4), 20f, ArenaBounds, false);
+        // --- ボス（AI チャット） ---
+        BossController boss = AiChatBossBuilder.CreateBoss(new Vector2(arenaBounds.center.x, arenaBounds.yMin) + AiChatBossBuilder.SpawnPosition, player.transform);
+        var director = new GameObject("BossTestDirector").AddComponent<BossTestDirector>();
+        PlayerTestSceneBuilder.SetProps(director, so =>
+        {
+            var arr = so.FindProperty("_bosses");
+            arr.arraySize = 1;
+            arr.GetArrayElementAtIndex(0).objectReferenceValue = boss;
+            so.FindProperty("_player").objectReferenceValue = player.transform;
+        });
+        var cycler = director.gameObject.AddComponent<BossAppLookCycler>();
+        PlayerTestSceneBuilder.SetProps(cycler, so => so.FindProperty("_boss").objectReferenceValue = boss);
 
         // --- カメラ（固定） ---
         var camGo = new GameObject("Main Camera");
@@ -88,6 +88,6 @@ public static class AiAssistantTestSceneBuilder
         PlayerTestSceneBuilder.EnsureFolder(Path.GetDirectoryName(ScenePath).Replace('\\', '/'));
         EditorSceneManager.SaveScene(scene, ScenePath);
         Selection.activeGameObject = player;
-        Debug.Log($"AIアシスタントのテストシーンを作成しました: {ScenePath}（1 キーで AIアシスタントを使う）");
+        Debug.Log($"AIアシスタント（AI チャットのボス戦）のテストシーンを作成しました: {ScenePath}（1：AIアシスタント　C：ボスのアプリを切り替え　R：やり直し　N：ゲージ+10）");
     }
 }

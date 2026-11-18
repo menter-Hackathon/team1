@@ -15,7 +15,7 @@ MonoBehaviour:
   _kind: 5
   _windup: 0
   _activeTime: 0.3
-  _cooldown: 12
+  _cooldown: 8
   _damage: 1
   _gaugeGain: 4
   _knockback: {x: 0.5, y: 0.5}
@@ -82,3 +82,12 @@ MonoBehaviour:
   _summonHoverOffset: {x: 0.9, y: 1.9}
   _summonFollowSharpness: 6
   _beamWidth: 0.33333334
+  _summonType: 0
+  _summonCount: 1
+  _summonSpeed: 2.5
+  _summonTurnRate: 90
+  _beamStyle: 0
+  _beamOrigin: 0
+  _beamMoveTime: 0.8
+  _beamHitThreshold: 0.5
+  _telegraphFrames: []

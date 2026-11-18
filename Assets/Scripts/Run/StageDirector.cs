@@ -69,6 +69,8 @@ public class StageDirector : MonoBehaviour
             var armor = Boss.GetComponentInChildren<BossArmorVisual>(true);
             if (armor != null) armor.SetWindowStages(BossWindowArt.Create(Plan.Visual.Icon24, Plan.App.Theme, $"BossWindow_{Plan.App.DisplayName}"));
         }
+        // アプリの見た目を受け取る部品（AI チャットのボス：アイコンの体・アプリの色の煙と技。2026-11-19）
+        foreach (var look in Boss.GetComponentsInChildren<IBossAppLook>(true)) look.ApplyAppLook(Plan.App.DisplayName, Plan.Visual, Plan.App.Theme);
         if (_player != null && Boss.TryGetComponent(out AttackRunner runner)) runner.Target = _player.transform;
         if (_entrance != null) _entrance.SetBoss(Boss);
     }

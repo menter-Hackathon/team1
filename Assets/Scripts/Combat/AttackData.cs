@@ -156,8 +156,29 @@ public class AttackData : ScriptableObject
     [SerializeField] Vector2 _summonHoverOffset = new Vector2(0.9f, 1.9f);
     [Tooltip("持ち主に付いていく速さ（大きいほど、すぐ追いつく）")]
     [SerializeField, Min(0.1f)] float _summonFollowSharpness = 6f;
-    [Tooltip("レーザーの太さ（マス）。判定も同じ太さ")]
+    [Tooltip("レーザーの太さ（マス）。判定も同じ太さ。Beam のときは、いちばん太いときの太さ")]
     [SerializeField, Min(0.05f)] float _beamWidth = 0.3f;
+    [Tooltip("召喚する物の種類。Assistant：味方の AI アシスタント、Chaser：敵のミニロボット")]
+    [SerializeField] SummonType _summonType = SummonType.Assistant;
+    [Tooltip("一度に出す数（Chaser のとき）")]
+    [SerializeField, Min(1)] int _summonCount = 1;
+    [Tooltip("動く速さ（マス/秒。Chaser のとき）")]
+    [SerializeField, Min(0f)] float _summonSpeed = 2.5f;
+    [Tooltip("1秒に曲がれる角度（度。Chaser のとき）。小さいほど、追いかけ方がゆるい")]
+    [SerializeField, Min(0f)] float _summonTurnRate = 90f;
+
+    // ───────── 直線のレーザー（Beam） ─────────
+    [Header("直線のレーザー（Beam のとき。AI チャットのボス）")]
+    [Tooltip("見せ方。Laser：ふつうのレーザー（予告は電流）、CodeStream：大技（予告は赤い危険エリア、文字列が流れる）")]
+    [SerializeField] BeamStyle _beamStyle = BeamStyle.Laser;
+    [Tooltip("撃つ位置。Owner：持ち主から（数・扇の角度・狙い方は「弾」の欄を使う）、ArenaLeft：部屋の左端へ寄ってから右向きに")]
+    [SerializeField] BeamOrigin _beamOrigin = BeamOrigin.Owner;
+    [Tooltip("部屋の左端へ寄るのにかける秒数（撃つ位置が ArenaLeft のとき）")]
+    [SerializeField, Min(0f)] float _beamMoveTime = 0.8f;
+    [Tooltip("いちばん太いときの何割より太い間、判定を出すか（細い間は当たらない）")]
+    [SerializeField, Range(0f, 1f)] float _beamHitThreshold = 0.5f;
+    [Tooltip("予告のコマ（電流。横に並べて通り道に流す）。空なら細い線で予告する")]
+    [SerializeField] Sprite[] _telegraphFrames;
 
     // ───────── 読み取り用 ─────────
     public AttackKind Kind => _kind;
@@ -231,6 +252,15 @@ public class AttackData : ScriptableObject
     public Vector2 SummonHoverOffset => _summonHoverOffset;
     public float SummonFollowSharpness => _summonFollowSharpness;
     public float BeamWidth => _beamWidth;
+    public SummonType SummonType => _summonType;
+    public int SummonCount => _summonCount;
+    public float SummonSpeed => _summonSpeed;
+    public float SummonTurnRate => _summonTurnRate;
+    public BeamStyle BeamStyle => _beamStyle;
+    public BeamOrigin BeamOrigin => _beamOrigin;
+    public float BeamMoveTime => _beamMoveTime;
+    public float BeamHitThreshold => _beamHitThreshold;
+    public Sprite[] TelegraphFrames => _telegraphFrames ?? System.Array.Empty<Sprite>();
 
     /// <summary>判定を出し続ける時間（持続があれば持続時間）</summary>
     public float HitWindow => _persistDuration > 0f ? _persistDuration : _activeTime;
@@ -267,6 +297,20 @@ public class AttackData : ScriptableObject
         if (recolor != null && _sprite != null) copy._sprite = recolor(_sprite);
         copy._color = new Color(1f, 1f, 1f, _color.a);
         if (_onTerrainHit != null) copy._onTerrainHit = _onTerrainHit.CreateRecoloredCopy(recolor);
+        if (recolor != null)
+        {
+            // 召喚する物の絵・予告のコマも塗り替える（AI チャットのボスのミニロボット・電流。2026-11-19）
+            copy._summonFrames = RecolorAll(_summonFrames, recolor);
+            copy._telegraphFrames = RecolorAll(_telegraphFrames, recolor);
+        }
         return copy;
+    }
+
+    static Sprite[] RecolorAll(Sprite[] frames, System.Func<Sprite, Sprite> recolor)
+    {
+        if (frames == null) return null;
+        var result = new Sprite[frames.Length];
+        for (int i = 0; i < frames.Length; i++) result[i] = frames[i] != null ? recolor(frames[i]) : null;
+        return result;
     }
 }
