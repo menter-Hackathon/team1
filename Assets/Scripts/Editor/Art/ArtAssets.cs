@@ -127,6 +127,7 @@ public static class ArtAssets
         R("Generated/UI/Icon_BarGraph.png"),
         R("Generated/UI/Icon_Paint.png"),
         R("Generated/UI/Icon_Bomb.png"),
+        R("Generated/UI/Icon_GalleryView.png"),
     };
 
     [MenuItem("Tools/Team1/グラフィックを適用")]
@@ -413,6 +414,8 @@ public static class ArtAssets
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_BarGraph.asset", "Generated/UI/Icon_BarGraph.png");
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_PaintBucket.asset", "Generated/UI/Icon_Paint.png");
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Bomb.asset", "Generated/UI/Icon_Bomb.png");
+        // アプリ専用の能力（2026-11-18）：Zoom のギャラリービュー
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_App_Zoom.asset", "Generated/UI/Icon_GalleryView.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_Chrome.asset", "Generated/Bosses/Icon_Browser.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_VSCode.asset", "Generated/Bosses/Icon_Editor.png");
     }

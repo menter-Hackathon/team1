@@ -5,7 +5,7 @@ using UnityEngine;
 
 /// <summary>
 /// AttackData を実行する部分。プレイヤー・ボス・雑魚で共通に使う（攻撃する人に1つ付ける）。
-/// ・Run(データ) で、予備動作 → 攻撃（弾を撃つ・判定を出す・落とす・瞬間移動）の順に進める
+/// ・Run(データ) で、予備動作 → 攻撃（弾を撃つ・判定を出す・落とす・瞬間移動・ロックオン）の順に進める
 /// ・出した弾・判定・落下物は覚えておき、ClearSpawned でまとめて消せる（形態変化・正常化のとき）
 /// ・同時に実行できる攻撃は1つ。実行中に Run しても false を返して何もしない（「同時に実行できる」をオンにしたときを除く）
 ///
@@ -89,6 +89,8 @@ public class AttackRunner : MonoBehaviour
             Debug.LogWarning($"{name}: 近接（{data.name}）は AttackRunner では実行しません。PlayerMeleeAttack に設定してください", this);
             return false;
         }
+        // 【仮】ロックオンは、画面に相手がいなければ使えない（false を返すので、能力のクールタイムも始まらない）
+        if (data.Kind == AttackKind.LockOn && LockOnStrike.FindTargets(this).Count == 0) return false;
         Current = data;
         var holder = new Coroutine[1];
         holder[0] = StartCoroutine(RunRoutine(data, holder));
@@ -194,6 +196,9 @@ public class AttackRunner : MonoBehaviour
             case AttackKind.Warp:
                 yield return WarpRoutine(data);
                 break;
+            case AttackKind.LockOn:
+                yield return LockOnRoutine(data);
+                break;
             default:
                 Debug.LogWarning($"{name}: 攻撃の種類 {data.Kind} はまだ実行できません（{data.name}）", this);
                 break;
@@ -284,6 +289,17 @@ public class AttackRunner : MonoBehaviour
                 Debug.LogWarning($"{name}: 追撃に使えるのは Area だけです（{data.name}）", this);
                 break;
         }
+    }
+
+    // ───────── ロックオン（2026-11-18：ギャラリービュー） ─────────
+
+    IEnumerator LockOnRoutine(AttackData data)
+    {
+        // 予備動作の間に相手がいなくなっていたら、何もしない
+        LockOnStrike strike = LockOnStrike.Spawn(this, data, LockOnStrike.FindTargets(this));
+        if (strike == null) yield break;
+        Released?.Invoke(data);
+        yield return new WaitForSeconds(strike.Duration);
     }
 
     // ───────── 落下物（F）・設置物（G） ─────────

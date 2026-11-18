@@ -68,7 +68,7 @@ public static class StageTestSceneBuilder
 
         // --- プレイヤー（左端から始める） ---
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-8.5f, 0.05f, 0f), attacks.PlayerMelee,
-            AbilitiesBuilder.GetOrCreate().All);
+            AbilitiesBuilder.GetOrCreate().ForDebugKey);
 
         // --- 雑魚ウイルス ---
         var wave = new GameObject("EnemyWave").AddComponent<EnemyWave>();

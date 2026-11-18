@@ -1226,6 +1226,21 @@ def make_category_abilities():
     save(orb, "Attacks/Bullet_Orb.png")
 
 
+def make_app_skill_icons():
+    # ギャラリービュー（Zoom の能力。2026-11-18）のアイコン（16×16）【仮】
+    # 黒いすき間で区切った 2×2 のタイルに人が1人ずつ。左上のタイルに「話している人」の緑の枠
+    im = new(16, 16, K)
+    tile = C("3a3a3a")
+    people = (SKY, ORANGE, GREEN_L, C("a259ff"))
+    for i, (x0, y0) in enumerate(((1, 1), (9, 1), (1, 9), (9, 9))):
+        rect(im, x0, y0, x0 + 5, y0 + 5, tile)
+        c = people[i]
+        rect(im, x0 + 2, y0 + 1, x0 + 3, y0 + 2, c)   # 頭
+        rect(im, x0 + 1, y0 + 4, x0 + 4, y0 + 5, c)   # 肩
+    outline_rect(im, 0, 0, 7, 7, C("2ad94f"))
+    save(im, "UI/Icon_GalleryView.png")
+
+
 def main():
     make_background()
     make_terrain()
@@ -1240,6 +1255,7 @@ def main():
     make_boss_b()
     make_stage_gimmicks()
     make_category_abilities()
+    make_app_skill_icons()
     print("done:", GEN)
 
 

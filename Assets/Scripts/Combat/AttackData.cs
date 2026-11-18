@@ -15,7 +15,7 @@ public class AttackData : ScriptableObject
     [SerializeField] AttackKind _kind = AttackKind.Projectile;
     [Tooltip("予備動作（秒）。この間に構えを見せてから攻撃が出る。床に予告（影・赤丸）を出す技は、予告時間の方を使い、ここは0にする")]
     [SerializeField, Min(0f)] float _windup;
-    [Tooltip("判定時間（秒）。指定位置の判定・近接で、攻撃判定を出している時間。出現型の落下物（ポップアップ出現）では、現れてから判定を出している時間")]
+    [Tooltip("判定時間（秒）。指定位置の判定・近接で、攻撃判定を出している時間。出現型の落下物（ポップアップ出現）では、現れてから判定を出している時間。ロックオンでは、レーザーが見えている時間")]
     [SerializeField, Min(0f)] float _activeTime = 0.3f;
     [Tooltip("間隔（クールタイム、秒）。プレイヤーの能力・近接で、次に使えるまでの時間")]
     [SerializeField, Min(0f)] float _cooldown;
@@ -29,7 +29,7 @@ public class AttackData : ScriptableObject
     [SerializeField, Min(0f)] float _hitStun = 0.25f;
     [Tooltip("1回の攻撃で、同じものを何回出すか（2連射なら2、扇状を2回なら2）")]
     [SerializeField, Min(1)] int _repeatCount = 1;
-    [Tooltip("繰り返すときの間隔（秒）")]
+    [Tooltip("繰り返すときの間隔（秒）。ロックオンでは、レーザー1本ごとの間隔")]
     [SerializeField, Min(0f)] float _repeatInterval;
 
     [Header("見た目（仮素材）")]
@@ -54,7 +54,7 @@ public class AttackData : ScriptableObject
     [SerializeField] AimMode _aim = AimMode.Target;
     [Tooltip("正面に撃つとき、上へ傾ける角度（度）。放物線で投げる弾（ボム）に使う")]
     [SerializeField, Range(0f, 85f)] float _launchAngle;
-    [Tooltip("弾を出す位置のずれ（x は向きに合わせて左右を反転）。足元が原点の持ち主（プレイヤー）が、体の中ほどから投げるときに使う")]
+    [Tooltip("弾を出す位置のずれ（x は向きに合わせて左右を反転）。足元が原点の持ち主（プレイヤー）が、体の中ほどから投げるときに使う。ロックオンのレーザーを出す位置にも使う")]
     [SerializeField] Vector2 _spawnOffset;
     [Tooltip("地形（床・壁）に当たったら消えるか")]
     [SerializeField] bool _destroyOnTerrain = true;
@@ -86,8 +86,8 @@ public class AttackData : ScriptableObject
     [Tooltip("オン：2つ目以降を前へ順に並べる（棒グラフ）。オフ：左→右→さらに左…の順")]
     [SerializeField] bool _areaForwardOrder;
 
-    [Header("予告（Area・Spawn のとき）")]
-    [Tooltip("予告（赤丸・影・出現の枠）を出してから判定・落下・出現を始めるまでの秒数")]
+    [Header("予告（Area・Spawn・LockOn のとき）")]
+    [Tooltip("予告（赤丸・影・出現の枠・ロックオンの印）を出してから判定・落下・出現・レーザーを始めるまでの秒数")]
     [SerializeField, Min(0f)] float _telegraphTime = 1f;
 
     [Header("持続（Area のとき。残り続けるダメージ床）")]
@@ -123,6 +123,14 @@ public class AttackData : ScriptableObject
     [SerializeField] Vector2 _appearTopRange = new Vector2(2.5f, 6f);
     [Tooltip("【仮】上の端に乗れるとみなす高さ（マス）。近くの床・足場から上の端までがこれ以下の位置にだけ出す。ジャンプの高さ3.2より少し低くしてある。置き方が AppearAroundTarget のとき（1つ目を除く）")]
     [SerializeField, Min(0.5f)] float _reachHeight = 3f;
+
+    // ───────── ロックオン（LockOn） ─────────
+    [Header("ロックオン（LockOn のとき。2026-11-18 ギャラリービュー）")]
+    [Tooltip("【仮】レーザーの本数。画面に映っている相手に、近い順に1本ずつ割り当てる。余った分は、まだ倒れない相手（ボスなど）にもう一度割り当てる。\n" +
+             "印を付けている時間は「予告」、1本ごとの間隔は「繰り返すときの間隔」、レーザーが見えている時間は「判定時間」、レーザーの色は「色」")]
+    [SerializeField, Min(1)] int _lockOnCount = 9;
+    [Tooltip("【仮】ロックオンの印（相手を囲む枠）の色。Zoom の「話している人」の枠に合わせて緑")]
+    [SerializeField] Color _lockOnMarkColor = new Color(0.14f, 0.85f, 0.35f, 1f);
 
     // ───────── Warp ─────────
     [Header("Warp のとき")]
@@ -195,6 +203,9 @@ public class AttackData : ScriptableObject
     public float DropInterval => _dropInterval;
     public Vector2 AppearTopRange => _appearTopRange;
     public float ReachHeight => _reachHeight;
+
+    public int LockOnCount => _lockOnCount;
+    public Color LockOnMarkColor => _lockOnMarkColor;
 
     public WarpDestination WarpDestination => _warpDestination;
     public float WarpDistance => _warpDistance;

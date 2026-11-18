@@ -14,6 +14,11 @@ public enum AttackKind
     Warp = 3,
     /// <summary>プレイヤーの近接。持ち主に付けた Hitbox を使うので、AttackRunner では実行しない（PlayerMeleeAttack が使う）</summary>
     Melee = 4,
+    /// <summary>
+    /// ロックオン（2026-11-18：Zoom の能力「ギャラリービュー」）。画面に映っている相手に印を付けてから、それぞれへレーザーを撃つ。
+    /// 画面に相手がいないときは使えない（クールタイムも始まらない）
+    /// </summary>
+    LockOn = 5,
 }
 
 /// <summary>弾の狙い方</summary>

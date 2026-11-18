@@ -69,7 +69,7 @@ public static class BossTestSceneBuilder
         // --- プレイヤー ---
         // 【仮】G キーでカテゴリの能力5つを順番にもらえる（ボスを倒さずに能力を試せる）
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-6f, 0.05f, 0f), attacks.PlayerMelee,
-            AbilitiesBuilder.GetOrCreate().All);
+            AbilitiesBuilder.GetOrCreate().ForDebugKey);
 
         // --- ボス（B キーで切り替え。最初は Chrome） ---
         // Chrome：空中に浮く（下の端が床から2.5マス）。VS Code：床に立つ
