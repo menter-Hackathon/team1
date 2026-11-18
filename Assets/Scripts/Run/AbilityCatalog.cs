@@ -54,18 +54,44 @@ public class AbilityCategoryEntry
     [Tooltip("バンドルID（前方一致）。ファイル・サンプル・手入力の使用データ用")]
     public string[] BundleIdPrefixes;
 
-    public bool Matches(AppUsageRow row)
+    public bool Matches(AppUsageRow row) => AppMatch.Matches(row, AppNames, BundleIdPrefixes);
+}
+
+/// <summary>
+/// アプリ専用の能力1つ分（2026-11-18 まさぴ〜決定：Zoom・Finder・Premiere Pro。中身はチームで決める）。
+/// 当たったアプリは、カテゴリの能力より先にこの能力を使う（能力えらびのカード・ボスを倒したときの能力・図鑑）。
+/// 中身を変えるときは、能力のアセット（名前・アイコン・攻撃データ）を書き換える。アイコンが空なら、アプリのアイコンで代わりに出す
+/// </summary>
+[Serializable]
+public class AppSkillEntry
+{
+    [Tooltip("どのアプリか（確認用の名前）")]
+    public string Label;
+    [Tooltip("このアプリの能力")]
+    public SkillDefinition Skill;
+    [Tooltip("スクリーンタイムでの名前（大文字小文字は区別しない。単語ごとに合わせる：「Adobe Premiere Pro 2025」は「premiere pro」に当たる）")]
+    public string[] AppNames;
+    [Tooltip("バンドルID（前方一致）")]
+    public string[] BundleIdPrefixes;
+
+    public bool Matches(AppUsageRow row) => AppMatch.Matches(row, AppNames, BundleIdPrefixes);
+}
+
+/// <summary>アプリの見分け方（バンドルIDの前方一致か、名前を単語ごとに）</summary>
+public static class AppMatch
+{
+    public static bool Matches(AppUsageRow row, string[] names, string[] bundleIdPrefixes)
     {
-        if (!string.IsNullOrEmpty(row.BundleId) && BundleIdPrefixes != null)
+        if (!string.IsNullOrEmpty(row.BundleId) && bundleIdPrefixes != null)
         {
-            foreach (var p in BundleIdPrefixes)
+            foreach (var p in bundleIdPrefixes)
             {
                 if (!string.IsNullOrEmpty(p) && row.BundleId.StartsWith(p, StringComparison.OrdinalIgnoreCase)) return true;
             }
         }
-        if (string.IsNullOrWhiteSpace(row.Name) || AppNames == null) return false;
+        if (string.IsNullOrWhiteSpace(row.Name) || names == null) return false;
         string n = row.Name.Trim().ToLowerInvariant();
-        foreach (var a in AppNames)
+        foreach (var a in names)
         {
             if (string.IsNullOrWhiteSpace(a)) continue;
             string alias = a.Trim().ToLowerInvariant();
@@ -78,8 +104,9 @@ public class AbilityCategoryEntry
 /// <summary>
 /// カテゴリごとの能力の表（2026-11-17 決定：ゲームの流れ）。
 /// ・使用時間の長い順にアプリをカテゴリへ振り分け、そのカテゴリの能力をカードにする（同じカテゴリは1枚にまとめる）
-/// ・カテゴリが分からないアプリ・能力の無いカテゴリは飛ばす
-/// ・5枚に足りなければ、まだ出ていないカテゴリの能力で埋める（いつも5枚から選べる）
+/// ・アプリ専用の能力があるアプリ（Zoom・Finder・Premiere Pro。2026-11-18）は、カテゴリより先にその能力にする（カテゴリの1枚とは別に数える）
+/// ・カテゴリが分からないアプリ・能力の無いカテゴリは、その場で能力を作る
+/// ・枚数に足りなければ、まだ出ていないカテゴリの能力で埋める
 /// 作り方：Project ウィンドウで右クリック ＞ Create ＞ Team1 ＞ Ability Catalog
 /// </summary>
 [CreateAssetMenu(fileName = "AbilityCatalog", menuName = "Team1/Ability Catalog")]
@@ -90,6 +117,8 @@ public class AbilityCatalog : ScriptableObject
     [Tooltip("選ぶ枚数")]
     [SerializeField, Min(1)] int _pickCount = 1;
     [SerializeField] AbilityCategoryEntry[] _categories;
+    [Tooltip("アプリ専用の能力（2026-11-18：Zoom・Finder・Premiere Pro）。カテゴリより先に使う")]
+    [SerializeField] AppSkillEntry[] _appSkills;
 
     [Header("対応表に無いアプリ（その場で能力を作る。2026-11-17）")]
     [Tooltip("ひな形（基盤の能力）。アプリの名前から1つ選ぶ（同じアプリなら、いつも同じ）")]
@@ -99,20 +128,21 @@ public class AbilityCatalog : ScriptableObject
     [Tooltip("作った能力のクールタイムの範囲（秒）")]
     [SerializeField] Vector2 _cooldownRange = new Vector2(2.5f, 6f);
     [Tooltip("カードにもボスにもしないアプリの名前（大文字小文字は区別しない）")]
-    [SerializeField] string[] _excludedNames = { "Finder", "System Settings", "System Preferences", "システム設定", "設定", "Team1" };
-    [Tooltip("カードにもボスにもしないアプリのバンドルID（前方一致）")]
-    [SerializeField] string[] _excludedBundleIds = { "com.apple.finder", "com.apple.systempreferences" };
+    [SerializeField] string[] _excludedNames = { "System Settings", "System Preferences", "システム設定", "設定", "Team1" };
+    [Tooltip("カードにもボスにもしないアプリのバンドルID（前方一致）。Finder は 2026-11-18 から専用の能力があるので外した")]
+    [SerializeField] string[] _excludedBundleIds = { "com.apple.systempreferences" };
 
     public int CardCount => _cardCount;
     public int PickCount => _pickCount;
     public AbilityCategoryEntry[] Categories => _categories ?? Array.Empty<AbilityCategoryEntry>();
+    public AppSkillEntry[] AppSkills => _appSkills ?? Array.Empty<AppSkillEntry>();
     public AbilityTemplate[] Templates => _templates ?? Array.Empty<AbilityTemplate>();
     public float GaugePerSecond => _gaugePerSecond;
     public Vector2 CooldownRange => _cooldownRange;
 
     /// <summary>
     /// カードにもボスにもしないアプリか。
-    /// ・除外の表にある（Finder・システム設定・このゲーム）
+    /// ・除外の表にある（システム設定・このゲーム。Finder は 2026-11-18 から除外しない）
     /// ・名前がバンドルIDの形（「com.google.chrome.ios」など）：Mac に無い、ほかのデバイス（iPhone）のアプリ。この Mac の使用時間ではないので数えない
     /// </summary>
     public bool IsExcluded(AppUsageRow row)
@@ -139,6 +169,14 @@ public class AbilityCatalog : ScriptableObject
     /// <summary>このアプリのカテゴリ（能力のあるカテゴリだけ）。無ければ null</summary>
     public AbilityCategoryEntry Find(AppUsageRow row) => Categories.FirstOrDefault(c => c != null && c.Skill != null && c.Matches(row));
 
+    /// <summary>このアプリ専用の能力（能力が入っているものだけ）。無ければ null</summary>
+    public AppSkillEntry FindAppSkill(AppUsageRow row) => AppSkills.FirstOrDefault(a => a != null && a.Skill != null && a.Matches(row));
+
+    /// <summary>
+    /// このアプリから出る能力：専用の能力 → カテゴリの能力の順。どちらも無ければ null（その場で作る能力は AppVisuals.Generate）
+    /// </summary>
+    public SkillDefinition SkillFor(AppUsageRow row) => FindAppSkill(row)?.Skill ?? Find(row)?.Skill;
+
     /// <summary>この能力のカテゴリ。無ければ null</summary>
     public AbilityCategoryEntry FindBySkill(SkillDefinition skill) => Categories.FirstOrDefault(c => c != null && c.Skill == skill);
 
@@ -151,11 +189,20 @@ public class AbilityCatalog : ScriptableObject
     {
         var cards = new List<AbilityCandidate>();
         var used = new HashSet<SkillCategory>();
+        var usedAppSkills = new HashSet<SkillDefinition>();
         var usedTemplates = new HashSet<int>();
         foreach (var row in (rows ?? Enumerable.Empty<AppUsageRow>()).Where(r => r.Seconds > 0).OrderByDescending(r => r.Seconds))
         {
             if (cards.Count >= _cardCount) break;
             if (IsExcluded(row)) continue;
+            AppSkillEntry own = FindAppSkill(row);
+            if (own != null)
+            {
+                // アプリ専用の能力：カテゴリの1枚とは別に数える（同じ能力は1枚だけ）
+                if (!usedAppSkills.Add(own.Skill)) continue;
+                cards.Add(new AbilityCandidate { Skill = own.Skill, Category = own.Skill.Category, AppName = row.Name, Seconds = row.Seconds, AppIcon = appIcon?.Invoke(row) });
+                continue;
+            }
             AbilityCategoryEntry entry = Find(row);
             if (entry != null)
             {

@@ -138,6 +138,28 @@ MonoBehaviour:
     - com.valvesoftware.steam
     - com.mojang.
     - com.epicgames.
+  _appSkills:
+  - Label: Zoom
+    Skill: {fileID: 11400000, guid: 403bb8d4301d9415d822fed68c95726f, type: 2}
+    AppNames:
+    - Zoom
+    - zoom.us
+    - Zoom Workplace
+    BundleIdPrefixes:
+    - us.zoom.xos
+  - Label: Finder
+    Skill: {fileID: 11400000, guid: 3cc7da256f9854cbf9e261a3728c8699, type: 2}
+    AppNames:
+    - Finder
+    BundleIdPrefixes:
+    - com.apple.finder
+  - Label: Premiere Pro
+    Skill: {fileID: 11400000, guid: 712c7afef79be49b8a19444d3a9cc679, type: 2}
+    AppNames:
+    - Premiere Pro
+    - Adobe Premiere Pro
+    BundleIdPrefixes:
+    - com.adobe.PremierePro
   _templates:
   - Name: "\u30D4\u30E9\u30FC"
     Attack: {fileID: 11400000, guid: 9eb594a4112d143cf9c37b3bdd2c56d7, type: 2}
@@ -177,12 +199,10 @@ MonoBehaviour:
   _gaugePerSecond: 4
   _cooldownRange: {x: 2.5, y: 6}
   _excludedNames:
-  - Finder
   - System Settings
   - System Preferences
   - "\u30B7\u30B9\u30C6\u30E0\u8A2D\u5B9A"
   - "\u8A2D\u5B9A"
   - Team1
   _excludedBundleIds:
-  - com.apple.finder
   - com.apple.systempreferences

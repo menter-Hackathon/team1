@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 1回のプレイ（ラン）の進行。シーンをまたいで残る（DontDestroyOnLoad）。
-/// ・タイトル：StartRun(読み込み方) → 使用データを読み、能力えらびのカードとステージの計画（上位10アプリからランダムに3つのボス）を作って、能力えらびの画面へ
+/// ・タイトル：StartRun(読み込み方) → 使用データを読み、能力えらびのカードとステージの計画（上位10アプリからランダムに3つのボス＋最後にラスボスの Terminal）を作って、能力えらびの画面へ
 /// ・能力えらび：ConfirmLoadout(選んだ能力) → 持っている能力にして、最初のステージへ（2026-11-17：ゲームの流れ。最初は1つ）
 /// ・ステージ：StageDirector がボスを出し、正常化したら CompleteStage、ライフ0なら ShowGameOver を呼ぶ
 /// ・CompleteStage：次のステージへ。最後ならリザルトへ
@@ -30,8 +30,10 @@ public class GameSession : MonoBehaviour
     [SerializeField] string _loadoutScene = "RunLoadout";
     [Tooltip("ボスの候補にするアプリの数（使用時間の上位）")]
     [SerializeField, Min(1)] int _bossPool = 10;
-    [Tooltip("ステージの数（候補からランダムに選ぶ）")]
+    [Tooltip("ステージの数（候補からランダムに選ぶ。ラスボスのステージは別に足す）")]
     [SerializeField, Min(1)] int _stageCount = 3;
+    [Tooltip("最後にラスボス（対応アプリ表のラスボス＝Terminal）のステージを足す（2026-11-18 まさぴ〜決定）")]
+    [SerializeField] bool _finalBossStage = true;
     [Tooltip("ボスを選ぶ乱数の種（0＝毎回ちがう。確認用）")]
     [SerializeField] int _randomSeed;
     [Tooltip("画面を暗くする・明るくする秒数")]
@@ -209,6 +211,12 @@ public class GameSession : MonoBehaviour
         {
             error = "駆除対象のアプリが見つかりません";
             return false;
+        }
+        // ラスボス：毎回、最後のステージに Terminal（2026-11-18）
+        if (_finalBossStage && _abilities != null)
+        {
+            StagePlan final = RunPlanner.CreateFinalPlan(_catalog);
+            if (final != null) plans.Add(final);
         }
 
         Run = new RunState(plans);

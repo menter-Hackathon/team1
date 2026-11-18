@@ -151,7 +151,7 @@ public class RunLoadoutMenu : MonoBehaviour
         PixelGui.Text(new Rect(x, y, w, 14f), "固有能力", 12, PixelGui.LabelPurple);
         if (c.Skill != null)
         {
-            PixelGui.DrawSprite(new Rect(x, y + 16f, 16f, 16f), c.Skill.Icon);
+            PixelGui.DrawSprite(new Rect(x, y + 16f, 16f, 16f), c.Skill.Icon != null ? c.Skill.Icon : c.AppIcon); // アイコンが空の能力は、アプリのアイコンで
             PixelGui.TextFit(new Rect(x + 20f, y + 15f, w - 20f, 18f), c.Skill.DisplayName, 16, PixelGui.Ink);
             PixelGui.Text(new Rect(x, y + 36f, w, 30f), SkillTexts.Description(c.Skill), 12, PixelGui.BodyText, TextAnchor.UpperLeft, true);
             float tx = x;
