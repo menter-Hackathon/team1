@@ -7,6 +7,7 @@ using UnityEngine;
 /// ・クールタイムは攻撃データの「間隔」。使った瞬間から数える
 /// ・クールタイムは能力ごとに覚える。捨てて拾い直しても、別の枠に入れ直しても、残り時間はそのまま
 /// ・使えるかどうか（のけぞり中・入れ替え待ち中は使えない）は PlayerSkills が判断して SkillUseRequested を出す
+/// ・召喚（AI アシスタント。2026-11-18）は、味方が消えてからクールタイムを数える。味方がいる間は使えない
 /// </summary>
 [RequireComponent(typeof(PlayerSkills), typeof(AttackRunner))]
 public class PlayerSkillExecutor : MonoBehaviour
@@ -14,6 +15,8 @@ public class PlayerSkillExecutor : MonoBehaviour
     PlayerSkills _skills;
     AttackRunner _runner;
     readonly Dictionary<SkillDefinition, float> _readyAt = new Dictionary<SkillDefinition, float>();
+    // 終わってからクールタイムを数える能力（攻撃データ → 能力）。攻撃が終わったら、そこからクールタイムを数え直す
+    readonly Dictionary<AttackData, SkillDefinition> _waitingFinish = new Dictionary<AttackData, SkillDefinition>();
 
     /// <summary>スキルを使ったとき（枠の番号, スキル）。SE・エフェクト・UI 用</summary>
     public event Action<int, SkillDefinition> SkillUsed;
@@ -26,8 +29,24 @@ public class PlayerSkillExecutor : MonoBehaviour
         _runner = GetComponent<AttackRunner>();
     }
 
-    void OnEnable() => _skills.SkillUseRequested += OnSkillUseRequested;
-    void OnDisable() => _skills.SkillUseRequested -= OnSkillUseRequested;
+    void OnEnable()
+    {
+        _skills.SkillUseRequested += OnSkillUseRequested;
+        _runner.Finished += OnAttackFinished;
+    }
+
+    void OnDisable()
+    {
+        _skills.SkillUseRequested -= OnSkillUseRequested;
+        _runner.Finished -= OnAttackFinished;
+    }
+
+    void OnAttackFinished(AttackData attack)
+    {
+        if (attack == null || !_waitingFinish.TryGetValue(attack, out SkillDefinition skill)) return;
+        _waitingFinish.Remove(attack);
+        _readyAt[skill] = Time.time + attack.Cooldown;
+    }
 
     void OnSkillUseRequested(int index, SkillDefinition skill) => TryUse(index, skill);
 
@@ -50,7 +69,16 @@ public class PlayerSkillExecutor : MonoBehaviour
         }
         if (!_runner.Run(attack)) return false;
 
-        _readyAt[skill] = Time.time + attack.Cooldown;
+        if (attack.Kind == AttackKind.Summon)
+        {
+            // 味方が消えるまでは使えない。消えたこと（Finished）を受け取れなかったときのために、いられる最大の秒数の後には使えるようにしておく
+            _readyAt[skill] = Time.time + attack.SummonLifetime + attack.Cooldown;
+            _waitingFinish[attack] = skill;
+        }
+        else
+        {
+            _readyAt[skill] = Time.time + attack.Cooldown;
+        }
         SkillUsed?.Invoke(index, skill);
         return true;
     }

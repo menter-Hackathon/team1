@@ -194,6 +194,9 @@ public class AttackRunner : MonoBehaviour
             case AttackKind.Warp:
                 yield return WarpRoutine(data);
                 break;
+            case AttackKind.Summon:
+                yield return SummonRoutine(data);
+                break;
             default:
                 Debug.LogWarning($"{name}: 攻撃の種類 {data.Kind} はまだ実行できません（{data.name}）", this);
                 break;
@@ -578,6 +581,16 @@ public class AttackRunner : MonoBehaviour
             }
         }
         return from + new Vector2(dir * distance, 0f);
+    }
+
+    // ───────── 召喚（AI アシスタント） ─────────
+
+    /// <summary>味方を出して、消えるまで待つ（消えたときに Finished が出る。能力のクールタイムはそこから数える）</summary>
+    IEnumerator SummonRoutine(AttackData data)
+    {
+        AssistantDrone drone = AssistantDrone.Spawn(this, data);
+        Released?.Invoke(data);
+        while (drone != null) yield return null;
     }
 
     // ───────── 共通の道具 ─────────

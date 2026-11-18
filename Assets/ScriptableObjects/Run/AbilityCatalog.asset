@@ -138,6 +138,17 @@ MonoBehaviour:
     - com.valvesoftware.steam
     - com.mojang.
     - com.epicgames.
+  - Category: 4
+    Skill: {fileID: 11400000, guid: b389f8d5ffc4843a29da8e439f9af54b, type: 2}
+    AppNames:
+    - ChatGPT
+    - Codex
+    - Claude
+    - Perplexity
+    BundleIdPrefixes:
+    - com.openai.
+    - com.anthropic.claudefordesktop
+    - ai.perplexity.
   _appSkills:
   - Label: Zoom
     Skill: {fileID: 11400000, guid: 403bb8d4301d9415d822fed68c95726f, type: 2}

@@ -9,6 +9,8 @@ using UnityEngine.InputSystem;
 public class SkillDebugGiver : MonoBehaviour
 {
     [SerializeField] SkillDefinition[] _skills;
+    [Tooltip("オン：始まったときに、リストの能力を枠に入れておく（枠に入る分だけ。能力1つを試すテストシーン用）")]
+    [SerializeField] bool _giveOnStart;
 
     PlayerSkills _playerSkills;
     InputAction _give;
@@ -24,6 +26,14 @@ public class SkillDebugGiver : MonoBehaviour
     void OnEnable() => _give.Enable();
     void OnDisable() => _give.Disable();
     void OnDestroy() => _give.Dispose();
+
+    void Start()
+    {
+        if (!_giveOnStart || _skills == null) return;
+        int n = Mathf.Min(_skills.Length, _playerSkills.Capacity);
+        for (int i = 0; i < n; i++) _playerSkills.TryAcquire(_skills[i]);
+        _next = n % Mathf.Max(1, _skills.Length);
+    }
 
     void Update()
     {

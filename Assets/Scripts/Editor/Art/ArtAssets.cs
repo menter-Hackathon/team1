@@ -79,6 +79,9 @@ public static class ArtAssets
         R("Generated/Attacks/Fx_Paint.png", border: new Vector4(2, 2, 2, 4), readable: true),
         R("Generated/Attacks/Fx_Bar.png", border: new Vector4(2, 0, 2, 0), readable: true),
         R("Generated/Attacks/Bullet_Orb.png", readable: true),
+        // AI の能力「AIアシスタント」（2026-11-18）：ロボット（羽ばたき4コマ）とレーザー（横に伸ばす）
+        R("Generated/Attacks/Summon_AiDrone.png", frame: 26),
+        R("Generated/Attacks/Fx_Laser.png"),
         R("Generated/Attacks/Fx_Shadow.png"),
         R("Generated/Attacks/Fx_Alert.png"),
         R("Generated/Attacks/Popup_Ad.png"),
@@ -127,6 +130,7 @@ public static class ArtAssets
         R("Generated/UI/Icon_BarGraph.png"),
         R("Generated/UI/Icon_Paint.png"),
         R("Generated/UI/Icon_Bomb.png"),
+        R("Generated/UI/Icon_AiAssistant.png"),
     };
 
     [MenuItem("Tools/Team1/グラフィックを適用")]
@@ -375,6 +379,7 @@ public static class ArtAssets
         ("Player/Attack_Ability_PaintBucket", "Generated/Attacks/Fx_Paint.png"),
         ("Player/Attack_Ability_Bomb", "Generated/Attacks/Bullet_Bomb.png"),
         ("Player/Attack_Ability_Bomb_Blast", "Generated/Attacks/Fx_Blast.png"),
+        ("Player/Attack_Ability_AiAssistant", "Generated/Attacks/Fx_Laser.png"), // レーザー。ロボットの絵は ApplyToData で入れる
         // その場で作る能力のひな形（ゲームの中で、アプリの色に塗り替える）
         ("Player/Gen/Attack_Gen_Spread", "Generated/Attacks/Bullet_Orb.png"),
         ("Player/Gen/Attack_Gen_Trap", "Generated/Attacks/Bullet_Orb.png"),
@@ -413,8 +418,23 @@ public static class ArtAssets
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_BarGraph.asset", "Generated/UI/Icon_BarGraph.png");
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_PaintBucket.asset", "Generated/UI/Icon_Paint.png");
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Bomb.asset", "Generated/UI/Icon_Bomb.png");
+        // AI の能力「AIアシスタント」（2026-11-18）：ロボットの絵・色・アイコン
+        SetSummonFrames($"{AttackFolder}/Player/Attack_Ability_AiAssistant.asset", "Generated/Attacks/Summon_AiDrone.png");
+        SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "_theme", GetOrCreateTheme("Theme_AI", AiTheme));
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "Generated/UI/Icon_AiAssistant.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_Chrome.asset", "Generated/Bosses/Icon_Browser.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_VSCode.asset", "Generated/Bosses/Icon_Editor.png");
+    }
+
+    /// <summary>召喚する味方の絵（コマ）を、攻撃データに入れる。同じなら書き換えない</summary>
+    static void SetSummonFrames(string assetPath, string sprite)
+    {
+        var data = AssetDatabase.LoadAssetAtPath<AttackData>(assetPath);
+        if (data == null) return;
+        Sprite[] frames = LoadFrames(sprite);
+        if (frames.Length == 0 || data.SummonFrames.SequenceEqual(frames)) return;
+        PlayerTestSceneBuilder.SetProps(data, so => SetArray(so, "_summonFrames", frames));
+        EditorUtility.SetDirty(data);
     }
 
     static void SetRef<T>(string assetPath, string prop, UnityEngine.Object value) where T : UnityEngine.Object
@@ -556,6 +576,18 @@ public static class ArtAssets
         Col(so, "_folder", "e4572e"); Col(so, "_folderShade", "a93a1b"); Col(so, "_folderTab", "ffb000");
         Col(so, "_main", "e4572e");
         Colors(so, "_accents", "e4572e", "ffb000", "66c0f4");
+    }
+
+    // AI：AI ロボットの水色（目とレーザー）に、夜の紺の空。差し色は白（2026-11-18。【仮】）
+    static void AiTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "10162a"); Col(so, "_cloud", "1f2a4a");
+        Colors(so, "_hills", "081022", "10203f", "1c4a7a", "3cc8e6", "bff8ff");
+        Col(so, "_floor", "3a4150"); Col(so, "_floorTop", "5ff0ff");
+        Col(so, "_wall", "1a1f2b"); Col(so, "_wallHighlight", "2e3647");
+        Col(so, "_folder", "3cc8e6"); Col(so, "_folderShade", "2696b0"); Col(so, "_folderTab", "bff8ff");
+        Col(so, "_main", "5ff0ff");
+        Colors(so, "_accents", "5ff0ff", "3cc8e6", "ffffff");
     }
 
     static void SetIcon<T>(string assetPath, string sprite) where T : UnityEngine.Object

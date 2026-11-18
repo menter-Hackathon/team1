@@ -14,6 +14,11 @@ public enum AttackKind
     Warp = 3,
     /// <summary>プレイヤーの近接。持ち主に付けた Hitbox を使うので、AttackRunner では実行しない（PlayerMeleeAttack が使う）</summary>
     Melee = 4,
+    /// <summary>
+    /// 召喚（部品 I・K。2026-11-18）。持ち主のそばに味方（AssistantDrone）を出し、味方が自分で敵を攻撃する。
+    /// 能力「AIアシスタント」：AI ロボットが一定時間、範囲内の敵にレーザーを撃つ
+    /// </summary>
+    Summon = 5,
 }
 
 /// <summary>弾の狙い方</summary>

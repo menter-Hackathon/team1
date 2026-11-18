@@ -140,6 +140,25 @@ public class AttackData : ScriptableObject
     [Tooltip("完全に現れるまで、体当たりの判定と被弾範囲を無効にするか")]
     [SerializeField] bool _disableContactUntilAppeared = true;
 
+    // ───────── 召喚（Summon） ─────────
+    [Header("召喚（Summon のとき。AI アシスタント）")]
+    [Tooltip("召喚した味方の絵（コマ送り。羽ばたき）。レーザーの絵は上の「見た目」の絵と色を使う")]
+    [SerializeField] Sprite[] _summonFrames;
+    [Tooltip("コマ送りの速さ（コマ/秒）")]
+    [SerializeField, Min(0.1f)] float _summonFps = 10f;
+    [Tooltip("味方がいられる最大の秒数。過ぎたら消える")]
+    [SerializeField, Min(0.1f)] float _summonLifetime = 30f;
+    [Tooltip("レーザーを撃てる合計の秒数。撃ち切ったら消える")]
+    [SerializeField, Min(0.1f)] float _summonFireTime = 7f;
+    [Tooltip("敵を探す範囲（持ち主の体の中心からの半径、マス）")]
+    [SerializeField, Min(0.5f)] float _summonRange = 6f;
+    [Tooltip("持ち主から見た、浮かぶ位置（x は持ち主の向きの後ろ側を正、y は足元からの高さ）")]
+    [SerializeField] Vector2 _summonHoverOffset = new Vector2(0.9f, 1.9f);
+    [Tooltip("持ち主に付いていく速さ（大きいほど、すぐ追いつく）")]
+    [SerializeField, Min(0.1f)] float _summonFollowSharpness = 6f;
+    [Tooltip("レーザーの太さ（マス）。判定も同じ太さ")]
+    [SerializeField, Min(0.05f)] float _beamWidth = 0.3f;
+
     // ───────── 読み取り用 ─────────
     public AttackKind Kind => _kind;
     public float Windup => _windup;
@@ -203,6 +222,15 @@ public class AttackData : ScriptableObject
     public float AppearTelegraph => _appearTelegraph;
     public float AppearTime => _appearTime;
     public bool DisableContactUntilAppeared => _disableContactUntilAppeared;
+
+    public Sprite[] SummonFrames => _summonFrames ?? System.Array.Empty<Sprite>();
+    public float SummonFps => _summonFps;
+    public float SummonLifetime => _summonLifetime;
+    public float SummonFireTime => _summonFireTime;
+    public float SummonRange => _summonRange;
+    public Vector2 SummonHoverOffset => _summonHoverOffset;
+    public float SummonFollowSharpness => _summonFollowSharpness;
+    public float BeamWidth => _beamWidth;
 
     /// <summary>判定を出し続ける時間（持続があれば持続時間）</summary>
     public float HitWindow => _persistDuration > 0f ? _persistDuration : _activeTime;

@@ -5,23 +5,90 @@ using UnityEngine;
 /// カテゴリの能力と、能力えらびの表を作るエディタ拡張（2026-11-17：ゲームの流れ）。
 /// ほかのシーンの作成ツールから呼ぶ（RunScenesBuilder など）。作るもの（すでにあれば作らない。数値を直すときはアセットを直接直す）：
 /// ・攻撃データ（Assets/ScriptableObjects/Attacks/Player）：棒グラフ・バケツ塗り・ボム（＋爆発）
-/// ・能力（Assets/ScriptableObjects/Skills）：Skill_BarGraph（Office）・Skill_PaintBucket（クリエイティブ）・Skill_Bomb（ゲーム）
+/// ・能力（Assets/ScriptableObjects/Skills）：Skill_BarGraph（Office）・Skill_PaintBucket（クリエイティブ）・Skill_Bomb（ゲーム）・
+///   Skill_AiAssistant（AI。2026-11-18。メニュー「Tools/Team1/AIアシスタントの能力を用意」でも作れる）
 /// ・能力えらびの表（Assets/ScriptableObjects/Run/AbilityCatalog）：カテゴリ → 能力・アプリの名前・バンドルID
 /// ・その場で作る能力のひな形（Assets/ScriptableObjects/Attacks/Player/Gen）：拡散ショット・トラップ弾（＋床）・ノヴァ。
 ///   表のひな形の欄が空なら、ブレークポイント・棒グラフ・バケツ塗り・ボムの攻撃と合わせて7つ入れる（2026-11-17）
 /// 新しいタブ（ブラウザ）・ブレークポイント（開発）は BossTestSceneBuilder が作る。
-/// SNS・チャット／AI／音楽・動画の能力はまだ無い（表に入れないので、カードにも出ない）。
+/// SNS・チャット／音楽・動画の能力はまだ無い（表に入れないので、カードにも出ない）。
 /// 数値はすべて【仮】。絵と色は ArtAssets（Tools/Team1/グラフィックを適用）が入れる。
 /// </summary>
 public static class AbilitiesBuilder
 {
     public const string CatalogPath = "Assets/ScriptableObjects/Run/AbilityCatalog.asset";
 
-    /// <summary>カテゴリの能力5つ</summary>
+    /// <summary>カテゴリの能力。All（テストシーンの G キーで渡す5つ）には AIアシスタントを入れない（専用のテストシーン AiAssistantTest で試す）</summary>
     public struct Skills
     {
-        public SkillDefinition NewTab, Breakpoint, BarGraph, PaintBucket, Bomb;
+        public SkillDefinition NewTab, Breakpoint, BarGraph, PaintBucket, Bomb, AiAssistant;
         public SkillDefinition[] All => new[] { NewTab, Breakpoint, BarGraph, PaintBucket, Bomb };
+    }
+
+    [MenuItem("Tools/Team1/AIアシスタントの能力を用意")]
+    public static void EnsureAiAssistantFromMenu()
+    {
+        SkillDefinition skill = GetOrCreateAiAssistant();
+        EnsureAiCategory(skill);
+        ArtAssets.Apply(); // ロボット・レーザーの絵、アイコン、色を入れる
+        AssetDatabase.SaveAssets();
+        Debug.Log("AIアシスタントの能力を用意しました（Skill_AiAssistant。能力えらびの表の AI カテゴリ）");
+    }
+
+    /// <summary>
+    /// AI の能力「AIアシスタント」（2026-11-18。数値は【仮】）。
+    /// 使うと、プレイヤーの後ろ上に AI ロボットが出て、プレイヤーの体の中心から6マス以内の敵へレーザーを撃つ（0.25秒ごとに当たる）。
+    /// レーザーを合計7秒撃つか、30秒たつと消える。クールタイム12秒は、ロボットが消えてから数える（PlayerSkillExecutor）。
+    /// 絵（ロボット・レーザー・アイコン）と色は ArtAssets が入れる。
+    /// </summary>
+    public static SkillDefinition GetOrCreateAiAssistant()
+    {
+        AttackData attack = BossTestSceneBuilder.GetOrCreateAttack("Player/Attack_Ability_AiAssistant", so =>
+        {
+            Kind(so, AttackKind.Summon);
+            F(so, "_windup", 0f);
+            F(so, "_cooldown", 12f);
+            I(so, "_damage", 1);
+            I(so, "_gaugeGain", 4);              // 1秒当て続けるごとに +4（近接1回分）。撃ち切ると +28
+            V(so, "_knockback", new Vector2(0.5f, 0.5f));
+            F(so, "_hitStun", 0.05f);
+            F(so, "_tickInterval", 1f);          // 1秒当て続けると1回当たる（雑魚は HP1 なので倒れる）
+            F(so, "_summonFps", 10f);
+            F(so, "_summonLifetime", 30f);
+            F(so, "_summonFireTime", 7f);
+            F(so, "_summonRange", 6f);
+            V(so, "_summonHoverOffset", new Vector2(0.9f, 1.9f));
+            F(so, "_summonFollowSharpness", 6f);
+            F(so, "_beamWidth", 6f / GameArt.PixelsPerUnit); // レーザーの絵の高さ（6ドット）と同じ
+        });
+        return BossTestSceneBuilder.GetOrCreateSkill("Skill_AiAssistant", "AIアシスタント", SkillCategory.AI, attack);
+    }
+
+    /// <summary>
+    /// 能力えらびの表に AI カテゴリ（ChatGPT・Codex・Claude・Perplexity）が無ければ足す。あれば、能力が空のときだけ入れる（手で直した値は残す）。
+    /// アプリの名前・バンドルIDは docs 9章の表から
+    /// </summary>
+    public static void EnsureAiCategory(SkillDefinition skill)
+    {
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
+        if (catalog == null || skill == null) return;
+        PlayerTestSceneBuilder.SetProps(catalog, so =>
+        {
+            var arr = so.FindProperty("_categories");
+            for (int i = 0; i < arr.arraySize; i++)
+            {
+                var e = arr.GetArrayElementAtIndex(i);
+                if (e.FindPropertyRelative("Category").intValue != (int)SkillCategory.AI) continue;
+                var s = e.FindPropertyRelative("Skill");
+                if (s.objectReferenceValue == null) s.objectReferenceValue = skill;
+                return;
+            }
+            arr.arraySize++;
+            Entry(arr.GetArrayElementAtIndex(arr.arraySize - 1), SkillCategory.AI, skill,
+                new[] { "ChatGPT", "Codex", "Claude", "Perplexity" },
+                new[] { "com.openai.", "com.anthropic.claudefordesktop", "ai.perplexity." });
+        });
+        EditorUtility.SetDirty(catalog);
     }
 
     /// <summary>能力5つと、能力えらびの表を用意する（無ければ作る）</summary>
@@ -208,8 +275,10 @@ public static class AbilitiesBuilder
             BarGraph = BossTestSceneBuilder.GetOrCreateSkill("Skill_BarGraph", "棒グラフ", SkillCategory.Office, bar),
             PaintBucket = BossTestSceneBuilder.GetOrCreateSkill("Skill_PaintBucket", "バケツ塗り", SkillCategory.Creative, paint),
             Bomb = BossTestSceneBuilder.GetOrCreateSkill("Skill_Bomb", "ボム", SkillCategory.Game, bomb),
+            AiAssistant = GetOrCreateAiAssistant(),
         };
         var catalog = GetOrCreateCatalog(skills);
+        EnsureAiCategory(skills.AiAssistant);
         FillTemplates(catalog, new[]
         {
             // 名前・攻撃・アプリごとに変える数値と範囲（すべて【仮】）

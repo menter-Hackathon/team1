@@ -1226,20 +1226,134 @@ def make_category_abilities():
     save(orb, "Attacks/Bullet_Orb.png")
 
 
+# ───────── AI の能力「AIアシスタント」（2026-11-18） ─────────
+
+AI_CYAN = C("5ff0ff")     # 目・レーザーの芯のまわり
+AI_CYAN_D = C("3cc8e6")   # 羽の影・レーザーの外側
+AI_WING = C("bff8ff")     # 羽
+AI_NAVY = C("10162a")     # 画面
+
+
+def line_points(x0, y0, x1, y1):
+    """(x0, y0) から (x1, y1) までの点（ブレゼンハム）"""
+    pts = []
+    dx, dy = abs(x1 - x0), -abs(y1 - y0)
+    sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
+    err = dx + dy
+    while True:
+        pts.append((x0, y0))
+        if x0 == x1 and y0 == y1:
+            break
+        e2 = 2 * err
+        if e2 >= dy:
+            err += dy
+            x0 += sx
+        if e2 <= dx:
+            err += dx
+            y0 += sy
+    return pts
+
+
+def ai_wing(im, root_x, root_y, tip_x, tip_y):
+    """羽：根元から先へ細くなる2枚重ね（上が明るい羽、下が影の羽）"""
+    main = line_points(root_x, root_y, tip_x, tip_y)
+    for i, (x, y) in enumerate(main):
+        put(im, x, y, WHITE if i < len(main) - 1 else AI_WING)
+        if i < len(main) - 1:
+            put(im, x, y + 1, AI_WING)
+        if i < len(main) - 2:
+            put(im, x, y + 2, AI_CYAN_D)
+    # 下の短い羽（羽根の重なり）
+    mid_x = root_x + (tip_x - root_x) * 2 // 3
+    mid_y = root_y + (tip_y - root_y) * 2 // 3 + 3
+    for (x, y) in line_points(root_x, root_y + 2, mid_x, mid_y):
+        put(im, x, y, AI_CYAN_D)
+
+
+def ai_drone_frame(flap, light):
+    """
+    AI ロボット1コマ（線を付ける前は 24×11。右向き）。
+    横長の長方形の体に画面（目）、左右に羽、頭にアンテナ、下に浮かぶための光。flap：羽の先の上下（-4〜2）
+    """
+    im = new(24, 11)
+    # 羽（体の後ろ）
+    ai_wing(im, 5, 5, 1, 5 + flap)
+    ai_wing(im, 18, 5, 22, 5 + flap)
+    # 体（横長の長方形）
+    rect(im, 6, 3, 17, 9, WHITE)
+    vline(im, 17, 4, 9, WA2)        # 右の影
+    hline(im, 6, 17, 9, WA2)        # 下の影
+    # 画面と目（右向きなので、目は少し右寄り）
+    rect(im, 7, 4, 15, 8, AI_NAVY)
+    for ex in (11, 14):
+        put(im, ex, 5, AI_CYAN)
+        put(im, ex, 6, AI_CYAN)
+    # アンテナ（先が点滅する）
+    vline(im, 11, 1, 2, W8B)
+    put(im, 11, 0, AI_CYAN if light else ORANGE)
+    # 浮かぶための光
+    put(im, 11, 10, C("5ff0ff", 200))
+    put(im, 12, 10, C("5ff0ff", 200))
+    return outline_alpha(im)
+
+
+def make_ai_assistant():
+    # 羽ばたき4コマ（線込みで 26×13。上→水平→下→水平）
+    flaps = (-4, -1, 2, -1)
+    frames = [ai_drone_frame(f, i % 2 == 0) for i, f in enumerate(flaps)]
+    save(sheet(frames), "Attacks/Summon_AiDrone.png")
+
+    # レーザー（4×6。横のどの列も同じなので、横に伸ばしてもドットが崩れない。太さ6ドット＝1/3マス）
+    beam = new(4, 6)
+    for y, c in enumerate((C("3cc8e6", 120), C("5ff0ff", 230), WHITE, WHITE, C("5ff0ff", 230), C("3cc8e6", 120))):
+        hline(beam, 0, 3, y, c)
+    save(beam, "Attacks/Fx_Laser.png")
+
+    # アイコン（16×16）：羽の生えたロボットが、下のウイルスへレーザーを撃っている
+    im = new(16, 16, WHITE)
+    outline_rect(im, 0, 0, 15, 15, K)
+    for (x, y) in ((1, 3), (2, 4), (3, 5)):    # 左の羽
+        put(im, x, y, AI_CYAN_D); put(im, x, y - 1, AI_WING)
+    for (x, y) in ((14, 3), (13, 4), (12, 5)):  # 右の羽
+        put(im, x, y, AI_CYAN_D); put(im, x, y - 1, AI_WING)
+    rect(im, 4, 3, 11, 8, K)                    # 体（横長）
+    rect(im, 5, 4, 10, 7, AI_NAVY)
+    put(im, 7, 5, AI_CYAN); put(im, 9, 5, AI_CYAN)
+    put(im, 7, 2, K); put(im, 7, 1, ORANGE)     # アンテナ
+    for y in range(9, 12):                       # レーザー（真下へ）
+        put(im, 7, y, WHITE); put(im, 6, y, AI_CYAN); put(im, 8, y, AI_CYAN)
+    rect(im, 5, 12, 10, 14, S0)                  # ウイルス
+    put(im, 6, 13, RED); put(im, 9, 13, RED)
+    put(im, 4, 13, S1); put(im, 11, 13, S1)
+    save(im, "UI/Icon_AiAssistant.png")
+
+
+SECTIONS = {
+    "background": lambda: make_background(),
+    "terrain": lambda: make_terrain(),
+    "windows": lambda: make_windows(),
+    "app_windows": lambda: make_app_windows(),
+    "boss_contents": lambda: make_boss_contents(),
+    "viruses": lambda: make_viruses(),
+    "attacks": lambda: make_attacks(),
+    "player_fx": lambda: make_player_fx(),
+    "hud": lambda: make_hud(),
+    "skill_icons": lambda: make_skill_icons(),
+    "boss_b": lambda: make_boss_b(),
+    "stage_gimmicks": lambda: make_stage_gimmicks(),
+    "category_abilities": lambda: make_category_abilities(),
+    "ai_assistant": lambda: make_ai_assistant(),
+}
+
+
 def main():
-    make_background()
-    make_terrain()
-    make_windows()
-    make_app_windows()
-    make_boss_contents()
-    make_viruses()
-    make_attacks()
-    make_player_fx()
-    make_hud()
-    make_skill_icons()
-    make_boss_b()
-    make_stage_gimmicks()
-    make_category_abilities()
+    """引数なしなら全部。名前を渡すと、その部分だけ作る（例：python3 Tools/art/gen_sprites.py ai_assistant）"""
+    import sys
+    names = sys.argv[1:] or list(SECTIONS)
+    for n in names:
+        if n not in SECTIONS:
+            raise SystemExit(f"unknown section: {n}（{', '.join(SECTIONS)}）")
+        SECTIONS[n]()
     print("done:", GEN)
 
 
