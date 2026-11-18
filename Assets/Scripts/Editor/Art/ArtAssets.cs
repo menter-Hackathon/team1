@@ -88,6 +88,28 @@ public static class ArtAssets
         R("Generated/Attacks/Fx_AiSpark.png", frame: 18, readable: true),
         R("Generated/Attacks/Summon_AiMini.png", frame: 14, readable: true),
         R("Generated/Attacks/Fx_AiError.png"),
+        // チャットアプリの能力（2026-11-19：Slack・Discord・LINE）：メッセージの絵（1つ目・2つ目以降）と、当たったときのエフェクト
+        R("Generated/Attacks/Chat_Line_Head.png"),
+        R("Generated/Attacks/Chat_Line_Body.png"),
+        R("Generated/Attacks/Chat_Slack_Head.png"),
+        R("Generated/Attacks/Chat_Slack_Body.png"),
+        R("Generated/Attacks/Chat_Discord_Head.png"),
+        R("Generated/Attacks/Chat_Discord_Body.png"),
+        R("Generated/Attacks/Fx_ChatHit_Line.png", frame: 16),
+        R("Generated/Attacks/Fx_ChatHit_Slack.png", frame: 16),
+        R("Generated/Attacks/Fx_ChatHit_Discord.png", frame: 16),
+        // チャットのボス（2026-11-19）：大きく濁ったメッセージ（そのほかのアプリ用の灰色は、ゲームの中でアプリの色に塗り替える）・チャットbot・通知の大技
+        R("Generated/Attacks/ChatBoss_Line_Head.png"),
+        R("Generated/Attacks/ChatBoss_Line_Body.png"),
+        R("Generated/Attacks/ChatBoss_Slack_Head.png"),
+        R("Generated/Attacks/ChatBoss_Slack_Body.png"),
+        R("Generated/Attacks/ChatBoss_Discord_Head.png"),
+        R("Generated/Attacks/ChatBoss_Discord_Body.png"),
+        R("Generated/Attacks/ChatBoss_Generic_Head.png", readable: true),
+        R("Generated/Attacks/ChatBoss_Generic_Body.png", readable: true),
+        R("Generated/Enemies/Zako_Chatbot.png", frame: 16, pivot: Feet, readable: true),
+        R("Generated/Attacks/Fx_Bell.png", frame: 24),
+        R("Generated/Attacks/Fx_NotifBadge.png", frame: 11),
         R("Generated/Bosses/Boss_AiDefaultIcon.png"),
         R("Generated/Attacks/Fx_Shadow.png"),
         R("Generated/Attacks/Fx_Alert.png"),
@@ -114,7 +136,7 @@ public static class ArtAssets
         R("Generated/Enemies/Zako_Walker.png", frame: 16, pivot: Feet),
         R("Generated/Enemies/Zako_Shooter.png", frame: 16, pivot: Feet),
         // エフェクト
-        R("Generated/Effects/Fx_VirusSmokeSmall.png", frame: 25),
+        R("Generated/Effects/Fx_VirusSmokeSmall.png", frame: 25, readable: true), // 通知の大技の赤いもやに塗り替える（2026-11-19）
         R("Generated/Effects/Fx_Shards.png", frame: 20),
         R("Generated/Effects/Fx_Sparkle.png", frame: 9),
         R("Generated/Player/Fx_Slash.png", frame: 16),
@@ -138,6 +160,9 @@ public static class ArtAssets
         R("Generated/UI/Icon_Paint.png"),
         R("Generated/UI/Icon_Bomb.png"),
         R("Generated/UI/Icon_AiAssistant.png"),
+        R("Generated/UI/Icon_ChatLine.png"),
+        R("Generated/UI/Icon_ChatSlack.png"),
+        R("Generated/UI/Icon_ChatDiscord.png"),
     };
 
     [MenuItem("Tools/Team1/グラフィックを適用")]
@@ -441,10 +466,84 @@ public static class ArtAssets
         foreach (string a in new[] { "AIChat/Attack_AIChat_Laser_P1", "AIChat/Attack_AIChat_LaserDouble_P1", "AIChat/Attack_AIChat_LaserFan_P2", "AIChat/Attack_AIChat_LaserBurst_P2" })
             SetFrames($"{AttackFolder}/{a}.asset", "_telegraphFrames", "Generated/Attacks/Fx_AiSpark.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_AIChat.asset", "Generated/Bosses/Boss_AiDefaultIcon.png");
+        ApplyChatApps();
         SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "_theme", GetOrCreateTheme("Theme_AI", AiTheme));
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "Generated/UI/Icon_AiAssistant.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_Chrome.asset", "Generated/Bosses/Icon_Browser.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_VSCode.asset", "Generated/Bosses/Icon_Editor.png");
+    }
+
+    /// <summary>チャットアプリの能力（2026-11-19：Slack・Discord・LINE）：メッセージの絵・エフェクト・アプリの色・アイコン</summary>
+    static readonly (string key, string file, Action<SerializedObject> theme)[] ChatApps =
+    {
+        ("Line", "Line", LineTheme),
+        ("Slack", "Slack", SlackTheme),
+        ("Discord", "Discord", DiscordTheme),
+    };
+
+    static void ApplyChatApps()
+    {
+        foreach (var (key, file, theme) in ChatApps)
+        {
+            string attack = $"{AttackFolder}/Player/App/Attack_App_{key}.asset";
+            string skill = $"Assets/ScriptableObjects/Skills/Skill_App_{key}.asset";
+            var data = AssetDatabase.LoadAssetAtPath<AttackData>(attack);
+            if (data != null)
+            {
+                Sprite head = LoadSprite($"Generated/Attacks/Chat_{file}_Head.png");
+                Sprite body = LoadSprite($"Generated/Attacks/Chat_{file}_Body.png");
+                var so0 = new SerializedObject(data);
+                if (so0.FindProperty("_sprite").objectReferenceValue != head || so0.FindProperty("_chatBodySprite").objectReferenceValue != body || data.Color != Color.white)
+                {
+                    PlayerTestSceneBuilder.SetProps(data, so =>
+                    {
+                        so.FindProperty("_sprite").objectReferenceValue = head;
+                        so.FindProperty("_chatBodySprite").objectReferenceValue = body;
+                        so.FindProperty("_color").colorValue = Color.white; // 絵の色のまま
+                    });
+                    EditorUtility.SetDirty(data);
+                }
+                SetFrames(attack, "_chatHitFrames", $"Generated/Attacks/Fx_ChatHit_{file}.png");
+            }
+            SetRef<SkillDefinition>(skill, "_theme", GetOrCreateTheme($"Theme_{key}", theme));
+            SetIcon<SkillDefinition>(skill, $"Generated/UI/Icon_Chat{file}.png");
+        }
+    }
+
+    // LINE：アプリの緑。自分のメッセージの明るい緑を差し色に（2026-11-19。【仮】）
+    static void LineTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "dff7d3"); Col(so, "_cloud", "ffffff");
+        Colors(so, "_hills", "0b3d1c", "0f5c27", "06a447", "06c755", "8ee06b");
+        Col(so, "_floor", "8a8f99"); Col(so, "_floorTop", "06c755");
+        Col(so, "_wall", "4a5a50"); Col(so, "_wallHighlight", "6b7d72");
+        Col(so, "_folder", "7ddb4e"); Col(so, "_folderShade", "2f7a1f"); Col(so, "_folderTab", "06c755");
+        Col(so, "_main", "06c755");
+        Colors(so, "_accents", "06c755", "7ddb4e");
+    }
+
+    // Slack：紫（オーベルジーヌ）に、ロゴの4色を差し色に（2026-11-19。【仮】）
+    static void SlackTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "3f0e40"); Col(so, "_cloud", "611f69");
+        Colors(so, "_hills", "1a061b", "350d36", "4a154b", "7c3085", "c08cc6");
+        Col(so, "_floor", "3a3a44"); Col(so, "_floorTop", "ecb22e");
+        Col(so, "_wall", "2a1a2b"); Col(so, "_wallHighlight", "4a2f4c");
+        Col(so, "_folder", "36c5f0"); Col(so, "_folderShade", "1d8db0"); Col(so, "_folderTab", "e01e5a");
+        Col(so, "_main", "4a154b");
+        Colors(so, "_accents", "e01e5a", "ecb22e", "2eb67d", "36c5f0");
+    }
+
+    // Discord：深い青に、Discord の青を差し色に（2026-11-19。【仮】）
+    static void DiscordTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "1e2448"); Col(so, "_cloud", "2b3160");
+        Colors(so, "_hills", "0c0f26", "1e2448", "3a43a8", "5865f2", "a5adff");
+        Col(so, "_floor", "35394a"); Col(so, "_floorTop", "5865f2");
+        Col(so, "_wall", "1a1d2e"); Col(so, "_wallHighlight", "2e3350");
+        Col(so, "_folder", "5865f2"); Col(so, "_folderShade", "3a43a8"); Col(so, "_folderTab", "a5adff");
+        Col(so, "_main", "5865f2");
+        Colors(so, "_accents", "5865f2", "a5adff");
     }
 
     /// <summary>召喚する味方の絵（コマ）を、攻撃データに入れる。同じなら書き換えない</summary>

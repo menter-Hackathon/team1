@@ -8,6 +8,8 @@ using UnityEngine;
 /// ・クールタイムは能力ごとに覚える。捨てて拾い直しても、別の枠に入れ直しても、残り時間はそのまま
 /// ・使えるかどうか（のけぞり中・入れ替え待ち中は使えない）は PlayerSkills が判断して SkillUseRequested を出す
 /// ・召喚（AI アシスタント。2026-11-18）は、味方が消えてからクールタイムを数える。味方がいる間は使えない
+/// ・チャット（Slack・Discord・LINE。2026-11-19）は、止まっている間は続けて押すとメッセージが増え（最大数まで、クールタイムなし）、
+///   動くか最大数まで出したら、そこからクールタイムを数える
 /// </summary>
 [RequireComponent(typeof(PlayerSkills), typeof(AttackRunner))]
 public class PlayerSkillExecutor : MonoBehaviour
@@ -61,6 +63,13 @@ public class PlayerSkillExecutor : MonoBehaviour
             return false;
         }
 
+        // チャット（Slack・Discord・LINE）：ためが続いている間（止まっていて最大数まで）は、クールタイムなしでメッセージを足す
+        if (attack.Kind == AttackKind.Chat && ChatVolley.TryAppend(_runner, attack))
+        {
+            SkillUsed?.Invoke(index, skill);
+            return true;
+        }
+
         float remain = GetCooldownRemaining(skill);
         if (remain > 0f)
         {
@@ -75,6 +84,13 @@ public class PlayerSkillExecutor : MonoBehaviour
             _readyAt[skill] = Time.time + attack.SummonLifetime + attack.Cooldown;
             _waitingFinish[attack] = skill;
         }
+        else if (attack.Kind == AttackKind.Chat)
+        {
+            // ためが終わる（動く・最大数まで出す）まではクールタイムを数えない。終わったら Finished から数える。
+            // 受け取れなかったときのために、待つ秒数×最大数の後には使えるようにしておく
+            _readyAt[skill] = Time.time + attack.ChatFireDelay * attack.ChatMaxMessages + attack.Cooldown;
+            _waitingFinish[attack] = skill;
+        }
         else
         {
             _readyAt[skill] = Time.time + attack.Cooldown;
@@ -87,6 +103,8 @@ public class PlayerSkillExecutor : MonoBehaviour
     public float GetCooldownRemaining(SkillDefinition skill)
     {
         if (skill == null || !_readyAt.TryGetValue(skill, out float t)) return 0f;
+        // チャットのためが続いている間は、まだ押せるので「使える」扱い
+        if (skill.Attack != null && skill.Attack.Kind == AttackKind.Chat && ChatVolley.IsOpenFor(_runner, skill.Attack)) return 0f;
         return Mathf.Max(0f, t - Time.time);
     }
 

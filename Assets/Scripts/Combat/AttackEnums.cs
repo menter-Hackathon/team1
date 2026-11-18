@@ -24,6 +24,16 @@ public enum AttackKind
     /// その場所にレーザーを撃つ。レーザーはだんだん太くなってから細くなる。位置は変わらない（BeamStrike）
     /// </summary>
     Beam = 6,
+    /// <summary>
+    /// チャットのメッセージ（2026-11-19。Slack・Discord・LINE の能力）。止まっている間は、続けて押すとメッセージが積み上がり（最大数まで）、
+    /// 最後に足してから決まった秒数で一斉に飛んでいく（ChatVolley）。動くか最大数まで出したら、そこからクールタイム
+    /// </summary>
+    Chat = 7,
+    /// <summary>
+    /// 通知のアラーム（2026-11-19。チャットのボスの大技）。部屋に通知を置き、ベルが決まった回数鳴るまでに全部回収しないと、
+    /// 部屋全体に攻撃が来る（NotificationAlarm）。出している間、持ち主は動かない
+    /// </summary>
+    Alarm = 8,
 }
 
 /// <summary>レーザーの見せ方（Beam のとき）</summary>
@@ -51,6 +61,8 @@ public enum SummonType
     Assistant = 0,
     /// <summary>敵のミニロボット（ChaserBot）。狙う相手をゆっくり追いかけ、触れるとダメージ。出したらすぐ次の行動へ</summary>
     Chaser = 1,
+    /// <summary>敵の雑魚（プレハブ）を出す（2026-11-19：チャットのボスのチャットbot）。出したらすぐ次の行動へ</summary>
+    Minion = 2,
 }
 
 /// <summary>弾の狙い方</summary>

@@ -36,6 +36,8 @@ public class AttackData : ScriptableObject
     [Tooltip("弾・判定・落下物の絵。空なら白い四角（円の判定は白い円）を使う")]
     [SerializeField] Sprite _sprite;
     [SerializeField] Color _color = Color.white;
+    [Tooltip("オン：ボスの技の絵を、アプリの色に塗り替えない（通知の赤いマークなど。2026-11-19）")]
+    [SerializeField] bool _fixedColors;
 
     // ───────── 弾（Projectile） ─────────
     [Header("弾（Projectile のとき）")]
@@ -166,6 +168,10 @@ public class AttackData : ScriptableObject
     [SerializeField, Min(0f)] float _summonSpeed = 2.5f;
     [Tooltip("1秒に曲がれる角度（度。Chaser のとき）。小さいほど、追いかけ方がゆるい")]
     [SerializeField, Min(0f)] float _summonTurnRate = 90f;
+    [Tooltip("出す雑魚のプレハブ（Minion のとき）。「召喚した味方の絵」があれば、雑魚の絵をそれに差し替える")]
+    [SerializeField] GameObject _summonPrefab;
+    [Tooltip("この技で出した雑魚が、同時にいられる数（Minion のとき。0なら制限なし）。いっぱいなら出さない")]
+    [SerializeField, Min(0)] int _summonMaxAlive;
 
     // ───────── 直線のレーザー（Beam） ─────────
     [Header("直線のレーザー（Beam のとき。AI チャットのボス）")]
@@ -179,6 +185,34 @@ public class AttackData : ScriptableObject
     [SerializeField, Range(0f, 1f)] float _beamHitThreshold = 0.5f;
     [Tooltip("予告のコマ（電流。横に並べて通り道に流す）。空なら細い線で予告する")]
     [SerializeField] Sprite[] _telegraphFrames;
+
+    // ───────── チャット（Chat） ─────────
+    [Header("チャット（Chat のとき。Slack・Discord・LINE）")]
+    [Tooltip("2つ目以降のメッセージの絵（続けて送ったメッセージ）。1つ目は「見た目」の絵。空なら1つ目と同じ絵")]
+    [SerializeField] Sprite _chatBodySprite;
+    [Tooltip("メッセージの間のすき間（マス）。マイナスなら重ねて、1つにつながって見える（Slack・Discord）")]
+    [SerializeField] float _chatGap = 0.1f;
+    [Tooltip("止まっている間に、クールタイムなしで出せるメッセージの数")]
+    [SerializeField, Min(1)] int _chatMaxMessages = 3;
+    [Tooltip("最後にメッセージを足してから、一斉に飛んでいくまでの秒数（足すたびに数え直す）")]
+    [SerializeField, Min(0f)] float _chatFireDelay = 1f;
+    [Tooltip("いちばん新しいメッセージ（いちばん下）の真ん中を出す位置。持ち主の足元から（x は向きの前を正）。メッセージの幅の半分より大きくすると、体に重ならない")]
+    [SerializeField] Vector2 _chatAnchor = new Vector2(2.1f, 1.1f);
+    [Tooltip("メッセージが当たったときのエフェクト（コマ）")]
+    [SerializeField] Sprite[] _chatHitFrames;
+
+    // ───────── 通知のアラーム（Alarm） ─────────
+    [Header("通知のアラーム（Alarm のとき。チャットのボスの大技）")]
+    [Tooltip("ベルが鳴る回数。最後に鳴ったときに、通知のベルが残っていれば部屋全体に攻撃（ベルの数は「出す数」）")]
+    [SerializeField, Min(1)] int _alarmRings = 3;
+    [Tooltip("始まってから、1回目に鳴るまでの秒数")]
+    [SerializeField, Min(0f)] float _alarmFirstRing = 1.6f;
+    [Tooltip("鳴る間隔（秒）")]
+    [SerializeField, Min(0.2f)] float _alarmRingInterval = 2.2f;
+    [Tooltip("回収する通知のベルのコマ（0：止まっている、1〜：揺れる）。空なら「見た目」の絵")]
+    [SerializeField] Sprite[] _alarmBellFrames;
+    [Tooltip("ベルの右上の、残りのベルの数のバッジ（0 番目＝1、1 番目＝2…）")]
+    [SerializeField] Sprite[] _alarmBadgeFrames;
 
     // ───────── 読み取り用 ─────────
     public AttackKind Kind => _kind;
@@ -261,6 +295,20 @@ public class AttackData : ScriptableObject
     public float BeamMoveTime => _beamMoveTime;
     public float BeamHitThreshold => _beamHitThreshold;
     public Sprite[] TelegraphFrames => _telegraphFrames ?? System.Array.Empty<Sprite>();
+    public Sprite ChatBodySprite => _chatBodySprite != null ? _chatBodySprite : _sprite;
+    public float ChatGap => _chatGap;
+    public int ChatMaxMessages => _chatMaxMessages;
+    public float ChatFireDelay => _chatFireDelay;
+    public Vector2 ChatAnchor => _chatAnchor;
+    public Sprite[] ChatHitFrames => _chatHitFrames ?? System.Array.Empty<Sprite>();
+    public bool FixedColors => _fixedColors;
+    public GameObject SummonPrefab => _summonPrefab;
+    public int SummonMaxAlive => _summonMaxAlive;
+    public int AlarmRings => _alarmRings;
+    public float AlarmFirstRing => _alarmFirstRing;
+    public float AlarmRingInterval => _alarmRingInterval;
+    public Sprite[] AlarmBellFrames => _alarmBellFrames ?? System.Array.Empty<Sprite>();
+    public Sprite[] AlarmBadgeFrames => _alarmBadgeFrames ?? System.Array.Empty<Sprite>();
 
     /// <summary>判定を出し続ける時間（持続があれば持続時間）</summary>
     public float HitWindow => _persistDuration > 0f ? _persistDuration : _activeTime;
@@ -292,6 +340,7 @@ public class AttackData : ScriptableObject
     /// </summary>
     public AttackData CreateRecoloredCopy(System.Func<Sprite, Sprite> recolor)
     {
+        if (_fixedColors) return this; // 塗り替えない技（通知の赤など）
         var copy = Instantiate(this);
         copy.name = name;
         if (recolor != null && _sprite != null) copy._sprite = recolor(_sprite);
@@ -302,9 +351,17 @@ public class AttackData : ScriptableObject
             // 召喚する物の絵・予告のコマも塗り替える（AI チャットのボスのミニロボット・電流。2026-11-19）
             copy._summonFrames = RecolorAll(_summonFrames, recolor);
             copy._telegraphFrames = RecolorAll(_telegraphFrames, recolor);
+            // チャットのメッセージ（2つ目以降の絵・当たったときのエフェクト。チャットのボス）
+            if (_chatBodySprite != null) copy._chatBodySprite = recolor(_chatBodySprite);
+            copy._chatHitFrames = RecolorAll(_chatHitFrames, recolor);
         }
         return copy;
     }
+
+    /// <summary>
+    /// チャットのメッセージの間のすき間を変える（CreateRecoloredCopy で作った複製にだけ使う。チャットのボスで、アプリごとに変える。2026-11-19）
+    /// </summary>
+    public void SetChatGap(float gap) => _chatGap = gap;
 
     static Sprite[] RecolorAll(Sprite[] frames, System.Func<Sprite, Sprite> recolor)
     {

@@ -1432,6 +1432,313 @@ def make_ai_boss():
     save(outline_alpha(im), "Bosses/Boss_AiDefaultIcon.png")
 
 
+# ───────── チャットアプリの能力（2026-11-19：Slack・Discord・LINE） ─────────
+# メッセージは1行分の厚み（中くらいの長さ）。中身の文字は描かない。
+# 1つ目（Head）と、続けて送った2つ目以降（Body）の2枚。Slack・Discord は重ねて並べると1つにつながる（Body は上の線が無い）
+
+LINE_G = C("7ddb4e")
+LINE_GL = C("aaee86")
+LINE_GD = C("2f7a1f")
+SLACK_P = C("4a154b")
+SLACK_PL = C("7c3085")
+SLACK_COLORS = (C("e01e5a"), C("ecb22e"), C("2eb67d"), C("36c5f0"))
+DISC_BG = C("1e2448")
+DISC_LINE = C("0c0f26")
+DISC_B = C("5865f2")
+DISC_BL = C("a5adff")
+
+
+def round_box(im, x0, y0, x1, y1, fill, line, r=2):
+    """角の丸い四角（線あり）"""
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            dx = max(x0 + r - x, 0, x - (x1 - r))
+            dy = max(y0 + r - y, 0, y - (y1 - r))
+            if dx * dx + dy * dy > r * r:
+                continue
+            edge = (x in (x0, x1) or y in (y0, y1) or
+                    (dx > 0 and dy > 0 and (dx + 1) ** 2 + (dy + 1) ** 2 > r * r + 1))
+            put(im, x, y, line if edge else fill)
+
+
+def make_chat_apps():
+    # 大きさ（2026-11-19：3つ積むと、3つとも高さ 26 ドット・幅 38 ドット。高さは最初の Slack・Discord の大きさにそろえた）
+    W = 38
+    LINE_H = 8              # LINE：吹き出し 8 ドット × 3 ＋ すき間 1 ドット × 2 ＝ 26
+    HEAD_H, BODY_H = 10, 9  # Slack・Discord：10 ＋ 9 × 2 − 重ね 2 ＝ 26
+
+    # ── LINE：自分が送った緑の吹き出し。1つ目だけ、プレイヤーの方（右向きのとき左上）にしっぽ ──
+    #    （右上にしっぽを付けて描いてから、左右を反転する。左を向いたときは、ゲームの中でもう一度反転する）
+    for tail in (True, False):
+        im = new(W, LINE_H)
+        round_box(im, 0, 0, W - 5, LINE_H - 1, LINE_G, LINE_GD, 2)
+        hline(im, 3, W - 8, 1, LINE_GL)              # つや
+        if tail:
+            # 右上のしっぽ：吹き出しの右の端から、右上へとがった三角形
+            for y in range(0, 4):
+                x_end = W - 1 - y
+                for x in range(W - 6, x_end + 1):
+                    edge = y == 0 or x == x_end
+                    put(im, x, y, LINE_GD if edge else LINE_G)
+            for y in range(1, 4):
+                put(im, W - 5, y, LINE_G)  # 吹き出しとつなげる（右の線を消す）
+        save(im.transpose(Image.FLIP_LEFT_RIGHT), f"Attacks/Chat_Line_{'Head' if tail else 'Body'}.png")
+
+    # ── Slack：白いメッセージに、ワンポイントの紫（アバター）。続けて送ると1つの枠につながる ──
+    def slack_row(head):
+        h = HEAD_H if head else BODY_H
+        im = new(W, h, WHITE)
+        vline(im, 0, 0, h - 1, C("3b3b3b")); vline(im, W - 1, 0, h - 1, C("3b3b3b"))
+        hline(im, 0, W - 1, h - 1, C("3b3b3b"))
+        if head:
+            hline(im, 0, W - 1, 0, C("3b3b3b"))
+            rect(im, 2, 2, 6, 6, SLACK_P)              # アバター（紫）
+            put(im, 3, 3, SLACK_PL)
+            rect(im, 9, 2, 18, 2, C("1d1c1d"))         # 名前（太字）
+            rect(im, 20, 2, 22, 2, C("9a9a9a"))        # 時刻
+            rect(im, 9, 5, W - 5, 5, C("c4c4c4"))      # 本文
+        else:
+            rect(im, 9, 4, W - 8, 4, C("c4c4c4"))      # 本文（行の真ん中）
+        return im
+    save(slack_row(True), "Attacks/Chat_Slack_Head.png")
+    save(slack_row(False), "Attacks/Chat_Slack_Body.png")
+
+    # ── Discord：深い青に、ワンポイントの Discord の青（アバター）。続けて送ると1つの枠につながる ──
+    def disc_row(head):
+        h = HEAD_H if head else BODY_H
+        im = new(W, h, DISC_BG)
+        vline(im, 0, 0, h - 1, DISC_LINE); vline(im, W - 1, 0, h - 1, DISC_LINE)
+        hline(im, 0, W - 1, h - 1, DISC_LINE)
+        if head:
+            hline(im, 0, W - 1, 0, DISC_LINE)
+            rect(im, 2, 2, 6, 6, DISC_B)               # アバター（丸。角を削る）
+            for cx, cy in ((2, 2), (6, 2), (2, 6), (6, 6)):
+                put(im, cx, cy, DISC_BG)
+            put(im, 3, 4, WHITE); put(im, 5, 4, WHITE)
+            rect(im, 9, 2, 18, 2, C("e6e8ff"))         # 名前
+            rect(im, 20, 2, 22, 2, C("6b72a8"))        # 時刻
+            rect(im, 9, 5, W - 5, 5, C("8e95c9"))      # 本文
+        else:
+            rect(im, 9, 4, W - 8, 4, C("8e95c9"))      # 本文（行の真ん中）
+        vline(im, 1, 1 if head else 0, h - 2, DISC_B)  # 左の端に細い青の線
+        return im
+    save(disc_row(True), "Attacks/Chat_Discord_Head.png")
+    save(disc_row(False), "Attacks/Chat_Discord_Body.png")
+
+    # ── 当たったときのエフェクト（4コマ、16×16） ──
+    def frames_of(draw):
+        out = []
+        for i in range(4):
+            im = new(16, 16)
+            draw(im, i)
+            out.append(im)
+        return sheet(out)
+
+    def line_fx(im, i):  # 緑の輪が広がり、小さな吹き出しが飛ぶ
+        r = 2.5 + i * 1.8
+        for a in range(0, 360, 10):
+            x = 7.5 + r * math.cos(math.radians(a)); y = 7.5 + r * math.sin(math.radians(a))
+            put(im, int(round(x)), int(round(y)), LINE_G if i < 3 else LINE_GL)
+        if i < 3:
+            for k, (dx, dy) in enumerate(((1, -1), (-1, -1), (1, 1))):
+                d = 3 + i * 2
+                bx, by = 7 + dx * d, 7 + dy * d
+                rect(im, bx - 1, by - 1, bx + 1, by, WHITE)
+                put(im, bx + 1, by + 1, WHITE)
+        if i == 0:
+            rect(im, 6, 6, 9, 9, WHITE)
+
+    def slack_fx(im, i):  # 4色の点が十字に飛び散る
+        d = 1 + i * 2
+        for k, (dx, dy) in enumerate(((0, -1), (1, 0), (0, 1), (-1, 0))):
+            c = SLACK_COLORS[k]
+            x, y = 7 + dx * d, 7 + dy * d
+            size = 2 if i < 3 else 1
+            rect(im, x, y, x + size - 1, y + size - 1, c)
+            if i in (1, 2):  # 斜めの小さな点
+                put(im, 7 + (dx - dy) * (d - 1), 7 + (dy + dx) * (d - 1), c)
+        if i == 0:
+            rect(im, 6, 6, 9, 9, SLACK_P)
+
+    def disc_fx(im, i):  # 青い星がはじけ、きらめきが散る
+        d = 2 + i * 2
+        for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0)):
+            for t in range(1, d + 1):
+                c = WHITE if t < d - 1 else (DISC_BL if i < 2 else DISC_B)
+                put(im, 7 + dx * t, 7 + dy * t, c)
+        for dx, dy in ((1, 1), (-1, 1), (1, -1), (-1, -1)):
+            put(im, 7 + dx * (d - 1), 7 + dy * (d - 1), DISC_BL)
+        if i < 2:
+            rect(im, 6, 6, 8, 8, DISC_B if i else WHITE)
+
+    save(frames_of(line_fx), "Attacks/Fx_ChatHit_Line.png")
+    save(frames_of(slack_fx), "Attacks/Fx_ChatHit_Slack.png")
+    save(frames_of(disc_fx), "Attacks/Fx_ChatHit_Discord.png")
+
+    # ── 能力のアイコン（16×16）：吹き出しが3つ重なって飛んでいく ──
+    def icon(bg, bubble, line, accent):
+        im = new(16, 16, bg)
+        outline_rect(im, 0, 0, 15, 15, K)
+        for k, y in enumerate((3, 7, 11)):
+            x0 = 3 + k
+            round_box(im, x0, y - 1, x0 + 8, y + 1, bubble, line, 1)
+            put(im, x0 + 9 + (1 if k else 0), y, accent)
+        return im
+    save(icon(WHITE, LINE_G, LINE_GD, LINE_GD), "UI/Icon_ChatLine.png")
+    save(icon(WHITE, WHITE, C("3b3b3b"), SLACK_P), "UI/Icon_ChatSlack.png")
+    save(icon(C("2b3160"), DISC_BG, DISC_LINE, DISC_B), "UI/Icon_ChatDiscord.png")
+
+
+# ───────── チャットのボス（2026-11-19） ─────────
+# ボスのメッセージは、プレイヤーの物より大きく（約1.5倍）、色を濁らせて、ウイルスに汚れたようなノイズを入れる
+
+DIGIT3 = {
+    "1": [".#.", "##.", ".#.", ".#.", "###"],
+    "2": ["##.", "..#", ".#.", "#..", "###"],
+    "3": ["##.", "..#", ".#.", "..#", "##."],
+}
+
+
+def corrupt(im, seed, colors, count):
+    """ウイルスに汚れたようなノイズ：不透明な所に、暗い点と短い横線を散らす"""
+    rng = random.Random(seed)
+    w, h = im.size
+    for _ in range(count):
+        x, y = rng.randrange(2, w - 2), rng.randrange(1, h - 1)
+        if im.getpixel((x, y))[3] == 0:
+            continue
+        c = rng.choice(colors)
+        put(im, x, y, c)
+        if rng.random() < 0.4 and im.getpixel((min(w - 1, x + 1), y))[3] > 0:
+            put(im, x + 1, y, c)
+
+
+def make_chat_boss():
+    W = 56
+    LINE_H = 13             # 13 × 3 ＋ すき間 1 × 2 ＝ 41
+    HEAD_H, BODY_H = 16, 14  # 16 ＋ 14 × 2 − 重ね 2 ＝ 42
+    GRIME = (C("1a1020"), C("2a1a30"), C("5a1020"))
+
+    # ── LINE（濁った緑の吹き出し。1つ目だけ、ボスの方にしっぽ） ──
+    lg, lgl, lgd = C("587a3e"), C("7d9a5e"), C("1f2c16")
+    for tail in (True, False):
+        im = new(W, LINE_H)
+        round_box(im, 0, 0, W - 6, LINE_H - 1, lg, lgd, 3)
+        hline(im, 4, W - 10, 1, lgl)
+        if tail:
+            for y in range(0, 5):
+                x_end = W - 1 - y
+                for x in range(W - 7, x_end + 1):
+                    put(im, x, y, lgd if (y == 0 or x == x_end) else lg)
+            for y in range(1, 5):
+                put(im, W - 6, y, lg)
+        corrupt(im, 11 if tail else 12, GRIME, 14)
+        save(im.transpose(Image.FLIP_LEFT_RIGHT), f"Attacks/ChatBoss_Line_{'Head' if tail else 'Body'}.png")
+
+    # ── Slack（くすんだ白に、濁った紫） ──
+    def slack_row(head):
+        h = HEAD_H if head else BODY_H
+        im = new(W, h, C("b8b0a8"))
+        out = C("1c1a1c")
+        vline(im, 0, 0, h - 1, out); vline(im, W - 1, 0, h - 1, out)
+        hline(im, 0, W - 1, h - 1, out)
+        if head:
+            hline(im, 0, W - 1, 0, out)
+            rect(im, 3, 3, 11, 11, C("2e0d33"))
+            put(im, 4, 4, C("5a2a62")); put(im, 5, 4, C("5a2a62"))
+            rect(im, 14, 4, 28, 5, C("2a2628"))
+            rect(im, 31, 5, 35, 5, C("7a726c"))
+            rect(im, 14, 9, W - 7, 10, C("8a827c"))
+        else:
+            rect(im, 14, 6, W - 11, 7, C("8a827c"))
+        corrupt(im, 21 if head else 22, GRIME, 16)
+        return im
+    save(slack_row(True), "Attacks/ChatBoss_Slack_Head.png")
+    save(slack_row(False), "Attacks/ChatBoss_Slack_Body.png")
+
+    # ── Discord（よどんだ深い青に、くすんだ Discord の青） ──
+    def disc_row(head):
+        h = HEAD_H if head else BODY_H
+        im = new(W, h, C("12152c"))
+        out = C("05060f")
+        vline(im, 0, 0, h - 1, out); vline(im, W - 1, 0, h - 1, out)
+        hline(im, 0, W - 1, h - 1, out)
+        if head:
+            hline(im, 0, W - 1, 0, out)
+            ellipse(im, 7.5, 7.5, 4.6, 4.6, C("383f9a"))
+            put(im, 6, 7, C("c0c4e8")); put(im, 9, 7, C("c0c4e8"))
+            rect(im, 14, 4, 28, 5, C("aab0d8"))
+            rect(im, 31, 5, 35, 5, C("4a5080"))
+            rect(im, 14, 9, W - 7, 10, C("5e6496"))
+        else:
+            rect(im, 14, 6, W - 11, 7, C("5e6496"))
+        vline(im, 1, 1 if head else 0, h - 2, C("383f9a"))
+        corrupt(im, 31 if head else 32, (C("000000"), C("2a0a18"), C("5a1020")), 16)
+        return im
+    save(disc_row(True), "Attacks/ChatBoss_Discord_Head.png")
+    save(disc_row(False), "Attacks/ChatBoss_Discord_Body.png")
+
+    # ── そのほかのアプリ用（灰色。ゲームの中でアプリの色に塗り替える。吹き出しの形） ──
+    for head in (True, False):
+        im = new(W, LINE_H)
+        round_box(im, 0, 0, W - 1, LINE_H - 1, C("9a9a9a"), C("2a2a2a"), 3)
+        hline(im, 4, W - 5, 1, C("cfcfcf"))
+        rect(im, 6, 5, W - 12 if head else W - 18, 6, C("6a6a6a"))
+        corrupt(im, 41 if head else 42, (C("3a3a3a"), C("4a4a4a")), 14)
+        save(im, f"Attacks/ChatBoss_Generic_{'Head' if head else 'Body'}.png")
+
+    # ── チャットbot（歩く2コマ、16×18。原点は足元。灰色：ゲームの中でアプリの色に塗り替える） ──
+    frames = []
+    for f in range(2):
+        im = new(16, 18)
+        # 頭（吹き出しの形の画面）
+        round_box(im, 1, 1, 14, 10, C("cfcfcf"), C("2a2a2a"), 2)
+        rect(im, 3, 3, 12, 8, C("3a3a3a"))
+        put(im, 5, 5, WHITE); put(im, 6, 5, WHITE); put(im, 9, 5, WHITE); put(im, 10, 5, WHITE)
+        hline(im, 6, 9, 7, C("9a9a9a"))
+        put(im, 3, 11, C("2a2a2a")); put(im, 4, 11, C("cfcfcf")); put(im, 4, 12, C("2a2a2a"))  # 吹き出しのしっぽ
+        put(im, 8, 0, WHITE)  # アンテナ
+        # 体と足（2コマで足を入れ替える）
+        rect(im, 5, 11, 10, 14, C("9a9a9a"))
+        outline_rect(im, 5, 11, 10, 14, C("2a2a2a"))
+        if f == 0:
+            vline(im, 6, 15, 17, C("2a2a2a")); vline(im, 9, 15, 16, C("2a2a2a")); put(im, 10, 16, C("2a2a2a"))
+        else:
+            vline(im, 9, 15, 17, C("2a2a2a")); vline(im, 6, 15, 16, C("2a2a2a")); put(im, 5, 16, C("2a2a2a"))
+        frames.append(im)
+    save(sheet(frames), "Enemies/Zako_Chatbot.png")
+
+    # ── 通知のベル（4コマ、22×22。回収する物）：0 止まっている、1〜3 揺れる ──
+    gold, gold_l, gold_d = C("ffd23f"), C("fff1a8"), C("b07d12")
+
+    def bell(shift):
+        im = new(22, 22)
+        cx = 11 + shift
+        rect(im, cx - 1, 1, cx, 2, gold_d)                   # 上のつまみ
+        for y in range(3, 15):                                # 本体（下へ広がる）
+            half = 3 + (y - 3) * 5 // 11
+            hline(im, cx - half, cx + half - 1, y, gold)
+            put(im, cx - half, y, gold_d); put(im, cx + half - 1, y, gold_d)
+        hline(im, cx - 9, cx + 8, 15, gold_d)                 # ふち
+        hline(im, cx - 8, cx + 7, 16, gold_d)
+        vline(im, cx - 3, 5, 12, gold_l)                       # つや
+        ellipse(im, cx, 18.5, 2.2, 2.2, gold_d)               # 舌
+        return outline_alpha(im)
+    save(sheet([bell(0), bell(-2), bell(2), bell(-1)]), "Attacks/Fx_Bell.png")
+
+    # ── 残りの数のバッジ（3コマ、11×11）：赤い丸に白い数字（Mac の通知のように） ──
+    badges = []
+    for d in "123":
+        im = new(11, 11)
+        ellipse(im, 5.5, 5.5, 5.3, 5.3, C("ff3b30"))
+        for yy, r in enumerate(DIGIT3[d]):
+            for xx, v in enumerate(r):
+                if v == "#":
+                    put(im, 4 + xx, 3 + yy, WHITE)
+        badges.append(im)
+    save(sheet(badges), "Attacks/Fx_NotifBadge.png")
+
+
 SECTIONS = {
     "background": lambda: make_background(),
     "terrain": lambda: make_terrain(),
@@ -1448,6 +1755,8 @@ SECTIONS = {
     "category_abilities": lambda: make_category_abilities(),
     "ai_assistant": lambda: make_ai_assistant(),
     "ai_boss": lambda: make_ai_boss(),
+    "chat_apps": lambda: make_chat_apps(),
+    "chat_boss": lambda: make_chat_boss(),
 }
 
 

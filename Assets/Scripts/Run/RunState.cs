@@ -173,7 +173,8 @@ public static class RunPlanner
     /// <summary>
     /// スクリーンタイムの上位 poolSize 個のアプリから、ランダムに stageCount 個を選んで、それぞれのステージのボスにする（2026-11-17 まさぴ〜決定）。
     /// ・対応表のアプリ（Chrome・VS Code）は、そのアプリのボス
-    /// ・対応表に無いアプリは代用ボス：見た目はアイコンから、技はカテゴリの近いボス（ブラウザ → Chrome、開発 → VS Code、AI → AI チャットのボス、ほかは名前で決める）。
+    /// ・対応表に無いアプリは代用ボス：見た目はアイコンから、技はカテゴリの近いボス（ブラウザ → Chrome、開発 → VS Code、AI → AI チャットのボス、
+///   SNS・チャット → チャットのボス、ほかは名前で決める）。
     ///   ステージは1画面（AppCatalog の「代用ボスのステージ」。ひな形に専用のステージがあればそれ）。倒すと、そのアプリの能力が手に入る
     ///   （アプリ専用の能力 → カテゴリの能力 → その場で作った能力の順。2026-11-18：Zoom・Finder・Premiere Pro は専用の能力）
     /// ・カードにもボスにもしないアプリ（設定・iPhone のアプリなど）と、ラスボスのアプリ（Terminal）は選ばない
@@ -205,7 +206,10 @@ public static class RunPlanner
             AppUsageRow row = p.row;
             row.Seconds = p.seconds;
             AbilityCategoryEntry category = abilities != null ? abilities.Find(row) : null;
-            AppEntry template = templates.FirstOrDefault(a => category != null && a.Category == category.Category);
+            // カテゴリ：カテゴリの表で分からなければ、アプリ専用の能力のカテゴリ（Slack・Discord・LINE は SNS・チャット。2026-11-19）
+            SkillCategory cat = category != null ? category.Category
+                : abilities?.FindAppSkill(row)?.Skill != null ? abilities.FindAppSkill(row).Skill.Category : SkillCategory.Unknown;
+            AppEntry template = cat != SkillCategory.Unknown ? templates.FirstOrDefault(a => a.Category == cat) : null;
             if (template == null)
             {
                 // カテゴリの近いボスが無ければ、名前で決める（同じカテゴリ専用のひな形＝AI チャットのボスは選ばない。2026-11-19）
@@ -220,7 +224,7 @@ public static class RunPlanner
             {
                 DisplayName = row.Name,
                 BundleIdPrefixes = string.IsNullOrEmpty(row.BundleId) ? System.Array.Empty<string>() : new[] { row.BundleId }, // 図鑑のアイコン用
-                Category = category != null ? category.Category : SkillCategory.Unknown,
+                Category = cat,
                 BossPrefab = template.BossPrefab,
                 Profile = template.Profile,
                 SpawnPosition = template.SpawnPosition,

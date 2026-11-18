@@ -44,10 +44,25 @@ public static class AiChatBossBuilder
         ArtAssets.Apply(); // 絵の取り込み設定と、技への絵の割り当て
         profile = AssetDatabase.LoadAssetAtPath<BossProfile>(ProfilePath);
         BossController prefab = BuildPrefab(profile);
-        string stagePath = RunScenesBuilder.BuildOneScreenStage(StageScene, BuildPlatforms, new Vector2(6.5f, 2.8f), new Vector2(-6.5f, 2.8f));
-        RunScenesBuilder.AddBuildScene(stagePath);
+        BuildStage();
         EnsureCatalogEntry(AssetDatabase.LoadAssetAtPath<BossController>(PrefabPath), AssetDatabase.LoadAssetAtPath<BossProfile>(ProfilePath));
         AssetDatabase.SaveAssets();
+    }
+
+    /// <summary>ステージ Stage_AIChat を作り直して、Build Settings に足す</summary>
+    public static string BuildStage()
+    {
+        string stagePath = RunScenesBuilder.BuildOneScreenStage(StageScene, BuildPlatforms, new Vector2(6.5f, 2.8f), new Vector2(-6.5f, 2.8f));
+        RunScenesBuilder.AddBuildScene(stagePath);
+        return stagePath;
+    }
+
+    /// <summary>ステージ Stage_AIChat が無ければ作る（チャットのボスも、このステージを使う。2026-11-19）</summary>
+    public static void EnsureStage()
+    {
+        string path = $"{RunScenesBuilder.RunSceneFolder}/{StageScene}.unity";
+        if (System.IO.File.Exists(path)) RunScenesBuilder.AddBuildScene(path);
+        else BuildStage();
     }
 
     // ───────── ステージの形 ─────────
@@ -81,10 +96,19 @@ public static class AiChatBossBuilder
     public static BossController CreateBoss(Vector2 position, Transform player, BossProfile profile = null)
     {
         if (profile == null) profile = GetOrCreateProfile();
+        return CreateIconBoss("Boss_AIChat", position, player, profile, null);
+    }
+
+    /// <summary>
+    /// アプリのアイコンのボスを作る（AI チャットのボス・チャットのボスで共通。2026-11-19）。
+    /// 体の判定・体当たり・ゲージ・攻撃・追い出されるウイルス・見た目（AiChatBossVisual）。visualSetup で見た目の設定を足せる（試すアプリ・技の絵の差し替えなど）
+    /// </summary>
+    internal static BossController CreateIconBoss(string objectName, Vector2 position, Transform player, BossProfile profile, Action<SerializedObject> visualSetup)
+    {
         int playerLayer = LayerMask.NameToLayer("Player");
         int enemyLayer = LayerMask.NameToLayer("Enemy");
         Sprite square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
-        var boss = new GameObject("Boss_AIChat");
+        var boss = new GameObject(objectName);
         boss.layer = enemyLayer;
         boss.transform.position = position;
 
@@ -102,7 +126,7 @@ public static class AiChatBossBuilder
         PlayerTestSceneBuilder.SetProps(gauge, so => so.FindProperty("_max").intValue = profile.GaugeMax);
         BossTestSceneBuilder.AddAttackRunner(boss, Team.Enemy, 1 << playerLayer, player);
         var controller = boss.AddComponent<BossController>();
-        AiChatBossVisual visual = Decorate(controller);
+        AiChatBossVisual visual = Decorate(controller, visualSetup);
         Health ejected = BossTestSceneBuilder.CreateEjectedVirus(boss.transform, square);
         PlayerTestSceneBuilder.SetProps(controller, so =>
         {
@@ -118,7 +142,7 @@ public static class AiChatBossBuilder
     }
 
     /// <summary>見た目：後ろに煙3つ（ゆっくり漂う）、体（アプリのアイコン）、頭の上にエラーのウィンドウ</summary>
-    static AiChatBossVisual Decorate(BossController boss)
+    static AiChatBossVisual Decorate(BossController boss, Action<SerializedObject> visualSetup)
     {
         int layer = boss.gameObject.layer;
         var art = new GameObject("Art");
@@ -148,11 +172,12 @@ public static class AiChatBossBuilder
             so.FindProperty("_defaultTheme").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AppTheme>(ThemePath);
             Set(so.FindProperty("_smoke"), smoke);
             Set(so.FindProperty("_smokeFrames"), smokeFrames);
+            visualSetup?.Invoke(so);
         });
         return visual;
     }
 
-    static void Set(SerializedProperty arr, UnityEngine.Object[] values)
+    internal static void Set(SerializedProperty arr, UnityEngine.Object[] values)
     {
         arr.arraySize = values.Length;
         for (int i = 0; i < values.Length; i++) arr.GetArrayElementAtIndex(i).objectReferenceValue = values[i];

@@ -2,11 +2,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// AI チャットのボスの見た目（2026-11-19。判定には関わらない。見た目・秒数は【仮】）。
+/// アプリのアイコンのボスの見た目（2026-11-19。AI チャットのボスとチャットのボスで共通。判定には関わらない。見た目・秒数は【仮】）。
 /// ・体：アプリのアイコンをドット絵にしたもの（アプリのアイコンを読めたら 40 ドット、だめなら 24 ドットを2倍、それもなければ仮のアイコン）。
 ///   ふわふわ上下する（羽は 2026-11-19 に外した）
 /// ・後ろに、ウイルスの黒い煙をアプリの色味にしたものが、ゆっくり漂い続ける（3つの煙を時間をずらして、ゆっくりコマ送り）
-/// ・技の絵（レーザー・電流・ミニロボット）をアプリの色に塗り替える（ボスの設定を、塗り替えた複製に差し替える）
+/// ・技の絵（レーザー・電流・ミニロボット・メッセージ）をアプリの色に塗り替える（ボスの設定を、塗り替えた複製に差し替える）。
+///   「アプリごとの技の絵」に当たるアプリ（チャットのボスの Slack・Discord・LINE）は、決まった絵に差し替える
 /// ・当たると白く光る。形態変化の演出中は赤く点滅。エラーで止まっている間は震えて、頭の上に「ERROR」のウィンドウ
 /// ・第2形態の大技（文字列のレーザー）の予備動作の間は、頭の上に「LOADING」と AI の考え中の表示
 /// ・ゲージ100%：煙がはじけて、きれいになったアイコンがきらめきながら上へ消える
@@ -35,6 +36,9 @@ public class AiChatBossVisual : MonoBehaviour, IBossAppLook
     [SerializeField, Min(0.1f)] float _smokeFps = 3.5f;
     [Tooltip("体のアイコンの大きさ（ドット）。アプリのアイコンを読めたとき")]
     [SerializeField, Range(16, 64)] int _iconPixels = 40;
+
+    [Tooltip("アプリごとの技の絵（名前に当たったアプリは、From の絵を To の絵に差し替える。ほかの絵と、当たらないアプリは、アプリの色に塗り替える）")]
+    [SerializeField] AttackSkin[] _attackSkins;
 
     [Header("テストシーン（アプリの見た目が渡されなかったとき）")]
     [SerializeField] string _previewAppName = "ChatGPT";
@@ -128,10 +132,39 @@ public class AiChatBossVisual : MonoBehaviour, IBossAppLook
         if (_boss != null && _boss.Profile != null && theme != null)
         {
             if (_baseProfile == null) _baseProfile = _boss.Profile;
-            BossProfile look = _baseProfile.CreateRecoloredCopy(s => ThemeRecolor.Effect(s, theme));
+            AttackSkin skin = FindSkin(appName);
+            BossProfile look = _baseProfile.CreateRecoloredCopy(s => skin != null && skin.TryMap(s, out Sprite to) ? to : ThemeRecolor.Effect(s, theme));
+            if (skin != null && skin.OverrideChatGap) SetChatGap(look, skin.ChatGap);
             look.SetLook(string.IsNullOrEmpty(appName) ? _baseProfile.DisplayName : appName, visual != null ? visual.Icon12 : null);
             _boss.SetProfile(look);
         }
+    }
+
+    /// <summary>塗り替えた複製の、チャットの技のすき間を変える（元の技のアセットは書き換えない）</summary>
+    void SetChatGap(BossProfile look, float gap)
+    {
+        void Each(AttackData[] moves, AttackData[] originals)
+        {
+            if (moves == null) return;
+            for (int i = 0; i < moves.Length; i++)
+            {
+                AttackData m = moves[i];
+                bool isCopy = originals == null || i >= originals.Length || originals[i] != m;
+                if (m != null && m.Kind == AttackKind.Chat && isCopy) m.SetChatGap(gap);
+            }
+        }
+        Each(look.Phase1.Moves, _baseProfile.Phase1.Moves);
+        Each(look.Phase2.Moves, _baseProfile.Phase2.Moves);
+    }
+
+    AttackSkin FindSkin(string appName)
+    {
+        if (_attackSkins == null || string.IsNullOrEmpty(appName)) return null;
+        foreach (var s in _attackSkins)
+        {
+            if (s != null && s.Matches(appName)) return s;
+        }
+        return null;
     }
 
     /// <summary>体にするアイコン：本物のアイコンを読めたら大きめのドット絵、だめなら 24 ドットを2倍、それも無ければ仮のアイコン</summary>
@@ -335,5 +368,41 @@ public class AiChatBossVisual : MonoBehaviour, IBossAppLook
             PixelGui.TextEn(new Rect(box.x + 6f, box.y + 28f + i * lineH, w - 12f, lineH), ThinkLines[i], 8, c);
         }
         PixelGui.End();
+    }
+}
+
+/// <summary>アプリごとの技の絵（2026-11-19：チャットのボスのメッセージ）。名前に当たったアプリは、From の絵を To の絵に差し替える</summary>
+[System.Serializable]
+public class AttackSkin
+{
+    [Tooltip("アプリの名前（大文字小文字は区別しない。名前に含まれていれば当たる）")]
+    public string[] AppNames;
+    [Tooltip("差し替える前の絵（技のデータに入っている絵）")]
+    public Sprite[] From;
+    [Tooltip("差し替えた後の絵（From と同じ順）")]
+    public Sprite[] To;
+    [Tooltip("オン：チャットのメッセージの間のすき間も変える（Slack・Discord は重ねてつなげる）")]
+    public bool OverrideChatGap;
+    [Tooltip("メッセージの間のすき間（マス。マイナスなら重ねる）")]
+    public float ChatGap;
+
+    public bool Matches(string appName)
+    {
+        if (AppNames == null) return false;
+        foreach (var n in AppNames)
+        {
+            if (!string.IsNullOrEmpty(n) && appName.IndexOf(n, System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+        }
+        return false;
+    }
+
+    public bool TryMap(Sprite from, out Sprite to)
+    {
+        to = null;
+        if (From == null || To == null) return false;
+        int i = System.Array.IndexOf(From, from);
+        if (i < 0 || i >= To.Length || To[i] == null) return false;
+        to = To[i];
+        return true;
     }
 }

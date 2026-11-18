@@ -16,6 +16,7 @@ using UnityEngine;
 ///   Stage_Scroll（横スクロール）・Stage_Windows（ウィンドウ移動）（StageLayoutsBuilder）、RunResult（【仮】リザルト）
 /// ・Build Settings にこの6つを登録する（ほかに登録されているシーンは後ろに残す）
 /// ・AI チャットのボス（AiChatBossBuilder：プレハブ・Stage_AIChat・対応アプリ表の行。2026-11-19）
+/// ・チャットのボス（ChatBossBuilder：プレハブ・チャットbot・対応アプリ表の行。2026-11-19）
 /// 数値はすべて【仮】。データ（対応アプリ表・サンプル）は上書きしないので、直したいときはそのアセットを直接直す（作り直すなら消してから実行）。
 /// 絵は ArtAssets（Tools/Team1/グラフィックを適用）が入れる。ボスのプレハブは絵ごと作り直す。
 /// </summary>
@@ -80,6 +81,7 @@ public static class RunScenesBuilder
         RegisterBuildScenes(titlePath, loadoutPath, stagePath, scrollPath, windowsPath, resultPath);
         FinalBossBuilder.BuildFinalBoss(); // ラスボス Terminal（無ければ作る。2026-11-18）
         AiChatBossBuilder.BuildForRun();   // AI チャットのボス（プレハブ・ステージ・対応アプリ表の行。2026-11-19）
+        ChatBossBuilder.BuildForRun();     // チャットのボス（プレハブ・チャットbot・対応アプリ表の行。2026-11-19）
 
         AssetDatabase.SaveAssets();
         Debug.Log($"ランのシーンを作成しました: {titlePath}, {loadoutPath}, {stagePath}, {scrollPath}, {windowsPath}, {resultPath}");

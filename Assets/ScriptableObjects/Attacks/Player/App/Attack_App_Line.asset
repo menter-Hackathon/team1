@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32015ae998734b8a83700e2a1c61f820, type: 3}
+  m_Name: Attack_App_Line
+  m_EditorClassIdentifier: 
+  _kind: 7
+  _windup: 0
+  _activeTime: 0.3
+  _cooldown: 2.5
+  _damage: 1
+  _gaugeGain: 4
+  _knockback: {x: 2, y: 1.5}
+  _hitStun: 0.15
+  _repeatCount: 1
+  _repeatInterval: 0
+  _sprite: {fileID: 21300000, guid: 642bf55a7ba504e4a9a551e68c0c3ce2, type: 3}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _projectileCount: 1
+  _spreadAngle: 0
+  _speed: 16
+  _gravity: 0
+  _lifetime: 1.2
+  _hitSize: {x: 0.5, y: 0.5}
+  _aim: 0
+  _launchAngle: 0
+  _spawnOffset: {x: 0, y: 0}
+  _destroyOnTerrain: 1
+  _destroyOnHit: 1
+  _onTerrainHit: {fileID: 0}
+  _followUpOnHit: 0
+  _anchor: 0
+  _forwardDistance: 4
+  _snapToGround: 1
+  _alignToSurface: 1
+  _shape: 0
+  _areaSize: {x: 1.5, y: 12}
+  _areaCount: 1
+  _areaSpacing: 4
+  _areaStagger: 0
+  _areaForwardOrder: 0
+  _telegraphTime: 1
+  _persistDuration: 0
+  _tickInterval: 0.5
+  _placement: 0
+  _spawnCount: 2
+  _minDistanceFromTarget: 3
+  _objectSize: {x: 3, y: 2}
+  _fallSpeed: 12
+  _landRemainTime: 0
+  _becomesPlatform: 0
+  _placeInterval: 0.3
+  _placeSpacing: 3
+  _dropHoldTime: 0.5
+  _dropInterval: 0.25
+  _appearTopRange: {x: 2.5, y: 6}
+  _reachHeight: 3
+  _warpDestination: 0
+  _warpDistance: 6
+  _vanishTime: 0
+  _appearDelay: 0
+  _appearTelegraph: 0
+  _appearTime: 0
+  _disableContactUntilAppeared: 1
+  _summonFrames: []
+  _summonFps: 10
+  _summonLifetime: 30
+  _summonFireTime: 7
+  _summonRange: 6
+  _summonHoverOffset: {x: 0.9, y: 1.9}
+  _summonFollowSharpness: 6
+  _beamWidth: 0.3
+  _summonType: 0
+  _summonCount: 1
+  _summonSpeed: 2.5
+  _summonTurnRate: 90
+  _beamStyle: 0
+  _beamOrigin: 0
+  _beamMoveTime: 0.8
+  _beamHitThreshold: 0.5
+  _telegraphFrames: []
+  _chatBodySprite: {fileID: 21300000, guid: 7d1a751ff000a4e0d848038ee5797315, type: 3}
+  _chatGap: 0.055555556
+  _chatMaxMessages: 3
+  _chatFireDelay: 1
+  _chatAnchor: {x: 1.85, y: 0.42}
+  _chatHitFrames:
+  - {fileID: -4947280030236491123, guid: e69ea079b7b8846b4b88af772aa0acea, type: 3}
+  - {fileID: 710831388016127698, guid: e69ea079b7b8846b4b88af772aa0acea, type: 3}
+  - {fileID: -5527564993960287031, guid: e69ea079b7b8846b4b88af772aa0acea, type: 3}
+  - {fileID: 5824028066636538980, guid: e69ea079b7b8846b4b88af772aa0acea, type: 3}

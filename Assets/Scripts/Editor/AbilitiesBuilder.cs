@@ -291,8 +291,83 @@ public static class AbilitiesBuilder
             ("ノヴァ", nova, AttackStat.AreaScale, 0.9f, 1.2f),
         });
         EnsureAppSkills();
+        EnsureChatSkills();
         AssetDatabase.SaveAssets();
         return skills;
+    }
+
+    // ───────── チャットアプリの能力（2026-11-19：Slack・Discord・LINE。数値は【仮】） ─────────
+
+    [MenuItem("Tools/Team1/チャットアプリの能力を用意")]
+    public static void EnsureChatSkillsFromMenu()
+    {
+        EnsureChatSkills();
+        ArtAssets.Apply(); // メッセージの絵・エフェクト・アプリの色・アイコンを入れる
+        AssetDatabase.SaveAssets();
+        Debug.Log("チャットアプリの能力（Slack・Discord・LINE）を用意しました（能力えらびの表の「アプリ専用の能力」に足しました）");
+    }
+
+    /// <summary>
+    /// アプリ1つ分：キー（アセット名）・能力の名前・表の確認用の名前・スクリーンタイムでの名前・バンドルID・
+    /// メッセージの間のすき間（マス。マイナスなら重ねてつなげる）・飛ぶ速さ・いちばん新しいメッセージを出す高さ（足元から）
+    /// </summary>
+    static readonly (string key, string name, string label, string[] names, string[] bundles, float gap, float speed, float anchorY)[] ChatApps =
+    {
+        // LINE：吹き出しが1つずつ分かれる（すき間1ドット）。3つ積むと 26 ドットで、Slack・Discord と同じ大きさ（2026-11-19）
+        ("Line", "LINE", "LINE", new[] { "LINE" }, new[] { "jp.naver.line.mac" }, 1f / GameArt.PixelsPerUnit, 16f, 0.42f),
+        // Slack・Discord：続けて送ると1つの枠につながる（1ドット重ねて、上のメッセージの下の線を隠す）。
+        // 出す高さは、いちばん下の端が LINE と同じ（足元から 0.2）になるように。小さな雑魚にも当たる（2026-11-19）
+        ("Slack", "Slack", "Slack", new[] { "Slack" }, new[] { "com.tinyspeck.slackmacgap" }, -1f / GameArt.PixelsPerUnit, 15f, 0.45f),
+        ("Discord", "Discord", "Discord", new[] { "Discord" }, new[] { "com.hnc.Discord" }, -1f / GameArt.PixelsPerUnit, 15f, 0.45f),
+    };
+
+    /// <summary>
+    /// チャットアプリの能力（Slack・Discord・LINE）を用意する：攻撃データ Attack_App_〇〇（種類 Chat）・能力 Skill_App_〇〇・
+    /// 能力えらびの表の「アプリ専用の能力」の行（無いときだけ足す。手で直した行は残す）。絵と色は ArtAssets が入れる。
+    /// 止まっている間はクールタイムなしで3つまでメッセージを出せ、最後に足してから1秒で一斉に飛ぶ。動くか3つ出したらクールタイム2.5秒
+    /// </summary>
+    public static void EnsureChatSkills()
+    {
+        var created = new System.Collections.Generic.List<(string label, SkillDefinition skill, string[] names, string[] bundles)>();
+        foreach (var app in ChatApps)
+        {
+            AttackData attack = BossTestSceneBuilder.GetOrCreateAttack($"Player/App/Attack_App_{app.key}", so =>
+            {
+                Kind(so, AttackKind.Chat);
+                F(so, "_windup", 0f);
+                F(so, "_cooldown", 2.5f);
+                I(so, "_damage", 1);
+                I(so, "_gaugeGain", 4);              // 1つにつき近接1回分。3つ全部当たると +12
+                V(so, "_knockback", new Vector2(2f, 1.5f));
+                F(so, "_hitStun", 0.15f);
+                F(so, "_speed", app.speed);
+                F(so, "_lifetime", 1.2f);
+                B(so, "_destroyOnTerrain", true);
+                B(so, "_destroyOnHit", true);
+                F(so, "_chatGap", app.gap);
+                I(so, "_chatMaxMessages", 3);
+                F(so, "_chatFireDelay", 1f);
+                V(so, "_chatAnchor", new Vector2(1.85f, app.anchorY)); // メッセージ（幅38ドット＝2.1マス）の左の端が、プレイヤーの体より前に来る（2026-11-19）
+            });
+            SkillDefinition skill = BossTestSceneBuilder.GetOrCreateSkill($"Skill_App_{app.key}", app.name, SkillCategory.SocialChat, attack);
+            created.Add((app.label, skill, app.names, app.bundles));
+        }
+
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
+        if (catalog == null) return;
+        PlayerTestSceneBuilder.SetProps(catalog, so =>
+        {
+            var arr = so.FindProperty("_appSkills");
+            foreach (var c in created)
+            {
+                bool found = false;
+                for (int i = 0; i < arr.arraySize && !found; i++) found = arr.GetArrayElementAtIndex(i).FindPropertyRelative("Label").stringValue == c.label;
+                if (found) continue;
+                arr.arraySize++;
+                AppSkill(arr.GetArrayElementAtIndex(arr.arraySize - 1), c.label, c.skill, c.names, c.bundles);
+            }
+        });
+        EditorUtility.SetDirty(catalog);
     }
 
     const string AppSkillAttackFolder = "Assets/ScriptableObjects/Attacks/Player/App";

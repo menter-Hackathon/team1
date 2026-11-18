@@ -71,6 +71,44 @@ public static class ThemeRecolor
     }
 
     static readonly Dictionary<(int, int), Sprite> SmokeCache = new Dictionary<(int, int), Sprite>();
+    static readonly Dictionary<(int, uint), Sprite> ColorizeCache = new Dictionary<(int, uint), Sprite>();
+
+    /// <summary>
+    /// 絵を1つの色の濃淡にした複製（2026-11-19：通知の大技の赤いもや）。明るさを3段に分けて、暗い色・その色・明るい色に置き換える。
+    /// 塗り替えられなければ元の絵
+    /// </summary>
+    public static Sprite Colorize(Sprite src, Color color)
+    {
+        if (src == null) return src;
+        Color32 c32 = color;
+        var key = (src.GetInstanceID(), ((uint)c32.r << 16) | ((uint)c32.g << 8) | c32.b);
+        if (ColorizeCache.TryGetValue(key, out Sprite cached) && cached != null) return cached;
+        Color32[] px = Read(src, out int w, out int h);
+        if (px == null) return src;
+        float lo = float.MaxValue, hi = float.MinValue;
+        foreach (var c in px)
+        {
+            if (c.a == 0) continue;
+            float l = Lum(c);
+            lo = Mathf.Min(lo, l);
+            hi = Mathf.Max(hi, l);
+        }
+        Color32 dark = Mix(color, Color.black, 0.45f);
+        Color32 mid = Mix(color, Color.black, 0f);
+        Color32 light = Mix(color, Color.white, 0.45f);
+        for (int i = 0; i < px.Length; i++)
+        {
+            Color32 c = px[i];
+            if (c.a == 0) continue;
+            float t = hi > lo ? (Lum(c) - lo) / (hi - lo) : 0.5f;
+            Color32 to = t < 0.33f ? dark : t < 0.7f ? mid : light;
+            to.a = c.a;
+            px[i] = to;
+        }
+        Sprite made = Make(px, w, h, src, $"{src.name}_tint");
+        ColorizeCache[key] = made;
+        return made;
+    }
 
     /// <summary>
     /// ウイルスの黒い煙を、アプリの色味にした複製（2026-11-19：AI チャットのボスの後ろに漂う煙）。

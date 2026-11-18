@@ -200,6 +200,12 @@ public class AttackRunner : MonoBehaviour
             case AttackKind.Beam:
                 yield return BeamRoutine(data);
                 break;
+            case AttackKind.Chat:
+                yield return ChatRoutine(data);
+                break;
+            case AttackKind.Alarm:
+                yield return AlarmRoutine(data);
+                break;
             default:
                 Debug.LogWarning($"{name}: 攻撃の種類 {data.Kind} はまだ実行できません（{data.name}）", this);
                 break;
@@ -594,6 +600,18 @@ public class AttackRunner : MonoBehaviour
     /// </summary>
     IEnumerator SummonRoutine(AttackData data)
     {
+        if (data.SummonType == SummonType.Minion)
+        {
+            int n = data.SummonCount;
+            for (int i = 0; i < n; i++)
+            {
+                float spread = n > 1 ? (i / (float)(n - 1) - 0.5f) * Mathf.Min(4f, 1.2f * (n - 1)) : 0f;
+                SpawnMinion(data, OriginPoint + new Vector2(spread, -0.4f));
+                Released?.Invoke(data);
+                if (i < n - 1) yield return new WaitForSeconds(0.15f);
+            }
+            yield break;
+        }
         if (data.SummonType == SummonType.Chaser)
         {
             int n = data.SummonCount;
@@ -612,6 +630,74 @@ public class AttackRunner : MonoBehaviour
         AssistantDrone drone = AssistantDrone.Spawn(this, data);
         Released?.Invoke(data);
         while (drone != null) yield return null;
+    }
+
+    // ───────── チャットのメッセージ（Slack・Discord・LINE） ─────────
+
+    /// <summary>
+    /// 最初のメッセージを出して、メッセージを足せる間（止まっていて、最大数に届いていない間）待つ。
+    /// 足せなくなったら終わる（Finished。能力のクールタイムはそこから数える）。メッセージが飛んでいくのは、そのあとでもよい
+    /// </summary>
+    IEnumerator ChatRoutine(AttackData data)
+    {
+        ChatVolley volley = ChatVolley.Start(this, data);
+        Released?.Invoke(data);
+        // 繰り返す回数が2以上なら、自分で続けて送る（チャットのボスの連投。プレイヤーは1回ずつボタンで足す）
+        for (int r = 1; r < data.RepeatCount && volley != null && volley.IsOpen; r++)
+        {
+            if (data.RepeatInterval > 0f) yield return new WaitForSeconds(data.RepeatInterval);
+            if (!ChatVolley.TryAppend(this, data)) break;
+            Released?.Invoke(data);
+        }
+        while (volley != null && volley.IsOpen) yield return null;
+    }
+
+    // ───────── 通知のアラーム（チャットのボスの大技） ─────────
+
+    /// <summary>通知を置いてベルを鳴らし、回収されるか攻撃が終わるまで待つ（その間、持ち主は動かない）</summary>
+    IEnumerator AlarmRoutine(AttackData data)
+    {
+        NotificationAlarm alarm = NotificationAlarm.Spawn(this, data);
+        Released?.Invoke(data);
+        while (alarm != null && !alarm.IsDone) yield return null;
+    }
+
+    /// <summary>
+    /// 雑魚をプレハブから出す（チャットのボスのチャットbot。2026-11-19）。出した物として登録する（正常化のときに消える）。
+    /// 「召喚した味方の絵」があれば、雑魚のコマ送りの絵をそれに差し替える（アプリの色に塗り替えた絵）
+    /// </summary>
+    void SpawnMinion(AttackData data, Vector2 position)
+    {
+        if (data.SummonPrefab == null) return;
+        // 同時にいられる数がいっぱいなら出さない（倒れた雑魚は数えない）
+        if (data.SummonMaxAlive > 0 && AliveMinions(data.SummonPrefab.name) >= data.SummonMaxAlive) return;
+        Rect arena = BattleArena.GetBounds();
+        position.x = Mathf.Clamp(position.x, arena.xMin + 0.6f, arena.xMax - 0.6f);
+        GameObject go = Instantiate(data.SummonPrefab, position, Quaternion.identity);
+        go.name = data.SummonPrefab.name;
+        go.SetActive(true);
+        Register(go);
+        Sprite[] frames = data.SummonFrames;
+        if (frames.Length > 0 && frames[0] != null)
+        {
+            var anim = go.GetComponentInChildren<SpriteFrameAnimation>(true);
+            if (anim != null) anim.Setup(anim.GetComponent<SpriteRenderer>(), frames, 7f, loop: true, destroyWhenDone: false);
+        }
+        Vfx.SmokeSmall(position + Vector2.up * 0.4f);
+    }
+
+    /// <summary>この人が出した、その名前の雑魚のうち、まだ倒れていない数</summary>
+    int AliveMinions(string prefabName)
+    {
+        _spawned.RemoveAll(g => g == null);
+        int n = 0;
+        foreach (var go in _spawned)
+        {
+            if (go.name != prefabName || !go.activeInHierarchy) continue;
+            if (go.TryGetComponent(out Health h) && h.IsDead) continue;
+            n++;
+        }
+        return n;
     }
 
     // ───────── 直線のレーザー（AI チャットのボス） ─────────

@@ -171,6 +171,24 @@ MonoBehaviour:
     - Adobe Premiere Pro
     BundleIdPrefixes:
     - com.adobe.PremierePro
+  - Label: LINE
+    Skill: {fileID: 11400000, guid: 9a058da6ec1874cc197474c7e3d5b02b, type: 2}
+    AppNames:
+    - LINE
+    BundleIdPrefixes:
+    - jp.naver.line.mac
+  - Label: Slack
+    Skill: {fileID: 11400000, guid: d91cb93355a714928857e7e97849e32a, type: 2}
+    AppNames:
+    - Slack
+    BundleIdPrefixes:
+    - com.tinyspeck.slackmacgap
+  - Label: Discord
+    Skill: {fileID: 11400000, guid: 62a921635ed68478f817a39305100dc6, type: 2}
+    AppNames:
+    - Discord
+    BundleIdPrefixes:
+    - com.hnc.Discord
   _templates:
   - Name: "\u30D4\u30E9\u30FC"
     Attack: {fileID: 11400000, guid: 9eb594a4112d143cf9c37b3bdd2c56d7, type: 2}

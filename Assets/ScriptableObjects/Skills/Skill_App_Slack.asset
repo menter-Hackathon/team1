@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3dd5947c20f542efa401be9630a1460c, type: 3}
+  m_Name: Skill_App_Slack
+  m_EditorClassIdentifier: 
+  _displayName: Slack
+  _icon: {fileID: 21300000, guid: ce2b5e7e90b33492ab6756496879aff0, type: 3}
+  _category: 2
+  _attack: {fileID: 11400000, guid: aa54b9e66baf8494f8a7d92feb0bdb9a, type: 2}
+  _theme: {fileID: 11400000, guid: 6da3555efd7b94cbca97afddc11f88c0, type: 2}
