@@ -8,6 +8,8 @@ using UnityEngine.InputSystem;
 /// ・このランのボスのアプリは感染している：紫に染まってチラつき、ウイルス（雑魚）が乗っている。壁紙とフォルダも、感染したアプリの数だけ乱れる
 /// ・ステージをクリアした後は、そのアプリのウイルスがはじけて元の色に戻り、壁紙の乱れも減る
 /// ・次に入るアプリへマウスの矢印が動いてクリックし、アイコンが跳ね、そのアプリのウィンドウが開いて画面いっぱいに広がり、ステージへ
+/// ・ラスボス（Terminal。2026-11-18）は、それまでのアプリを全部元に戻すまで Dock にいない。
+///   最後のアプリが元に戻ってデスクトップがきれいになった直後に、乱れとともに Dock の端へ現れ、そのウィンドウが開いてラスボスのステージへ
 /// ・最後のステージの後は、全部のアプリが元に戻ったデスクトップを見せてからリザルトへ
 /// 文字の説明は出さない（使用時間などの数字も出さない）。自動で進み、Z・Enter・Space・クリックで早送りできる。
 /// 時間はすべて unscaledTime（前のステージは止めてある）。GameSession が自分に付ける。
@@ -20,6 +22,8 @@ public class DesktopScreen : MonoBehaviour
     const float OpenTime = 0.45f;   // ウィンドウが開いて広がる時間
     const float FinalHold = 1.6f;   // 最後：全部戻ったデスクトップを見せる時間
     const float InputGuard = 0.4f;  // 出た瞬間の押しっぱなしで早送りしない
+    const float FinalDelay = 0.45f; // 前のアプリが元に戻ってから、ラスボスが Dock に現れるまで
+    const float FinalGlitch = 0.35f; // ラスボスが現れるときに乱れている時間
 
     static readonly Color WallClean = new Color32(0x4f, 0x86, 0xb8, 0xff);
     static readonly Color WallInfected = new Color32(0x2a, 0x0c, 0x3e, 0xff);
@@ -79,8 +83,20 @@ public class DesktopScreen : MonoBehaviour
     }
 
     float T => Time.unscaledTime - _shownAt;
-    // 次のアプリへ向かい始める時刻（元に戻る所を見せてから）
-    float TargetStart => _restored >= 0 ? RestoreAt + 0.5f : 0.3f;
+    bool IsFinalStage(int stage) => _run != null && stage >= 0 && stage < _run.Stages.Count && _run.Stages[stage].IsFinal;
+    bool TargetIsFinal => IsFinalStage(_target);
+    // ラスボスが Dock に現れる時刻
+    float FinalAppearAt => (_restored >= 0 ? RestoreAt : 0f) + FinalDelay;
+    // 次のアプリへ向かい始める時刻（元に戻る所を見せてから。ラスボスなら、現れてから）
+    float TargetStart => TargetIsFinal ? FinalAppearAt + FinalGlitch + 0.4f : _restored >= 0 ? RestoreAt + 0.5f : 0.3f;
+
+    // Dock に出すか：ラスボスは、次がラスボスになって現れる時刻を過ぎてから（倒した後はずっと出す）
+    bool IsShown(int stage, float t)
+    {
+        if (!IsFinalStage(stage)) return true;
+        if (_run.CurrentIndex > stage) return true;
+        return stage == _target && t >= FinalAppearAt;
+    }
 
     void Update()
     {
@@ -127,12 +143,15 @@ public class DesktopScreen : MonoBehaviour
         GUI.depth = -500; // ステージの表示・ゲームオーバーより手前、暗転（-1000）より奥
         PixelGui.Begin(false);
         float W = PixelGui.Width, H = PixelGui.Height, t = T;
-        int infected = 0;
+        // 感染の数と割合は、Dock に出ているボスのアプリで数える（ラスボスが現れる前は、きれいになったデスクトップに見える）
+        int infected = 0, shown = 0;
         for (int i = 0; i < _run.Stages.Count; i++)
         {
+            if (!IsShown(i, t)) continue;
+            shown++;
             if (IsInfected(i, t)) infected++;
         }
-        float ratio = _run.Stages.Count > 0 ? infected / (float)_run.Stages.Count : 0f;
+        float ratio = shown > 0 ? infected / (float)shown : 0f;
 
         DrawWallpaper(W, H, ratio, infected);
         DrawFolders(W, infected);
@@ -219,7 +238,12 @@ public class DesktopScreen : MonoBehaviour
     Rect DrawDock(float W, float H, float t, out Rect targetHome)
     {
         const float icon = 32f, gap = 10f, pad = 8f;
-        int n = _run.Dock.Count;
+        var apps = new System.Collections.Generic.List<DockApp>();
+        foreach (DockApp a in _run.Dock)
+        {
+            if (IsShown(a.Stage, t)) apps.Add(a);
+        }
+        int n = Mathf.Max(1, apps.Count);
         float dockW = n * icon + (n - 1) * gap + pad * 2f, dockH = icon + pad * 2f;
         var dock = new Rect(Mathf.Round((W - dockW) * 0.5f), Mathf.Round(H - dockH - 6f), dockW, dockH);
         PixelGui.Fill(dock, new Color(1f, 1f, 1f, 0.28f));
@@ -229,9 +253,9 @@ public class DesktopScreen : MonoBehaviour
         Rect target = new Rect(W * 0.5f - 16f, H * 0.5f - 16f, 32f, 32f);
         targetHome = target;
         float clickAt = TargetStart + CursorTime;
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < apps.Count; i++)
         {
-            DockApp app = _run.Dock[i];
+            DockApp app = apps[i];
             var home = new Rect(dock.x + pad + i * (icon + gap), dock.y + pad, icon, icon);
             Rect r = home;
             bool isTarget = app.Stage >= 0 && app.Stage == _target;
@@ -249,6 +273,7 @@ public class DesktopScreen : MonoBehaviour
             bool infected = IsInfected(app.Stage, t);
             DrawAppIcon(r, app.Icon, infected, i);
             if (infected) DrawVirusOn(r, i);
+            if (IsFinalStage(app.Stage) && app.Stage == _target) DrawArrival(r, t - FinalAppearAt);
             if (app.Stage >= 0 && app.Stage == _restored) DrawRestore(r, t - RestoreAt);
             // 次に入るアプリの下に、起動中の点
             if (isTarget && t >= clickAt) PixelGui.Fill(new Rect(home.center.x - 1f, dock.yMax - 4f, 2f, 2f), PixelGui.White);
@@ -274,6 +299,21 @@ public class DesktopScreen : MonoBehaviour
         float dx = glitch ? (step % 2 == 0 ? 2f : -2f) : 0f;
         PixelGui.DrawSprite(new Rect(r.x + dx, r.y, r.width, r.height), icon, InfectTint);
         if (glitch) PixelGui.DrawSprite(new Rect(r.x - dx * 2f, r.y, r.width, r.height), icon, new Color(PixelGui.Magenta.r, PixelGui.Magenta.g, PixelGui.Magenta.b, 0.45f));
+    }
+
+    // ラスボスが現れるとき：アイコンの上がマゼンタと黒のかけらで乱れる
+    static void DrawArrival(Rect r, float since)
+    {
+        if (since < 0f || since > FinalGlitch) return;
+        var rng = new System.Random(Mathf.FloorToInt(Time.unscaledTime * 20f));
+        float a = 1f - since / FinalGlitch;
+        for (int k = 0; k < 10; k++)
+        {
+            float w = rng.Next(4, 20), h = rng.Next(2, 6);
+            var b = new Rect(r.x - 4f + rng.Next(0, (int)(r.width + 8f - w)), r.y - 4f + rng.Next(0, (int)(r.height + 8f - h)), w, h);
+            Color c = rng.Next(2) == 0 ? PixelGui.Magenta : PixelGui.Ink;
+            PixelGui.Fill(b, new Color(c.r, c.g, c.b, a));
+        }
     }
 
     // アイコンに乗っているウイルス（雑魚の歩く絵）

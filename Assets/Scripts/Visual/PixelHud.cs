@@ -138,15 +138,16 @@ public class PixelHud : MonoBehaviour
         PixelGui.Fill(r, PixelGui.FrameDark);
         PixelGui.Fill(PixelGui.Inset(r, 1f), edge);
         PixelGui.Fill(PixelGui.Inset(r, 3f), PixelGui.SlotBg);
+        // 元になったアプリのアイコン。能力のアイコンが空なら（中身を決める前のアプリ専用の能力）、これを大きく出す
+        RunState run = GameSession.Instance != null ? GameSession.Instance.Run : null;
+        Sprite source = run != null ? run.SourceIcon(skill) : null;
         var icon = new Rect(r.x + 2f, r.y + 2f, 32f, 32f);
-        PixelGui.DrawSprite(icon, skill.Icon);
+        PixelGui.DrawSprite(icon, skill.Icon != null ? skill.Icon : source);
         float ratio = _executor != null ? _executor.GetCooldownRatio(skill) : 0f;
         if (ratio > 0f) PixelGui.Fill(new Rect(icon.x, icon.y, icon.width, Mathf.Ceil(icon.height * ratio)), CooldownColor);
 
         // 元になったアプリのアイコンを右下に小さく重ねる（どのアプリの技か、絵で分かるように。2026-11-18：メンターのFB）
-        RunState run = GameSession.Instance != null ? GameSession.Instance.Run : null;
-        Sprite source = run != null ? run.SourceIcon(skill) : null;
-        if (source != null)
+        if (source != null && skill.Icon != null)
         {
             var badge = new Rect(r.xMax - 15f, r.yMax - 15f, 18f, 18f);
             PixelGui.Fill(badge, PixelGui.FrameDark);
