@@ -256,7 +256,7 @@ public static class AbilitiesBuilder
         AssetDatabase.CreateAsset(catalog, CatalogPath);
         PlayerTestSceneBuilder.SetProps(catalog, so =>
         {
-            I(so, "_cardCount", 5);
+            I(so, "_cardCount", 3); // 使用時間の上位3アプリ（2026-11-18：画面のイメージ）
             I(so, "_pickCount", 1); // 最初に持てる能力は1つ（2026-11-17 まさぴ〜決定）
             var arr = so.FindProperty("_categories");
             arr.arraySize = 5;

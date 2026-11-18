@@ -6,7 +6,7 @@ using UnityEngine;
 /// ・ラン状態の「今のステージ」を見て、そのアプリのボスをプレハブから作る（使用時間で強さを変えた設定を渡す）
 /// ・ボスは雑魚を全員倒すと出てくる（BossEntrance）
 /// ・ボスが正常化したら、少し待って次へ（GameSession.CompleteStage）
-/// ・ライフが0になったら、少し待ってやり直し（GameSession.FailStage）
+/// ・ライフが0になったら、少し待ってゲームオーバーの画面（GameSession.ShowGameOver。そこからリトライ）
 /// ・プレイヤーの能力は、ラン状態の所持スキルにつなぐ（ステージをまたいで残る）
 /// ・ステージの色を、そのアプリの色（AppTheme）に塗り替える（同じ GameObject の StageTheme）
 /// ステージのシーンを直接再生したときは、サンプルデータでランを作って始める（開発用）。
@@ -103,7 +103,7 @@ public class StageDirector : MonoBehaviour
     {
         if (_ending) return;
         _ending = true;
-        StartCoroutine(After(_retryDelay, () => _session.FailStage()));
+        StartCoroutine(After(_retryDelay, () => _session.ShowGameOver()));
     }
 
     static IEnumerator After(float seconds, System.Action action)

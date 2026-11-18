@@ -3,13 +3,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// 【仮】能力えらびの画面（2026-11-17：ゲームの流れ）。UI 担当の本番画面ができたら消す。
-/// 使用時間の長いアプリから作った5枚のカード（GameSession.Run.Candidates）から、決まった数（今は1つ。2026-11-17 まさぴ〜決定）選んでステージへ進む。
-/// 能力はボスを倒すと増え、3枠がうまっていれば入れ替えられる。
-/// ・カード：アプリの色の帯・能力のアイコン・能力の名前・元のアプリ（アイコンのドット絵と名前）と使用時間。
-///   対応表に無いアプリの能力（その場で作った能力）は、能力のアイコンもアプリのアイコンになる
-/// ・下の枠（選ぶ数だけ）：選んだ順に入る（ステージでの 1・2・3 の枠になる）。そろうと ▶ が押せる。1つだけ選ぶときは、ほかのカードを押すと選び直す
-/// 操作：カードをクリック、または 1〜5 キーで選ぶ／外す。Enter・Space で決定
+/// 【仮】能力えらびの画面（2026-11-18：デザイン担当の画面イメージに合わせた）。UI 担当の本番画面ができたら消す。
+/// 使用時間の上位3アプリのカード（GameSession.Run.Candidates）から、相棒を1つ選んでステージへ進む（2026-11-18 まさぴ〜決定）。
+/// 相棒の能力を最初から持つ。ボスは今までどおり、上位10アプリからランダムに3つ（相棒のアプリが出ることもある）。
+/// ・カード：順位（1ST〜3RD）・アプリのアイコンと名前・使用時間とメーター・固有能力（能力の名前・説明・タグ。説明とタグは【仮】）
+/// ・選んでいるカードはオレンジの縁と「▶ 選択中」。右下の「◯◯ と出撃 ▶」で決定
+/// 操作：← → か 1〜3 キー・クリックで選ぶ。Z・Enter・Space で決定。Esc か「◀ もどる」・× でタイトルへ
 /// このシーンを直接再生したときは、サンプルの使用データでランを作る（開発用）。
 /// </summary>
 public class RunLoadoutMenu : MonoBehaviour
@@ -19,17 +18,16 @@ public class RunLoadoutMenu : MonoBehaviour
     [Tooltip("このシーンを直接再生したときに使う、カテゴリごとの能力の表")]
     [SerializeField] AbilityCatalog _abilities;
 
-    readonly List<int> _picked = new List<int>(); // 選んだカードの番号（選んだ順）
-    Texture2D _white;
-    GUIStyle _name, _app, _appLeft, _rank, _order;
+    static readonly string[] Ranks = { "1ST", "2ND", "3RD", "4TH", "5TH" };
+
+    int _selected; // 選んでいるカード
 
     GameSession Session => GameSession.Instance;
     IReadOnlyList<AbilityCandidate> Cards => Session != null && Session.Run != null ? Session.Run.Candidates : (IReadOnlyList<AbilityCandidate>)System.Array.Empty<AbilityCandidate>();
-    int PickCount => Session != null && Session.Abilities != null ? Session.Abilities.PickCount : 3;
 
-    /// <summary>選んだカードの番号（選んだ順）</summary>
-    public IReadOnlyList<int> Picked => _picked;
-    public bool CanConfirm => _picked.Count == PickCount && Session != null && !Session.IsTransitioning;
+    /// <summary>選んでいるカードの番号（0 から）</summary>
+    public int Selected => _selected;
+    public bool CanConfirm => Session != null && !Session.IsTransitioning && _selected >= 0 && _selected < Cards.Count && Cards[_selected].Skill != null;
 
     void Start()
     {
@@ -39,160 +37,126 @@ public class RunLoadoutMenu : MonoBehaviour
         if (!session.PrepareRun(new SampleUsageProvider(), out string error)) Debug.LogError($"能力えらびを始められません：{error}", this);
     }
 
-    /// <summary>カードを選ぶ／外す（番号は 0 から）</summary>
-    public void Toggle(int index)
+    /// <summary>カードを選ぶ（番号は 0 から）</summary>
+    public void Select(int index)
     {
         if (Session == null || Session.IsTransitioning || index < 0 || index >= Cards.Count) return;
-        if (_picked.Remove(index)) return;
-        if (_picked.Count < PickCount) _picked.Add(index);
-        else if (PickCount == 1) _picked[0] = index; // 1つだけ選ぶときは、押したカードに選び直す
+        _selected = index;
     }
 
-    /// <summary>決定：選んだ能力を持って、最初のステージへ</summary>
+    /// <summary>決定：選んだカードの能力（相棒）を持って、最初のステージへ</summary>
     public void Confirm()
     {
         if (!CanConfirm) return;
-        var skills = new List<SkillDefinition>();
-        foreach (int i in _picked) skills.Add(Cards[i].Skill);
-        Session.ConfirmLoadout(skills);
+        Session.ConfirmLoadout(new List<SkillDefinition> { Cards[_selected].Skill });
+    }
+
+    void Back()
+    {
+        if (Session != null && !Session.IsTransitioning) Session.ReturnToTitle();
     }
 
     void Update()
     {
         var kb = Keyboard.current;
-        if (kb == null) return;
-        Key[] keys = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5 };
-        Key[] pad = { Key.Numpad1, Key.Numpad2, Key.Numpad3, Key.Numpad4, Key.Numpad5 };
+        if (kb == null || Cards.Count == 0) return;
+        if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) Select(Mathf.Max(0, _selected - 1));
+        if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) Select(Mathf.Min(Cards.Count - 1, _selected + 1));
+        Key[] keys = { Key.Digit1, Key.Digit2, Key.Digit3 };
+        Key[] pad = { Key.Numpad1, Key.Numpad2, Key.Numpad3 };
         for (int i = 0; i < keys.Length; i++)
         {
-            if (kb[keys[i]].wasPressedThisFrame || kb[pad[i]].wasPressedThisFrame) Toggle(i);
+            if (kb[keys[i]].wasPressedThisFrame || kb[pad[i]].wasPressedThisFrame) Select(i);
         }
-        if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame) Confirm();
+        if (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame) Confirm();
+        if (kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame) Back();
     }
 
     void OnGUI()
     {
-        if (Session == null || Session.Run == null) return;
+        if (Session == null || Session.Run == null || Session.IsTransitioning) return;
         PixelGui.Begin();
-        EnsureStyles();
-        GameArt art = GameArt.Instance;
+        float W = PixelGui.Width, H = PixelGui.Height;
+        float ox = Mathf.Round((W - 640f) * 0.5f), oy = Mathf.Round(Mathf.Max(0f, (H - 360f) * 0.5f));
 
-        int count = Cards.Count;
-        float gap = 8f;
-        float cardW = Mathf.Min(104f, (PixelGui.Width - 24f - gap * (count - 1)) / Mathf.Max(1, count));
-        float cardH = 150f;
-        float totalW = cardW * count + gap * (count - 1);
-        float slotsH = 64f;
-        float top = Mathf.Max(8f, (PixelGui.Height - cardH - 24f - slotsH) * 0.5f);
-        float left = (PixelGui.Width - totalW) * 0.5f;
+        // 下のバーと「◀ もどる」
+        float barY = PixelGui.BottomBar(34f);
+        if (PixelGui.BevelButton(new Rect(8f, barY + 7f, 70f, 22f), "◀ もどる")) Back();
 
+        // ウィンドウ
+        var win = new Rect(ox + 28f, oy + 14f, 584f, Mathf.Min(292f, barY - oy - 22f));
+        Rect inner = PixelGui.Window(win);
+        if (PixelGui.CloseButton(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f))) Back();
+
+        float x = inner.x + 12f, y = inner.y + 8f;
+        PixelGui.TextEn(new Rect(x, y, 140f, 10f), Session.IsSampleRun ? "SAMPLE_DATA.EXE" : "USAGE_SCAN.EXE", 8, PixelGui.LabelPurple);
+        float labelW = PixelGui.Measure(Session.IsSampleRun ? "SAMPLE_DATA.EXE" : "USAGE_SCAN.EXE", PixelGui.Style(true, 8));
+        PixelGui.Text(new Rect(x + labelW + 8f, y - 3f, 200f, 16f), Session.IsSampleRun ? "－ 訓練モード" : "－ スキャン完了", 12, PixelGui.LabelPurple);
+        PixelGui.Text(new Rect(x, y + 14f, inner.width - 24f, 20f), $"よく使うアプリ TOP{Mathf.Min(3, Cards.Count)} から、相棒を1つ選ぼう", 16, PixelGui.Ink);
+        PixelGui.Text(new Rect(x, y + 36f, inner.width - 24f, 16f), "相棒の能力は最初から使える。よく使うアプリのどれか3つが、ボスとして登場する。", 12, PixelGui.SubText);
+
+        // カード
+        int count = Mathf.Min(Cards.Count, 3);
+        float gap = 10f;
+        float cardW = Mathf.Floor((inner.width - 24f - gap * (count - 1)) / Mathf.Max(1, count));
+        float cardY = y + 58f, cardH = 182f;
+        double maxSeconds = 1;
+        for (int i = 0; i < count; i++) maxSeconds = System.Math.Max(maxSeconds, Cards[i].Seconds);
         for (int i = 0; i < count; i++)
         {
-            int order = _picked.IndexOf(i);
-            float lift = order >= 0 ? -8f : 0f; // 選んだカードは少し持ち上げる
-            var r = new Rect(left + i * (cardW + gap), top + 8f + lift, cardW, cardH);
-            DrawCard(r, i, Cards[i], order, art);
-            if (GUI.Button(r, GUIContent.none, GUIStyle.none)) Toggle(i);
+            var r = new Rect(x + i * (cardW + gap), cardY, cardW, cardH);
+            DrawCard(r, i, Cards[i], i == _selected, maxSeconds);
+            if (GUI.Button(r, GUIContent.none, GUIStyle.none)) Select(i);
         }
+        PixelGui.Text(new Rect(x, cardY + cardH + 6f, 300f, 16f), "← → で選択　Z で決定", 12, PixelGui.SubText);
 
-        // 下の枠：選んだ順に能力が入る。3つそろうと ▶ が押せる
-        int pick = PickCount;
-        float slot = 40f;
-        float buttonW = 64f;
-        float rowW = pick * slot + (pick - 1) * 6f + 14f + buttonW;
-        float sx = (PixelGui.Width - rowW) * 0.5f;
-        float sy = top + cardH + 28f;
-        for (int k = 0; k < pick; k++)
-        {
-            var sr = new Rect(sx + k * (slot + 6f), sy, slot, slot);
-            bool filled = k < _picked.Count;
-            Sprite frame = art != null ? (filled ? art.SlotSelected : art.Slot) : null;
-            if (frame != null) PixelGui.DrawSprite(sr, frame);
-            else Fill(sr, new Color(0f, 0f, 0f, 0.35f));
-            if (filled)
-            {
-                AbilityCandidate c = Cards[_picked[k]];
-                Color theme = c.Skill != null && c.Skill.Theme != null ? c.Skill.Theme.Main : Color.white;
-                Fill(new Rect(sr.x + 3f, sr.yMax - 6f, sr.width - 6f, 3f), theme);
-                if (c.Skill != null) PixelGui.DrawSprite(new Rect(sr.x + 4f, sr.y + 4f, 32f, 32f), c.Skill.Icon);
-            }
-        }
-        bool wasEnabled = GUI.enabled;
+        // 出撃ボタン（ウィンドウの下の縁に重ねる）
+        string name = CanConfirm ? (Cards[_selected].IsFiller ? Cards[_selected].Skill.DisplayName : Cards[_selected].AppName) : "";
+        string label = $"{PixelGui.Fit(name, PixelGui.Style(false, 12), 120f)} と出撃 ▶";
+        float bw = Mathf.Max(150f, Mathf.Ceil(PixelGui.Measure(label, PixelGui.Style(false, 12))) + 32f);
+        bool was = GUI.enabled;
         GUI.enabled = CanConfirm;
-        if (GUI.Button(new Rect(sx + rowW - buttonW, sy + 4f, buttonW, slot - 8f), "▶", PixelGui.Button)) Confirm();
-        GUI.enabled = wasEnabled;
-
+        if (PixelGui.PrimaryButton(new Rect(win.xMax - bw - 20f, win.yMax - 16f, bw, 30f), label, true)) Confirm();
+        GUI.enabled = was;
         PixelGui.End();
     }
 
-    void DrawCard(Rect r, int index, AbilityCandidate c, int order, GameArt art)
+    void DrawCard(Rect r, int index, AbilityCandidate c, bool selected, double maxSeconds)
     {
-        Color theme = c.Skill != null && c.Skill.Theme != null ? c.Skill.Theme.Main : new Color(0.5f, 0.5f, 0.5f);
-        bool selected = order >= 0;
-        if (selected) Fill(new Rect(r.x - 3f, r.y - 3f, r.width + 6f, r.height + 6f), theme); // 選んだカードはアプリの色で縁どる
-        GUI.Box(r, GUIContent.none, PixelGui.Panel);
+        PixelGui.CardBox(r, selected);
+        float x = r.x + 10f, w = r.width - 20f;
+        float y = r.y + 8f;
+        Color accent = selected ? PixelGui.Orange : PixelGui.FrameDark;
+        PixelGui.TextEn(new Rect(x, y + 2f, 60f, 10f), index < Ranks.Length ? Ranks[index] : $"{index + 1}TH", 8, accent);
+        if (selected) PixelGui.Chip(new Rect(r.xMax - 70f, y, 60f, 16f), "▶ 選択中");
 
-        // アプリの色の帯（ウィンドウのタイトルバー）と、キーの番号
-        var bar = new Rect(r.x + 4f, r.y + 4f, r.width - 8f, 14f);
-        Fill(bar, theme);
-        GUI.Label(new Rect(bar.x + 3f, bar.y - 1f, 20f, 16f), (index + 1).ToString(), _rank);
-
-        // 能力のアイコン（16 ドットを3倍）
-        if (c.Skill != null) PixelGui.DrawSprite(new Rect(r.center.x - 24f, r.y + 28f, 48f, 48f), c.Skill.Icon);
-
-        // 能力の名前・元のアプリと使用時間（埋めたカードはアプリなし）
-        GUI.Label(new Rect(r.x + 2f, r.y + 82f, r.width - 4f, 20f), c.Skill != null ? c.Skill.DisplayName : "-", _name);
+        // アプリ（アイコン 16 ドットを2倍）・名前・使用時間
+        y += 20f;
         if (!c.IsFiller)
         {
-            if (c.AppIcon != null)
-            {
-                PixelGui.DrawSprite(new Rect(r.x + 6f, r.y + 102f, 16f, 16f), c.AppIcon);
-                GUI.Label(new Rect(r.x + 24f, r.y + 102f, r.width - 28f, 16f), c.AppName, _appLeft);
-            }
-            else
-            {
-                GUI.Label(new Rect(r.x + 2f, r.y + 104f, r.width - 4f, 16f), c.AppName, _app);
-            }
-            GUI.Label(new Rect(r.x + 2f, r.y + 120f, r.width - 4f, 16f), $"{c.Seconds / 3600.0:0.#} h", _app);
+            if (c.AppIcon != null) PixelGui.DrawSprite(new Rect(x, y, 32f, 32f), c.AppIcon);
+            PixelGui.TextFit(new Rect(x + 38f, y, w - 38f, 18f), c.AppName, 16, PixelGui.Ink);
+            PixelGui.Text(new Rect(x + 38f, y + 19f, w - 38f, 14f), $"1週間で {c.Seconds / 3600.0:0.#} 時間", 12, PixelGui.SubText);
+            PixelGui.Meter(new Rect(x, y + 38f, w, 5f), 10, (float)(c.Seconds / maxSeconds), accent, PixelGui.Muted);
         }
-
-        // 選んだ順の番号（1・2・3 の枠になる）
-        if (selected)
+        else
         {
-            var badge = new Rect(r.xMax - 20f, r.y - 8f, 22f, 22f);
-            Fill(badge, theme);
-            Fill(new Rect(badge.x + 2f, badge.y + 2f, badge.width - 4f, badge.height - 4f), Color.white);
-            GUI.Label(badge, (order + 1).ToString(), _order);
+            PixelGui.Text(new Rect(x, y + 6f, w, 18f), "おまけの能力", 16, PixelGui.SubText);
         }
-    }
 
-    void EnsureStyles()
-    {
-        if (_name != null) return;
-        var dark = new Color32(0x22, 0x22, 0x22, 0xff);
-        // 「ブレークポイント」（全角8文字）がカードの幅に収まる大きさ
-        _name = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 11, fontStyle = FontStyle.Bold, clipping = TextClipping.Clip };
-        _name.normal.textColor = dark;
-        _app = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 10, clipping = TextClipping.Clip };
-        _app.normal.textColor = new Color32(0x51, 0x51, 0x51, 0xff);
-        _appLeft = new GUIStyle(_app) { alignment = TextAnchor.MiddleLeft };
-        _rank = new GUIStyle(GUI.skin.label) { fontSize = 11, fontStyle = FontStyle.Bold };
-        _rank.normal.textColor = Color.white;
-        _order = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 13, fontStyle = FontStyle.Bold };
-        _order.normal.textColor = dark;
-    }
-
-    void Fill(Rect r, Color color)
-    {
-        if (_white == null)
+        // 固有能力
+        y += 50f;
+        PixelGui.DottedLine(x, y, w, PixelGui.Muted);
+        y += 6f;
+        PixelGui.Text(new Rect(x, y, w, 14f), "固有能力", 12, PixelGui.LabelPurple);
+        if (c.Skill != null)
         {
-            _white = new Texture2D(1, 1);
-            _white.SetPixel(0, 0, Color.white);
-            _white.Apply();
+            PixelGui.DrawSprite(new Rect(x, y + 16f, 16f, 16f), c.Skill.Icon);
+            PixelGui.TextFit(new Rect(x + 20f, y + 15f, w - 20f, 18f), c.Skill.DisplayName, 16, PixelGui.Ink);
+            PixelGui.Text(new Rect(x, y + 36f, w, 30f), SkillTexts.Description(c.Skill), 12, PixelGui.BodyText, TextAnchor.UpperLeft, true);
+            float tx = x;
+            foreach (string tag in SkillTexts.Tags(c.Skill)) tx += PixelGui.OutlineTag(tx, r.yMax - 26f, tag) + 4f;
         }
-        Color saved = GUI.color;
-        GUI.color = color;
-        GUI.DrawTexture(r, _white);
-        GUI.color = saved;
     }
+
 }

@@ -69,3 +69,10 @@ MonoBehaviour:
   - {fileID: 6740012380587470751, guid: 9ca8bac1218c74593863deed876286ee, type: 3}
   - {fileID: 2027882306579495052, guid: 9ca8bac1218c74593863deed876286ee, type: 3}
   - {fileID: -4198330706962942397, guid: 9ca8bac1218c74593863deed876286ee, type: 3}
+  _fontJa: {fileID: 12800000, guid: 525043d52f0f5437199bec060226461b, type: 3}
+  _fontEn: {fileID: 12800000, guid: 06827e25507994f5a9e68bcf7d6de637, type: 3}
+  _zakoWalk:
+  - {fileID: 5332006304905421816, guid: 94e177de2db5e431484836b50ccd6db6, type: 3}
+  - {fileID: 1941447372151373906, guid: 94e177de2db5e431484836b50ccd6db6, type: 3}
+  - {fileID: -5495548070017973452, guid: 94e177de2db5e431484836b50ccd6db6, type: 3}
+  - {fileID: 4932516817129409264, guid: 94e177de2db5e431484836b50ccd6db6, type: 3}
