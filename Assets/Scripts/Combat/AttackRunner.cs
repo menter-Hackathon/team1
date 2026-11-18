@@ -91,6 +91,8 @@ public class AttackRunner : MonoBehaviour
         }
         // 【仮】ロックオンは、画面に相手がいなければ使えない（false を返すので、能力のクールタイムも始まらない）
         if (data.Kind == AttackKind.LockOn && LockOnStrike.FindTargets(this).Count == 0) return false;
+        // 専用の技は、使えるかどうかを技の中身に聞く（使えなければ false。能力ならクールタイムも始まらない）
+        if (data.Kind == AttackKind.Custom && (data.Custom == null || !data.Custom.CanRun(this, data))) return false;
         Current = data;
         var holder = new Coroutine[1];
         holder[0] = StartCoroutine(RunRoutine(data, holder));
@@ -182,6 +184,21 @@ public class AttackRunner : MonoBehaviour
         Started?.Invoke(data);
         if (data.Windup > 0f) yield return new WaitForSeconds(data.Windup);
 
+        yield return Execute(data);
+
+        if (self[0] != null) _routines.Remove(self[0]);
+        else _finishedImmediately = true; // StartCoroutine から戻る前に終わった
+        if (_routines.Count == 0) Current = null;
+        Finished?.Invoke(data);
+    }
+
+    /// <summary>
+    /// 攻撃の本体だけを進める（予備動作・開始と終わりのイベントなし）。専用の技が、中で別の攻撃データを出すときに使う
+    /// （例：エフェクトアイコン投げが、選んだアイコンの投てきを出す）。呼んだコルーチンの中で yield return する
+    /// </summary>
+    public IEnumerator Execute(AttackData data)
+    {
+        if (data == null) yield break;
         switch (data.Kind)
         {
             case AttackKind.Projectile:
@@ -199,16 +216,17 @@ public class AttackRunner : MonoBehaviour
             case AttackKind.LockOn:
                 yield return LockOnRoutine(data);
                 break;
+            case AttackKind.Custom:
+                if (data.Custom != null) yield return data.Custom.Run(this, data);
+                break;
             default:
                 Debug.LogWarning($"{name}: 攻撃の種類 {data.Kind} はまだ実行できません（{data.name}）", this);
                 break;
         }
-
-        if (self[0] != null) _routines.Remove(self[0]);
-        else _finishedImmediately = true; // StartCoroutine から戻る前に終わった
-        if (_routines.Count == 0) Current = null;
-        Finished?.Invoke(data);
     }
+
+    /// <summary>攻撃が出た瞬間を知らせる（専用の技が、弾を撃つ・予告を出すなどの瞬間に呼ぶ）</summary>
+    public void NotifyReleased(AttackData data) => Released?.Invoke(data);
 
     // ───────── 弾（A） ─────────
 

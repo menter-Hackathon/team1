@@ -79,3 +79,31 @@ MonoBehaviour:
     AbilityValue:
       Min: 0
       Max: 0
+  _appBosses:
+  - Label: Finder
+    AppNames:
+    - Finder
+    BundleIdPrefixes:
+    - com.apple.finder
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 03ffb32c15fc840e7afa3726c8cbb551, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+  - Label: Premiere Pro
+    AppNames:
+    - Premiere Pro
+    - Adobe Premiere Pro
+    BundleIdPrefixes:
+    - com.adobe.PremierePro
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 7440c2700851f4898b24a96573128b5b, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6

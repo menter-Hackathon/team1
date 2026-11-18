@@ -60,6 +60,10 @@ public class BossProfile : ScriptableObject
     [Header("正常化したときに手に入る能力")]
     [SerializeField] SkillDefinition _reward;
 
+    [Header("ボスに足す仕組み（2026-11-18）")]
+    [Tooltip("そのボスだけの仕組み（Terminal の再起動の演出など）。プロフィールを受け取ったときに、ボスに足される")]
+    [SerializeField] BossExtension[] _extensions;
+
     public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
     public Sprite Icon => _icon;
     public int GaugeMax => _gaugeMax;
@@ -73,6 +77,7 @@ public class BossProfile : ScriptableObject
     public float HoverSpeed => _hoverSpeed;
     public float[] HoverPointsX => _hoverPointsX;
     public SkillDefinition Reward => _reward;
+    public BossExtension[] Extensions => _extensions;
 
     /// <summary>形態の設定（1 か 2）</summary>
     public BossPhaseSettings GetPhase(int phase) => phase >= 2 ? _phase2 : _phase1;

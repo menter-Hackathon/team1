@@ -54,9 +54,24 @@ public class PlayerMeleeAttack : MonoBehaviour
 
     void OnAttackPressed() => TrySwing();
 
-    /// <summary>振る。間隔中・操作できないときは false</summary>
+    float _lockedUntil = float.NegativeInfinity;
+    /// <summary>近接を封じられているか（2026-11-18：Terminal の chmod 000 player）</summary>
+    public bool IsLocked => Time.time < _lockedUntil;
+    /// <summary>近接を seconds 秒封じる（すでに長く封じられていれば短くしない）</summary>
+    public void Lock(float seconds) => _lockedUntil = Mathf.Max(_lockedUntil, Time.time + seconds);
+    /// <summary>近接の封印を解く</summary>
+    public void Unlock() => _lockedUntil = float.NegativeInfinity;
+    /// <summary>封じられている間に近接を押したとき（南京錠をゆらす演出用）</summary>
+    public event System.Action SwingBlocked;
+
+    /// <summary>振る。間隔中・操作できないとき・封じられているときは false</summary>
     public bool TrySwing()
     {
+        if (IsLocked)
+        {
+            SwingBlocked?.Invoke();
+            return false;
+        }
         if (_hitbox == null || !_controller.IsControllable || Time.time < _nextAttackTime) return false;
 
         _hitbox.Activate();

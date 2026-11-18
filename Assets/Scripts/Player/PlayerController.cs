@@ -85,6 +85,22 @@ public class PlayerController : MonoBehaviour
     /// <summary>向きを変えられない間 true（近接の攻撃判定が出ている間）</summary>
     public bool IsFacingLocked => _melee != null && _melee.IsAttacking;
 
+    /// <summary>
+    /// 【仮】横の速さの倍率（2026-11-18：Premiere Pro のスピードデュレーションの「スローの場」）。ジャンプ・落ちる速さ・ダッシュは変えない。
+    /// 変えた技が、終わるとき（場から出たとき・消えたとき）に 1 に戻す
+    /// </summary>
+    public float MoveSpeedMultiplier { get; set; } = 1f;
+
+    float _jumpLockedUntil = float.NegativeInfinity;
+    /// <summary>ジャンプを封じられているか（2026-11-18：Terminal の chmod 000 player）</summary>
+    public bool IsJumpLocked => Time.time < _jumpLockedUntil;
+    /// <summary>ジャンプを seconds 秒封じる（すでに長く封じられていれば短くしない）</summary>
+    public void LockJump(float seconds) => _jumpLockedUntil = Mathf.Max(_jumpLockedUntil, Time.time + seconds);
+    /// <summary>ジャンプの封印を解く</summary>
+    public void UnlockJump() => _jumpLockedUntil = float.NegativeInfinity;
+    /// <summary>封じられている間にジャンプを押したとき（南京錠をゆらす演出用）</summary>
+    public event Action JumpBlocked;
+
     /// <summary>ジャンプした瞬間（SE・エフェクト用）</summary>
     public event Action Jumped;
     /// <summary>着地した瞬間（SE・エフェクト用）</summary>
@@ -116,6 +132,11 @@ public class PlayerController : MonoBehaviour
 
     void OnJumpPressed()
     {
+        if (IsJumpLocked)
+        {
+            JumpBlocked?.Invoke();
+            return;
+        }
         if (CanControl) _lastJumpPressedTime = Time.time;
     }
 
@@ -162,7 +183,7 @@ public class PlayerController : MonoBehaviour
 
         // --- 横移動 ---
         float inputX = controllable ? _input.Move.x : 0f;
-        float targetX = inputX * _moveSpeed;
+        float targetX = inputX * _moveSpeed * Mathf.Max(0.05f, MoveSpeedMultiplier);
         bool hasInput = Mathf.Abs(targetX) > 0.01f;
         float accel;
         if (stunned) accel = _knockbackDeceleration; // のけぞり中は弱い減速で吹き飛ばす
@@ -174,7 +195,7 @@ public class PlayerController : MonoBehaviour
         // --- ジャンプ（先行入力 × コヨーテタイム） ---
         bool jumpBuffered = now - _lastJumpPressedTime <= _jumpBufferTime;
         bool canJump = now - _lastGroundedTime <= _coyoteTime;
-        if (controllable && jumpBuffered && canJump)
+        if (controllable && jumpBuffered && canJump && !IsJumpLocked)
         {
             _velocity.y = JumpVelocity;
             _isJumpRising = true;

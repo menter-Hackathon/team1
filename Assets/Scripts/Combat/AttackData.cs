@@ -132,6 +132,15 @@ public class AttackData : ScriptableObject
     [Tooltip("【仮】ロックオンの印（相手を囲む枠）の色。Zoom の「話している人」の枠に合わせて緑")]
     [SerializeField] Color _lockOnMarkColor = new Color(0.14f, 0.85f, 0.35f, 1f);
 
+    // ───────── 専用の技（Custom） ─────────
+    [Header("専用の技（Custom のとき。2026-11-18）")]
+    [Tooltip("技の中身（CustomAttack を継いだアセット）。技ごとの数値もこちらに持つ")]
+    [SerializeField] CustomAttack _custom;
+    [Tooltip("【仮】場に残る技（docs/app-boss-skills-design.md 1-3）。場に残る技の効果が出ている間、ボスはほかの場に残る技を選ばない")]
+    [SerializeField] bool _lingering;
+    [Tooltip("【仮】床が文字化けしている間（rm -rf）は選ばない（文字列の雨など、床に逃げ場が要る技）")]
+    [SerializeField] bool _avoidWhileFloorCorrupted;
+
     // ───────── Warp ─────────
     [Header("Warp のとき")]
     [SerializeField] WarpDestination _warpDestination = WarpDestination.Forward;
@@ -203,6 +212,10 @@ public class AttackData : ScriptableObject
     public float DropInterval => _dropInterval;
     public Vector2 AppearTopRange => _appearTopRange;
     public float ReachHeight => _reachHeight;
+
+    public CustomAttack Custom => _custom;
+    public bool Lingering => _lingering;
+    public bool AvoidWhileFloorCorrupted => _avoidWhileFloorCorrupted;
 
     public int LockOnCount => _lockOnCount;
     public Color LockOnMarkColor => _lockOnMarkColor;

@@ -19,6 +19,11 @@ public enum AttackKind
     /// 画面に相手がいないときは使えない（クールタイムも始まらない）
     /// </summary>
     LockOn = 5,
+    /// <summary>
+    /// 専用の技（2026-11-18：Finder・Premiere Pro・Terminal の技、zip圧縮など）。中身は AttackData の「専用の技」（CustomAttack）が持つ。
+    /// docs/app-boss-skills-design.md
+    /// </summary>
+    Custom = 6,
 }
 
 /// <summary>弾の狙い方</summary>

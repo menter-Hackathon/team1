@@ -41,9 +41,16 @@ public class Health : MonoBehaviour, IDamageable
         Current = _max;
     }
 
+    /// <summary>
+    /// 【確認用】true の間、プレイヤーの陣営はダメージを受けない（2026-11-18：P キーの無敵。DebugInvincibility）。
+    /// 点滅しない（IsInvincible とは別）。本番のビルドでは DebugInvincibility が動かないので、いつも false
+    /// </summary>
+    public static bool DebugInvincible { get; set; }
+
     public bool TryTakeDamage(in DamageInfo info)
     {
         if (!isActiveAndEnabled || IsDead || IsInvincible) return false;
+        if (DebugInvincible && _team == Team.Player) return false;
         if (info.SourceTeam == _team) return false;
 
         int amount = _oneDamagePerHit ? 1 : info.Amount;

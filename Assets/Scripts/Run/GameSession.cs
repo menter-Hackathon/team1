@@ -123,6 +123,9 @@ public class GameSession : MonoBehaviour
     /// <summary>確認用：ボスを選ぶ乱数の種（0＝毎回ちがう）</summary>
     public int RandomSeed { get => _randomSeed; set => _randomSeed = value; }
 
+    /// <summary>【確認用】ランを作るとき、ステージをしぼる（null なら何もしない）。遊ぶボスを選ぶ確認用の画面（BossSelectDebug）が使う</summary>
+    public Func<List<StagePlan>, List<StagePlan>> StageFilter { get; set; }
+
     /// <summary>無ければ作る（ステージのシーンを直接再生したときの開発用）</summary>
     public static GameSession EnsureExists(AppCatalog catalog, AbilityCatalog abilities = null)
     {
@@ -217,6 +220,17 @@ public class GameSession : MonoBehaviour
         {
             StagePlan final = RunPlanner.CreateFinalPlan(_catalog);
             if (final != null) plans.Add(final);
+        }
+
+        // 【確認用】遊ぶボスを選ぶとき：ステージをしぼる（2026-11-18。BossSelectDebug）
+        if (StageFilter != null)
+        {
+            plans = StageFilter(plans) ?? plans;
+            if (plans.Count == 0)
+            {
+                error = "選んだボスのステージが作れません";
+                return false;
+            }
         }
 
         Run = new RunState(plans);
