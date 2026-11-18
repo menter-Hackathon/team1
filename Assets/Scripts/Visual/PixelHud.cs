@@ -4,6 +4,7 @@ using UnityEngine;
 /// 【仮】ゲーム中の画面表示（2026-11-18：デザイン担当の画面イメージの部品に合わせて、OnGUI で描く）。
 /// イメージは画面の下のバーだが、1画面のステージは床が画面の下の端にあり隠れてしまうので、場所は今までどおり上にした（まさぴ〜了承）。
 /// ・左上：相棒（選んだアプリのアイコンと名前）・HP（区切りのゲージ）・能力の枠3つ（枠の左上に 1・2・3。空の枠は点線で「空き」）
+///   枠の右下には、その能力の元になったアプリのアイコンを小さく重ねる（RunState.SourceIcon。2026-11-18）
 ///   選択中の枠は白い縁、ほかの枠の縁はその能力のアプリの色。クールタイム中は、残りの割合だけ上から暗くする
 ///   入れ替え待ちのときは、新しい能力を枠の右に出して点滅させる。X 長押しの進み具合は、選んでいる枠の下に赤い棒で出す
 /// ・右上：「STAGE 1/3  02:31」（何ステージ目か・遊んだ時間）。その下に、ボスが出るまでのゲージ（暗いボスのアイコン・マゼンタ）、
@@ -141,6 +142,17 @@ public class PixelHud : MonoBehaviour
         PixelGui.DrawSprite(icon, skill.Icon);
         float ratio = _executor != null ? _executor.GetCooldownRatio(skill) : 0f;
         if (ratio > 0f) PixelGui.Fill(new Rect(icon.x, icon.y, icon.width, Mathf.Ceil(icon.height * ratio)), CooldownColor);
+
+        // 元になったアプリのアイコンを右下に小さく重ねる（どのアプリの技か、絵で分かるように。2026-11-18：メンターのFB）
+        RunState run = GameSession.Instance != null ? GameSession.Instance.Run : null;
+        Sprite source = run != null ? run.SourceIcon(skill) : null;
+        if (source != null)
+        {
+            var badge = new Rect(r.xMax - 15f, r.yMax - 15f, 18f, 18f);
+            PixelGui.Fill(badge, PixelGui.FrameDark);
+            PixelGui.Fill(PixelGui.Inset(badge, 1f), PixelGui.White);
+            PixelGui.DrawSprite(PixelGui.Inset(badge, 1f), source);
+        }
     }
 
     // 枠の左上の番号（キー）

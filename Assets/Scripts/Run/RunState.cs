@@ -16,6 +16,8 @@ public class StagePlan
     public SkillDefinition Reward;
     /// <summary>代用ボス（対応表に無いアプリ）の見た目（アイコン・色）。対応表のボスは null</summary>
     public AppVisual Visual;
+    /// <summary>アプリのアイコン（16 ドット）。ランを作るときに1回だけ用意する（画面の描画中にアイコンを読みに行かないため）</summary>
+    public Sprite Icon16;
     public bool IsStandIn => Visual != null;
 
     public double UsageHours => UsageSeconds / 3600.0;
@@ -27,6 +29,16 @@ public class ClearRecord
 {
     public StagePlan Stage;
     public SkillDefinition Reward;
+}
+
+/// <summary>感染したデスクトップの画面の Dock に並べるアプリ1つ（2026-11-18：メンターのFBから）</summary>
+public class DockApp
+{
+    public string Name;
+    /// <summary>16 ドットのアイコン（無ければ null）</summary>
+    public Sprite Icon;
+    /// <summary>このランでボスになるステージの番号（0 から）。ボスでなければ -1</summary>
+    public int Stage = -1;
 }
 
 /// <summary>
@@ -59,6 +71,8 @@ public class RunState
     public StagePlan LastFailed;
     /// <summary>相棒（能力えらびで選んだカード。2026-11-18：画面のイメージ）</summary>
     public AbilityCandidate Partner;
+    /// <summary>感染したデスクトップの画面の Dock（使用時間の長い順。ボスのアプリは必ず入る）</summary>
+    public List<DockApp> Dock = new List<DockApp>();
 
     public RunState(IEnumerable<StagePlan> stages)
     {
@@ -67,6 +81,25 @@ public class RunState
 
     public StagePlan Current => CurrentIndex >= 0 && CurrentIndex < Stages.Count ? Stages[CurrentIndex] : null;
     public bool IsFinished => CurrentIndex >= Stages.Count;
+
+    /// <summary>
+    /// 能力の元になったアプリのアイコン（能力の枠に小さく重ねる。2026-11-18：メンターのFB「アプリの技が分かりにくい」）。
+    /// 相棒の能力なら相棒のアプリ、ボスの報酬ならそのボスのアプリ。カテゴリの能力は複数のアプリで同じものなので、先に当たった方。分からなければ null
+    /// </summary>
+    public Sprite SourceIcon(SkillDefinition skill)
+    {
+        if (skill == null) return null;
+        if (Partner.Skill == skill && Partner.AppIcon != null) return Partner.AppIcon;
+        foreach (StagePlan stage in Stages)
+        {
+            if (stage.Reward == skill && stage.Icon16 != null) return stage.Icon16;
+        }
+        foreach (AbilityCandidate c in Candidates)
+        {
+            if (c.Skill == skill && c.AppIcon != null) return c.AppIcon;
+        }
+        return null;
+    }
 
     /// <summary>
     /// 【仮】防衛ランク（2026-11-18）：100 点から、受けたダメージ1つで4点、リトライ1回で15点、1ステージ5分を超えた分は1分ごとに2点引く。
