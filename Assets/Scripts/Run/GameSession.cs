@@ -9,9 +9,11 @@ using UnityEngine.SceneManagement;
 /// 1回のプレイ（ラン）の進行。シーンをまたいで残る（DontDestroyOnLoad）。
 /// ・タイトル：StartRun(読み込み方) → 使用データを読み、能力えらびのカードとステージの計画（上位10アプリからランダムに3つのボス）を作って、能力えらびの画面へ
 /// ・能力えらび：ConfirmLoadout(選んだ能力) → 持っている能力にして、最初のステージへ（2026-11-17：ゲームの流れ。最初は1つ）
-/// ・ステージ：StageDirector がボスを出し、正常化したら CompleteStage、ライフ0なら FailStage を呼ぶ
+/// ・ステージ：StageDirector がボスを出し、正常化したら CompleteStage、ライフ0なら ShowGameOver を呼ぶ
 /// ・CompleteStage：次のステージへ。最後ならリザルトへ
+/// ・ShowGameOver：ゲームオーバーの画面を出してゲームを止める（2026-11-18）。画面の「リトライ」で FailStage、「タイトルへ」で ReturnToTitle
 /// ・FailStage：今のステージを最初からやり直す（仕様書 2.4）。ライフは全快、能力はステージを始めたときの状態、クールタイムはリセット
+/// ・ステージで遊んだ時間・倒した雑魚・受けたダメージを Run に数える（リザルトに出す。2026-11-18）
 /// ・シーンの切り替えは画面を暗くしてから行う（文字は出さない）
 /// UI 担当は、ここのイベントと Run（ラン状態）を見て画面を作る。
 /// </summary>
@@ -38,6 +40,8 @@ public class GameSession : MonoBehaviour
 
     float _fade; // 0＝見える、1＝真っ暗
     Texture2D _black;
+    IAppUsageProvider _lastProvider; // 「もう一度あそぶ」で同じ使用データを使う
+    bool _inStage; // ステージで遊んでいる（時間を数える）
 
     public static GameSession Instance { get; private set; }
     public AppCatalog Catalog => _catalog;
@@ -45,6 +49,12 @@ public class GameSession : MonoBehaviour
     public RunState Run { get; private set; }
     /// <summary>シーンを切り替えている途中か</summary>
     public bool IsTransitioning { get; private set; }
+    /// <summary>ゲームオーバーの画面を出している</summary>
+    public bool IsGameOver { get; private set; }
+    /// <summary>「もう一度あそぶ」ができる（前のランの使用データがある）</summary>
+    public bool CanPlayAgain => _lastProvider != null;
+    /// <summary>サンプルの使用データで遊んでいる（訓練モード）</summary>
+    public bool IsSampleRun => _lastProvider is SampleUsageProvider;
 
     /// <summary>ランを始めたとき（ステージの計画が決まった）</summary>
     public event Action<RunState> RunStarted;
@@ -52,7 +62,7 @@ public class GameSession : MonoBehaviour
     public event Action<StagePlan> StageStarted;
     /// <summary>ステージをクリアしたとき（正常化したアプリ, 手に入れた能力）</summary>
     public event Action<StagePlan, SkillDefinition> StageCleared;
-    /// <summary>ライフが0になったとき（このあと同じステージをやり直す）</summary>
+    /// <summary>ライフが0になったとき（ゲームオーバーの画面を出す）</summary>
     public event Action<StagePlan> GameOver;
     /// <summary>最後のステージをクリアしたとき（このあとリザルトへ）</summary>
     public event Action<RunState> RunCompleted;
@@ -66,11 +76,35 @@ public class GameSession : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        if (GetComponent<GameOverScreen>() == null) gameObject.AddComponent<GameOverScreen>();
+        Health.AnyDamaged += OnAnyDamaged;
+        Health.AnyDied += OnAnyDied;
     }
 
     void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance != this) return;
+        Instance = null;
+        Health.AnyDamaged -= OnAnyDamaged;
+        Health.AnyDied -= OnAnyDied;
+    }
+
+    void Update()
+    {
+        if (_inStage && Run != null && !IsTransitioning && !IsGameOver) Run.PlaySeconds += Time.deltaTime;
+    }
+
+    // ステージの中だけ数える：プレイヤーが受けたダメージと、倒れた雑魚（ボスは正常化なので数えない）
+    void OnAnyDamaged(Health health, int amount)
+    {
+        if (_inStage && Run != null && health.Team == Team.Player) Run.DamageTaken += amount;
+    }
+
+    void OnAnyDied(Health health)
+    {
+        if (!_inStage || Run == null || health.Team != Team.Enemy) return;
+        if (health.GetComponentInParent<BossController>() != null) return;
+        Run.Kills++;
     }
 
     /// <summary>確認用：ボスを選ぶ乱数の種（0＝毎回ちがう）</summary>
@@ -92,6 +126,7 @@ public class GameSession : MonoBehaviour
     public bool StartRun(IAppUsageProvider provider, out string error)
     {
         if (!PrepareRun(provider, out error)) return false;
+        _lastProvider = provider;
         int pick = _abilities != null ? _abilities.PickCount : 0;
         if (!string.IsNullOrEmpty(_loadoutScene) && pick > 0 && Run.Candidates.Count >= pick)
         {
@@ -116,6 +151,8 @@ public class GameSession : MonoBehaviour
             {
                 if (s != null) Run.Loadout.TryAcquire(s);
             }
+            SkillDefinition first = picks.FirstOrDefault(p => p != null);
+            Run.Partner = Run.Candidates.FirstOrDefault(c => c.Skill == first);
         }
         LoadCurrentStage();
     }
@@ -126,6 +163,7 @@ public class GameSession : MonoBehaviour
         if (Run == null || Run.Loadout.Count > 0) return;
         int pick = _abilities != null ? _abilities.PickCount : 0;
         foreach (var c in Run.Candidates.Take(pick)) Run.Loadout.TryAcquire(c.Skill);
+        Run.Partner = Run.Candidates.FirstOrDefault();
         Run.StageStartSlots = Run.Loadout.Snapshot();
     }
 
@@ -181,13 +219,24 @@ public class GameSession : MonoBehaviour
     /// <summary>StageDirector が呼ぶ：ステージが始まった</summary>
     public void NotifyStageStarted()
     {
-        if (Run?.Current != null) StageStarted?.Invoke(Run.Current);
+        if (Run?.Current == null) return;
+        _inStage = true;
+        StageStarted?.Invoke(Run.Current);
+    }
+
+    /// <summary>リザルトから：同じ使用データで、新しいランを始める（ボスは選び直す）</summary>
+    public bool PlayAgain(out string error)
+    {
+        error = null;
+        if (_lastProvider == null) { error = "前のランの使用データがありません"; return false; }
+        return StartRun(_lastProvider, out error);
     }
 
     /// <summary>ステージをクリアした（ボスが正常化した）。次のステージかリザルトへ</summary>
     public void CompleteStage(SkillDefinition reward)
     {
         if (IsTransitioning || Run?.Current == null) return;
+        _inStage = false;
         StagePlan stage = Run.Current;
         Run.Cleared.Add(new ClearRecord { Stage = stage, Reward = reward });
         // アプリ図鑑：正常化したアプリに色を付ける。初めてなら、リザルトで光らせる
@@ -206,11 +255,23 @@ public class GameSession : MonoBehaviour
         }
     }
 
-    /// <summary>ライフが0になった。今のステージを最初からやり直す</summary>
+    /// <summary>ライフが0になった：ゲームオーバーの画面を出して、ゲームを止める（2026-11-18）</summary>
+    public void ShowGameOver()
+    {
+        if (IsTransitioning || IsGameOver || Run?.Current == null) return;
+        _inStage = false;
+        IsGameOver = true;
+        Run.LastFailed = Run.Current;
+        Time.timeScale = 0f;
+        GameOver?.Invoke(Run.Current);
+    }
+
+    /// <summary>今のステージを最初からやり直す（ゲームオーバーの画面の「リトライ」）</summary>
     public void FailStage()
     {
         if (IsTransitioning || Run?.Current == null) return;
-        GameOver?.Invoke(Run.Current);
+        IsGameOver = false;
+        _inStage = false;
         Run.RetryCount++;
         Run.Loadout.Restore(Run.StageStartSlots);
         StartCoroutine(Transition(Run.Current.App.StageScene));
@@ -220,6 +281,8 @@ public class GameSession : MonoBehaviour
     public void ReturnToTitle()
     {
         if (IsTransitioning) return;
+        IsGameOver = false;
+        _inStage = false;
         Run = null;
         StartCoroutine(Transition(_titleScene));
     }

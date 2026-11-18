@@ -4,28 +4,22 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// 【仮】アプリ図鑑の画面（OnGUI。2026-11-17 まさぴ〜決定）。UI 担当の本番画面ができたら差し替える。
+/// 【仮】アプリ図鑑の画面（OnGUI。2026-11-17 まさぴ〜決定。2026-11-18 画面のイメージの色と部品に合わせた）。UI 担当の本番画面ができたら差し替える。
 /// ・ボスの候補（上位10アプリ）に入ったアプリを、ドット絵のアイコン（24 ドットを2倍）で並べる
 /// ・まだ正常化していないアプリはグレー、正常化したアプリは色付きで「×回数」
-/// ・上の帯に「色が付いた数 / 全体」、下の欄に選んだアプリの詳しい表示（回数・初めての日・手に入る能力）
-/// ・閉じているときは、画面の右上に「図鑑」ボタンを出す（タイトル画面。リザルト画面はボタンを自分で出す）
-/// ・ほかの画面より手前に描き、開いている間は下の画面にクリックを通さない。Esc か × で閉じる
+/// ・上に「色が付いた数 / 全体」とメーター、下の欄に選んだアプリの詳しい表示（回数・初めての日・手に入る能力）
+/// ・ShowButton なら、閉じているときに画面の右上に「ずかん」ボタンを出す（タイトル・リザルトは自分のメニューから Open する）
+/// ・ほかの画面より手前に描き、開いている間は下の画面にクリックを通さない。矢印キーで選び、Esc・X・× で閉じる
 /// </summary>
 public class AppDexMenu : MonoBehaviour
 {
     [Tooltip("閉じているときに、画面の右上に「図鑑」ボタンを出す")]
     [SerializeField] bool _showButton = true;
 
-    static readonly Color Red = new Color32(0xc8, 0x24, 0x32, 0xff);
-    static readonly Color Orange = new Color32(0xdf, 0x71, 0x26, 0xff);
-    static readonly Color Dark = new Color32(0x22, 0x22, 0x22, 0xff);
-    static readonly Color Grey = new Color32(0x8a, 0x8a, 0x8a, 0xff);
-
     List<AppDexEntry> _entries = new List<AppDexEntry>();
     int _selected = -1;
     Vector2 _scroll;
-    Texture2D _white;
-    GUIStyle _title, _count, _name, _nameGrey, _badge, _detailName, _detail, _empty;
+    int _cols = 6;
 
     public bool IsOpen { get; private set; }
     public bool ShowButton { get => _showButton; set => _showButton = value; }
@@ -44,7 +38,15 @@ public class AppDexMenu : MonoBehaviour
     void Update()
     {
         var kb = Keyboard.current;
-        if (IsOpen && kb != null && kb.escapeKey.wasPressedThisFrame) Close();
+        if (!IsOpen || kb == null) return;
+        if (kb.escapeKey.wasPressedThisFrame || kb.xKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame) Close();
+        if (_entries.Count == 0) return;
+        int step = 0;
+        if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) step = -1;
+        if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) step = 1;
+        if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) step = -_cols;
+        if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) step = _cols;
+        if (step != 0) _selected = Mathf.Clamp(_selected + step, 0, _entries.Count - 1);
     }
 
     void OnGUI()
@@ -52,10 +54,9 @@ public class AppDexMenu : MonoBehaviour
         GUI.depth = -50; // タイトル・リザルトの画面より手前
         if (GameSession.Instance != null && GameSession.Instance.IsTransitioning) return;
         PixelGui.Begin(false);
-        EnsureStyles();
         if (!IsOpen)
         {
-            if (_showButton && GUI.Button(new Rect(PixelGui.Width - 84f, 8f, 76f, 26f), "図鑑", PixelGui.Button)) Open();
+            if (_showButton && PixelGui.SecondaryButton(new Rect(PixelGui.Width - 86f, 8f, 76f, 24f), "ずかん")) Open();
             PixelGui.End();
             return;
         }
@@ -69,46 +70,52 @@ public class AppDexMenu : MonoBehaviour
     void DrawDex()
     {
         float W = PixelGui.Width, H = PixelGui.Height;
-        var panel = new Rect(24f, 14f, W - 48f, H - 28f);
-        Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.35f)); // 後ろを少し暗く
-        GUI.Box(panel, GUIContent.none, PixelGui.Panel);
-        // タイトルバー（ウィルスの赤）・数・閉じる
-        var bar = new Rect(panel.x + 4f, panel.y + 4f, panel.width - 8f, 20f);
-        Fill(bar, Red);
-        GUI.Label(new Rect(bar.x + 8f, bar.y, 200f, 20f), "アプリ図鑑", _title);
-        GUI.Label(new Rect(bar.xMax - 150f, bar.y, 110f, 20f), $"{_entries.Count(e => e.IsDefeated)} / {_entries.Count}", _count);
-        var close = new Rect(bar.xMax - 20f, bar.y + 3f, 14f, 14f);
-        Fill(close, Orange);
-        GUI.Label(close, "×", _count);
-        if (GUI.Button(close, GUIContent.none, GUIStyle.none)) { Close(); return; }
+        PixelGui.Fill(new Rect(0f, 0f, W, H), new Color(0.12f, 0.03f, 0.19f, 0.55f)); // 後ろを暗い紫に
+        var win = new Rect(Mathf.Round((W - 600f) * 0.5f), Mathf.Round(Mathf.Max(8f, (H - 340f) * 0.5f)), 600f, Mathf.Min(340f, H - 16f));
+        Rect inner = PixelGui.Window(win);
+        if (PixelGui.CloseButton(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f))) { Close(); return; }
+
+        float x = inner.x + 12f, y = inner.y + 8f;
+        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "APP_DEX.EXE", 8, PixelGui.LabelPurple);
+        PixelGui.Text(new Rect(x, y + 14f, 200f, 20f), "アプリ図鑑", 16, PixelGui.Ink);
+        int done = _entries.Count(e => e.IsDefeated);
+        PixelGui.TextEn(new Rect(x + 110f, y + 19f, 120f, 10f), $"{done} / {_entries.Count}", 8, PixelGui.LabelPurple);
+        PixelGui.Meter(new Rect(x + 180f, y + 20f, 120f, 6f), Mathf.Max(1, _entries.Count), _entries.Count > 0 ? done / (float)_entries.Count : 0f, PixelGui.Orange, PixelGui.Muted);
 
         if (_entries.Count == 0)
         {
-            GUI.Label(new Rect(panel.x, panel.y + 60f, panel.width, 60f), "まだアプリがありません\nスキャンか訓練モードで遊ぶと、ボスの候補のアプリが載ります", _empty);
+            PixelGui.Text(new Rect(inner.x, inner.y + 90f, inner.width, 40f), "まだアプリがありません\nスキャンか訓練モードで遊ぶと、ボスの候補のアプリが載ります", 12, PixelGui.SubText, TextAnchor.MiddleCenter, true);
             return;
         }
 
         // アイコンの一覧（多ければ縦にスクロール）
-        const float cellW = 84f, cellH = 74f;
-        var gridArea = new Rect(panel.x + 12f, bar.yMax + 8f, panel.width - 24f, panel.height - 24f - 20f - 70f);
-        int cols = Mathf.Max(1, Mathf.FloorToInt(gridArea.width / cellW));
-        int rows = Mathf.CeilToInt(_entries.Count / (float)cols);
+        const float cellW = 80f, cellH = 76f;
+        float detailH = 58f;
+        var gridArea = new Rect(x, y + 40f, inner.width - 24f, inner.yMax - (y + 40f) - detailH - 14f);
+        _cols = Mathf.Max(1, Mathf.FloorToInt((gridArea.width - 12f) / cellW));
+        int rows = Mathf.CeilToInt(_entries.Count / (float)_cols);
         var content = new Rect(0f, 0f, gridArea.width - 16f, rows * cellH);
+        // 選んだアプリが見えるようにスクロールする
+        float selTop = (_selected / _cols) * cellH;
+        if (selTop < _scroll.y) _scroll.y = selTop;
+        if (selTop + cellH > _scroll.y + gridArea.height) _scroll.y = selTop + cellH - gridArea.height;
         _scroll = GUI.BeginScrollView(gridArea, _scroll, content);
         for (int i = 0; i < _entries.Count; i++)
         {
             AppDexEntry e = _entries[i];
-            var cell = new Rect((i % cols) * cellW, (i / cols) * cellH, cellW, cellH);
-            var iconRect = new Rect(cell.x + (cellW - 48f) * 0.5f, cell.y + 4f, 48f, 48f);
-            if (i == _selected) Frame(new Rect(iconRect.x - 3f, iconRect.y - 3f, 54f, 54f), Red, 2f);
+            var cell = new Rect((i % _cols) * cellW, (i / _cols) * cellH, cellW, cellH);
+            var iconRect = new Rect(cell.x + (cellW - 48f) * 0.5f, cell.y + 6f, 48f, 48f);
+            var plate = new Rect(iconRect.x - 4f, iconRect.y - 4f, 56f, 56f);
+            if (i == _selected) { PixelGui.Fill(plate, PixelGui.DarkRed); PixelGui.Fill(PixelGui.Inset(plate, 1f), PixelGui.Orange); PixelGui.Fill(PixelGui.Inset(plate, 3f), PixelGui.White); }
+            else { PixelGui.Fill(plate, PixelGui.Frame); PixelGui.Fill(PixelGui.Inset(plate, 2f), e.IsDefeated ? PixelGui.White : PixelGui.Card); }
             PixelGui.DrawSprite(iconRect, IconOf(e, 24));
             if (e.IsDefeated)
             {
-                var badge = new Rect(iconRect.xMax - 14f, iconRect.y - 4f, 22f, 12f);
-                Fill(badge, Red);
-                GUI.Label(badge, $"×{e.defeats}", _badge);
+                var badge = new Rect(plate.xMax - 20f, plate.y - 4f, 24f, 12f);
+                PixelGui.Fill(badge, PixelGui.Orange);
+                PixelGui.TextEn(new Rect(badge.x, badge.y + 2f, badge.width, 8f), $"x{Mathf.Min(99, e.defeats)}", 8, PixelGui.White, TextAnchor.MiddleCenter);
             }
-            GUI.Label(new Rect(cell.x, iconRect.yMax + 2f, cellW, 14f), e.name, e.IsDefeated ? _name : _nameGrey);
+            PixelGui.TextFit(new Rect(cell.x + 2f, plate.yMax + 2f, cellW - 4f, 14f), e.name, 12, e.IsDefeated ? PixelGui.Ink : PixelGui.SubText, TextAnchor.MiddleCenter);
             if (GUI.Button(cell, GUIContent.none, GUIStyle.none)) _selected = i;
         }
         GUI.EndScrollView();
@@ -116,22 +123,24 @@ public class AppDexMenu : MonoBehaviour
         // 選んだアプリの詳しい表示
         if (_selected < 0 || _selected >= _entries.Count) return;
         AppDexEntry s = _entries[_selected];
-        var detail = new Rect(panel.x + 10f, panel.yMax - 66f, panel.width - 20f, 56f);
-        Fill(detail, new Color32(0x51, 0x51, 0x51, 0xff));
-        Fill(new Rect(detail.x + 2f, detail.y + 2f, detail.width - 4f, detail.height - 4f), new Color32(0xf4, 0xf4, 0xf4, 0xff));
-        PixelGui.DrawSprite(new Rect(detail.x + 6f, detail.y + 4f, 48f, 48f), IconOf(s, 24));
-        GUI.Label(new Rect(detail.x + 62f, detail.y + 4f, detail.width * 0.5f, 22f), s.name, _detailName);
+        var detail = new Rect(x, inner.yMax - detailH - 6f, inner.width - 24f, detailH);
+        PixelGui.WhiteBox(detail);
+        PixelGui.DrawSprite(new Rect(detail.x + 6f, detail.y + 5f, 48f, 48f), IconOf(s, 24));
+        PixelGui.TextFit(new Rect(detail.x + 62f, detail.y + 8f, detail.width * 0.5f - 62f, 18f), s.name, 16, PixelGui.Ink);
         string line = s.IsDefeated ? $"正常化 {s.defeats}回　はじめて {ShortDate(s.firstDefeated)}" : "まだ正常化していない";
-        GUI.Label(new Rect(detail.x + 62f, detail.y + 28f, detail.width * 0.5f, 20f), line, _detail);
-        float sx = detail.x + detail.width * 0.58f;
+        PixelGui.Text(new Rect(detail.x + 62f, detail.y + 32f, detail.width * 0.5f - 62f, 16f), line, 12, PixelGui.SubText);
+        float sx = detail.x + detail.width * 0.55f;
+        PixelGui.Text(new Rect(sx, detail.y + 8f, 120f, 14f), "固有能力", 12, PixelGui.LabelPurple);
         if (s.IsDefeated)
         {
-            PixelGui.DrawSprite(new Rect(sx, detail.y + 12f, 32f, 32f), SkillIconOf(s));
-            GUI.Label(new Rect(sx + 38f, detail.y + 18f, detail.xMax - sx - 42f, 20f), $"能力：{(string.IsNullOrEmpty(s.skill) ? "-" : s.skill)}", _detail);
+            var box = new Rect(sx, detail.y + 26f, 24f, 24f);
+            PixelGui.Fill(box, PixelGui.SlotBg);
+            PixelGui.DrawSprite(new Rect(box.x + 4f, box.y + 4f, 16f, 16f), SkillIconOf(s));
+            PixelGui.TextFit(new Rect(sx + 30f, detail.y + 28f, detail.xMax - sx - 36f, 18f), string.IsNullOrEmpty(s.skill) ? "-" : s.skill, 16, PixelGui.Ink);
         }
         else
         {
-            GUI.Label(new Rect(sx, detail.y + 18f, detail.xMax - sx - 4f, 20f), "能力：？？？", _detail);
+            PixelGui.Text(new Rect(sx, detail.y + 28f, detail.xMax - sx - 6f, 18f), "？？？", 16, PixelGui.SubText);
         }
     }
 
@@ -154,46 +163,4 @@ public class AppDexMenu : MonoBehaviour
     }
 
     static string ShortDate(string date) => date != null && date.Length >= 10 ? $"{int.Parse(date.Substring(5, 2))}/{int.Parse(date.Substring(8, 2))}" : "-";
-
-    void EnsureStyles()
-    {
-        if (_title != null) return;
-        _title = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
-        _title.normal.textColor = Color.white;
-        _count = new GUIStyle(_title) { alignment = TextAnchor.MiddleRight, fontSize = 11 };
-        _count.normal.textColor = Color.white;
-        _name = new GUIStyle(GUI.skin.label) { fontSize = 9, alignment = TextAnchor.MiddleCenter, clipping = TextClipping.Clip };
-        _name.normal.textColor = Dark;
-        _nameGrey = new GUIStyle(_name);
-        _nameGrey.normal.textColor = Grey;
-        _badge = new GUIStyle(_name) { fontSize = 8, fontStyle = FontStyle.Bold };
-        _badge.normal.textColor = Color.white;
-        _detailName = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, clipping = TextClipping.Clip };
-        _detailName.normal.textColor = Dark;
-        _detail = new GUIStyle(GUI.skin.label) { fontSize = 10, clipping = TextClipping.Clip };
-        _detail.normal.textColor = new Color32(0x51, 0x51, 0x51, 0xff);
-        _empty = new GUIStyle(_detail) { alignment = TextAnchor.MiddleCenter, fontSize = 11, wordWrap = true };
-    }
-
-    void Fill(Rect r, Color color)
-    {
-        if (_white == null)
-        {
-            _white = new Texture2D(1, 1);
-            _white.SetPixel(0, 0, Color.white);
-            _white.Apply();
-        }
-        Color saved = GUI.color;
-        GUI.color = color;
-        GUI.DrawTexture(r, _white);
-        GUI.color = saved;
-    }
-
-    void Frame(Rect r, Color color, float t)
-    {
-        Fill(new Rect(r.x, r.y, r.width, t), color);
-        Fill(new Rect(r.x, r.yMax - t, r.width, t), color);
-        Fill(new Rect(r.x, r.y, t, r.height), color);
-        Fill(new Rect(r.xMax - t, r.y, t, r.height), color);
-    }
 }

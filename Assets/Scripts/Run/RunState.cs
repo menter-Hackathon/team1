@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 /// <summary>1ステージ分の計画：どのアプリのボスが、どの強さで出るか</summary>
 public class StagePlan
@@ -47,6 +48,18 @@ public class RunState
     /// <summary>このランで初めて正常化したアプリ（図鑑のキー）。リザルトで光らせる</summary>
     public readonly HashSet<string> NewDex = new HashSet<string>();
 
+    // リザルトに出す数（2026-11-18：画面のイメージから。ステージで遊んでいた時間だけ数える）
+    /// <summary>ステージで遊んだ秒数（リトライの分も含む。切り替え・ゲームオーバーの画面は含まない）</summary>
+    public float PlaySeconds;
+    /// <summary>倒した雑魚の数（駆除したウイルス）</summary>
+    public int Kills;
+    /// <summary>受けたダメージ（ライフが減った数）</summary>
+    public int DamageTaken;
+    /// <summary>最後にゲームオーバーになったステージ</summary>
+    public StagePlan LastFailed;
+    /// <summary>相棒（能力えらびで選んだカード。2026-11-18：画面のイメージ）</summary>
+    public AbilityCandidate Partner;
+
     public RunState(IEnumerable<StagePlan> stages)
     {
         Stages = stages.ToList();
@@ -54,6 +67,20 @@ public class RunState
 
     public StagePlan Current => CurrentIndex >= 0 && CurrentIndex < Stages.Count ? Stages[CurrentIndex] : null;
     public bool IsFinished => CurrentIndex >= Stages.Count;
+
+    /// <summary>
+    /// 【仮】防衛ランク（2026-11-18）：100 点から、受けたダメージ1つで4点、リトライ1回で15点、1ステージ5分を超えた分は1分ごとに2点引く。
+    /// 90 点以上 S、75 以上 A、55 以上 B、35 以上 C、それより下は D
+    /// </summary>
+    public string Rank
+    {
+        get
+        {
+            float overMinutes = Mathf.Max(0f, PlaySeconds / 60f - 5f * Mathf.Max(1, Stages.Count));
+            float score = 100f - DamageTaken * 4f - RetryCount * 15f - overMinutes * 2f;
+            return score >= 90f ? "S" : score >= 75f ? "A" : score >= 55f ? "B" : score >= 35f ? "C" : "D";
+        }
+    }
 }
 
 /// <summary>

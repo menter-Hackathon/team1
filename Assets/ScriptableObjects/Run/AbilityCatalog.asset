@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce3aadaca7dcd4cf9a3b07f65b9f369a, type: 3}
   m_Name: AbilityCatalog
   m_EditorClassIdentifier: 
-  _cardCount: 5
+  _cardCount: 3
   _pickCount: 1
   _categories:
   - Category: 1

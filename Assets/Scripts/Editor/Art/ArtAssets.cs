@@ -149,8 +149,27 @@ public static class ArtAssets
     // ───────── 取り込み設定 ─────────
 
 #pragma warning disable 618 // spritesheet は古い書き方だが、2D Sprite パッケージなしでコマ分けできる
+    const string FontJaPath = "Assets/Fonts/DotGothic16-Regular.ttf";
+    const string FontEnPath = "Assets/Fonts/PressStart2P-Regular.ttf";
+
+    /// <summary>ドットのフォントは、ぼかさずに描く（アンチエイリアスなし）。拡大はゲームの中で点のまま行う</summary>
+    static void ApplyFontSettings()
+    {
+        foreach (string path in new[] { FontJaPath, FontEnPath })
+        {
+            if (!File.Exists(path)) continue;
+            if (AssetImporter.GetAtPath(path) == null) AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            if (!(AssetImporter.GetAtPath(path) is TrueTypeFontImporter fi)) continue;
+            if (fi.fontRenderingMode == FontRenderingMode.HintedRaster && fi.fontTextureCase == FontTextureCase.Dynamic) continue;
+            fi.fontRenderingMode = FontRenderingMode.HintedRaster;
+            fi.fontTextureCase = FontTextureCase.Dynamic;
+            fi.SaveAndReimport();
+        }
+    }
+
     static void ApplyImportSettings()
     {
+        ApplyFontSettings();
         foreach (Rule rule in Rules)
         {
             string path = $"{SpriteRoot}/{rule.Path}";
@@ -312,6 +331,9 @@ public static class ArtAssets
             Set(so, "_button", LoadSprite("Generated/UI/Ui_Button.png"));
             Set(so, "_buttonHover", LoadSprite("Generated/UI/Ui_ButtonHover.png"));
             SetArray(so, "_playerWalk", LoadFrames("Provided/Player_Walk.png"));
+            SetArray(so, "_zakoWalk", LoadFrames("Generated/Enemies/Zako_Walker.png"));
+            Set(so, "_fontJa", AssetDatabase.LoadAssetAtPath<Font>(FontJaPath));
+            Set(so, "_fontEn", AssetDatabase.LoadAssetAtPath<Font>(FontEnPath));
         });
         EditorUtility.SetDirty(art);
     }
