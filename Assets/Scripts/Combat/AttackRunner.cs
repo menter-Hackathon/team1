@@ -195,6 +195,9 @@ public class AttackRunner : MonoBehaviour
             case AttackKind.Warp:
                 yield return WarpRoutine(data);
                 break;
+            case AttackKind.PhysicsObject:
+                yield return PhysicsObjectRoutine(data);
+                break;
             default:
                 Debug.LogWarning($"{name}: 攻撃の種類 {data.Kind} はまだ実行できません（{data.name}）", this);
                 break;
@@ -374,6 +377,95 @@ public class AttackRunner : MonoBehaviour
             best = left >= minX ? left : Mathf.Min(right, maxX);
         }
         return best;
+    }
+
+    // ───────── 物理オブジェクト（Unity の Cube・Sphere・Capsule） ─────────
+
+    readonly Dictionary<AttackData, int> _primitiveTurn = new Dictionary<AttackData, int>();
+    readonly Dictionary<AttackData, BoundedSpawnList<PhysicsPrimitive>> _alivePrimitives = new Dictionary<AttackData, BoundedSpawnList<PhysicsPrimitive>>();
+
+    /// <summary>次に出す物理オブジェクトの番号（Cube → Sphere → Capsule の順）。進めない</summary>
+    public int PeekPrimitiveIndex(AttackData data)
+    {
+        int n = data.Primitives != null ? data.Primitives.Length : 0;
+        if (n == 0) return 0;
+        _primitiveTurn.TryGetValue(data, out int turn);
+        return turn % n;
+    }
+
+    /// <summary>この攻撃データで出して、まだ残っている物理オブジェクトの数（テスト用）</summary>
+    public int AlivePrimitiveCount(AttackData data)
+    {
+        if (!_alivePrimitives.TryGetValue(data, out var list)) return 0;
+        list.Prune(p => p == null || p.IsGone);
+        return list.Count;
+    }
+
+    IEnumerator PhysicsObjectRoutine(AttackData data)
+    {
+        if (data.Primitives == null || data.Primitives.Length == 0)
+        {
+            Debug.LogWarning($"{name}: 物理オブジェクトの「出す物」が空です（{data.name}）", this);
+            yield break;
+        }
+        if (!_alivePrimitives.TryGetValue(data, out var alive))
+        {
+            alive = new BoundedSpawnList<PhysicsPrimitive>(data.MaxAlive);
+            _alivePrimitives[data] = alive;
+        }
+        alive.Capacity = data.MaxAlive;
+
+        foreach (Vector2 pos in PickPrimitivePositions(data))
+        {
+            _primitiveTurn.TryGetValue(data, out int turn);
+            _primitiveTurn[data] = turn + 1;
+            var obj = PhysicsPrimitive.Spawn(this, data, pos, turn % data.Primitives.Length);
+            alive.Prune(p => p == null || p.IsGone);
+            foreach (var old in alive.Add(obj)) if (old != null) old.Despawn(); // 上限を超えたら古い物から消す
+        }
+        Released?.Invoke(data);
+
+        // 本体が出るまで待つ（ボスはそのあと次の行動へ）
+        float wait = data.TelegraphTime * (data.WarningFrames != null && data.WarningFrames.Length > 0 ? 1f : 0f) + data.SpawnReleaseDelay;
+        if (wait > 0f) yield return new WaitForSeconds(wait);
+    }
+
+    /// <summary>
+    /// 物理オブジェクトを出す位置（中心）。
+    /// ・ForwardAbove：前方やや上（弾を出す位置のずれ）
+    /// ・AroundTarget：1つ目は狙う相手の頭上、残りは部屋の中のランダムな位置（相手から一定以上離す）
+    /// </summary>
+    List<Vector2> PickPrimitivePositions(AttackData data)
+    {
+        var result = new List<Vector2>();
+        if (data.Placement == SpawnPlacement.AroundTarget)
+        {
+            Rect arena = BattleArena.GetBounds();
+            float margin = 0.8f;
+            float topY = arena.yMax - margin;
+            Vector2 target = TargetPoint ?? OriginPoint;
+            result.Add(new Vector2(Mathf.Clamp(target.x, arena.xMin + margin, arena.xMax - margin), Mathf.Min(target.y + data.DropHeight, topY)));
+            for (int i = 1; i < data.SpawnCount; i++)
+            {
+                Vector2 best = result[0];
+                for (int attempt = 0; attempt < 40; attempt++)
+                {
+                    var c = new Vector2(UnityEngine.Random.Range(arena.xMin + margin, arena.xMax - margin),
+                        UnityEngine.Random.Range(Mathf.Min(arena.yMin + 3f, topY), topY));
+                    if (Mathf.Abs(c.x - target.x) < data.MinDistanceFromTarget) continue;
+                    bool near = false;
+                    foreach (Vector2 t in result) if (Vector2.Distance(t, c) < 1.6f) { near = true; break; }
+                    best = c;
+                    if (!near) break;
+                }
+                result.Add(best);
+            }
+            return result;
+        }
+
+        Vector2 basePos = OriginPoint + new Vector2(Facing * data.SpawnOffset.x, data.SpawnOffset.y);
+        for (int i = 0; i < data.SpawnCount; i++) result.Add(basePos + new Vector2(Facing * i * 1.2f, 0f));
+        return result;
     }
 
     // ───────── 予備動作の絵 ─────────
