@@ -178,6 +178,7 @@ public class AttackRunner : MonoBehaviour
     IEnumerator RunRoutine(AttackData data, Coroutine[] self)
     {
         Started?.Invoke(data);
+        PlayWindupEffect(data);
         if (data.Windup > 0f) yield return new WaitForSeconds(data.Windup);
 
         switch (data.Kind)
@@ -234,11 +235,14 @@ public class AttackRunner : MonoBehaviour
         }
 
         int n = data.ProjectileCount;
+        bool fullCircle = data.SpreadAngle >= 359.9f; // 全方位：端どうしが重ならないように、数で等分する
         for (int i = 0; i < n; i++)
         {
-            float angle = n > 1 ? -data.SpreadAngle * 0.5f + data.SpreadAngle * i / (n - 1) : 0f;
+            float angle = n <= 1 ? 0f
+                : fullCircle ? 360f * i / n
+                : -data.SpreadAngle * 0.5f + data.SpreadAngle * i / (n - 1);
             Vector2 dir = Quaternion.Euler(0f, 0f, angle) * baseDir;
-            Projectile.Spawn(this, data, origin, dir);
+            Projectile.Spawn(this, data, origin, dir, i);
         }
         Released?.Invoke(data);
     }
@@ -247,10 +251,14 @@ public class AttackRunner : MonoBehaviour
 
     IEnumerator AreaRoutine(AttackData data)
     {
+        // 出す位置のずれ（弾を出す位置のずれと同じ欄。x は向きに合わせて反転）。今までの攻撃データは 0 なので変わらない
+        Vector2 offset = new Vector2(Facing * data.SpawnOffset.x, data.SpawnOffset.y);
         Vector2 anchor = data.Anchor switch
         {
             AreaAnchor.TargetPosition => TargetPoint ?? OriginPoint,
-            AreaAnchor.Forward => OriginPoint + new Vector2(Facing * data.ForwardDistance, 0f),
+            AreaAnchor.Forward => OriginPoint + new Vector2(Facing * data.ForwardDistance, 0f) + offset,
+            AreaAnchor.ForwardAtTargetHeight => new Vector2(OriginPoint.x + Facing * data.ForwardDistance + offset.x,
+                (TargetPoint ?? OriginPoint).y + data.SpawnOffset.y),
             _ => OriginPoint,
         };
 
@@ -263,11 +271,11 @@ public class AttackRunner : MonoBehaviour
             Vector2 point = data.AreaForwardOrder
                 ? anchor + new Vector2(Facing * i * data.AreaSpacing, 0f) // 前へ順に並べる
                 : anchor + new Vector2(sign * step * data.AreaSpacing, 0f);
-            AreaStrike.Spawn(this, data, point, Vector2.up, i * data.AreaStagger);
+            AreaStrike.Spawn(this, data, point, Vector2.up, i * data.AreaStagger, i);
         }
         Released?.Invoke(data);
 
-        float total = (data.AreaCount - 1) * data.AreaStagger + data.TelegraphTime + data.HitWindow;
+        float total = (data.AreaCount - 1) * data.AreaStagger + data.TelegraphTime + data.HitDelay + data.HitWindow;
         yield return new WaitForSeconds(total);
     }
 
@@ -366,6 +374,18 @@ public class AttackRunner : MonoBehaviour
             best = left >= minX ? left : Mathf.Min(right, maxX);
         }
         return best;
+    }
+
+    // ───────── 予備動作の絵 ─────────
+
+    /// <summary>予備動作の間に出す絵（円グラフ）。弾を出す位置に出し、最後まで再生して消える。出した物として登録する</summary>
+    void PlayWindupEffect(AttackData data)
+    {
+        Sprite[] frames = data.WindupFrames;
+        if (frames == null || frames.Length == 0 || frames[0] == null) return;
+        Vector2 pos = OriginPoint + new Vector2(Facing * data.SpawnOffset.x, data.SpawnOffset.y);
+        SpriteRenderer sr = Vfx.Play(frames, pos, data.WindupFrameRate, 19, null, Facing < 0);
+        if (sr != null) Register(sr.gameObject);
     }
 
     // ───────── 出現型の置き方（ポップアップ出現） ─────────
@@ -615,6 +635,7 @@ public class AttackRunner : MonoBehaviour
         var hitbox = go.AddComponent<Hitbox>();
         hitbox.SetArea(area);
         hitbox.SetOwner(_team, _targetLayers, hitOncePerActivation);
+        hitbox.SetStatSource(transform); // 持ち主のバフ（Steam の実績解除）を、出した弾・判定にも効かせる
         hitbox.Setup(data);
         hitbox.Deactivate();
         return hitbox;
