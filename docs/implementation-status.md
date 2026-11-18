@@ -554,3 +554,18 @@ UI 担当の本番の画面ができたら差し替える。ステージ中は�
 - 配る用にビルドしたゲームで、アイコンの読み込みが動くかは未確認（エディタでだけ確かめた）。
 - 能力のレベル・経験値（16章の第2段階）は未実装。
 
+
+---
+
+## 18. Office・Unity・Steam のスキルとアプリボス（2026-11-18。feature/office-unity-steam-skills。**テスト**）
+
+- 決めたこと（2026-11-18 相談）
+  - 共有の仕組みの拡張は OK（SkillDefinition の順番の攻撃・常に効く効果、AttackKind／AreaShape の追加、バフの倍率、BossProfile の順番）。
+  - 雑魚も Unity のオブジェクトに乗れる（オブジェクトは Ground レイヤー）。
+  - ボスはアプリ単位で対応アプリ表に登録する（Excel・Word・PowerPoint → Office、Unity・Unity Hub → Unity、Steam → Steam。ステージは1画面）。カテゴリの能力（棒グラフ【仮】・ボム【仮】）はそのまま。
+  - 正常化は今までの流れ（ゲージ100% → 追い出し → とどめ）。追い出しのときに Purify を再生し、とどめでスキルを渡す。
+- 素材：`Assets/_Project/Art/VirusGameArt/VirusGameArt`。PPU 54（プレイヤーの元素材と同じ）。`Tools/Team1/Office・Unity・Steam の素材を取り込む`。
+- 作り方：`Tools/Team1/Office・Unity・Steam テストシーンを作成`（素材の取り込み・アセット・プレハブ・対応アプリ表への登録・`Scenes/Test/OfficeUnitySteamTest`）。
+- キー（テストシーン）：1/2/3 プレイヤー版、T/F1 Office ボス版、Y/F2 Unity ボス版、U/F3 Steam ボス版の実績、I/F4 プレイヤーの実績、B ボス切替、N ゲージ+10、P ゲージ満タン、Z 雑魚、R やり直し。
+- 【仮】ダメージ・ゲージの量（ゲージは「クールタイム × 毎秒4」の目安）、Steam ボスの攻撃（トロフィー弾3発・足元のバースト。依頼書に指定が無い）。
+- テスト：`Assets/Tests/Editor/OfficeUnitySteamLogicTests.cs`（EditMode）。
