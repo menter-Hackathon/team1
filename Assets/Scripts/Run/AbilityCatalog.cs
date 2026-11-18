@@ -86,7 +86,7 @@ public class AbilityCategoryEntry
 public class AbilityCatalog : ScriptableObject
 {
     [Tooltip("並べる枚数")]
-    [SerializeField, Min(1)] int _cardCount = 5;
+    [SerializeField, Min(1)] int _cardCount = 3;
     [Tooltip("選ぶ枚数")]
     [SerializeField, Min(1)] int _pickCount = 1;
     [SerializeField] AbilityCategoryEntry[] _categories;

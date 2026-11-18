@@ -712,6 +712,7 @@ public static class OfficeUnitySteamBuilder
                     e.FindPropertyRelative("Theme").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AppTheme>($"Assets/ScriptableObjects/Themes/{row.Theme}.asset");
                 }
             }
+            e.FindPropertyRelative("ExcludeFromStandIn").boolValue = true; // 代用ボスのひな形にしない（ボス B の部品が無い）
             e.FindPropertyRelative("BossPrefab").objectReferenceValue = bosses[row.Boss].prefab;
             e.FindPropertyRelative("Profile").objectReferenceValue = bosses[row.Boss].profile;
         }

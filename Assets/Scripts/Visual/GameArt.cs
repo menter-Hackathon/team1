@@ -51,6 +51,13 @@ public class GameArt : ScriptableObject
     [SerializeField] Sprite _button;
     [SerializeField] Sprite _buttonHover;
     [SerializeField] Sprite[] _playerWalk;
+    [Header("文字（2026-11-18：画面のイメージに合わせたドットのフォント。OFL）")]
+    [Tooltip("日本語：DotGothic16（16 か 12 の大きさで使う）")]
+    [SerializeField] Font _fontJa;
+    [Tooltip("英字の見出し：Press Start 2P（8 の倍数の大きさで使う）")]
+    [SerializeField] Font _fontEn;
+    [Tooltip("雑魚の絵（ゲームオーバー・タイトルの飾り。シートの1コマ目を使う）")]
+    [SerializeField] Sprite[] _zakoWalk;
 
     public Sprite TelegraphFrame => _telegraphFrame;
     public Sprite Shadow => _shadow;
@@ -75,6 +82,9 @@ public class GameArt : ScriptableObject
     public Sprite Button => _button;
     public Sprite ButtonHover => _buttonHover;
     public Sprite[] PlayerWalk => _playerWalk;
+    public Font FontJa => _fontJa;
+    public Font FontEn => _fontEn;
+    public Sprite[] ZakoWalk => _zakoWalk;
 
     static GameArt _instance;
     static bool _loaded;

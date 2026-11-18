@@ -204,6 +204,8 @@ public static class RunScenesBuilder
         });
         var menu = new GameObject("RunTitleMenu").AddComponent<RunTitleMenu>();
         PlayerTestSceneBuilder.SetProps(menu, so => so.FindProperty("_catalog").objectReferenceValue = catalog);
+        // アプリ図鑑（右上の「図鑑」ボタンで開く。タイトル画面とは別の部品として重ねる。2026-11-17）
+        new GameObject("AppDex").AddComponent<AppDexMenu>();
         string path = $"{SceneFolder}/{TitleScene}.unity";
         EditorSceneManager.SaveScene(scene, path);
         return path;

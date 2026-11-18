@@ -58,7 +58,7 @@ public class AchievementRunner : MonoBehaviour, IDisposable
         if (_subscribed) return;
         _subscribed = true;
         Health.AnyDied += OnAnyDied;
-        Health.AnyDamaged += OnAnyDamaged;
+        Health.AnyHit += OnAnyDamaged;
         VirusGauge.AnyGained += OnAnyGained;
         if (_executor != null) _executor.SkillUsed += OnSkillUsed;
         if (_boss != null) _boss.MoveStarted += OnBossMove;
@@ -69,7 +69,7 @@ public class AchievementRunner : MonoBehaviour, IDisposable
         if (!_subscribed) return;
         _subscribed = false;
         Health.AnyDied -= OnAnyDied;
-        Health.AnyDamaged -= OnAnyDamaged;
+        Health.AnyHit -= OnAnyDamaged;
         VirusGauge.AnyGained -= OnAnyGained;
         if (_executor != null) _executor.SkillUsed -= OnSkillUsed;
         if (_boss != null) _boss.MoveStarted -= OnBossMove;

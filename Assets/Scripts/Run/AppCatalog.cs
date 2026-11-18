@@ -41,6 +41,8 @@ public class AppEntry
     public BossController BossPrefab;
     [Tooltip("ボスの設定。使用時間で数値を変えた複製を作って渡す。手に入る能力もここから読む")]
     public BossProfile Profile;
+    [Tooltip("オン：対応表に無いアプリの代用ボスの、ひな形にしない（Office・Unity・Steam のボスは、ボス B の「抱えたウィンドウ」が無く、アイコンを差し替えられないため。2026-11-18）")]
+    public bool ExcludeFromStandIn;
     [Tooltip("ボスが出てくる位置（部屋の床の真ん中が (0, 0)）")]
     public Vector2 SpawnPosition;
     [Tooltip("このアプリのステージのシーン名（Build Settings に登録しておく）")]
