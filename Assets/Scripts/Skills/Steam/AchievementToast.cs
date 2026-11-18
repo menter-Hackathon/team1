@@ -111,8 +111,12 @@ public class AchievementToast : MonoBehaviour
         label.fontSize = Mathf.Max(10, fontSize);
         label.fontStyle = style;
         label.alignment = TextAnchor.MiddleLeft;
-        label.horizontalOverflow = HorizontalWrapMode.Overflow;
-        label.verticalOverflow = VerticalWrapMode.Overflow;
+        // 通知の枠からはみ出さないように、入りきらないときは文字を小さくする（2026-11-18）
+        label.horizontalOverflow = HorizontalWrapMode.Wrap;
+        label.verticalOverflow = VerticalWrapMode.Truncate;
+        label.resizeTextForBestFit = true;
+        label.resizeTextMinSize = 6;
+        label.resizeTextMaxSize = label.fontSize;
         label.raycastTarget = false;
     }
 
@@ -128,17 +132,17 @@ public class AchievementToast : MonoBehaviour
     }
 
     /// <summary>
-    /// 得たパラメータの文（例：「攻撃力+30% 移動速度+15% 8秒」）。延長したときは「8秒延長（残り12秒）」。
-    /// ボス版（味方にもかかる）は頭に「ボスと雑魚：」を付ける
+    /// 得たパラメータの文（例：「攻撃+30% 速度+15% 8秒」）。延長したときは「+8秒(残り12秒)」。
+    /// ボス版（味方にもかかる）は頭に「全員」を付ける。通知の枠に入るように短くしている
     /// </summary>
     public static string FormatBuff(BuffSpec spec, bool extended, float remaining, bool allies)
     {
         var parts = new List<string>();
-        if (spec.AttackBonus != 0f) parts.Add($"攻撃力{Signed(spec.AttackBonus)}");
-        if (spec.SpeedBonus != 0f) parts.Add($"移動速度{Signed(spec.SpeedBonus)}");
-        string time = extended ? $"{spec.Duration:0.#}秒延長（残り{remaining:0}秒）" : $"{spec.Duration:0.#}秒";
+        if (spec.AttackBonus != 0f) parts.Add($"攻撃{Signed(spec.AttackBonus)}");
+        if (spec.SpeedBonus != 0f) parts.Add($"速度{Signed(spec.SpeedBonus)}");
+        string time = extended ? $"+{spec.Duration:0.#}秒(残り{remaining:0}秒)" : $"{spec.Duration:0.#}秒";
         string text = string.Join(" ", parts) + " " + time;
-        return allies ? "ボスと雑魚：" + text : text;
+        return allies ? "全員 " + text : text;
     }
 
     static string Signed(float ratio) => (ratio >= 0f ? "+" : "") + Mathf.RoundToInt(ratio * 100f) + "%";

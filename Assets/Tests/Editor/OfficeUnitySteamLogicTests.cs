@@ -284,9 +284,9 @@ public class OfficeUnitySteamLogicTests
     public void Steam_ToastShowsGainedParameters()
     {
         BuffSpec spec = BuffSpec.Default;
-        Assert.AreEqual("攻撃力+30% 移動速度+15% 8秒", AchievementToast.FormatBuff(spec, false, 8f, false));
-        Assert.AreEqual("攻撃力+30% 移動速度+15% 8秒延長（残り12秒）", AchievementToast.FormatBuff(spec, true, 12f, false));
-        Assert.AreEqual("ボスと雑魚：攻撃力+30% 移動速度+15% 8秒", AchievementToast.FormatBuff(spec, false, 8f, true));
+        Assert.AreEqual("攻撃+30% 速度+15% 8秒", AchievementToast.FormatBuff(spec, false, 8f, false));
+        Assert.AreEqual("攻撃+30% 速度+15% +8秒(残り12秒)", AchievementToast.FormatBuff(spec, true, 12f, false));
+        Assert.AreEqual("全員 攻撃+30% 速度+15% 8秒", AchievementToast.FormatBuff(spec, false, 8f, true));
     }
 
     [Test]
