@@ -32,6 +32,11 @@ public class Health : MonoBehaviour, IDamageable
     /// <summary>0になったとき（1回だけ呼ばれる）</summary>
     public event Action Died;
 
+    /// <summary>どれかの Health がダメージを受けたとき（受けた物, 攻撃の中身）。実績（Steam）の「攻撃を当てた回数」用</summary>
+    public static event Action<Health, DamageInfo> AnyDamaged;
+    /// <summary>どれかの Health が 0 になったとき。実績（Steam）の「倒した数」用</summary>
+    public static event Action<Health> AnyDied;
+
     void Awake()
     {
         Current = _max;
@@ -50,11 +55,13 @@ public class Health : MonoBehaviour, IDamageable
 
         Changed?.Invoke(Current, _max);
         Damaged?.Invoke(info);
+        AnyDamaged?.Invoke(this, info);
 
         if (Current == 0)
         {
             IsDead = true;
             Died?.Invoke();
+            AnyDied?.Invoke(this);
         }
         return true;
     }

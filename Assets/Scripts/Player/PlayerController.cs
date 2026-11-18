@@ -162,7 +162,7 @@ public class PlayerController : MonoBehaviour
 
         // --- 横移動 ---
         float inputX = controllable ? _input.Move.x : 0f;
-        float targetX = inputX * _moveSpeed;
+        float targetX = inputX * _moveSpeed * StatModifiers.SpeedOf(this); // バフ（Steam の実績解除）
         bool hasInput = Mathf.Abs(targetX) > 0.01f;
         float accel;
         if (stunned) accel = _knockbackDeceleration; // のけぞり中は弱い減速で吹き飛ばす

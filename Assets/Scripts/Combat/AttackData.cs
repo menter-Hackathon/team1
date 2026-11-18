@@ -37,6 +37,23 @@ public class AttackData : ScriptableObject
     [SerializeField] Sprite _sprite;
     [SerializeField] Color _color = Color.white;
 
+    [Header("コマ送りの絵（あれば上の絵の代わりに使う。Office・Unity・Steam の素材）")]
+    [Tooltip("コマの絵。行ごとに色が違う素材は、1行目の全コマ → 2行目の全コマ…の順に並べる")]
+    [SerializeField] Sprite[] _frames;
+    [Tooltip("1行のコマ数。0なら全部で1行。2つ目以降の柱・弾は次の行を使う（棒グラフ・円グラフの色）")]
+    [SerializeField, Min(0)] int _framesPerRow;
+    [Tooltip("1秒あたりのコマ数")]
+    [SerializeField, Min(0.1f)] float _frameRate = 12f;
+    [Tooltip("コマ送りを繰り返すか（弾の回転など）")]
+    [SerializeField] bool _loopFrames;
+    [Tooltip("指定位置の判定のとき：絵が出てから判定を出すまでの秒数（棒グラフは F2 から当たるので 1/12）")]
+    [SerializeField, Min(0f)] float _hitDelay;
+    [Tooltip("指定位置の判定のとき：判定を出している間、このコマで止める（0始まり。-1 なら止めない）。ボスの折れ線の「光る時間を長く」に使う")]
+    [SerializeField] int _holdFrame = -1;
+    [Tooltip("予備動作の間に出す絵（円グラフの出現→回転→光る）。弾を出す位置に出し、最後まで再生して消える")]
+    [SerializeField] Sprite[] _windupFrames;
+    [SerializeField, Min(0.1f)] float _windupFrameRate = 12f;
+
     // ───────── 弾（Projectile） ─────────
     [Header("弾（Projectile のとき）")]
     [Tooltip("1回に撃つ数")]
@@ -85,6 +102,10 @@ public class AttackData : ScriptableObject
     [SerializeField, Min(0f)] float _areaStagger;
     [Tooltip("オン：2つ目以降を前へ順に並べる（棒グラフ）。オフ：左→右→さらに左…の順")]
     [SerializeField] bool _areaForwardOrder;
+    [Tooltip("形が Polyline のときの点（マス。判定の中心から。右向きの値で入れる。左向きでは左右を反転する）")]
+    [SerializeField] Vector2[] _polylinePoints;
+    [Tooltip("形が Polyline のときの線の太さの半分（マス）")]
+    [SerializeField, Min(0.01f)] float _polylineRadius = 0.12f;
 
     [Header("予告（Area・Spawn のとき）")]
     [Tooltip("予告（赤丸・影・出現の枠）を出してから判定・落下・出現を始めるまでの秒数")]
@@ -124,6 +145,32 @@ public class AttackData : ScriptableObject
     [Tooltip("【仮】上の端に乗れるとみなす高さ（マス）。近くの床・足場から上の端までがこれ以下の位置にだけ出す。ジャンプの高さ3.2より少し低くしてある。置き方が AppearAroundTarget のとき（1つ目を除く）")]
     [SerializeField, Min(0.5f)] float _reachHeight = 3f;
 
+    // ───────── 物理オブジェクト（PhysicsObject） ─────────
+    [Header("物理オブジェクト（PhysicsObject のとき）。置き方・出す数・予告時間は上の「落下物・設置物」の欄を使う")]
+    [Tooltip("出す物。使うたびに上から順に出す（Cube → Sphere → Capsule）")]
+    [SerializeField] PrimitiveEntry[] _primitives;
+    [Tooltip("同時に置いておける数。超えたら古い物から消す")]
+    [SerializeField, Min(1)] int _maxAlive = 3;
+    [Tooltip("寿命（秒）")]
+    [SerializeField, Min(0.1f)] float _objectLifetime = 8f;
+    [Tooltip("この速さ（マス/秒）以上で落ちているときだけ、相手に当たる。床に置いてあるだけの物は当たらない")]
+    [SerializeField, Min(0f)] float _damageFallSpeed = 4f;
+    [Tooltip("この速さ（マス/秒）以上でぶつかって止まったら、着地の砂煙を出す")]
+    [SerializeField, Min(0f)] float _impactSpeed = 5f;
+    [Tooltip("置き方が AroundTarget のとき、狙う相手の頭からどれだけ上に出すか（マス）")]
+    [SerializeField, Min(0f)] float _dropHeight = 4f;
+    [Tooltip("出るときの絵（Unity_Spawn）。「本体を出すコマ」で本体が現れる")]
+    [SerializeField] Sprite[] _spawnFrames;
+    [SerializeField, Min(0.1f)] float _spawnFrameRate = 14f;
+    [Tooltip("本体を出すコマ（0始まり。README の F2 なら 1）")]
+    [SerializeField, Min(0)] int _spawnReleaseFrame = 1;
+    [Tooltip("着地・命中の砂煙（Unity_Impact）")]
+    [SerializeField] Sprite[] _impactFrames;
+    [SerializeField, Min(0.1f)] float _impactFrameRate = 14f;
+    [Tooltip("出る前の予告（Unity_SpawnWarning_Virus）。予告時間（上の欄）のあいだ繰り返す。空なら予告なし")]
+    [SerializeField] Sprite[] _warningFrames;
+    [SerializeField, Min(0.1f)] float _warningFrameRate = 8f;
+
     // ───────── Warp ─────────
     [Header("Warp のとき")]
     [SerializeField] WarpDestination _warpDestination = WarpDestination.Forward;
@@ -153,6 +200,15 @@ public class AttackData : ScriptableObject
     public float RepeatInterval => _repeatInterval;
     public Sprite Sprite => _sprite;
     public Color Color => _color;
+    public Sprite[] Frames => _frames;
+    public bool HasFrames => _frames != null && _frames.Length > 0 && _frames[0] != null;
+    public int FramesPerRow => _framesPerRow;
+    public float FrameRate => _frameRate;
+    public bool LoopFrames => _loopFrames;
+    public float HitDelay => _hitDelay;
+    public int HoldFrame => _holdFrame;
+    public Sprite[] WindupFrames => _windupFrames;
+    public float WindupFrameRate => _windupFrameRate;
 
     public int ProjectileCount => _projectileCount;
     public float SpreadAngle => _spreadAngle;
@@ -178,6 +234,8 @@ public class AttackData : ScriptableObject
     public float AreaSpacing => _areaSpacing;
     public float AreaStagger => _areaStagger;
     public bool AreaForwardOrder => _areaForwardOrder;
+    public Vector2[] PolylinePoints => _polylinePoints;
+    public float PolylineRadius => _polylineRadius;
     public float TelegraphTime => _telegraphTime;
     public float PersistDuration => _persistDuration;
     public float TickInterval => _tickInterval;
@@ -195,6 +253,26 @@ public class AttackData : ScriptableObject
     public float DropInterval => _dropInterval;
     public Vector2 AppearTopRange => _appearTopRange;
     public float ReachHeight => _reachHeight;
+
+    public PrimitiveEntry[] Primitives => _primitives;
+    public int MaxAlive => _maxAlive;
+    public float ObjectLifetime => _objectLifetime;
+    public float DamageFallSpeed => _damageFallSpeed;
+    public float ImpactSpeed => _impactSpeed;
+    public float DropHeight => _dropHeight;
+    public Sprite[] SpawnFrames => _spawnFrames;
+    public float SpawnFrameRate => _spawnFrameRate;
+    public int SpawnReleaseFrame => _spawnReleaseFrame;
+    public Sprite[] ImpactFrames => _impactFrames;
+    public float ImpactFrameRate => _impactFrameRate;
+    public Sprite[] WarningFrames => _warningFrames;
+    public float WarningFrameRate => _warningFrameRate;
+
+    /// <summary>出る絵で、本体が現れるまでの秒数</summary>
+    public float SpawnReleaseDelay => _spawnFrames != null && _spawnFrames.Length > 0 ? Mathf.Min(_spawnReleaseFrame, _spawnFrames.Length - 1) / _spawnFrameRate : 0f;
+
+    /// <summary>コマ送りの絵の、row 行目（行が無ければ全部）。2つ目以降の柱・弾で色を変えるときに使う</summary>
+    public Sprite[] GetFrameRow(int row) => SpriteFrames.Row(_frames, _framesPerRow, row);
 
     public WarpDestination WarpDestination => _warpDestination;
     public float WarpDistance => _warpDistance;
