@@ -316,9 +316,10 @@ public static class OfficeUnitySteamBuilder
         // ───── Unity ─────
         PrimitiveEntry[] Prims(string v) => new[]
         {
-            new PrimitiveEntry { Sprite = First(U + $"Unity_Cube{v}.png"), Shape = PrimitiveShape.Box, Size = new Vector2(0.95f, 0.95f) },
-            new PrimitiveEntry { Sprite = First(U + $"Unity_Sphere{v}.png"), Shape = PrimitiveShape.Circle, Size = new Vector2(0.95f, 0.95f) },
-            new PrimitiveEntry { Sprite = First(U + $"Unity_Capsule{v}.png"), Shape = PrimitiveShape.Capsule, Size = new Vector2(0.55f, 1.0f) },
+            // 大きさは 2026-11-18 に約1.4倍にした（もうちょっと大きく）
+            new PrimitiveEntry { Sprite = First(U + $"Unity_Cube{v}.png"), Shape = PrimitiveShape.Box, Size = new Vector2(1.35f, 1.35f) },
+            new PrimitiveEntry { Sprite = First(U + $"Unity_Sphere{v}.png"), Shape = PrimitiveShape.Circle, Size = new Vector2(1.35f, 1.35f) },
+            new PrimitiveEntry { Sprite = First(U + $"Unity_Capsule{v}.png"), Shape = PrimitiveShape.Capsule, Size = new Vector2(0.75f, 1.45f) },
         };
         a.UnitySpawn = Attack("Unity/Attack_Unity_Spawn", so =>
         {
@@ -343,6 +344,12 @@ public static class OfficeUnitySteamBuilder
         }
         a.UnityBossSpawnP1 = Attack("Unity/Attack_UnityBoss_Spawn_P1", so => UnityBoss(so, 2));
         a.UnityBossSpawnP2 = Attack("Unity/Attack_UnityBoss_Spawn_P2", so => UnityBoss(so, 3));
+        // 3D の見た目のマテリアル（2026-11-18 追加。すでにあるアセットでも、空なら入れる）
+        Material normalMat = PrimitiveMaterial("Unity_Primitive_Default", null);
+        Material virusMat = PrimitiveMaterial("Unity_Primitive_Virus", new Color(0.62f, 0.3f, 0.95f));
+        FillMaterial(a.UnitySpawn, normalMat);
+        FillMaterial(a.UnityBossSpawnP1, virusMat);
+        FillMaterial(a.UnityBossSpawnP2, virusMat);
 
         // ───── Steam（ボスの攻撃【仮】。依頼書に攻撃の指定が無いので、素材で作った） ─────
         a.SteamBossTrophy = Attack("Steam/Attack_SteamBoss_Trophy", so =>
@@ -418,6 +425,36 @@ public static class OfficeUnitySteamBuilder
 
         AssetDatabase.SaveAssets();
         return a;
+    }
+
+    // ───── Unity の 3D の見た目 ─────
+
+    /// <summary>
+    /// Unity で Create したときのマテリアル（Default-Material）の複製を作る。color があれば色だけ変える（ボス版：ウイルスの紫）。
+    /// 複製をアセットにしておくと、ビルドしたゲームにもシェーダーが入る
+    /// </summary>
+    static Material PrimitiveMaterial(string file, Color? color)
+    {
+        string path = $"Assets/Materials/{file}.mat";
+        var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (mat != null) return mat;
+        var src = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Material.mat");
+        mat = src != null ? new Material(src) : new Material(Shader.Find("Standard"));
+        if (color is Color c) mat.color = c;
+        PlayerTestSceneBuilder.EnsureFolder("Assets/Materials");
+        AssetDatabase.CreateAsset(mat, path);
+        return mat;
+    }
+
+    static void FillMaterial(AttackData data, Material mat)
+    {
+        if (data == null || data.PrimitiveMaterial != null) return;
+        PlayerTestSceneBuilder.SetProps(data, so =>
+        {
+            so.FindProperty("_primitiveMaterial").objectReferenceValue = mat;
+            so.FindProperty("_meshLook").boolValue = true;
+        });
+        EditorUtility.SetDirty(data);
     }
 
     // ───── 攻撃データの部品 ─────

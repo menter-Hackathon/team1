@@ -149,6 +149,10 @@ public class AttackData : ScriptableObject
     [Header("物理オブジェクト（PhysicsObject のとき）。置き方・出す数・予告時間は上の「落下物・設置物」の欄を使う")]
     [Tooltip("出す物。使うたびに上から順に出す（Cube → Sphere → Capsule）")]
     [SerializeField] PrimitiveEntry[] _primitives;
+    [Tooltip("オン：本体を Unity で Create した 3D Object（Cube／Sphere／Capsule）の見た目で描く（2026-11-18）。オフ：「出す物」の絵（スプライト）で描く")]
+    [SerializeField] bool _meshLook = true;
+    [Tooltip("3D の見た目のマテリアル。空なら Unity の既定（Default-Material）")]
+    [SerializeField] Material _primitiveMaterial;
     [Tooltip("同時に置いておける数。超えたら古い物から消す")]
     [SerializeField, Min(1)] int _maxAlive = 3;
     [Tooltip("寿命（秒）")]
@@ -255,6 +259,8 @@ public class AttackData : ScriptableObject
     public float ReachHeight => _reachHeight;
 
     public PrimitiveEntry[] Primitives => _primitives;
+    public bool MeshLook => _meshLook;
+    public Material PrimitiveMaterial => _primitiveMaterial;
     public int MaxAlive => _maxAlive;
     public float ObjectLifetime => _objectLifetime;
     public float DamageFallSpeed => _damageFallSpeed;

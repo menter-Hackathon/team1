@@ -22,7 +22,8 @@ public class PhysicsPrimitive : MonoBehaviour
     Rigidbody2D _rb;
     Collider2D _body;
     Hitbox _hitbox;
-    SpriteRenderer _visual;
+    Renderer _visual;
+    bool _flipX;
     float _lastFastFall = float.NegativeInfinity;
     float _lastImpact = float.NegativeInfinity;
 
@@ -64,15 +65,10 @@ public class PhysicsPrimitive : MonoBehaviour
         Collider2D hitCol = AddShape(hitGo, entry.Shape, size * 1.15f, true);
         Hitbox hitbox = owner.AddHitbox(hitGo, data, hitCol);
 
-        var vgo = new GameObject("Visual");
-        vgo.layer = go.layer;
-        vgo.transform.SetParent(go.transform, false);
-        var sr = vgo.AddComponent<SpriteRenderer>();
-        sr.sprite = entry.Sprite;
-        sr.color = data.Color;
-        sr.sortingOrder = 16;
-        sr.flipX = owner.Facing < 0;
-        sr.enabled = false;
+        Renderer visual = data.MeshLook
+            ? CreateMeshVisual(go.transform, entry.Shape, size, data.PrimitiveMaterial)
+            : CreateSpriteVisual(go.transform, entry.Sprite, data.Color, owner.Facing < 0);
+        visual.enabled = false;
 
         var p = go.AddComponent<PhysicsPrimitive>();
         p._owner = owner;
@@ -80,7 +76,8 @@ public class PhysicsPrimitive : MonoBehaviour
         p._rb = rb;
         p._body = body;
         p._hitbox = hitbox;
-        p._visual = sr;
+        p._visual = visual;
+        p._flipX = owner.Facing < 0;
         p.ShapeIndex = shapeIndex;
         hitbox.Hit += p.OnHit;
         p.StartCoroutine(p.Run());
@@ -113,6 +110,57 @@ public class PhysicsPrimitive : MonoBehaviour
         return col;
     }
 
+    static Renderer CreateSpriteVisual(Transform parent, Sprite sprite, Color color, bool flipX)
+    {
+        var vgo = new GameObject("Visual");
+        vgo.layer = parent.gameObject.layer;
+        vgo.transform.SetParent(parent, false);
+        var sr = vgo.AddComponent<SpriteRenderer>();
+        sr.sprite = sprite;
+        sr.color = color;
+        sr.sortingOrder = 16;
+        sr.flipX = flipX;
+        return sr;
+    }
+
+    /// <summary>3D の見た目のかたむき（Unity のシーンビューで Create したときのように、上と横の面が見える向き）</summary>
+    static readonly Quaternion MeshTilt = Quaternion.Euler(-20f, 30f, 0f);
+    /// <summary>かたむけた立方体の見た目の大きさ（1辺1の立方体が、横 1.37・縦 1.41 に見える）。コライダーの大きさに収める</summary>
+    static readonly Vector2 CubeSilhouette = new Vector2(1.37f, 1.41f);
+
+    /// <summary>
+    /// 本体の見た目を、Unity で Create した 3D Object（GameObject.CreatePrimitive）にする。
+    /// 3D のコライダーは消す（当たり判定は 2D の物理のまま）。マテリアルが空なら Create したときの既定のまま
+    /// </summary>
+    static Renderer CreateMeshVisual(Transform parent, PrimitiveShape shape, Vector2 size, Material material)
+    {
+        PrimitiveType type = shape switch
+        {
+            PrimitiveShape.Circle => PrimitiveType.Sphere,
+            PrimitiveShape.Capsule => PrimitiveType.Capsule,
+            _ => PrimitiveType.Cube,
+        };
+        GameObject mesh = GameObject.CreatePrimitive(type);
+        mesh.name = "Visual";
+        if (mesh.TryGetComponent(out Collider col3d)) Destroy(col3d);
+        mesh.layer = parent.gameObject.layer;
+        mesh.transform.SetParent(parent, false);
+        mesh.transform.localRotation = MeshTilt;
+        mesh.transform.localScale = type switch
+        {
+            PrimitiveType.Sphere => new Vector3(size.x, size.x, size.x),
+            PrimitiveType.Capsule => new Vector3(size.x, size.y * 0.5f, size.x), // Unity のカプセルは高さ2・直径1
+            _ => new Vector3(size.x / CubeSilhouette.x, size.y / CubeSilhouette.y, size.x / CubeSilhouette.x),
+        };
+        var r = mesh.GetComponent<MeshRenderer>();
+        if (material != null) r.sharedMaterial = material;
+        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        r.receiveShadows = false;
+        r.sortingOrder = 16;
+        PrimitiveLight.Ensure();
+        return r;
+    }
+
     static int FirstLayer(LayerMask mask)
     {
         int v = mask.value;
@@ -140,7 +188,7 @@ public class PhysicsPrimitive : MonoBehaviour
         Sprite[] spawn = _data.SpawnFrames;
         if (spawn != null && spawn.Length > 0 && spawn[0] != null)
         {
-            SpriteRenderer fx = Vfx.Play(spawn, transform.position, _data.SpawnFrameRate, 21, null, _visual.flipX);
+            SpriteRenderer fx = Vfx.Play(spawn, transform.position, _data.SpawnFrameRate, 21, null, _flipX);
             if (fx != null) _owner.Register(fx.gameObject);
             float wait = _data.SpawnReleaseDelay;
             if (wait > 0f) yield return new WaitForSeconds(wait);
@@ -206,5 +254,31 @@ public class PhysicsPrimitive : MonoBehaviour
     {
         IsGone = true;
         if (_hitbox != null) _hitbox.Hit -= OnHit;
+    }
+}
+
+/// <summary>
+/// 3D の見た目（Unity スキルのオブジェクト）を照らすライト。シーンに Directional Light が無ければ、
+/// Unity で新しいシーンを作ったときと同じもの（回転 (50, -30, 0)・少し暖かい白・強さ1）を1つ作る。
+/// スプライトはライトの影響を受けないので、ほかの絵の見た目は変わらない。
+/// </summary>
+public static class PrimitiveLight
+{
+    static Light _light;
+
+    public static void Ensure()
+    {
+        if (_light != null) return;
+        foreach (var l in Object.FindObjectsOfType<Light>())
+        {
+            if (l.type == LightType.Directional && l.isActiveAndEnabled) { _light = l; return; }
+        }
+        var go = new GameObject("Directional Light (Unity スキル用)");
+        go.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+        _light = go.AddComponent<Light>();
+        _light.type = LightType.Directional;
+        _light.color = new Color(1f, 0.957f, 0.839f);
+        _light.intensity = 1f;
+        _light.shadows = LightShadows.None;
     }
 }
