@@ -37,6 +37,17 @@ public static class RunScenesBuilder
     static readonly Vector2 ChromeSpawn = new Vector2(0f, 2.5f + 1.5f);
     static readonly Vector2 VSCodeSpawn = new Vector2(7f, 1.5f);
 
+    [MenuItem("Tools/Team1/リザルト画面を確認")]
+    static void PreviewResult()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        EditorSceneManager.OpenScene(SceneFolder + "/" + ResultScene + ".unity");
+        EditorApplication.isPlaying = true;
+    }
+
+    [MenuItem("Tools/Team1/リザルト画面を確認", true)]
+    static bool CanPreviewResult() => !EditorApplication.isPlayingOrWillChangePlaymode;
+
     [MenuItem("Tools/Team1/ランのシーンを作成")]
     public static void BuildFromMenu()
     {
