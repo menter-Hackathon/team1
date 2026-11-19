@@ -1,0 +1,77 @@
+{
+ "id": "jingle_gameover",
+ "desc": "ゲームオーバー。ウイルスのモチーフがだんだん遅くなって、音程もずれながら落ちていく（音の長さをのばして遅く聞かせる）",
+ "bpm": 100,
+ "steps_per_beat": 4,
+ "beats_per_bar": 4,
+ "swing": 0.0,
+ "instruments": {
+  "lead": {
+   "wave": "pulse",
+   "duty": 0.25,
+   "env": {
+    "a": 0.005,
+    "d": 0.12,
+    "s": 0.55,
+    "r": 0.06
+   },
+   "vol": 0.32,
+   "vib": [
+    0.35,
+    4.0,
+    0.2
+   ],
+   "echo": [
+    3,
+    0.45,
+    0.35
+   ],
+   "detune": 22
+  },
+  "harm": {
+   "wave": "pulse",
+   "duty": 0.5,
+   "env": {
+    "a": 0.02,
+    "d": 0.3,
+    "s": 0.4,
+    "r": 0.3
+   },
+   "vol": 0.247,
+   "detune": 18
+  },
+  "bass": {
+   "wave": "triangle",
+   "env": {
+    "a": 0.005,
+    "d": 0.3,
+    "s": 0.7,
+    "r": 0.3
+   },
+   "vol": 0.324
+  },
+  "drums": {
+   "kit": "chip",
+   "vol": 0.42
+  }
+ },
+ "patterns": {
+  "lead": "A4 C5 E5 D#5 E5 - B4 - C5 - B4 - - A4 - - | G#4 - - - G4 - - - F4' - - - E4' - - . |",
+  "harm": "A3+C4+E4 - - - - - - - - - - - - - . . | G#3+B3+E4 - - - G3+B3+E4 - - - A3+D4+F4 - - - A3+C4+E4 - - . |",
+  "bass": "A2 - - - - - - - E2 - - - - - - . | E2 - - - E2 - - - D2 - - - A2 - - . |",
+  "drums": "k . . . . . . . s' . . . . . . . | t . . . m' . . . t' . . . k' . h' h' |"
+ },
+ "sections": {
+  "A": {
+   "bars": 2,
+   "lead": "lead",
+   "harm": "harm",
+   "bass": "bass",
+   "drums": "drums"
+  }
+ },
+ "loop": [
+  "A"
+ ],
+ "jingle": true
+}

@@ -53,7 +53,7 @@ public class KinematicBody2D : MonoBehaviour
     /// </summary>
     public void Move(Vector2 delta)
     {
-        Vector2 pos = _rb.position;
+        Vector2 pos = ApplyCarry(_rb.position); // 動く足場に運ばれた分（AppPlatform が先に Carry で渡す）
         IsGrounded = HitCeiling = HitWallLeft = HitWallRight = false;
 
         // 縦 → 横 の順に解決する。
@@ -89,6 +89,41 @@ public class KinematicBody2D : MonoBehaviour
     {
         _rb.position = position;
         transform.position = position;
+    }
+
+    /// <summary>
+    /// 動く足場に立っている間、足場といっしょに動かす（2026-11-19：アプリの足場 AppPlatform が、この物の Move より前に呼ぶ）。
+    /// その場では動かさず、量をためておき、同じ物理のコマの Move の最初にまとめて足す
+    /// （ここで transform を書くと、次の物理のコマの前の同期で、Move の MovePosition が消えて左右に歩けなくなるため）。
+    /// 床・壁（すり抜け床でない地形）の手前で止まる。接地などの印は Move が決める
+    /// </summary>
+    public void Carry(Vector2 delta)
+    {
+        if (!Mathf.Approximately(_carryTime, Time.fixedTime)) _pendingCarry = Vector2.zero; // 前のコマの残りは捨てる（Move を呼ばない物）
+        _carryTime = Time.fixedTime;
+        _pendingCarry += delta;
+    }
+
+    Vector2 _pendingCarry;
+    float _carryTime = -1f;
+
+    // ためた運ぶ量を pos に足す（地形の手前まで）
+    Vector2 ApplyCarry(Vector2 pos)
+    {
+        if (_pendingCarry == Vector2.zero) return pos;
+        Vector2 delta = Mathf.Approximately(_carryTime, Time.fixedTime) ? _pendingCarry : Vector2.zero;
+        _pendingCarry = Vector2.zero;
+        if (delta.y != 0f)
+        {
+            Vector2 vDir = delta.y > 0f ? Vector2.up : Vector2.down;
+            pos += vDir * CastAxis(pos, vDir, Mathf.Abs(delta.y), false, out _);
+        }
+        if (delta.x != 0f)
+        {
+            Vector2 hDir = delta.x > 0f ? Vector2.right : Vector2.left;
+            pos += hDir * CastAxis(pos, hDir, Mathf.Abs(delta.x), false, out _);
+        }
+        return pos;
     }
 
     /// <summary>pos から dir 方向に distance だけ動けるか調べ、実際に動ける距離を返す</summary>

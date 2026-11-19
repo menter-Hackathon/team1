@@ -2,7 +2,10 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-// Premiere Pro のボスの専用の技と、能力「エフェクトアイコン投げ」のアセットを作る（2026-11-18。docs/app-boss-skills-design.md 3章）。
+// Premiere Pro のボスの専用の技と、能力のアセットを作る（2026-11-18。docs/app-boss-skills-design.md 3章）。
+// 2026-11-19（docs/app-feedback-v2-design.md 5章）：キーフレーム（新しい技）・再生ヘッドの白い柱・レーザーツールの列ごと削除・能力「リップル削除」。
+// 使わなくなったアセット（消してよい）：Attack_App_PremierePro_Fire・_Thunder・_Dissolve・_IconThrow・Custom_App_PremierePro_IconThrow、
+// Attack_Premiere_IconRain_P1・_P2・_Fire、Custom_Premiere_IconRain_P1・_P2、Attack_Premiere_Playhead_Explosion・_Bolt（消さなくても動く）。
 // 決まりは BossSkillAssets と同じ：無ければ作り、作ったときだけ数値を入れる（手で直した値は残す）。
 // 技の中身（CustomAttack）の数値は、クラスの初期値が第1形態の値。第2形態の違いだけを、作ったときに入れる。
 // 中で使う攻撃データ（爆発・落雷・切る線・火・もや）への参照は、空のときだけ入れ直す。
@@ -12,47 +15,81 @@ public static partial class BossSkillAssets
     const string PremiereBossPrefix = PremiereFolder + "/";
     const string PremiereAppPrefix = PlayerAppFolder + "/";
 
-    /// <summary>第1形態の技の並び：エフェクトアイコンの雨（P1）⇄ 再生ヘッドレーザー（P1）</summary>
+    /// <summary>
+    /// 【仮】キーフレームを使うか。false にすると、エフェクトアイコンの雨に戻る（遊んでみて具合が悪いときの逃げ道。
+    /// docs/app-feedback-v2-design.md 7章の「落とす順」の 14）
+    /// </summary>
+    static readonly bool PremiereUseKeyframe = true;
+
+    /// <summary>第1形態の技の並び（2026-11-19。5-0）：キーフレーム（P1）⇄ 再生ヘッド（P1）</summary>
     public static AttackData[] PremierePhase1() => new[]
     {
-        PremiereRainAttack(1),
+        PremiereUseKeyframe ? PremiereKeyframeAttack(1) : PremiereRainAttack(1),
         PremierePlayheadAttack(1),
     };
 
-    /// <summary>第2形態の技の並び：雨（P2）・再生ヘッド（P2）・レーザーツール・スピードデュレーション</summary>
+    /// <summary>第2形態の技の並び：キーフレーム（P2）・再生ヘッド（P2）・レーザーツール・スピードデュレーション</summary>
     public static AttackData[] PremierePhase2() => new[]
     {
-        PremiereRainAttack(2),
+        PremiereUseKeyframe ? PremiereKeyframeAttack(2) : PremiereRainAttack(2),
         PremierePlayheadAttack(2),
         PremiereRazorAttack(),
         PremiereSpeedAttack(),
     };
 
-    /// <summary>Premiere Pro の能力（エフェクトアイコン投げ）の攻撃データ。種類 Custom、クールタイム 3</summary>
+    // ───────── 5-1 キーフレーム（2026-11-19） ─────────
+
+    static AttackData PremiereKeyframeAttack(int phase)
+    {
+        var custom = GetOrCreateCustom<PremiereKeyframe>(PremiereBossPrefix + $"Custom_Premiere_Keyframe_P{phase}.asset", so =>
+        {
+            if (phase < 2) return;
+            PremiereInt(so, "_points", 5);
+            PremiereInt(so, "_clipCount", 2);
+            PremiereFloat(so, "_placeInterval", 0.06f);
+        });
+        return GetOrCreateAttack(PremiereBossPrefix + $"Attack_Premiere_Keyframe_P{phase}.asset", custom, so =>
+        {
+            PremiereInt(so, "_damage", 1);
+            PremiereVec2(so, "_knockback", new Vector2(6f, 5f));
+            PremiereFloat(so, "_hitStun", 0.25f);
+            PremiereColor(so, "_color", "9A8CF0");
+        });
+    }
+
+    /// <summary>
+    /// Premiere Pro の能力の攻撃データ。2026-11-19（docs/app-feedback-v2-design.md 5-5）：エフェクトアイコン投げ → リップル削除。
+    /// 新しい名前のアセット（Attack_App_PremierePro_RippleDelete）。AppBossSkillsBuilder.SetAppSkill が能力の欄に入れる。
+    /// 能力の名前は SetAppSkill では変わらない（空・（仮）のときだけ）ので、ここで「リップル削除」にする（前の名前のときだけ）
+    /// </summary>
     public static AttackData PremiereSkill()
     {
-        // 効果（3-5 の表）。判定の色は透明にし、絵は PremiereFx が出す
-        AttackData fire = PremiereData(PremiereAppPrefix + "Attack_App_PremierePro_Fire.asset", so =>
-            PremiereArea(so, true, new Vector2(3.5f, 3.5f), false, 0.25f, 0f, 3, 8, new Vector2(6f, 6f), 0.3f, "FF950000"));
-        AttackData thunder = PremiereData(PremiereAppPrefix + "Attack_App_PremierePro_Thunder.asset", so =>
-            PremiereArea(so, false, new Vector2(1.5f, 12f), true, 0.25f, 0f, 3, 8, new Vector2(3f, 6f), 0.3f, "FFD60A00"));
-        AttackData dissolve = PremiereData(PremiereAppPrefix + "Attack_App_PremierePro_Dissolve.asset", so =>
-            PremiereArea(so, false, new Vector2(3f, 3f), false, 0.3f, 1.5f, 1, 3, new Vector2(1f, 2f), 0.1f, "9999FF00"));
-
-        var custom = GetOrCreateCustom<PremiereIconThrow>(PremiereAppPrefix + "Custom_App_PremierePro_IconThrow.asset");
-        PremiereLink(custom, "_fire", fire);
-        PremiereLink(custom, "_thunder", thunder);
-        PremiereLink(custom, "_dissolve", dissolve);
-
-        // 直撃（ダメージ 1・ゲージ +2）。前からある Attack_App_PremierePro（BarGraph の複製）は使わず、新しく作る
-        return GetOrCreateAttack(PremiereAppPrefix + "Attack_App_PremierePro_IconThrow.asset", custom, so =>
+        var custom = GetOrCreateCustom<PremiereRippleDelete>(PremiereAppPrefix + "Custom_App_PremierePro_RippleDelete.asset");
+        AttackData data = GetOrCreateAttack(PremiereAppPrefix + "Attack_App_PremierePro_RippleDelete.asset", custom, so =>
         {
-            PremiereFloat(so, "_cooldown", 3f);
-            PremiereInt(so, "_damage", 1);
-            PremiereInt(so, "_gaugeGain", 2);
-            PremiereVec2(so, "_knockback", new Vector2(3f, 3f));
-            PremiereFloat(so, "_hitStun", 0.15f);
+            PremiereFloat(so, "_cooldown", 3.5f);
+            PremiereInt(so, "_damage", 3);      // 雑魚 3
+            PremiereInt(so, "_gaugeGain", 12);  // ボスのゲージ +12
+            PremiereVec2(so, "_knockback", new Vector2(2f, 2f));
+            PremiereFloat(so, "_hitStun", 0.2f);
         });
+        PremiereRenameSkill("Assets/ScriptableObjects/Skills/Skill_App_PremierePro.asset", "リップル削除", "エフェクトアイコン投げ");
+        return data;
+    }
+
+    /// <summary>能力の名前を入れ替える（今の名前が空・（仮）・oldName のときだけ。手で直した名前は残す）</summary>
+    static void PremiereRenameSkill(string path, string newName, string oldName)
+    {
+        var skill = AssetDatabase.LoadAssetAtPath<SkillDefinition>(path);
+        if (skill == null) return;
+        PlayerTestSceneBuilder.SetProps(skill, so =>
+        {
+            SerializedProperty p = PremiereProp(so, "_displayName");
+            if (p == null) return;
+            string name = p.stringValue;
+            if (string.IsNullOrEmpty(name) || name.EndsWith("（仮）") || name == oldName) p.stringValue = newName;
+        });
+        EditorUtility.SetDirty(skill);
     }
 
     // ───────── 3-1 エフェクトアイコンの雨 ─────────
@@ -89,20 +126,21 @@ public static partial class BossSkillAssets
 
     static AttackData PremierePlayheadAttack(int phase)
     {
-        AttackData explosion = PremiereData(PremiereBossPrefix + "Attack_Premiere_Playhead_Explosion.asset", so =>
-            PremiereArea(so, true, new Vector2(3f, 3f), false, 0.3f, 0f, 1, 0, new Vector2(6f, 5f), 0.25f, "FF950000"));
-        AttackData bolt = PremiereData(PremiereBossPrefix + "Attack_Premiere_Playhead_Bolt.asset", so =>
-            PremiereArea(so, false, new Vector2(1.5f, 12f), true, 0.3f, 0f, 1, 0, new Vector2(6f, 5f), 0.25f, "FFD60A00"));
+        // 2026-11-19（5-2）：マーカーで起きる物は、ディップ トゥ ホワイトの白い柱だけ（幅 1.5、床から天井、0.3秒）。
+        // 名前に Bolt・Fire を入れない（PremiereSkin が雷・炎の絵にしてしまう）
+        AttackData dip = PremiereData(PremiereBossPrefix + "Attack_Premiere_Playhead_Dip.asset", so =>
+            PremiereArea(so, false, new Vector2(1.5f, 12f), true, 0.3f, 0f, 1, 0, new Vector2(6f, 5f), 0.25f, "FFFFFF00"));
 
         var custom = GetOrCreateCustom<PremierePlayhead>(PremiereBossPrefix + $"Custom_Premiere_Playhead_P{phase}.asset", so =>
         {
             if (phase < 2) return;
             PremiereInt(so, "_markerCount", 5);
-            PremiereInt(so, "_fireCount", 3);
             PremiereBool(so, "_roundTrip", true);
         });
-        PremiereLink(custom, "_explosion", explosion);
-        PremiereLink(custom, "_bolt", bolt);
+        PremiereLink(custom, "_dip", dip);
+        // 第2形態はマーカーを1つ足す（円が柱になって、やさしくなった分）。毎回入れる
+        PlayerTestSceneBuilder.SetProps(custom, so => PremiereInt(so, "_extraMarkers", phase >= 2 ? 1 : 0));
+        EditorUtility.SetDirty(custom);
 
         return GetOrCreateAttack(PremiereBossPrefix + $"Attack_Premiere_Playhead_P{phase}.asset", custom);
     }

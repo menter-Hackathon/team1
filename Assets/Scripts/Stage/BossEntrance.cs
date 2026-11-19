@@ -78,6 +78,7 @@ public class BossEntrance : MonoBehaviour
         if (_delay > 0f) yield return new WaitForSeconds(_delay);
 
         Appearing?.Invoke(_boss);
+        GameAudio.BossAppearing(_boss);
         _boss.gameObject.SetActive(true);
         yield return null; // ボスの Start（最初の状態に戻す）が終わるのを待つ
         _boss.SetContactEnabled(false);

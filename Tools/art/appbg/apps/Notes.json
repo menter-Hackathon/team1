@@ -1,0 +1,39 @@
+{
+  "id": "Notes",
+  "desc": "メモ：フォルダ・メモの一覧・罫線のあるうす黄色の紙",
+  "base": "#d3cdb8",
+  "elements": [
+    {"type": "rect", "x": 10, "y": 0, "w": 300, "h": 30, "color": "#bdb8ac"},
+    {"type": "line", "x1": 10, "y1": 30, "x2": 310, "y2": 30, "color": "#aaa598"},
+    {"type": "icon", "name": "list", "x": 154, "y": 24, "size": 5, "color": "#7a7568"},
+    {"type": "icon", "name": "grid", "x": 164, "y": 24, "size": 5, "color": "#7a7568"},
+    {"type": "icon", "name": "pen", "x": 190, "y": 23, "size": 7, "color": "#7a7568"},
+    {"type": "text", "x": 204, "y": 24, "text": "AA", "color": "#7a7568", "scale": 1},
+    {"type": "icon", "name": "check", "x": 218, "y": 23, "size": 7, "color": "#7a7568"},
+    {"type": "icon", "name": "lock", "x": 230, "y": 23, "size": 7, "color": "#7a7568"},
+    {"type": "rect", "x": 10, "y": 31, "w": 42, "h": 149, "color": "#b5b0a3"},
+    {"type": "text", "x": 14, "y": 36, "text": "FOLDERS", "color": "#8e897c", "scale": 1},
+    {"type": "repeat", "count": 5, "dx": 0, "dy": 10, "items": [{"type": "icon", "name": "folder", "x": 14, "y": 45, "size": 5, "color": "#b39a55"}, {"type": "bars", "x": 22, "y": 46, "w": 26, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#888376", "seed": 81, "min": 0.5, "indent": 0}]},
+    {"type": "rrect", "x": 12, "y": 43, "w": 38, "h": 9, "color": "#c9bf96", "r": 2, "alpha": 0.55},
+    {"type": "text", "x": 14, "y": 160, "text": "+ FOLDER", "color": "#8e897c", "scale": 1},
+    {"type": "rect", "x": 52, "y": 31, "w": 50, "h": 149, "color": "#c8c3b6"},
+    {"type": "line", "x1": 52, "y1": 31, "x2": 52, "y2": 180, "color": "#aaa598"},
+    {"type": "line", "x1": 102, "y1": 31, "x2": 102, "y2": 180, "color": "#b9b4a6"},
+    {"type": "rrect", "x": 54, "y": 34, "w": 46, "h": 20, "color": "#d6c88f", "r": 2},
+    {"type": "repeat", "count": 6, "dx": 0, "dy": 22, "items": [{"type": "bars", "x": 57, "y": 38, "w": 38, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#847f72", "seed": 91, "min": 0.6, "indent": 0}, {"type": "bars", "x": 57, "y": 44, "w": 40, "rows": 2, "row_h": 4, "bar_h": 1, "color": "#a8a396", "seed": 95, "min": 0.5, "indent": 0}, {"type": "line", "x1": 56, "y1": 55, "x2": 99, "y2": 55, "color": "#bbb6a8"}]},
+    {"type": "hlines", "x": 103, "y": 46, "w": 207, "h": 124, "step": 10, "color": "#c8c2ac"},
+    {"type": "text", "x": 190, "y": 35, "text": "TODAY 21:04", "color": "#b3ad98", "scale": 1},
+    {"type": "text", "x": 112, "y": 48, "text": "TO DO", "color": "#8f8973", "scale": 2}
+  ],
+  "stage": {
+    "hide_folders": true,
+    "platforms": [
+      {"id": "check1", "x": 88, "y": 127, "w": 50, "h": 10, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 50, "h": 10, "color": "#8e897c", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 48, "h": 8, "color": "#efe9d6", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 46, "h": 1, "color": "#f8f4e6"}, {"type": "circle", "cx": 6, "cy": 5, "r": 2, "color": "#a8975a", "fill": false}, {"type": "rect", "x": 12, "y": 4, "w": 30, "h": 2, "color": "#8f8973"}], "behavior": {"type": "static"}},
+      {"id": "check2", "x": 192, "y": 127, "w": 50, "h": 10, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 50, "h": 10, "color": "#8e897c", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 48, "h": 8, "color": "#efe9d6", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 46, "h": 1, "color": "#f8f4e6"}, {"type": "circle", "cx": 6, "cy": 5, "r": 2, "color": "#a8975a", "fill": false}, {"type": "rect", "x": 12, "y": 4, "w": 30, "h": 2, "color": "#8f8973"}], "behavior": {"type": "static"}},
+      {"id": "sticky", "x": 138, "y": 98, "w": 44, "h": 13, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 44, "h": 13, "color": "#96884e", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 42, "h": 11, "color": "#e3d9a8", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 40, "h": 1, "color": "#efe7c0"}, {"type": "rect", "x": 5, "y": 4, "w": 30, "h": 2, "color": "#96884e"}, {"type": "rect", "x": 5, "y": 8, "w": 20, "h": 2, "color": "#b8ab72"}], "behavior": {"type": "fall", "delay": 0.6, "respawn": 4}},
+      {"id": "listitem", "x": 54, "y": 102, "w": 46, "h": 20, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 46, "h": 20, "color": "#8e897c", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 44, "h": 18, "color": "#e6e1d2", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 42, "h": 1, "color": "#f3efe3"}, {"type": "rect", "x": 4, "y": 4, "w": 30, "h": 2, "color": "#847f72"}, {"type": "rect", "x": 4, "y": 9, "w": 36, "h": 1, "color": "#a8a396"}, {"type": "rect", "x": 4, "y": 13, "w": 24, "h": 1, "color": "#a8a396"}], "behavior": {"type": "static"}},
+      {"id": "check3", "x": 248, "y": 98, "w": 50, "h": 10, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 50, "h": 10, "color": "#8e897c", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 48, "h": 8, "color": "#efe9d6", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 46, "h": 1, "color": "#f8f4e6"}, {"type": "circle", "cx": 6, "cy": 5, "r": 2, "color": "#a8975a", "fill": false}, {"type": "rect", "x": 12, "y": 4, "w": 30, "h": 2, "color": "#8f8973"}], "behavior": {"type": "static"}},
+      {"id": "pin", "x": 150, "y": 150, "w": 27, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 27, "h": 11, "color": "#7d6630", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 25, "h": 9, "color": "#b99a55", "r": 2}, {"type": "rect", "x": 3, "y": 1, "w": 21, "h": 1, "color": "#fff8e266"}, {"type": "icon", "name": "flag", "x": 3, "y": 3, "size": 5, "color": "#fff8e2"}, {"type": "text", "x": 11, "y": 3, "text": "PIN", "color": "#fff8e2", "scale": 1}], "behavior": {"type": "button", "effect": "stun_boss", "cooldown": 15}}
+    ]
+  }
+}

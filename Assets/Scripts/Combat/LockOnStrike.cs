@@ -14,6 +14,13 @@ using UnityEngine;
 ///
 /// 出したあとは自分で進むので、攻撃した人が攻撃を止めても最後まで残る（AreaStrike と同じ）。
 /// 印を付けている間に倒れた・消えた相手には撃たない。
+///
+/// 2026-11-18（スキルの見た目 7-3。担当2）：動き・秒数・本数は今のまま、Zoom らしさを足す。
+/// ・タイルごとに、左下の名札（暗い地に白い棒）と、右上のマイクの印
+/// ・印（緑の枠）に、左下の名札と、右上の赤い斜線の入ったマイク（ミュート）
+/// ・レーザーが当たった所に、赤い「退出」のボタンが「パッ」と出て消える（同じ相手には1本目だけ。2本目からは白い光だけ）
+/// ・雑魚が倒れたら、小さい黒い四角（カメラがオフ）を 0.1秒
+/// ・暗くする面は撃ち始めで消え（今のまま）、3×3 の線は撃ち終わりに、まん中へ集まって消える（0.15秒）
 /// </summary>
 public class LockOnStrike : MonoBehaviour
 {
@@ -34,6 +41,9 @@ public class LockOnStrike : MonoBehaviour
     const float HitWindow = 0.1f;            // 当たり判定を出している時間
     static readonly Color GridColor = new Color(0.05f, 0.05f, 0.06f, 0.85f); // タイルの間（Zoom の黒いすき間）
     static readonly Color DimColor = new Color(0f, 0f, 0f, 0.2f);            // 画面全体を少し暗くする
+    const float GridCollapse = 0.15f;        // 撃ち終わりに、線がまん中へ集まって消える秒数（7-3）
+    const float LeaveTime = 0.2f;            // 「退出」のボタンが出ている秒数（7-3）
+    const float CameraOffTime = 0.1f;        // 雑魚が倒れたときの黒い四角（7-3）
 
     const int DimOrder = 60, GridOrder = 61, MarkOrder = 63, LaserOrder = 64, ImpactOrder = 65;
 
@@ -43,6 +53,9 @@ public class LockOnStrike : MonoBehaviour
     readonly List<Mark> _marks = new List<Mark>();
     Transform _grid;
     readonly List<SpriteRenderer> _gridParts = new List<SpriteRenderer>();
+    readonly List<Vector3> _gridBase = new List<Vector3>();        // 線の元の位置と長さ（集まって消える動き用。x,y＝位置、z＝長さ）
+    readonly List<SpriteRenderer> _tileDeco = new List<SpriteRenderer>(); // タイルの名札・マイク（_gridParts とは別。色を変えない）
+    readonly HashSet<Hurtbox> _leaveShown = new HashSet<Hurtbox>(); // 「退出」のボタンを出した相手
     Vector2 _lastOrigin;
 
     /// <summary>出してから消えるまでの秒数</summary>
@@ -57,6 +70,8 @@ public class LockOnStrike : MonoBehaviour
         public Hurtbox Target;
         public Transform Root;
         public SpriteRenderer[] Sides; // 上・下・左・右
+        public SpriteRenderer Tag;     // 左下の名札（7-3）
+        public SpriteRenderer Mic;     // 右上のミュートのマイク（7-3）
         public float FlashUntil;
     }
 
@@ -192,6 +207,7 @@ public class LockOnStrike : MonoBehaviour
         _grid.position = view.center;
         Sprite sq = PlaceholderSprites.Square;
         _gridParts.Add(AttackRunner.AddVisual(_grid, sq, DimColor, view.size, DimOrder, "Dim"));
+        _gridBase.Add(Vector3.zero);
         // タイルの間の線（外周と、間）
         for (int i = 0; i <= GridTiles; i++)
         {
@@ -203,8 +219,30 @@ public class LockOnStrike : MonoBehaviour
             hl.transform.localPosition = new Vector3(0f, y, 0f);
             _gridParts.Add(v);
             _gridParts.Add(hl);
+            _gridBase.Add(new Vector3(x, 0f, view.height));
+            _gridBase.Add(new Vector3(0f, y, view.width));
         }
-        SetGridAlpha(0f);
+        BuildTileDeco(view);
+        SetGridAlpha(0f, 0f, 0f);
+    }
+
+    /// <summary>タイルごとに、左下の名札（暗い地に白い棒）と、右上のマイクの印（7-3）</summary>
+    void BuildTileDeco(Rect view)
+    {
+        Sprite tag = ZoomArt.NameTag();
+        Sprite mic = ZoomArt.Mic();
+        float tw = view.width / GridTiles, th = view.height / GridTiles;
+        for (int i = 0; i < GridTiles; i++)
+        {
+            for (int j = 0; j < GridTiles; j++)
+            {
+                float x0 = -view.width * 0.5f + tw * i, y0 = -view.height * 0.5f + th * j;
+                var t = RuntimeSprites.Show(_grid, tag, new Vector2(x0 + GridLine + 9f * Pixel, y0 + GridLine + 5f * Pixel), GridOrder, 1f, "NameTag");
+                var m = RuntimeSprites.Show(_grid, mic, new Vector2(x0 + tw - GridLine - 5f * Pixel, y0 + th - GridLine - 5f * Pixel), GridOrder, 1f, "Mic");
+                _tileDeco.Add(t);
+                _tileDeco.Add(m);
+            }
+        }
     }
 
     Mark BuildMark(Hurtbox target)
@@ -217,7 +255,10 @@ public class LockOnStrike : MonoBehaviour
         {
             sides[i] = AttackRunner.AddVisual(root, PlaceholderSprites.Square, _data.LockOnMarkColor, Vector2.one, MarkOrder, "Side");
         }
-        var mark = new Mark { Target = target, Root = root, Sides = sides };
+        // 左下の名札と、右上のミュートのマイク（7-3）
+        var tag = RuntimeSprites.Show(root, ZoomArt.NameTag(), Vector2.zero, MarkOrder + 1, 1f, "NameTag");
+        var mic = RuntimeSprites.Show(root, ZoomArt.MutedMic(), Vector2.zero, MarkOrder + 1, 1f, "Mic");
+        var mark = new Mark { Target = target, Root = root, Sides = sides, Tag = tag, Mic = mic };
         PlaceMark(mark, MarkSnapScale);
         return mark;
     }
@@ -233,6 +274,9 @@ public class LockOnStrike : MonoBehaviour
         SetSide(mark.Sides[1], new Vector2(0f, -hy + t * 0.5f), new Vector2(size.x, t));
         SetSide(mark.Sides[2], new Vector2(-hx + t * 0.5f, 0f), new Vector2(t, size.y));
         SetSide(mark.Sides[3], new Vector2(hx - t * 0.5f, 0f), new Vector2(t, size.y));
+        // 名札は枠の左下（枠の外へ少しはみ出す）、マイクは右上の内側
+        if (mark.Tag != null) mark.Tag.transform.localPosition = new Vector3(-hx + 7f * Pixel, -hy + 1f * Pixel, 0f);
+        if (mark.Mic != null) mark.Mic.transform.localPosition = new Vector3(hx - 5f * Pixel, hy - 5f * Pixel, 0f);
     }
 
     static void SetSide(SpriteRenderer sr, Vector2 localPos, Vector2 size)
@@ -242,13 +286,33 @@ public class LockOnStrike : MonoBehaviour
         sr.transform.localScale = new Vector3(size.x / Mathf.Max(native.x, 0.001f), size.y / Mathf.Max(native.y, 0.001f), 1f);
     }
 
-    void SetGridAlpha(float k)
+    /// <summary>
+    /// タイルの濃さ。dim＝暗くする面、lines＝線と名札・マイク、collapse＝線がまん中へ集まる割合（0＝元の所、1＝まん中）
+    /// </summary>
+    void SetGridAlpha(float dim, float lines, float collapse)
     {
+        float keep = 1f - collapse;
         for (int i = 0; i < _gridParts.Count; i++)
         {
             Color c = i == 0 ? DimColor : GridColor;
-            c.a *= k;
+            c.a *= i == 0 ? dim : lines;
             _gridParts[i].color = c;
+            if (i == 0) continue;
+            // 線：位置と長さを、まん中へ縮める
+            Vector3 b = _gridBase[i];
+            Transform tr = _gridParts[i].transform;
+            tr.localPosition = new Vector3(b.x * keep, b.y * keep, 0f);
+            Vector2 native = _gridParts[i].sprite.bounds.size;
+            bool vertical = i % 2 == 1;
+            float len = Mathf.Max(0.001f, b.z * keep);
+            tr.localScale = vertical
+                ? new Vector3(GridLine / Mathf.Max(native.x, 0.001f), len / Mathf.Max(native.y, 0.001f), 1f)
+                : new Vector3(len / Mathf.Max(native.x, 0.001f), GridLine / Mathf.Max(native.y, 0.001f), 1f);
+        }
+        foreach (var d in _tileDeco)
+        {
+            if (d == null) continue;
+            d.color = new Color(1f, 1f, 1f, lines * (1f - collapse));
         }
     }
 
@@ -259,6 +323,7 @@ public class LockOnStrike : MonoBehaviour
         float start = Time.time;
         float fireAt = start + _data.TelegraphTime;
         float gridOutStart = fireAt;
+        float lastShot = fireAt + Mathf.Max(0, _shots.Count - 1) * _data.RepeatInterval; // 撃ち終わり（7-3：線がまん中へ集まる）
         int next = 0;
         float nextShot = fireAt;
         float end = start + Duration;
@@ -276,11 +341,12 @@ public class LockOnStrike : MonoBehaviour
                 nextShot += _data.RepeatInterval;
             }
 
-            // タイル：すぐ出て、撃ち始めたら消えていく
-            float a = now < gridOutStart
-                ? Mathf.Clamp01((now - start) / GridFadeIn)
-                : 1f - Mathf.Clamp01((now - gridOutStart) / GridFadeOut);
-            SetGridAlpha(a);
+            // タイル：すぐ出る。暗くする面は撃ち始めたら消えていく。線と名札は撃ち終わりに、まん中へ集まって消える（7-3）
+            float fadeIn = Mathf.Clamp01((now - start) / GridFadeIn);
+            float dim = now < gridOutStart ? fadeIn : 1f - Mathf.Clamp01((now - gridOutStart) / GridFadeOut);
+            float collapse = Mathf.Clamp01((now - lastShot) / GridCollapse);
+            float eased = collapse * collapse;
+            SetGridAlpha(dim, fadeIn * (1f - collapse), eased);
             Rect view = ViewRect(); // カメラが動いても画面に付いていく
             _grid.position = view.center;
 
@@ -316,6 +382,10 @@ public class LockOnStrike : MonoBehaviour
             if (m.Target == target) m.FlashUntil = Time.time + MarkFlashTime;
         }
         StartCoroutine(Laser(from, to));
+        // 当たった所に「退出」のボタン（同じ相手には1本目だけ）。雑魚が倒れたら「カメラがオフ」（7-3）
+        bool first = _leaveShown.Add(target);
+        if (first) StartCoroutine(Leave(to + LeaveOffset(b, from)));
+        if (target.Owner is Health) StartCoroutine(CameraOff(target, b));
 
         // 当たり判定：相手の体を少し大きく覆う箱を、短い時間だけ出す（ダメージ・ゲージ・のけぞりは Hitbox に任せる）
         if (_owner == null) return;
@@ -374,5 +444,156 @@ public class LockOnStrike : MonoBehaviour
         }
         Destroy(root.gameObject);
         Destroy(impactGo.gameObject);
+    }
+
+    /// <summary>「退出」のボタンを出す位置のずれ：相手の中心から、レーザーが来た側の上へ（顔をかくさない）</summary>
+    static Vector2 LeaveOffset(Bounds b, Vector2 from)
+    {
+        Vector2 side = from - (Vector2)b.center;
+        float sx = Mathf.Abs(side.x) > 0.01f ? Mathf.Sign(side.x) : 1f;
+        return new Vector2(sx * Mathf.Min(0.35f, b.extents.x * 0.6f), Mathf.Min(0.45f, b.extents.y * 0.7f));
+    }
+
+    /// <summary>赤い「退出」のボタンが「パッ」と出て消える（0.2秒。7-3）</summary>
+    IEnumerator Leave(Vector2 at)
+    {
+        var go = new GameObject("Leave");
+        go.layer = gameObject.layer;
+        go.transform.SetParent(transform, false);
+        go.transform.position = at;
+        var sr = RuntimeSprites.Show(go.transform, ZoomArt.LeaveButton(), Vector2.zero, ImpactOrder + 1, 1f, "Button");
+        float start = Time.time;
+        while (Time.time - start < LeaveTime)
+        {
+            float e = Time.time - start;
+            float t = e / 0.08f;
+            float s = t >= 1f ? 1f : t < 0.6f ? Mathf.Lerp(0f, 1.15f, t / 0.6f) : Mathf.Lerp(1.15f, 1f, (t - 0.6f) / 0.4f);
+            go.transform.localScale = new Vector3(s, s, 1f);
+            float k = e / LeaveTime;
+            sr.color = new Color(1f, 1f, 1f, k < 0.7f ? 1f : 1f - (k - 0.7f) / 0.3f);
+            yield return null;
+        }
+        Destroy(go);
+    }
+
+    /// <summary>雑魚が倒れたら、タイルが閉じる煙の前に、小さい黒い四角（カメラがオフ）を 0.1秒（7-3）</summary>
+    IEnumerator CameraOff(Hurtbox target, Bounds b)
+    {
+        float start = Time.time;
+        while (Time.time - start < HitWindow + 0.1f)
+        {
+            if (!IsAlive(target))
+            {
+                var go = new GameObject("CameraOff");
+                go.layer = gameObject.layer;
+                go.transform.SetParent(transform, false);
+                go.transform.position = b.center;
+                RuntimeSprites.Show(go.transform, ZoomArt.CameraOff(), Vector2.zero, ImpactOrder + 1, 1f, "Off");
+                Destroy(go, CameraOffTime);
+                yield break;
+            }
+            yield return null;
+        }
+    }
+}
+
+/// <summary>【仮】Zoom のギャラリービューの小さい絵（7-3。コードの中のドット絵、1マス＝18ドット）</summary>
+public static class ZoomArt
+{
+    static readonly Color32 White = new Color32(255, 255, 255, 255);
+    static readonly Color32 Plate = new Color32(0x1C, 0x1C, 0x1E, 0xD0);
+    static readonly Color32 Red = new Color32(0xE0, 0x2F, 0x2F, 0xFF);
+    static readonly Color32 Green = new Color32(0x24, 0xD9, 0x59, 0xFF);
+
+    /// <summary>名札（暗い地、8×3ドットの白い棒。12×5）</summary>
+    public static Sprite NameTag() => RuntimeSprites.FromAscii("BDZoom_NameTag", new[]
+    {
+        "PPPPPPPPPPPP",
+        "PWWWWWWWWPPP",
+        "PWWWWWWWWPPP",
+        "PWWWWWWWWPPP",
+        "PPPPPPPPPPPP",
+    }, new Dictionary<char, Color32> { { 'P', Plate }, { 'W', White } });
+
+    /// <summary>マイクの印（4ドット）</summary>
+    public static Sprite Mic() => RuntimeSprites.FromAscii("BDZoom_Mic", new[]
+    {
+        ".W.",
+        ".W.",
+        "W.W",
+        ".W.",
+    }, new Dictionary<char, Color32> { { 'W', new Color32(255, 255, 255, 200) } });
+
+    /// <summary>赤い斜線の入ったマイク（ミュート。6ドット）</summary>
+    public static Sprite MutedMic() => RuntimeSprites.FromAscii("BDZoom_MicMuted", new[]
+    {
+        "..WW.R",
+        "..WWR.",
+        ".W.RW.",
+        "..RW..",
+        ".R.W..",
+        "R.WWW.",
+    }, new Dictionary<char, Color32> { { 'W', White }, { 'R', Red } });
+
+    /// <summary>赤い「退出」のボタン（角の丸い赤い四角、14×8。白い棒）</summary>
+    public static Sprite LeaveButton() => RuntimeSprites.FromAscii("BDZoom_Leave", new[]
+    {
+        ".RRRRRRRRRRRR.",
+        "RRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRR",
+        "RRRWWWWWWWWRRR",
+        "RRRWWWWWWWWRRR",
+        "RRRRRRRRRRRRRR",
+        "RRRRRRRRRRRRRR",
+        ".RRRRRRRRRRRR.",
+    }, new Dictionary<char, Color32> { { 'R', Red }, { 'W', White } });
+
+    /// <summary>カメラがオフ（小さい黒い四角に、灰色のふち。12×9）</summary>
+    public static Sprite CameraOff() => RuntimeSprites.FromAscii("BDZoom_CameraOff", new[]
+    {
+        "GGGGGGGGGGGG",
+        "GKKKKKKKKKKG",
+        "GKKKKKKKKKKG",
+        "GKKKKKKKKKKG",
+        "GKKKKKKKKKKG",
+        "GKKKKKKKKKKG",
+        "GKKKKKKKKKKG",
+        "GKKKKKKKKKKG",
+        "GGGGGGGGGGGG",
+    }, new Dictionary<char, Color32> { { 'G', new Color32(0x3A, 0x3A, 0x3C, 0xFF) }, { 'K', new Color32(0x08, 0x08, 0x0A, 0xFF) } });
+
+    /// <summary>緑の枠のかけら（L の形、4ドット）</summary>
+    public static Sprite FrameBit() => RuntimeSprites.FromAscii("BDZoom_FrameBit", new[]
+    {
+        "GGGG",
+        "GG..",
+        "G...",
+        "G...",
+    }, new Dictionary<char, Color32> { { 'G', Green } });
+}
+
+/// <summary>
+/// 【仮】Zoom の能力（ギャラリービュー）のスキン（7-3）。当たった絵は LockOnStrike が出す「退出」のボタンなので、
+/// ここはかけら（緑の枠のかけら）だけを出して true を返す（Generic の当たった絵が重ならないように）
+/// </summary>
+public class ZoomGallerySkin : AppSkin
+{
+    public override SkinId Id => SkinId.Zoom;
+
+    public override bool Hit(HitInfo info)
+    {
+        try
+        {
+            int n = info.Strength == HitStrength.Small ? 1 : info.Strength == HitStrength.Light ? 3 : info.Strength == HitStrength.Finisher ? 12 : 6;
+            Sprite bit = ZoomArt.FrameBit();
+            Vector2 dir = info.Direction.sqrMagnitude > 0.0001f ? info.Direction : Vector2.up;
+            BrowserDevFx.Burst(info.Point, dir, n, i => bit, i => Color.white, unscaled: true);
+            return true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"ZoomGallerySkin.Hit：{e}");
+            return false;
+        }
     }
 }

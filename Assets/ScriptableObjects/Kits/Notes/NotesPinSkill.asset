@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0009f37cbace944d89f564f487ff8e70, type: 3}
+  m_Name: NotesPinSkill
+  m_EditorClassIdentifier: 
+  _pin: {fileID: 11400000, guid: c07a99074c5ee4f0495e209897e45c2a, type: 2}
+  _stun: 2
+  _art: notes.pin

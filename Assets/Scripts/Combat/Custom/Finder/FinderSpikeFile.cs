@@ -20,6 +20,7 @@ public class FinderSpikeFile : MonoBehaviour
     float _flyEnd;
     float _spawnedAt;
     readonly Collider2D[] _overlap = new Collider2D[2];
+    FinderLine _tail; // 飛んでいる間の、タグの色の点線の尾（2026-11-18。11-2）
 
     /// <summary>色（0＝赤、1＝青）</summary>
     public int Tag { get; private set; }
@@ -47,6 +48,7 @@ public class FinderSpikeFile : MonoBehaviour
         AttackRunner.AddVisual(s._visual, FinderArt.SpikeFile(tag), Color.white, Vector2.one, 22, "Sprite");
         s._visual.localScale = Vector3.zero;
         s._hitbox = owner.AddHitbox(go, data, box); // 飛ぶまでは出さない
+        s._hitbox.SetErrorKind(tag == 1 ? "SmartFolder_Blue" : "SmartFolder_Red"); // 当たった絵：その色のタグが貼られて落ちる（FinderSkin）
         s._hitbox.Hit += s.OnHit;
         return s;
     }
@@ -92,6 +94,8 @@ public class FinderSpikeFile : MonoBehaviour
         _flyEnd = Time.time + maxTime;
         IsFlying = true;
         _hitbox.Activate();
+        _tail = FinderLine.Create(transform, FinderArt.TagColor(Tag), true, 1, 21, "Tail");
+        _tail.Set(transform.position, transform.position);
     }
 
     void Update()
@@ -109,6 +113,7 @@ public class FinderSpikeFile : MonoBehaviour
         }
         Vector2 next = (Vector2)transform.position + _velocity * Time.deltaTime;
         transform.position = next;
+        if (_tail != null) _tail.Set(next - _velocity.normalized * 1.4f, next - _velocity.normalized * 0.45f);
 
         // 壁・床に当たったら消える
         var filter = new ContactFilter2D { useTriggers = false, useLayerMask = true };

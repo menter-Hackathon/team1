@@ -191,6 +191,7 @@ public class ShieldWindow : MonoBehaviour
         _flashUntil = Time.time + _hitFlashTime;
         SetBar(1f - (float)_hits / _maxHits);
         Blocked?.Invoke(projectile);
+        GameAudio.Event("shield_block");
         if (_hits >= _maxHits) Break();
         return true;
     }
@@ -206,6 +207,7 @@ public class ShieldWindow : MonoBehaviour
         ApplyColors(0f, _ghostAlpha);
         SetBar(0f);
         Broken?.Invoke();
+        GameAudio.Event("shield_break");
     }
 
     void Restore()
@@ -217,6 +219,7 @@ public class ShieldWindow : MonoBehaviour
         ApplyColors(0f, 1f);
         SetBar(1f);
         Restored?.Invoke();
+        GameAudio.Event("shield_restore");
     }
 
     /// <summary>最初の状態に戻す（テストシーンのやり直し用）</summary>

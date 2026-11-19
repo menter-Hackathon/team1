@@ -46,6 +46,11 @@ public class FinderSpotlightEffect : CustomEffect
     Transform _circle;
     SpriteRenderer _circleFill, _circleRing;
     int _circleDots;
+    // 2026-11-18：スキルの見た目（docs/app-skill-visuals-design.md 11-1）【仮】
+    bool _hitThisShot;                   // 今の回の光の帯が当たったか
+    float _noResultsUntil = float.NegativeInfinity; // 外れたとき、検索バーの字を No Results にする時刻まで
+    const float NoResultsTime = 0.4f;
+    const float CloseTime = 0.1f;        // 引っ込むとき、左右からまん中へ閉じる時間
 
     /// <summary>今撃っている回（0 から）。テスト用</summary>
     public int ShotIndex { get; private set; }
@@ -224,14 +229,30 @@ public class FinderSpotlightEffect : CustomEffect
         beam.rotation = Quaternion.Euler(0f, 0f, angle);
         var box = AddTrigger<BoxCollider2D>(beam.gameObject);
         box.size = new Vector2(length, _attack.BeamWidth);
-        _owner.AddHitbox(beam.gameObject, _data, box).Activate();
+        Hitbox beamHit = _owner.AddHitbox(beam.gameObject, _data, box);
+        beamHit.Activate();
         Destroy(beam.gameObject, _attack.HitWindow);
 
         var circle = FinderArt.Child(transform, "CircleHit", to);
         var col = AddTrigger<CircleCollider2D>(circle.gameObject);
         col.radius = _attack.CircleDiameter * 0.5f;
-        _owner.AddHitbox(circle.gameObject, _data, col).Activate();
+        Hitbox circleHit = _owner.AddHitbox(circle.gameObject, _data, col);
+        circleHit.Activate();
         Destroy(circle.gameObject, _attack.HitWindow);
+
+        // 当たったかを見て、外れたら検索バーに No Results（11-1）。当たった絵は FinderSkin.Error（種類 Spotlight）
+        _hitThisShot = false;
+        beamHit.Hit += OnBeamHit;
+        circleHit.Hit += OnBeamHit;
+        StartCoroutine(CheckMiss(_attack.HitWindow + 0.02f));
+    }
+
+    void OnBeamHit(IDamageable target, DamageInfo info) => _hitThisShot = true;
+
+    IEnumerator CheckMiss(float wait)
+    {
+        yield return new WaitForSeconds(wait);
+        if (!_hitThisShot) _noResultsUntil = Time.time + NoResultsTime;
     }
 
     static T AddTrigger<T>(GameObject go) where T : Collider2D
@@ -253,6 +274,15 @@ public class FinderSpotlightEffect : CustomEffect
         root.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
         var outer = AttackRunner.AddVisual(root, PlaceholderSprites.Square, FinderArt.BeamOuter, new Vector2(length, BeamOuterDots * FinderArt.Dot), BeamOrder, "Outer");
         var core = AttackRunner.AddVisual(root, PlaceholderSprites.Square, Color.white, new Vector2(length, BeamCoreDots * FinderArt.Dot), BeamOrder + 1, "Core");
+        // 帯の両側に、うすい黄色の線を 1本ずつ（判定の外。3割）【仮】2026-11-18（11-1）
+        float side = _attack.BeamWidth * 0.5f + 3f * FinderArt.Dot;
+        var sideA = AttackRunner.AddVisual(root, PlaceholderSprites.Square, new Color(1f, 0.92f, 0.45f, 0.3f), new Vector2(length, FinderArt.Dot), BeamOrder, "SideA");
+        var sideB = AttackRunner.AddVisual(root, PlaceholderSprites.Square, new Color(1f, 0.92f, 0.45f, 0.3f), new Vector2(length, FinderArt.Dot), BeamOrder, "SideB");
+        sideA.transform.localPosition = new Vector3(0f, side, 0f);
+        sideB.transform.localPosition = new Vector3(0f, -side, 0f);
+        // 帯の根元（検索バーの虫めがね）が、白く 2倍にふくらむ
+        Transform glowRoot = FinderArt.Child(transform, "BeamRoot", from);
+        var glow = RuntimeSprites.Show(glowRoot, FinderArt.Disc(14), Vector2.zero, FlashOrder, 1f, "Glow");
 
         Vector2 floor = to - new Vector2(0f, _attack.CircleDiameter * 0.5f);
         Transform flashRoot = FinderArt.Child(transform, "FloorFlash", floor);
@@ -267,10 +297,15 @@ public class FinderSpotlightEffect : CustomEffect
             outer.transform.localScale = new Vector3(outerScale.x, outerScale.y * k, 1f);
             core.transform.localScale = new Vector3(coreScale.x, coreScale.y * k, 1f);
             flash.color = new Color(1f, 1f, 1f, 1f - Mathf.Clamp01((Time.time - start) / FloorFlashTime));
+            sideA.color = sideB.color = new Color(1f, 0.92f, 0.45f, 0.3f * k);
+            float g = Mathf.Clamp01((Time.time - start) / 0.15f);
+            glowRoot.localScale = Vector3.one * Mathf.Lerp(1f, 2f, 1f - (1f - g) * (1f - g));
+            glow.color = new Color(1f, 1f, 1f, 1f - g);
             yield return null;
         }
         Destroy(root.gameObject);
         Destroy(flashRoot.gameObject);
+        Destroy(glowRoot.gameObject);
     }
 
     // ───────── 検索バー（ゲームの世界の位置） ─────────
@@ -291,11 +326,12 @@ public class FinderSpotlightEffect : CustomEffect
         return new Vector2(bar.center.x, bar.yMin);
     }
 
-    /// <summary>出る・引っ込む動き（上へずらす距離と、濃さ）</summary>
-    void BarMotion(out float slide, out float alpha)
+    /// <summary>出る・引っ込む動き（上へずらす距離と、濃さ。width は横の幅の割合＝左右からまん中へ閉じる）</summary>
+    void BarMotion(out float slide, out float alpha, out float width)
     {
         slide = 0f;
         alpha = 1f;
+        width = 1f;
         if (_step == Step.Appear)
         {
             float k = _attack.AppearTime > 0f ? Mathf.Clamp01((Time.time - _stepStart) / _attack.AppearTime) : 1f;
@@ -305,9 +341,12 @@ public class FinderSpotlightEffect : CustomEffect
         }
         else if (_step == Step.Retract)
         {
-            float k = _attack.RetractTime > 0f ? Mathf.Clamp01((Time.time - _stepStart) / _attack.RetractTime) : 1f;
-            slide = k * k * SlideCells;
-            alpha = 1f - k;
+            // 消えるとき：検索バーが、左右からまん中へ閉じる（11-1。2026-11-18）
+            // 引っ込む時間の最後の 0.1秒で閉じる（それまでは、外れたときの No Results を見せる）
+            float close = Mathf.Max(0.01f, Mathf.Min(CloseTime, _attack.RetractTime));
+            float k = Mathf.Clamp01((Time.time - _stepStart - (_attack.RetractTime - close)) / close);
+            width = 1f - k * k;
+            alpha = width > 0.02f ? 1f : 0f;
         }
     }
 
@@ -338,9 +377,14 @@ public class FinderSpotlightEffect : CustomEffect
 
     void DrawBar()
     {
-        BarMotion(out float slide, out float alpha);
+        BarMotion(out float slide, out float alpha, out float widthK);
         if (alpha <= 0f) return;
         Rect w = BarRect(slide);
+        if (widthK < 1f)
+        {
+            float cx = w.center.x;
+            w = new Rect(cx - w.width * widthK * 0.5f, w.y, w.width * widthK, w.height);
+        }
         Vector2? a = ScreenUi.WorldToGui(new Vector3(w.xMin, w.yMax, 0f));
         Vector2? b = ScreenUi.WorldToGui(new Vector3(w.xMax, w.yMin, 0f));
         if (!a.HasValue || !b.HasValue) return;
@@ -363,26 +407,38 @@ public class FinderSpotlightEffect : CustomEffect
         var icon = new Rect(Mathf.Round(r.x + cell * 0.35f), Mathf.Round(r.center.y - m * 0.5f), m, m);
         PixelGui.DrawSprite(icon, FinderArt.Magnifier, new Color(1f, 1f, 1f, alpha));
 
-        // 打った文字と、点滅するカーソル
-        string text = TypedText();
+        if (widthK < 0.6f) return; // 閉じる途中は、地とふちだけ
+
+        // 打った文字と、点滅するカーソル。外れたときは、灰色の No Results（11-1。2026-11-18）
+        bool noResults = Time.time < _noResultsUntil;
+        string text = noResults ? "No Results" : TypedText();
         float tx = Mathf.Round(icon.xMax + cell * 0.3f);
         var textRect = new Rect(tx, Mathf.Round(r.center.y - TextSize * 0.5f), Mathf.Max(0f, r.xMax - tx - 4f), TextSize);
-        PixelGui.TextEn(textRect, text, TextSize, new Color(1f, 1f, 1f, alpha));
+        PixelGui.TextEn(textRect, text, TextSize, noResults ? new Color(0.56f, 0.56f, 0.58f, alpha) : new Color(1f, 1f, 1f, alpha));
         bool typing = _step == Step.Track && ShotIndex == 0;
-        if (typing || Mathf.FloorToInt(Time.time / 0.4f) % 2 == 0)
+        if (!noResults && (typing || Mathf.FloorToInt(Time.time / 0.4f) % 2 == 0))
         {
             float width = string.IsNullOrEmpty(text) ? 0f : PixelGui.Measure(text, PixelGui.Style(true, TextSize));
             PixelGui.Fill(new Rect(Mathf.Round(tx + width + 2f), Mathf.Round(r.center.y - TextSize * 0.5f - 1f), 2f, TextSize + 2f), new Color(1f, 1f, 1f, alpha));
         }
 
-        // 結果の行（プレイヤーの小さい絵）。いちばん新しい行を選ばれた色にする
+        // 結果の行（プレイヤーの小さい絵）。追っている間は、まだ選ばれていない行を1行足す。
+        // 固定（赤）になった瞬間、その行が青で選ばれ、右の端に ⏎ の印（11-1。2026-11-18）
         float rowH = Mathf.Round(cell * RowHeightCells);
-        for (int i = 0; i < _rows; i++)
+        bool pending = _step == Step.Track;
+        int shown = _rows + (pending ? 1 : 0);
+        for (int i = 0; i < shown; i++)
         {
             var row = new Rect(r.x, r.yMax + RowGap + i * (rowH + RowGap), r.width, rowH);
-            Color fill = i == _rows - 1 ? FinderArt.RowSelect : FinderArt.BarFill;
+            bool selected = !pending && i == _rows - 1;
+            Color fill = selected ? FinderArt.RowSelect : FinderArt.BarFill;
             RoundedBox(row, Fade(fill, 0.92f * alpha), Fade(FinderArt.BarEdge, alpha));
             DrawPlayerIcon(new Rect(row.x + cell * 0.35f, row.y + 3f, rowH - 6f, rowH - 6f), alpha);
+            if (selected)
+            {
+                float rm = Mathf.Round(6f * dot * 1.5f);
+                PixelGui.DrawSprite(new Rect(Mathf.Round(row.xMax - rm - cell * 0.35f), Mathf.Round(row.center.y - rm * 0.5f), rm, rm), FinderSkinArt.Return6, new Color(1f, 1f, 1f, alpha));
+            }
         }
     }
 

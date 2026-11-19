@@ -1,0 +1,47 @@
+{
+  "id": "Keynote",
+  "desc": "スライドの一覧と、舞台のような暗い灰色の台に大きなスライド。右に書式の欄",
+  "base": "#5b5f69",
+  "elements": [
+    {"type": "rect", "x": 0, "y": 0, "w": 320, "h": 30, "color": "#7e8189"},
+    {"type": "line", "x1": 10, "y1": 30, "x2": 310, "y2": 30, "color": "#6c6f77"},
+    {"type": "icon", "name": "plus", "x": 156, "y": 6, "size": 7, "color": "#c9cbd0"},
+    {"type": "icon", "name": "play", "x": 172, "y": 6, "size": 7, "color": "#c9cbd0"},
+    {"type": "icon", "name": "grid", "x": 188, "y": 6, "size": 7, "color": "#c9cbd0"},
+    {"type": "icon", "name": "brush", "x": 220, "y": 6, "size": 7, "color": "#c9cbd0"},
+    {"type": "text", "x": 152, "y": 22, "text": "TABLE", "color": "#b9bbc1", "scale": 1},
+    {"type": "text", "x": 178, "y": 22, "text": "CHART", "color": "#b9bbc1", "scale": 1},
+    {"type": "text", "x": 204, "y": 22, "text": "TEXT", "color": "#b9bbc1", "scale": 1},
+    {"type": "text", "x": 224, "y": 22, "text": "SHAPE", "color": "#b9bbc1", "scale": 1},
+    {"type": "text", "x": 60, "y": 22, "text": "VIEW", "color": "#b9bbc1", "scale": 1},
+    {"type": "text", "x": 82, "y": 22, "text": "ZOOM", "color": "#b9bbc1", "scale": 1},
+    {"type": "rect", "x": 10, "y": 31, "w": 46, "h": 139, "color": "#696d76"},
+    {"type": "line", "x1": 56, "y1": 31, "x2": 56, "y2": 170, "color": "#767a83"},
+    {"type": "repeat", "count": 5, "dx": 0, "dy": 27, "items": [{"type": "gradient", "x": 20, "y": 36, "w": 32, "h": 20, "c1": "#858c9e", "c2": "#72798a", "dir": "v", "steps": 3}, {"type": "bars", "x": 24, "y": 43, "w": 20, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#acb3c2", "seed": 201, "min": 0.6, "indent": 0}, {"type": "bars", "x": 24, "y": 48, "w": 14, "rows": 1, "row_h": 7, "bar_h": 1, "color": "#979daf", "seed": 205, "min": 0.6, "indent": 0}]},
+    {"type": "text", "x": 13, "y": 37, "text": "1", "color": "#a2a5ad", "scale": 1},
+    {"type": "text", "x": 13, "y": 64, "text": "2", "color": "#a2a5ad", "scale": 1},
+    {"type": "text", "x": 13, "y": 91, "text": "3", "color": "#a2a5ad", "scale": 1},
+    {"type": "text", "x": 13, "y": 118, "text": "4", "color": "#a2a5ad", "scale": 1},
+    {"type": "text", "x": 13, "y": 145, "text": "5", "color": "#a2a5ad", "scale": 1},
+    {"type": "frame", "x": 19, "y": 35, "w": 34, "h": 22, "color": "#7ba7e2", "width": 1},
+    {"type": "rect", "x": 70, "y": 46, "w": 180, "h": 108, "color": "#52565f"},
+    {"type": "gradient", "x": 68, "y": 44, "w": 180, "h": 108, "c1": "#787e92", "c2": "#686e80", "dir": "v", "steps": 6},
+    {"type": "rect", "x": 260, "y": 31, "w": 50, "h": 139, "color": "#696d76"},
+    {"type": "line", "x1": 260, "y1": 31, "x2": 260, "y2": 170, "color": "#767a83"},
+    {"type": "text", "x": 264, "y": 36, "text": "FORMAT", "color": "#b9bbc1", "scale": 1},
+    {"type": "line", "x1": 264, "y1": 44, "x2": 306, "y2": 44, "color": "#7ba7e2"},
+    {"type": "repeat", "count": 3, "dx": 15, "dy": 0, "items": [{"type": "rrect", "x": 264, "y": 49, "w": 12, "h": 9, "color": "#7b7f8a", "r": 1}]},
+    {"type": "repeat", "count": 6, "dx": 0, "dy": 16, "items": [{"type": "bars", "x": 264, "y": 66, "w": 22, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#9397a0", "seed": 221, "min": 0.6, "indent": 0}, {"type": "rrect", "x": 290, "y": 64, "w": 16, "h": 6, "color": "#7b7f8a", "r": 2}]}
+  ],
+  "stage": {
+    "hide_folders": true,
+    "platforms": [
+      {"id": "textbox1", "x": 86, "y": 127, "w": 50, "h": 12, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 50, "h": 12, "color": "#3b3f4a", "r": 1}, {"type": "rrect", "x": 1, "y": 1, "w": 48, "h": 10, "color": "#a4abbf", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 46, "h": 1, "color": "#bcc2d2"}, {"type": "rect", "x": 0, "y": 0, "w": 2, "h": 2, "color": "#6f9fe0"}, {"type": "rect", "x": 48, "y": 0, "w": 2, "h": 2, "color": "#6f9fe0"}, {"type": "rect", "x": 0, "y": 10, "w": 2, "h": 2, "color": "#6f9fe0"}, {"type": "rect", "x": 48, "y": 10, "w": 2, "h": 2, "color": "#6f9fe0"}, {"type": "rect", "x": 6, "y": 5, "w": 34, "h": 2, "color": "#e0e4ee"}], "behavior": {"type": "static"}},
+      {"id": "textbox2", "x": 192, "y": 127, "w": 50, "h": 12, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 50, "h": 12, "color": "#3b3f4a", "r": 1}, {"type": "rrect", "x": 1, "y": 1, "w": 48, "h": 10, "color": "#a4abbf", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 46, "h": 1, "color": "#bcc2d2"}, {"type": "rect", "x": 0, "y": 0, "w": 2, "h": 2, "color": "#6f9fe0"}, {"type": "rect", "x": 48, "y": 0, "w": 2, "h": 2, "color": "#6f9fe0"}, {"type": "rect", "x": 0, "y": 10, "w": 2, "h": 2, "color": "#6f9fe0"}, {"type": "rect", "x": 48, "y": 10, "w": 2, "h": 2, "color": "#6f9fe0"}, {"type": "rect", "x": 6, "y": 5, "w": 34, "h": 2, "color": "#e0e4ee"}], "behavior": {"type": "static"}},
+      {"id": "titlebox", "x": 92, "y": 97, "w": 66, "h": 12, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 66, "h": 12, "color": "#3b3f4a", "r": 1}, {"type": "rrect", "x": 1, "y": 1, "w": 64, "h": 10, "color": "#a4abbf", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 62, "h": 1, "color": "#bcc2d2"}, {"type": "text", "x": 5, "y": 4, "text": "ONE MORE THING", "color": "#3f4452", "scale": 1}], "behavior": {"type": "move", "dx": 46, "dy": 0, "period": 7, "offset": 0}},
+      {"id": "thumb4", "x": 20, "y": 117, "w": 32, "h": 20, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 32, "h": 20, "color": "#6f9fe0", "r": 1}, {"type": "rrect", "x": 1, "y": 1, "w": 30, "h": 18, "color": "#9aa2b8", "r": 1}, {"type": "text", "x": 3, "y": 3, "text": "4", "color": "#e0e4ee", "scale": 1}, {"type": "rect", "x": 9, "y": 5, "w": 16, "h": 2, "color": "#e0e4ee"}, {"type": "rect", "x": 9, "y": 11, "w": 12, "h": 1, "color": "#c9cedb"}], "behavior": {"type": "static"}},
+      {"id": "format", "x": 264, "y": 98, "w": 42, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 42, "h": 11, "color": "#3b3f4a", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 40, "h": 9, "color": "#9a9eaa", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 38, "h": 1, "color": "#b4b8c2"}, {"type": "text", "x": 4, "y": 3, "text": "STYLE", "color": "#3f4452", "scale": 1}, {"type": "rrect", "x": 28, "y": 3, "w": 10, "h": 5, "color": "#6f9fe0", "r": 2}], "behavior": {"type": "static"}},
+      {"id": "play", "x": 146, "y": 150, "w": 31, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 31, "h": 11, "color": "#34588f", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 29, "h": 9, "color": "#6f9fe0", "r": 2}, {"type": "rect", "x": 3, "y": 1, "w": 25, "h": 1, "color": "#f2f7ff66"}, {"type": "icon", "name": "play", "x": 3, "y": 3, "size": 5, "color": "#f2f7ff"}, {"type": "text", "x": 11, "y": 3, "text": "PLAY", "color": "#f2f7ff", "scale": 1}], "behavior": {"type": "button", "effect": "stun_boss", "cooldown": 15}}
+    ]
+  }
+}

@@ -174,6 +174,29 @@ public class TerminalForkEffect : CustomEffect
         }
         _firstShotAt = Time.time + _cfg.FirstShotDelay;
         _totalShots = _ghosts.Count * Mathf.Max(1, _cfg.Rounds);
+        SplitImages();
+    }
+
+    /// <summary>
+    /// 分身が出る瞬間、ボスの絵が横に「割れる」（2026-11-18：スキルの見た目 13-2）：
+    /// うすい緑の像が、ボスの体から左右へ分かれて、分身の位置へ飛ぶ（0.15秒。近い分身から順に）
+    /// </summary>
+    void SplitImages()
+    {
+        if (_owner == null) return;
+        Vector2 from = _owner.TryGetComponent(out BossController boss) ? (Vector2)boss.BodyBounds.center : _owner.OriginPoint;
+        const float travel = 0.15f;
+        for (int i = 0; i < _points.Count; i++)
+        {
+            Vector2 to = _points[i];
+            float delay = Mathf.Abs(to.x - from.x) * 0.006f;
+            // 1段目：左右へ 2つに分かれる（すぐ）。2段目：分身の位置へ
+            Vector2 mid = new Vector2(from.x + Mathf.Sign(to.x - from.x) * 0.9f, from.y);
+            FxAnim.Sprite(TerminalArt.GhostWindow, from, 31, 0.07f, TerminalArt.WithAlpha(TerminalArt.Green, 0.55f), 1.65f, "ForkSplitA")
+                .Velocity((mid - from) / 0.07f).FadeFrom(0.9f);
+            FxAnim.Sprite(TerminalArt.GhostWindow, mid, 31, travel, TerminalArt.WithAlpha(TerminalArt.Green, 0.45f), 1.65f, "ForkSplitB")
+                .Velocity((to - mid) / travel).Grow(1f / 1.65f).Delay(0.06f + delay).FadeFrom(0.8f);
+        }
     }
 
     /// <summary>k 発目を撃つ（左の分身から順に。消された分身の番は飛ばす）</summary>

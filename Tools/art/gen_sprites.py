@@ -75,6 +75,26 @@ CODE_PURP = C("c586c0")
 CODE_ERR = C("f14c4c")
 CODE_STATUS = C("007acc")
 GOLD = C("ffd23f")
+# Mac の部品の色（2026-11-19 docs/mac-look-design.md 1-1。Assets/Scripts/Visual/Skins/MacUi.cs と同じ値）【仮】
+MAC_EDGE = C("aeaeb2")    # ふち（明るい）
+MAC_BG = C("f2f2f7")      # ウィンドウの地（明るい）
+MAC_TITLE = C("e5e5ea")   # タイトルバー（明るい）
+MAC_LINE = C("c7c7cc")    # タイトルバーの下の線（明るい）
+MAC_SUB = C("8e8e93")     # うすい字・字の代わりの棒
+MAC_INK = C("1c1c1e")     # 字（明るい）
+MAC_RED = C("ff453a")     # 敵のふち・エラー
+MAC_BLUE = C("0a84ff")    # 既定のボタン
+MAC_D_BG = C("1e1e1e")    # ウィンドウの地（暗い）
+MAC_D_TITLE = C("3a3a3c")  # タイトルバー（暗い）
+MAC_D_EDGE = C("5a5a5e")  # ふち（暗い）
+MAC_D_LINE = C("000000", 128)  # タイトルバーの下の線（暗い。黒の5割）
+LIGHT_R = C("ff5f57")     # 信号機
+LIGHT_Y = C("febc2e")
+LIGHT_G = C("28c840")
+LIGHT_OFF = C("c7c7cc")
+FOLDER_BLUE = C("5ab0f0")  # Mac の青いフォルダ（FinderArt.SmartFolder の色）
+FOLDER_SHADE = C("2f7fc4")
+FOLDER_SHINE = C("8fcbf7")
 
 
 # ───────── 道具 ─────────
@@ -162,6 +182,70 @@ def outline_alpha(im, c=K):
                     out.putpixel((x, y), c)
                     break
     return out
+
+
+# ───────── Mac の部品（2026-11-19 docs/mac-look-design.md 1-2〜1-4。MacUi.cs と同じ形）【仮】 ─────────
+
+def in_round(x, y, w, h, r):
+    """角を r 段けずった四角の中か（MacUi.InRound と同じ）"""
+    if x < 0 or y < 0 or x >= w or y >= h:
+        return False
+    return min(x, w - 1 - x) + min(y, h - 1 - y) >= r
+
+
+def blend(im, x, y, c):
+    """半とうめいの色を重ねる"""
+    if 0 <= x < im.width and 0 <= y < im.height and c is not None:
+        dot = new(1, 1, c)
+        base = im.crop((x, y, x + 1, y + 1))
+        base.alpha_composite(dot)
+        im.putpixel((x, y), base.getpixel((0, 0)))
+
+
+def round_rect(im, x0, y0, w, h, r, c):
+    """角を r 段けずった四角を塗る（左上 x0, y0、幅 w、高さ h）"""
+    for y in range(h):
+        for x in range(w):
+            if in_round(x, y, w, h, r):
+                put(im, x0 + x, y0 + y, c)
+
+
+def stamp_lights(im, x, y, red_only=False):
+    """信号機（3×3 の丸 3つ。角の 4ドットは 5割すかす）。x は左の丸の左の端、y は丸の上の端"""
+    cols = (LIGHT_R, LIGHT_OFF if red_only else LIGHT_Y, LIGHT_OFF if red_only else LIGHT_G)
+    for i, c in enumerate(cols):
+        half = (c[0], c[1], c[2], c[3] // 2)
+        for j in range(3):
+            for k in range(3):
+                blend(im, x + i * 4 + k, y + j, c if (j == 1 or k == 1) else half)
+
+
+def mac_window(w, h, dark=False, edge=None, title_bar=True, red_only=False):
+    """Mac のウィンドウ（角は丸く、ふち 1ドット、タイトルバー 7ドット、左上に信号機、題名の棒はまん中、右上は空）。
+    MacUi.WindowSprite と同じ並び。ふちと信号機を描いた絵と、タイトルバーの高さを返す"""
+    r = 3 if w >= 80 else 2
+    th = 7 if h >= 20 else 5
+    e = edge or (MAC_D_EDGE if dark else MAC_EDGE)
+    bg = MAC_D_BG if dark else MAC_BG
+    title = MAC_D_TITLE if dark else MAC_TITLE
+    line = MAC_D_LINE if dark else MAC_LINE
+    im = new(w, h)
+    round_rect(im, 0, 0, w, h, r, e)
+    round_rect(im, 1, 1, w - 2, h - 2, max(0, r - 1), bg)
+    for y in range(1, th + 2):
+        for x in range(1, w - 1):
+            if not in_round(x, y, w, h, r) or im.getpixel((x, y)) == e:
+                continue
+            put(im, x, y, title)
+            if y == th + 1:
+                blend(im, x, y, line)
+    stamp_lights(im, 3, 1 + (th - 3) // 2, red_only)
+    if title_bar:
+        bw = max(3, int(round(w * 0.3)))
+        bx = (w - bw) // 2
+        if bx >= 16:  # 信号機と重ならないときだけ
+            rect(im, bx, 1 + (th - 2) // 2, bx + bw - 1, 1 + (th - 2) // 2 + 1, MAC_SUB)
+    return im, th
 
 
 # ───────── 背景（デザイン担当の壁紙から、下の道路を消したもの） ─────────
@@ -289,7 +373,13 @@ def make_terrain():
         hline(wl, 4, 13, y, C("4a4a4a"))
     save(wl, "Stage/Tile_Wall.png")
 
-    # すり抜け床（フォルダ）：左はタブ、まん中は横に並べる
+    make_platform_folder()
+
+
+def make_platform_folder():
+    """すり抜け床（フォルダ。24×6）：左はタブ、まん中は横に並べる。
+    2026-11-19：Mac の青いフォルダの色にした（docs/mac-look-design.md 28。クリーム色は Windows の色）。
+    3色（タブ・体・影）は ThemeRecolor が探して、アプリの色に塗り替える（色を変えたら ThemeRecolor も変える）"""
     rows = [
         ".KKKKKK.................",
         "KTTTTTTKKKKKKKKKKKKKKKK.",
@@ -298,8 +388,8 @@ def make_terrain():
         "KOOOOOOOOOOOOOOOOOOOOOOK",
         ".KKKKKKKKKKKKKKKKKKKKKK.",
     ]
-    # タブ（T）は、アプリの色で別の色に塗り替えられるように、体（Y）とわずかに違う色にしておく
-    save(ascii_art(rows, {"K": K, "Y": CREAM, "O": OLIVE, "T": C("f6f29a")}), "Stage/Platform_Folder.png")
+    # タブ（T）は、アプリの色で別の色に塗り替えられるように、体（Y）・影（O）と違う色にしておく
+    save(ascii_art(rows, {"K": K, "Y": FOLDER_BLUE, "O": FOLDER_SHADE, "T": FOLDER_SHINE}), "Stage/Platform_Folder.png")
 
 
 # ───────── ウィンドウ ─────────
@@ -355,61 +445,9 @@ def make_windows():
     save(cur, "Attacks/Fx_Cursor.png")
 
 
-def window_base(w, h, title=None, frame=4, close=True):
-    """小さめのウィンドウ（ポップアップ・エラー）。title はタイトルバーの色"""
-    im = new(w, h, WDC)
-    cols = (W51, W79, WHITE, WHITE)[:frame] if frame <= 4 else (W51, W51, W79, W79, WHITE, WHITE)
-    for i, c in enumerate(cols):
-        outline_rect(im, i, i, w - 1 - i, h - 1 - i, c)
-    top = len(cols)
-    if title is not None:
-        rect(im, top, top, w - 1 - top, top + 5, title)
-        hline(im, top + 2, top + 12, top + 2, WHITE)
-        hline(im, top + 2, top + 8, top + 3, WHITE)
-        if close:
-            bx = w - 1 - top - 6
-            rect(im, bx, top, bx + 6, top + 5, ORANGE)
-            vline(im, bx, top, top + 5, DRED)
-            for k in range(4):
-                put(im, bx + 2 + k, top + 1 + k, WHITE)
-                put(im, bx + 5 - k, top + 1 + k, WHITE)
-    return im, top
-
-
 def make_app_windows():
-    # ポップアップ（Chrome のポップアップ出現。3×2マス＝54×36）
-    im, top = window_base(54, 36, SKY)
-    rect(im, 7, 12, 46, 25, ORANGE)
-    outline_rect(im, 7, 12, 46, 25, DRED)
-    # 星形のバッジ
-    cx, cy = 15, 18
-    for dy in range(-4, 5):
-        for dx in range(-4, 5):
-            if abs(dx) + abs(dy) <= 4 or (dx == 0 or dy == 0) and abs(dx) + abs(dy) <= 5:
-                put(im, cx + dx, cy + dy, GOLD)
-    put(im, cx, cy, WHITE)
-    for y, (a, b) in zip((15, 18, 21), ((23, 43), (23, 39), (23, 41))):
-        hline(im, a, b, y, WHITE)
-        hline(im, a, b, y + 1, WHITE)
-    rect(im, 18, 28, 35, 31, GREEN)
-    outline_rect(im, 18, 28, 35, 31, C("1d7a12"))
-    hline(im, 22, 31, 29, WHITE)
-    save(im, "Attacks/Popup_Ad.png")
-
-    # エラーウィンドウ（VS Code。3×2マス）
-    im, top = window_base(54, 36, DRED)
-    ellipse(im, 11.5, 18.5, 5.5, 5.5, DRED)
-    ellipse(im, 11.5, 18.5, 4.5, 4.5, RED)
-    for k in range(-2, 3):
-        put(im, 11 + k, 18 + k, WHITE); put(im, 12 + k, 18 + k, WHITE)
-        put(im, 11 + k, 18 - k, WHITE); put(im, 12 + k, 18 - k, WHITE)
-    for y, b in ((14, 46), (17, 40), (20, 44)):
-        hline(im, 20, b, y, W68)
-    rect(im, 33, 26, 47, 31, WHITE)
-    outline_rect(im, 33, 26, 47, 31, W79)
-    hline(im, 37, 43, 28, W68)
-    hline(im, 37, 43, 29, W68)
-    save(im, "Attacks/Window_Error.png")
+    make_popup_ad()
+    make_window_error()
 
     # タブ増殖のタブ（1.5×0.6マス＝27×11）
     tab = new(27, 11)
@@ -442,6 +480,45 @@ def make_app_windows():
         "KKKKKKKKKKK",
     ]
     save(ascii_art(rows, {"K": K, "W": WHITE, "B": SKY, "E": WA2, "D": WDC}), "Attacks/Bullet_Tab.png")
+
+
+def make_popup_ad():
+    """ポップアップ（Chrome のポップアップ出現。3×2マス＝54×36。スキンが無いときの予備の絵）。
+    2026-11-19：Mac のウィンドウにした（docs/mac-look-design.md 29。信号機は左上、右上の × は無し）。中身は今のまま"""
+    im, th = mac_window(54, 36)
+    rect(im, 7, 12, 46, 25, ORANGE)
+    outline_rect(im, 7, 12, 46, 25, DRED)
+    # 星形のバッジ
+    cx, cy = 15, 18
+    for dy in range(-4, 5):
+        for dx in range(-4, 5):
+            if abs(dx) + abs(dy) <= 4 or (dx == 0 or dy == 0) and abs(dx) + abs(dy) <= 5:
+                put(im, cx + dx, cy + dy, GOLD)
+    put(im, cx, cy, WHITE)
+    for y, (a, b) in zip((15, 18, 21), ((23, 43), (23, 39), (23, 41))):
+        hline(im, a, b, y, WHITE)
+        hline(im, a, b, y + 1, WHITE)
+    rect(im, 18, 28, 35, 31, GREEN)
+    outline_rect(im, 18, 28, 35, 31, C("1d7a12"))
+    hline(im, 22, 31, 29, WHITE)
+    save(im, "Attacks/Popup_Ad.png")
+
+
+def make_window_error():
+    """エラーウィンドウ（VS Code。3×2マス。スキンが無いときの予備の絵）。
+    2026-11-19：Mac の暗いウィンドウにした（docs/mac-look-design.md 29・17）。赤丸の ×（VS Code の中身）は残し、
+    白い OK のボタンを、右下の青い既定のボタン（字は入らないので棒）にした"""
+    im, th = mac_window(54, 36, dark=True)
+    ellipse(im, 11.5, 18.5, 5.5, 5.5, DRED)
+    ellipse(im, 11.5, 18.5, 4.5, 4.5, RED)
+    for k in range(-2, 3):
+        put(im, 11 + k, 18 + k, WHITE); put(im, 12 + k, 18 + k, WHITE)
+        put(im, 11 + k, 18 - k, WHITE); put(im, 12 + k, 18 - k, WHITE)
+    for y, b in ((14, 46), (17, 40), (20, 44)):
+        hline(im, 20, b, y, MAC_SUB)
+    round_rect(im, 32, 26, 17, 7, 1, MAC_BLUE)  # 既定のボタン（高さ 7、角を 1ドット欠く。右下）
+    hline(im, 36, 44, 29, WHITE)
+    save(im, "Attacks/Window_Error.png")
 
 
 def make_boss_contents():
@@ -960,47 +1037,7 @@ def make_boss_b():
         frames.append(im)
     save(sheet(frames), "Bosses/BossB_Face.png")
 
-    # 着ているウィンドウ（48×36）：0 きれい、1 小さなひび、2 大きなひびと欠け。タイトルバーはアプリの色
-    def armor(content_file, title_colors, content_xy):
-        content = Image.open(os.path.join(GEN, "Bosses", content_file)).convert("RGBA")
-        frames = []
-        for stage in range(3):
-            w, h = 48, 36
-            im = new(w, h, WDC)
-            for i, c in enumerate((W51, W79, WHITE)):
-                outline_rect(im, i, i, w - 1 - i, h - 1 - i, c)
-            # タイトルバー（アイコンの色を左から並べる）
-            for x in range(3, w - 3):
-                seg = min(len(title_colors) - 1, (x - 3) * len(title_colors) // (w - 6))
-                for y in range(3, 7):
-                    put(im, x, y, title_colors[seg])
-            rect(im, w - 9, 3, w - 4, 6, ORANGE)
-            put(im, w - 7, 4, WHITE); put(im, w - 6, 5, WHITE); put(im, w - 6, 4, WHITE); put(im, w - 7, 5, WHITE)
-            cx, cy = content_xy
-            im.alpha_composite(content.crop((cx, cy, cx + w - 6, cy + h - 10)), (3, 7))
-            if stage >= 1:  # ひび
-                pts = [(31, 7), (28, 13), (32, 18), (27, 24), (30, 32)]
-                for (a, b) in zip(pts, pts[1:]):
-                    for t in range(10):
-                        put(im, int(a[0] + (b[0] - a[0]) * t / 10), int(a[1] + (b[1] - a[1]) * t / 10), K)
-                for (x, y) in ((9, 22), (11, 24), (13, 26), (10, 28)):
-                    put(im, x, y, K); put(im, x + 1, y, K)
-            if stage >= 2:  # 大きなひびと、欠けた角
-                pts = [(5, 9), (10, 14), (8, 19), (14, 23)]
-                for (a, b) in zip(pts, pts[1:]):
-                    for t in range(8):
-                        put(im, int(a[0] + (b[0] - a[0]) * t / 8), int(a[1] + (b[1] - a[1]) * t / 8), K)
-                for y in range(h - 11, h):
-                    for x in range(w - 14 + (h - y), w):
-                        put(im, x, y, CLEAR)
-                for y in range(h - 11, h):  # 欠けたふち
-                    x = w - 14 + (h - y)
-                    put(im, x - 1, y, W51)
-            frames.append(im)
-        return sheet(frames)
-
-    save(armor("Content_Browser.png", [C("ea4335"), C("fbbc05"), C("34a853"), C("4285f4")], (0, 7)), "Bosses/BossB_Window_Browser.png")
-    save(armor("Content_Editor.png", [C("007acc")], (4, 4)), "Bosses/BossB_Window_Editor.png")
+    make_boss_armor()
 
     # 追い出されて逃げるウイルス（20×18、4コマ。足元が下の端）。怖がっている目
     frames = []
@@ -1042,23 +1079,75 @@ def make_boss_b():
     save(sheet(frames), "Effects/Fx_Sparkle.png")
 
 
+def boss_armor(content_file, title_colors, content_xy):
+    """着ているウィンドウ（48×36、3コマ）：0 きれい、1 小さなひび、2 大きなひびと欠け。
+    2026-11-19：Mac の形にした（docs/mac-look-design.md 4。ドットの並びは BossWindowArt.cs と同じ）。
+    角は丸く 2ドット欠く・ふち 1ドット・1〜7行目がタイトルバー・左上に信号機（x＝3・7・11、3〜5行目）・題名の棒（x＝17〜30、3〜4行目）・右上は空。
+    8〜9行目がアプリの色の帯（アイコンの色を左から等分）。10〜34行目が中の面（アプリの中身の絵）"""
+    w, h, cut = 48, 36, 2
+    content = Image.open(os.path.join(GEN, "Bosses", content_file)).convert("RGBA")
+    frames = []
+    for stage in range(3):
+        im = new(w, h)
+        edge = set()
+        for y in range(h):
+            for x in range(w):
+                if not in_round(x, y, w, h, cut):
+                    continue
+                if not (in_round(x - 1, y, w, h, cut) and in_round(x + 1, y, w, h, cut) and in_round(x, y - 1, w, h, cut) and in_round(x, y + 1, w, h, cut)):
+                    put(im, x, y, MAC_EDGE)
+                    edge.add((x, y))
+                else:
+                    put(im, x, y, MAC_TITLE if 1 <= y <= 7 else MAC_BG)
+        stamp_lights(im, 3, 3)
+        rect(im, 17, 3, 30, 4, MAC_SUB)
+        # アプリの色の帯（タイトルバーの下の 2ドット）
+        for x in range(1, w - 1):
+            seg = min(len(title_colors) - 1, (x - 1) * len(title_colors) // (w - 2))
+            for y in (8, 9):
+                put(im, x, y, title_colors[seg])
+        # 中の面（ふちは上書きしない）
+        cx, cy = content_xy
+        crop = content.crop((cx, cy, cx + w - 2, cy + h - 11))
+        for y in range(crop.height):
+            for x in range(crop.width):
+                px = crop.getpixel((x, y))
+                if px[3] > 0 and (1 + x, 10 + y) not in edge:
+                    put(im, 1 + x, 10 + y, px)
+        if stage >= 1:  # ひび（今と同じ点）
+            pts = [(31, 7), (28, 13), (32, 18), (27, 24), (30, 32)]
+            for (a, b) in zip(pts, pts[1:]):
+                for t in range(10):
+                    put(im, int(a[0] + (b[0] - a[0]) * t / 10), int(a[1] + (b[1] - a[1]) * t / 10), K)
+            for (x, y) in ((9, 22), (11, 24), (13, 26), (10, 28)):
+                put(im, x, y, K); put(im, x + 1, y, K)
+        if stage >= 2:  # 大きなひびと、欠けた角
+            pts = [(5, 9), (10, 14), (8, 19), (14, 23)]
+            for (a, b) in zip(pts, pts[1:]):
+                for t in range(8):
+                    put(im, int(a[0] + (b[0] - a[0]) * t / 8), int(a[1] + (b[1] - a[1]) * t / 8), K)
+            for y in range(h - 11, h):
+                for x in range(w - 14 + (h - y), w):
+                    put(im, x, y, CLEAR)
+            for y in range(h - 11, h):  # 欠けたふち
+                put(im, w - 14 + (h - y) - 1, y, MAC_EDGE)
+        frames.append(im)
+    return sheet(frames)
+
+
+def make_boss_armor():
+    """テスト用のシーンのボスが着るウィンドウ（本番のランは BossWindowArt がゲームの中で作る）"""
+    save(boss_armor("Content_Browser.png", [C("ea4335"), C("fbbc05"), C("34a853"), C("4285f4")], (0, 7)), "Bosses/BossB_Window_Browser.png")
+    save(boss_armor("Content_Editor.png", [C("007acc")], (4, 4)), "Bosses/BossB_Window_Editor.png")
+
+
 # ───────── ステージのギミックと部屋（2026-11-17：ステージの種類） ─────────
 
 DKEY = C("2a6fb0")  # タイトルバーの影（実行中にアプリの色の暗い色へ塗り替える）
 
 
 def make_stage_gimmicks():
-    # 開いたり閉じたりするウィンドウの足場（24×8、左右3ドットが縁。タイトルバー＝空色は、実行中にアプリの色へ塗り替える）
-    im = new(24, 8, WDC)
-    hline(im, 0, 23, 0, W51)
-    for y in (1, 2):
-        hline(im, 1, 22, y, SKY)
-    rect(im, 20, 1, 21, 2, ORANGE)
-    hline(im, 1, 22, 3, W79)
-    hline(im, 0, 23, 7, W51)
-    vline(im, 0, 0, 7, W51)
-    vline(im, 23, 0, 7, W51)
-    save(im, "Stage/Platform_Window.png")
+    make_platform_window()
 
     # エディタの部屋の中（36×18 を並べる。うすいコードの行）
     rnd = random.Random(11)
@@ -1077,21 +1166,7 @@ def make_stage_gimmicks():
     hline(tb, 0, 17, 5, DKEY)
     save(tb, "Stage/Room_TitleBar.png")
 
-    # 降ってくる通知（36×16）
-    n = new(36, 16)
-    rect(n, 1, 0, 34, 15, WHITE)
-    rect(n, 0, 1, 35, 14, WHITE)
-    for (x, y) in ((1, 0), (34, 0), (0, 1), (35, 1), (0, 14), (35, 14), (1, 15), (34, 15)):
-        put(n, x, y, CLEAR)
-    hline(n, 2, 33, 0, K); hline(n, 2, 33, 15, K); vline(n, 0, 2, 13, K); vline(n, 35, 2, 13, K)
-    put(n, 1, 1, K); put(n, 34, 1, K); put(n, 1, 14, K); put(n, 34, 14, K)
-    ellipse(n, 7.5, 8.0, 4.6, 4.6, DRED)
-    ellipse(n, 7.5, 8.0, 3.8, 3.8, RED)
-    vline(n, 7, 5, 8, WHITE); vline(n, 8, 5, 8, WHITE); put(n, 7, 10, WHITE); put(n, 8, 10, WHITE)
-    hline(n, 14, 30, 5, W68); hline(n, 14, 26, 8, WA2); hline(n, 14, 28, 11, WA2)
-    for k in range(3):
-        put(n, 30 + k, 2 + k, W8B); put(n, 32 - k, 2 + k, W8B)
-    save(n, "Hazards/Hazard_Notification.png")
+    make_hazard_notification()
 
     # ファイアウォール（炎の壁。18×18 を縦に並べる、3コマ）
     frames = []
@@ -1122,6 +1197,64 @@ def make_stage_gimmicks():
     for x in (4, 9, 14, 19):
         put(e, x - 1, 4, RED); put(e, x, 4, RED)
     save(e, "Hazards/Firewall_Emitter.png")
+
+    make_mac_frame()
+
+
+def make_platform_window():
+    """開いたり閉じたりするウィンドウの足場（24×8）。
+    2026-11-19：Mac の形にした（docs/mac-look-design.md 26）。明るいタイトルバー（1〜3行目）・左に信号機の点 3つ（x＝2・4・6、2行目）・右は空。
+    4〜5行目の空色の帯は、実行中にアプリの色へ塗り替える（ThemeRecolor が空色を探す）。
+    並べて伸ばすので、左の縁は 8ドット・右は 3ドット（ArtAssets の border を (8, 0, 3, 0) にする。信号機をくり返さないため）"""
+    w, h = 24, 8
+    im = new(w, h)
+    for y in range(h):
+        for x in range(w):
+            if not in_round(x, y, w, h, 1):
+                continue
+            if x == 0 or y == 0 or x == w - 1 or y == h - 1:
+                c = MAC_EDGE
+            elif y <= 3:
+                c = MAC_TITLE
+            elif y <= 5:
+                c = SKY
+            else:
+                c = MAC_BG
+            put(im, x, y, c)
+    put(im, 2, 2, LIGHT_R); put(im, 4, 2, LIGHT_Y); put(im, 6, 2, LIGHT_G)
+    save(im, "Stage/Platform_Window.png")
+
+
+def make_hazard_notification():
+    """降ってくる通知（36×16）。
+    2026-11-19：Mac の小さい通知にした（docs/mac-look-design.md 27・1-4）。角の丸い明るい板（角を 2ドット欠く）・赤いふち（敵の物）・
+    左に赤い角の丸い四角（アプリのアイコンの代わり）に白い「！」・右に棒 2本（題名と本文）・右上に時刻の代わりの棒。× は無し"""
+    w, h = 36, 16
+    n = new(w, h)
+    round_rect(n, 0, 0, w, h, 2, MAC_RED)
+    round_rect(n, 1, 1, w - 2, h - 2, 1, C("f2f2f7", 235))  # 通知の地（92%）
+    round_rect(n, 3, 3, 10, 10, 2, MAC_RED)                 # アイコンの代わり
+    rect(n, 7, 5, 8, 8, WHITE); rect(n, 7, 10, 8, 10, WHITE)
+    rect(n, 16, 5, 24, 6, MAC_INK)                          # 題名（太字の代わりの棒）
+    hline(n, 27, 31, 5, MAC_EDGE)                           # 時刻の代わり
+    rect(n, 16, 9, 31, 10, MAC_SUB)                         # 本文
+    save(n, "Hazards/Hazard_Notification.png")
+
+
+def make_mac_frame():
+    """盾のウィンドウ（マウスのギミック【仮】）の枠と信号機（2026-11-19 docs/mac-look-design.md 43）。
+    Mac_Frame（16×20）：角の丸い 1ドットのふち・明るい地・1〜7行目がタイトルバー・8行目が下の線。9つに切って伸ばす
+    （ArtAssets の border を (3, 3, 3, 9) にする）。Mac_Lights（11×3）：信号機（左上に重ねる）。Win_Frame.png は変えない"""
+    f, th = mac_window(16, 20, title_bar=False)
+    # 信号機は別の絵（伸ばしても丸のまま）。枠からは消す
+    for y in range(1, 1 + th):
+        for x in range(1, 15):
+            if f.getpixel((x, y)) != MAC_EDGE:
+                put(f, x, y, MAC_TITLE)
+    save(f, "Stage/Mac_Frame.png")
+    lights = new(11, 3)
+    stamp_lights(lights, 0, 0)
+    save(lights, "Stage/Mac_Lights.png")
 
 
 # ───────── カテゴリの能力（2026-11-17：ゲームの流れ） ─────────

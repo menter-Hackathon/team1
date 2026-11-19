@@ -320,6 +320,7 @@ public class GameSession : MonoBehaviour
         Run.Cleared.Add(new ClearRecord { Stage = stage, Reward = reward });
         // アプリ図鑑：正常化したアプリに色を付ける。初めてなら、リザルトで光らせる
         if (AppDex.RecordDefeat(stage.App.DisplayName, FirstBundle(stage.App), reward)) Run.NewDex.Add(AppDex.KeyOf(stage.App.DisplayName));
+        GameAudio.StageCleared();
         StageCleared?.Invoke(stage, reward);
 
         Run.CurrentIndex++;
@@ -342,6 +343,7 @@ public class GameSession : MonoBehaviour
         IsGameOver = true;
         Run.LastFailed = Run.Current;
         Time.timeScale = 0f;
+        GameAudio.GameOver();
         GameOver?.Invoke(Run.Current);
     }
 

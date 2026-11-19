@@ -39,6 +39,16 @@ public class PremiereIconRain : CustomAttack
         public bool Done;
     }
 
+    // 着地した所の小さい絵（アイコンごと。12-1。2026-11-18）
+    struct LandWatch
+    {
+        public FallingObject Icon;
+        public PremiereIcon Kind;
+        public float X;
+        public float GroundY;
+        public bool Done;
+    }
+
     public override IEnumerator Run(AttackRunner owner, AttackData data)
     {
         Rect arena = BattleArena.GetBounds();
@@ -51,6 +61,7 @@ public class PremiereIconRain : CustomAttack
 
         var icons = new List<FallingObject>(n);
         var fires = new List<FireWatch>();
+        var lands = new List<LandWatch>();
         for (int i = 0; i < n; i++)
         {
             // 0.3秒ごとに1つずつ並べる（影も、並べた時に出る）
@@ -64,6 +75,10 @@ public class PremiereIconRain : CustomAttack
             f.gameObject.name = $"PremiereIcon_{kind}";
             PremiereArt.SetSprite(f.Visual, PremiereArt.Icon(kind), size);
             icons.Add(f);
+            // 見た目（12-1。2026-11-18）：後ろに同じアイコンのうすい残像 2枚。当たった絵はアイコンごと（PremiereSkin がエラーの絵の種類で見分ける）
+            PremiereSkinTrail.Attach(f.gameObject, f.Visual);
+            if (f.TryGetComponent(out Hitbox hb)) hb.SetErrorKind(kind == PremiereIcon.Fire ? "IconRain_Fire" : "IconRain_Thunder");
+            lands.Add(new LandWatch { Icon = f, Kind = kind, X = x, GroundY = f.GroundY });
             if (kind == PremiereIcon.Fire && _landingFire != null)
             {
                 fires.Add(new FireWatch { Icon = f, X = x, GroundY = f.GroundY });
@@ -90,12 +105,37 @@ public class PremiereIconRain : CustomAttack
                 }
                 else pending = true;
             }
+            for (int k = 0; k < lands.Count; k++)
+            {
+                LandWatch w = lands[k];
+                if (w.Done || (w.Icon != null && !w.Icon.HasLanded)) continue;
+                w.Done = true;
+                lands[k] = w;
+                LandingPuff(w.Kind, new Vector2(w.X, w.GroundY));
+            }
             foreach (var f in icons)
             {
                 if (f != null && !f.HasLanded) pending = true;
             }
             if (!pending) break;
             yield return null;
+        }
+    }
+
+    /// <summary>着地した所に、アイコンの小さい絵（炎＝小さい火、雷＝黄色の火花）。見た目だけ（12-1。2026-11-18）</summary>
+    static void LandingPuff(PremiereIcon kind, Vector2 at)
+    {
+        if (kind == PremiereIcon.Fire)
+        {
+            Transform root = GenericFrameKit.Loose("Gen4_PremiereLandFire", at);
+            SpriteRenderer f = GenericFrameKit.Spr(root, PremiereArt.SmallFlame, Vector2.zero, Color.white, 22, 1.5f, "Flame");
+            Vector3 s = f.transform.localScale;
+            GenericFrameTweens.Of(root.gameObject).Scale(f.transform, new Vector3(s.x, 0f, 1f), s, 0.08f, 0f, GenericFrameTweens.Ease.OutBack).Alpha(f, 1f, 0f, 0.15f, 0.1f).Kill(0.26f);
+            GenericFrameKit.Shards(at + Vector2.up * 0.2f, Vector2.up, 3, i => null, i => i % 2 == 0 ? PremiereArt.FireColor : PremiereArt.FireCore, 50f, 0.6f);
+        }
+        else
+        {
+            GenericFrameKit.Shards(at + Vector2.up * 0.15f, Vector2.up, 5, i => GenericFrameKit.Sparkle(5), i => PremiereArt.ThunderColor, 70f);
         }
     }
 }

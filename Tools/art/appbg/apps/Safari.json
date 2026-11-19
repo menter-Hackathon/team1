@@ -1,0 +1,40 @@
+{
+  "id": "Safari",
+  "desc": "タブの行、住所の欄、スタートページのタイル",
+  "base": "#c5c8ce",
+  "elements": [
+    {"type": "rect", "x": 0, "y": 0, "w": 320, "h": 22, "color": "#b3b6bd"},
+    {"type": "icon", "name": "prev", "x": 60, "y": 8, "size": 5, "color": "#7a7e88"},
+    {"type": "icon", "name": "next", "x": 70, "y": 8, "size": 5, "color": "#7a7e88"},
+    {"type": "rrect", "x": 152, "y": 5, "w": 86, "h": 11, "color": "#c9ccd2", "r": 3},
+    {"type": "icon", "name": "search", "x": 156, "y": 8, "size": 5, "color": "#8a8e98"},
+    {"type": "text", "x": 165, "y": 8, "text": "SEARCH OR URL", "color": "#8a8e98", "scale": 1},
+    {"type": "rect", "x": 10, "y": 22, "w": 300, "h": 9, "color": "#a9acb4"},
+    {"type": "rect", "x": 60, "y": 22, "w": 90, "h": 9, "color": "#c5c8ce"},
+    {"type": "text", "x": 64, "y": 24, "text": "START PAGE", "color": "#6c707a", "scale": 1},
+    {"type": "text", "x": 140, "y": 24, "text": "X", "color": "#8a8e98", "scale": 1},
+    {"type": "bars", "x": 160, "y": 26, "w": 50, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#8a8e98", "seed": 3, "min": 0.9, "indent": 0},
+    {"type": "line", "x1": 150, "y1": 23, "x2": 150, "y2": 29, "color": "#989ba3"},
+    {"type": "line", "x1": 236, "y1": 23, "x2": 236, "y2": 29, "color": "#989ba3"},
+    {"type": "text", "x": 228, "y": 24, "text": "+", "color": "#7a7e88", "scale": 1},
+    {"type": "text", "x": 84, "y": 40, "text": "START PAGE", "color": "#9a9da6", "scale": 1},
+    {"type": "bars", "x": 84, "y": 50, "w": 120, "rows": 2, "row_h": 7, "bar_h": 2, "color": "#b9bcc3", "seed": 241, "min": 0.5, "indent": 0},
+    {"type": "text", "x": 94, "y": 117, "text": "FAVORITES", "color": "#8a8e98", "scale": 1},
+    {"type": "rrect", "x": 131, "y": 129, "w": 26, "h": 20, "color": "#bcc0c8", "r": 4},
+    {"type": "rrect", "x": 166, "y": 129, "w": 26, "h": 20, "color": "#bfc4bd", "r": 4},
+    {"type": "rrect", "x": 236, "y": 129, "w": 26, "h": 20, "color": "#c4bfc8", "r": 4},
+    {"type": "rect", "x": 299, "y": 40, "w": 2, "h": 126, "color": "#b6b9c0"}
+  ],
+  "stage": {
+    "hide_folders": true,
+    "platforms": [
+      {"id": "fav1", "x": 93, "y": 127, "w": 30, "h": 24, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 30, "h": 24, "color": "#6c707a", "r": 4}, {"type": "rrect", "x": 1, "y": 1, "w": 28, "h": 22, "color": "#8fa3c4", "r": 3}, {"type": "rect", "x": 2, "y": 1, "w": 26, "h": 1, "color": "#aebcd6"}, {"type": "icon", "name": "star", "x": 11, "y": 6, "size": 7, "color": "#f2f3f6"}, {"type": "rect", "x": 7, "y": 18, "w": 16, "h": 2, "color": "#f2f3f6"}], "behavior": {"type": "static"}},
+      {"id": "fav2", "x": 198, "y": 127, "w": 30, "h": 24, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 30, "h": 24, "color": "#6c707a", "r": 4}, {"type": "rrect", "x": 1, "y": 1, "w": 28, "h": 22, "color": "#b0a27e", "r": 3}, {"type": "rect", "x": 2, "y": 1, "w": 26, "h": 1, "color": "#c8bc9c"}, {"type": "icon", "name": "cart", "x": 11, "y": 6, "size": 7, "color": "#f2f3f6"}, {"type": "rect", "x": 7, "y": 18, "w": 16, "h": 2, "color": "#f2f3f6"}], "behavior": {"type": "static"}},
+      {"id": "tab1", "x": 134, "y": 98, "w": 52, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 52, "h": 11, "color": "#6c707a", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 50, "h": 9, "color": "#e4e6ea", "r": 2}, {"type": "rect", "x": 2, "y": 1, "w": 48, "h": 1, "color": "#f3f4f6"}, {"type": "circle", "cx": 6, "cy": 5, "r": 2, "color": "#8fa5c8", "fill": true}, {"type": "rect", "x": 11, "y": 5, "w": 28, "h": 2, "color": "#8a8e98"}, {"type": "text", "x": 44, "y": 3, "text": "X", "color": "#8a8e98", "scale": 1}], "behavior": {"type": "fall", "delay": 0.6, "respawn": 4}},
+      {"id": "reading", "x": 68, "y": 99, "w": 44, "h": 14, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 44, "h": 14, "color": "#6c707a", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 42, "h": 12, "color": "#e4e6ea", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 40, "h": 1, "color": "#f3f4f6"}, {"type": "rrect", "x": 3, "y": 3, "w": 8, "h": 8, "color": "#b9bcc4", "r": 1}, {"type": "rect", "x": 14, "y": 4, "w": 24, "h": 2, "color": "#8a8e98"}, {"type": "rect", "x": 14, "y": 8, "w": 16, "h": 2, "color": "#b5b8bf"}], "behavior": {"type": "static"}},
+      {"id": "privacy", "x": 236, "y": 98, "w": 52, "h": 12, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 52, "h": 12, "color": "#6c707a", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 50, "h": 10, "color": "#e4e6ea", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 48, "h": 1, "color": "#f3f4f6"}, {"type": "icon", "name": "shield", "x": 4, "y": 3, "size": 5, "color": "#8fa5c8"}, {"type": "text", "x": 12, "y": 4, "text": "12", "color": "#7a7e88", "scale": 1}, {"type": "rect", "x": 24, "y": 5, "w": 22, "h": 2, "color": "#b5b8bf"}], "behavior": {"type": "static"}},
+      {"id": "scrollbar", "x": 294, "y": 128, "w": 12, "h": 28, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 12, "h": 28, "color": "#6c707a", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 10, "h": 26, "color": "#9aa0ac", "r": 2}, {"type": "rect", "x": 3, "y": 1, "w": 6, "h": 1, "color": "#c0c5ce"}, {"type": "rect", "x": 4, "y": 11, "w": 4, "h": 1, "color": "#d6d9de"}, {"type": "rect", "x": 4, "y": 14, "w": 4, "h": 1, "color": "#d6d9de"}, {"type": "rect", "x": 4, "y": 17, "w": 4, "h": 1, "color": "#d6d9de"}], "behavior": {"type": "move", "dx": 0, "dy": -40, "period": 7, "offset": 0}},
+      {"id": "reload", "x": 144, "y": 152, "w": 31, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 31, "h": 11, "color": "#48669a", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 29, "h": 9, "color": "#7f9fd0", "r": 2}, {"type": "rect", "x": 3, "y": 1, "w": 25, "h": 1, "color": "#f2f6fd66"}, {"type": "text", "x": 4, "y": 3, "text": "RELOAD", "color": "#f2f6fd", "scale": 1}], "behavior": {"type": "button", "effect": "clear_bullets", "cooldown": 12}}
+    ]
+  }
+}

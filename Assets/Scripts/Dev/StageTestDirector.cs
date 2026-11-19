@@ -21,6 +21,8 @@ public class StageTestDirector : MonoBehaviour
 
     BossController Boss => _entrance != null ? _entrance.Boss : null;
 
+    void Start() => GameAudio.StageStarted(); // ステージの曲（ボスが出たら BossEntrance がボスの曲にする）
+
     void OnEnable()
     {
         if (_entrance != null) _entrance.Appearing += OnBossAppearing;

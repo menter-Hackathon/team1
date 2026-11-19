@@ -21,7 +21,10 @@ public class PremiereSpeedEffect : CustomEffect
     static readonly Color GhostRed = new Color(1f, 0.3f, 0.3f, 0.4f);
 
     // ───────── ウィンドウ（OnGUI。PixelGui の座標）【仮】 ─────────
-    const float WindowW = 150f, WindowH = 66f, TitleH = 14f, WindowTop = 58f, OpenTime = 0.12f;
+    // 2026-11-19：Mac の暗いウィンドウにした（docs/mac-look-design.md 2-4 の 38）。左上に信号機、題名はまん中、角を 3ドット欠く。
+    // 幅は、題名が信号機にかからない幅まで広げる（WindowW より小さくはしない）。閉じるときは赤い丸がへこんで、まん中へ縮む
+    const float WindowW = 150f, WindowH = 66f, TitleH = 14f, WindowTop = 58f, OpenTime = 0.12f, DentTime = 0.05f;
+    const string WindowTitle = "速度・デュレーション";
 
     AttackRunner _owner;
     PremiereSpeedDuration _config;
@@ -43,6 +46,14 @@ public class PremiereSpeedEffect : CustomEffect
     Transform _hand;
     SpriteRenderer _mark;
     PremiereGhost[] _ghosts;
+    // 2026-11-18：スキルの見た目（docs/app-skill-visuals-design.md 12-4）【仮】
+    GenericFrameCanvas _stripes;      // スローの場の中の横じま（白 1割、2ドットおき。ゆっくり下へ流れる）
+    SpriteRenderer _stripesSr;
+    int _stripeOffset = -1;
+    TextMesh _percent;                // 場のふちの大きいうすい 50% ／ ▶▶ の右の 300%
+    readonly SpriteRenderer[] _speedLines = new SpriteRenderer[3];
+    float _lastBossX = float.NaN;
+    float _trailDir = -1f;            // 速さの線を出す向き（ボスの後ろ）
 
     public override bool Lingers => true;
 
@@ -92,6 +103,7 @@ public class PremiereSpeedEffect : CustomEffect
         foreach (var d in _ringDots) d.color = ringColor;
         _fill.enabled = active;
         _clock.gameObject.SetActive(active);
+        UpdateStripes(now, active);
         _hand.localRotation = Quaternion.Euler(0f, 0f, HandSpin * (now - _start));
 
         bool inside = false;
@@ -125,9 +137,35 @@ public class PremiereSpeedEffect : CustomEffect
         }
         // ▶▶：予告の間は点滅、効果の間は出したまま。効果が切れたら消す
         _mark.enabled = active || (now < _effectAt && Mathf.FloorToInt(now / 0.1f) % 2 == 0);
+        UpdateBoostDeco(now, active);
         if (_ghosts != null)
         {
             foreach (var g in _ghosts) if (g != null) g.Visible = active;
+        }
+    }
+
+    void UpdateBoostDeco(float now, bool active)
+    {
+        if (_percent != null && _percent.gameObject.activeSelf != active) _percent.gameObject.SetActive(active);
+        if (_boss == null) return;
+        Bounds b = _boss.BodyBounds;
+        // 動いた向きの反対（後ろ）に線を出す
+        if (!float.IsNaN(_lastBossX) && Mathf.Abs(b.center.x - _lastBossX) > 0.002f) _trailDir = b.center.x > _lastBossX ? -1f : 1f;
+        _lastBossX = b.center.x;
+        for (int i = 0; i < _speedLines.Length; i++)
+        {
+            SpriteRenderer l = _speedLines[i];
+            if (l == null) continue;
+            l.enabled = active;
+            if (!active) continue;
+            float len = 1f + i * 0.4f;
+            float slide = Mathf.Repeat(now * 6f + i * 0.37f, 1f) * 0.5f;
+            float x = b.center.x + _trailDir * (b.extents.x + 0.3f + len * 0.5f + slide);
+            float y = b.center.y + (i - 1) * 0.45f;
+            l.transform.position = new Vector3(x, y, 0f);
+            Color c = l.color;
+            c.a = 0.6f * (1f - slide * 1.6f);
+            l.color = c;
         }
     }
 
@@ -169,11 +207,52 @@ public class PremiereSpeedEffect : CustomEffect
 
         // 中のプレイヤーに紫の残像を1枚
         if (_player != null) _ghosts = new[] { PremiereGhost.Create(transform, _player.transform, GhostPurple, 0.12f) };
+
+        // 横じまと、大きいうすい 50%（12-4。2026-11-18）
+        int d = Mathf.Clamp(Mathf.RoundToInt(r * 2f * 18f), 8, 160);
+        _stripes = new GenericFrameCanvas(d, d, "SlowStripes");
+        _stripesSr = _stripes.Show(transform, Vector2.zero, FillOrder, "Stripes");
+        _stripesSr.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+        _stripesSr.enabled = false;
+        _percent = WorldText.Create(transform, "50%", 0.8f, new Color(1f, 1f, 1f, 0.2f), ClockOrder, true, TextAnchor.MiddleCenter, "Percent");
+        _percent.transform.localPosition = new Vector3(r * 0.42f, -r * 0.62f, 0f);
+        _percent.gameObject.SetActive(false);
+    }
+
+    void UpdateStripes(float now, bool active)
+    {
+        if (_stripes == null) return;
+        _stripesSr.enabled = active;
+        if (_percent != null && _percent.gameObject.activeSelf != active) _percent.gameObject.SetActive(active);
+        if (!active) return;
+        int offset = Mathf.FloorToInt((now - _effectAt) / 0.12f);
+        if (offset == _stripeOffset) return;
+        _stripeOffset = offset;
+        _stripes.Clear();
+        int d = _stripes.W;
+        float rr = d * 0.5f;
+        var c = new Color32(255, 255, 255, 26);
+        for (int y = 0; y < d; y++)
+        {
+            if (((y - offset) % 3 + 3) % 3 != 0) continue; // 2ドットあけて1本
+            float dy = y + 0.5f - rr;
+            float half = Mathf.Sqrt(Mathf.Max(0f, rr * rr - dy * dy));
+            for (int x = Mathf.CeilToInt(rr - half); x < Mathf.FloorToInt(rr + half); x++) _stripes.Set(x, y, c);
+        }
+        _stripes.Apply();
     }
 
     void BuildBoost()
     {
         _mark = RuntimeSprites.Show(transform, PremiereArt.FastForwardMark, Vector2.zero, MarkOrder, 1f, "FastForward");
+        // ▶▶ の右に 300%、ボスの後ろに横の速さの線 3本（12-4。2026-11-18）
+        _percent = WorldText.Create(transform, "300%", 0.4f, PremiereArt.FastForward, MarkOrder, true, TextAnchor.MiddleLeft, "Percent");
+        _percent.transform.localPosition = new Vector3(0.35f, 0f, 0f);
+        for (int i = 0; i < 3; i++)
+        {
+            _speedLines[i] = PremiereArt.Box(transform, Vector2.zero, new Vector2(1f + i * 0.4f, PremiereArt.Pixel), new Color(1f, 1f, 1f, 0.6f), MarkOrder - 1, "SpeedLine");
+            _speedLines[i].enabled = false;
+        }
         // ボスの後ろに、赤っぽい残像を2枚
         if (_boss != null)
         {
@@ -205,18 +284,26 @@ public class PremiereSpeedEffect : CustomEffect
     void DrawWindow(float now)
     {
         float open = Mathf.Clamp01((now - _start) / OpenTime);
-        float close = now < _effectAt ? 0f : Mathf.Clamp01((now - _effectAt) / Mathf.Max(0.01f, _config.CloseTime));
-        float h = Mathf.Round(WindowH * Mathf.Min(open, 1f - close));
-        if (h < 2f) return;
-        float x = Mathf.Round(PixelGui.Width * 0.5f - WindowW * 0.5f);
-        var r = new Rect(x, Mathf.Round(WindowTop + (WindowH - h) * 0.5f), WindowW, h);
-        PixelGui.Fill(r, PremiereArt.WindowBorder);
-        PixelGui.Fill(PixelGui.Inset(r, 1f), PremiereArt.WindowBg);
-        if (h < WindowH) return; // 開く・閉じる途中は箱だけ
+        // 閉じる：はじめの 0.05秒は赤い丸がへこむだけ。そのあと、まん中へ縮む（閉じる秒数の合計は今のまま）
+        bool closing = now >= _effectAt;
+        float shrinkTime = Mathf.Max(0.01f, _config.CloseTime - DentTime);
+        float close = closing ? Mathf.Clamp01((now - _effectAt - DentTime) / shrinkTime) : 0f;
+        // 題名（左右に信号機の分をあける）が入る幅
+        float width = Mathf.Max(WindowW, GenericMac.Gui.TitleWidth(WindowTitle, true) + 64f);
+        float sx = 1f - close, sy = Mathf.Min(open, 1f - close);
+        float w = Mathf.Round(width * sx), h = Mathf.Round(WindowH * sy);
+        if (h < 2f || w < 4f) return;
+        float cx = PixelGui.Width * 0.5f, cy = WindowTop + WindowH * 0.5f;
+        var r = new Rect(Mathf.Round(cx - w * 0.5f), Mathf.Round(cy - h * 0.5f), w, h);
+        if (h < WindowH || w < width)
+        {
+            // 開く・閉じる途中は、角の丸い箱だけ
+            GenericMac.Gui.RoundFill(r, 3, 3, GenericMac.DarkEdge);
+            GenericMac.Gui.RoundFill(PixelGui.Inset(r, 1f), 2, 2, GenericMac.DarkBg);
+            return;
+        }
 
-        var title = new Rect(r.x + 1f, r.y + 1f, r.width - 2f, TitleH);
-        PixelGui.Fill(title, PremiereArt.WindowTitle);
-        PixelGui.Text(new Rect(title.x + 5f, title.y, title.width - 10f, TitleH), "速度・デュレーション", 12, new Color(0.92f, 0.92f, 0.92f));
+        Rect body = GenericMac.Gui.Window(r, WindowTitle, true, TitleH, 3, true, closing ? 0 : -1);
 
         // 「速度： 50 %」（数字だけ青）
         string label = "速度： ", num = Value(now).ToString(), unit = " %";
@@ -225,7 +312,7 @@ public class PremiereSpeedEffect : CustomEffect
         float nw = Mathf.Ceil(PixelGui.Measure(num, style));
         float uw = Mathf.Ceil(PixelGui.Measure(unit, style));
         float bx = Mathf.Round(r.center.x - (lw + nw + uw) * 0.5f);
-        float by = Mathf.Round(title.yMax + (r.yMax - title.yMax - 14f) * 0.5f);
+        float by = Mathf.Round(body.y + (body.height - 14f) * 0.5f);
         PixelGui.Text(new Rect(bx, by, lw + 2f, 14f), label, 12, Color.white);
         PixelGui.Text(new Rect(bx + lw, by, nw + 2f, 14f), num, 12, PremiereArt.PlayheadBlue);
         PixelGui.Text(new Rect(bx + lw + nw, by, uw + 2f, 14f), unit, 12, Color.white);

@@ -147,12 +147,14 @@ MonoBehaviour:
     - Zoom Workplace
     BundleIdPrefixes:
     - us.zoom.xos
+    FromKit: 0
   - Label: Finder
     Skill: {fileID: 11400000, guid: 3cc7da256f9854cbf9e261a3728c8699, type: 2}
     AppNames:
     - Finder
     BundleIdPrefixes:
     - com.apple.finder
+    FromKit: 0
   - Label: Premiere Pro
     Skill: {fileID: 11400000, guid: 712c7afef79be49b8a19444d3a9cc679, type: 2}
     AppNames:
@@ -160,29 +162,291 @@ MonoBehaviour:
     - Adobe Premiere Pro
     BundleIdPrefixes:
     - com.adobe.PremierePro
-  - Label: Office
-    Skill: {fileID: 11400000, guid: 33cbf97f8dc254498889bcfb8d5b77e6, type: 2}
+    FromKit: 0
+  - Label: Arc
+    Skill: {fileID: 11400000, guid: 7ce67a171a4f6443cb990e3adc28ae1a, type: 2}
+    AppNames:
+    - Arc
+    BundleIdPrefixes:
+    - company.thebrowser.Browser
+    FromKit: 1
+  - Label: Blender
+    Skill: {fileID: 11400000, guid: 5cf71ecd390cb4619ae0286f8df5f126, type: 2}
+    AppNames:
+    - Blender
+    BundleIdPrefixes:
+    - org.blenderfoundation.
+    FromKit: 1
+  - Label: Calendar
+    Skill: {fileID: 11400000, guid: 80e93f6766293467cb741b44af09d9d5, type: 2}
+    AppNames:
+    - Calendar
+    - "\u30AB\u30EC\u30F3\u30C0\u30FC"
+    BundleIdPrefixes:
+    - com.apple.iCal
+    FromKit: 1
+  - Label: ChatGPT
+    Skill: {fileID: 11400000, guid: 61aa0d206856640ed926a664e8f4af40, type: 2}
+    AppNames:
+    - ChatGPT
+    BundleIdPrefixes:
+    - com.openai.chat
+    FromKit: 1
+  - Label: Chrome
+    Skill: {fileID: 11400000, guid: a6c25639ec522438996c53efff4abcd4, type: 2}
+    AppNames:
+    - Google Chrome
+    - Chrome
+    BundleIdPrefixes:
+    - com.google.Chrome
+    FromKit: 1
+  - Label: Claude
+    Skill: {fileID: 11400000, guid: 529526f9611984d0491cfe325d6ee1ca, type: 2}
+    AppNames:
+    - Claude
+    BundleIdPrefixes:
+    - com.anthropic.claudefordesktop
+    FromKit: 1
+  - Label: Cursor
+    Skill: {fileID: 11400000, guid: d30a62334400d46439564b398afe7d03, type: 2}
+    AppNames:
+    - Cursor
+    BundleIdPrefixes:
+    - com.todesktop.230313mzl4w4u92
+    FromKit: 1
+  - Label: Discord
+    Skill: {fileID: 11400000, guid: df5328778cf3340a9858853f8f782c53, type: 2}
+    AppNames:
+    - Discord
+    BundleIdPrefixes:
+    - com.hnc.Discord
+    FromKit: 1
+  - Label: Excel
+    Skill: {fileID: 11400000, guid: 6918daaa3bcee48a296c83333c73af30, type: 2}
     AppNames:
     - Excel
-    - Word
-    - PowerPoint
+    - Microsoft Excel
+    - Numbers
     BundleIdPrefixes:
     - com.microsoft.Excel
-    - com.microsoft.Word
+    - com.apple.iWork.Numbers
+    FromKit: 1
+  - Label: Figma
+    Skill: {fileID: 11400000, guid: 7330e64701b724b7382eade08eb1bcf2, type: 2}
+    AppNames:
+    - Figma
+    BundleIdPrefixes:
+    - com.figma.Desktop
+    FromKit: 1
+  - Label: Firefox
+    Skill: {fileID: 11400000, guid: f1f53284220e44dbd92c193486736527, type: 2}
+    AppNames:
+    - Firefox
+    - Firefox Developer Edition
+    - Firefox Nightly
+    BundleIdPrefixes:
+    - org.mozilla.firefox
+    FromKit: 1
+  - Label: Gemini
+    Skill: {fileID: 11400000, guid: 2d3406b819bd24871ab651738cb0c8fd, type: 2}
+    AppNames:
+    - Gemini
+    - Perplexity
+    - Copilot
+    - Microsoft Copilot
+    BundleIdPrefixes:
+    - ai.perplexity.mac
+    - com.microsoft.copilot
+    FromKit: 1
+  - Label: GitHubDesktop
+    Skill: {fileID: 11400000, guid: b07919aeda7c248ccbc58c187ff529be, type: 2}
+    AppNames:
+    - GitHub Desktop
+    BundleIdPrefixes:
+    - com.github.GitHubClient
+    FromKit: 1
+  - Label: Illustrator
+    Skill: {fileID: 11400000, guid: 03bbdcb8ebb2d4d34801bd7045aa8ebd, type: 2}
+    AppNames:
+    - Illustrator
+    - Adobe Illustrator
+    BundleIdPrefixes:
+    - com.adobe.illustrator
+    FromKit: 1
+  - Label: Keynote
+    Skill: {fileID: 11400000, guid: 1b6929aa6f07845978a75e8ea758f619, type: 2}
+    AppNames:
+    - Keynote
+    BundleIdPrefixes:
+    - com.apple.iWork.Keynote
+    FromKit: 1
+  - Label: LINE
+    Skill: {fileID: 11400000, guid: ab1d985616ddc4375b19997e07f334ba, type: 2}
+    AppNames:
+    - LINE
+    BundleIdPrefixes:
+    - jp.naver.line.mac
+    FromKit: 1
+  - Label: Mail
+    Skill: {fileID: 11400000, guid: 008d21bb245594420b9eeaafca786bee, type: 2}
+    AppNames:
+    - Mail
+    - "\u30E1\u30FC\u30EB"
+    - Outlook
+    - Microsoft Outlook
+    BundleIdPrefixes:
+    - com.apple.mail
+    - com.microsoft.Outlook
+    FromKit: 1
+  - Label: Messages
+    Skill: {fileID: 11400000, guid: 00817d38d5d824ceea41228058cec989, type: 2}
+    AppNames:
+    - Messages
+    - "\u30E1\u30C3\u30BB\u30FC\u30B8"
+    - Telegram
+    - WhatsApp
+    - Messenger
+    BundleIdPrefixes:
+    - com.apple.MobileSMS
+    - ru.keepcoder.Telegram
+    - net.whatsapp.WhatsApp
+    - desktop.WhatsApp
+    - com.facebook.archon
+    FromKit: 1
+  - Label: Minecraft
+    Skill: {fileID: 11400000, guid: c6b297178cfb2471aa57209cec896678, type: 2}
+    AppNames:
+    - Minecraft
+    - Minecraft Launcher
+    BundleIdPrefixes:
+    - com.mojang.
+    FromKit: 1
+  - Label: Music
+    Skill: {fileID: 11400000, guid: 2fd38a6154a0d416398d2badfdf00a2b, type: 2}
+    AppNames:
+    - Music
+    - "\u30DF\u30E5\u30FC\u30B8\u30C3\u30AF"
+    - Apple Music
+    BundleIdPrefixes:
+    - com.apple.Music
+    FromKit: 1
+  - Label: Notes
+    Skill: {fileID: 11400000, guid: 06f4475a573a34af1bd24004fd0223b0, type: 2}
+    AppNames:
+    - Notes
+    - "\u30E1\u30E2"
+    - Reminders
+    - "\u30EA\u30DE\u30A4\u30F3\u30C0\u30FC"
+    BundleIdPrefixes:
+    - com.apple.Notes
+    - com.apple.reminders
+    FromKit: 1
+  - Label: Notion
+    Skill: {fileID: 11400000, guid: 67a35345109f4406ea8aa38cd8914a91, type: 2}
+    AppNames:
+    - Notion
+    - Obsidian
+    - Linear
+    BundleIdPrefixes:
+    - notion.id
+    - md.obsidian
+    - com.linear
+    FromKit: 1
+  - Label: Photoshop
+    Skill: {fileID: 11400000, guid: 473a6295d0c6643ba8fb89c934409c05, type: 2}
+    AppNames:
+    - Photoshop
+    - Adobe Photoshop
+    BundleIdPrefixes:
+    - com.adobe.Photoshop
+    FromKit: 1
+  - Label: PowerPoint
+    Skill: {fileID: 11400000, guid: a19e05df725f24a148997180453a5596, type: 2}
+    AppNames:
+    - PowerPoint
+    - Microsoft PowerPoint
+    BundleIdPrefixes:
     - com.microsoft.Powerpoint
+    FromKit: 1
+  - Label: QuickTime
+    Skill: {fileID: 11400000, guid: 37d6d51cea17248edaf843a7da870000, type: 2}
+    AppNames:
+    - QuickTime Player
+    - QuickTime
+    BundleIdPrefixes:
+    - com.apple.QuickTimePlayerX
+    FromKit: 1
+  - Label: Safari
+    Skill: {fileID: 11400000, guid: dfebb0fb6c75844cb9c0a4d9473b2f86, type: 2}
+    AppNames:
+    - Safari
+    BundleIdPrefixes:
+    - com.apple.Safari
+    FromKit: 1
+  - Label: Slack
+    Skill: {fileID: 11400000, guid: 767924cf0e72141e4b086f3058cc926a, type: 2}
+    AppNames:
+    - Slack
+    BundleIdPrefixes:
+    - com.tinyspeck.slackmacgap
+    FromKit: 1
+  - Label: Spotify
+    Skill: {fileID: 11400000, guid: eefcaa04c8a29480b867c295d07926d0, type: 2}
+    AppNames:
+    - Spotify
+    BundleIdPrefixes:
+    - com.spotify.client
+    FromKit: 1
+  - Label: Steam
+    Skill: {fileID: 11400000, guid: a921ef0cf409c45a6ae41944ba3d79a6, type: 2}
+    AppNames:
+    - Steam
+    BundleIdPrefixes:
+    - com.valvesoftware.steam
+    FromKit: 1
+  - Label: Teams
+    Skill: {fileID: 11400000, guid: 75563dba8f48145dbb48ba64177f16bc, type: 2}
+    AppNames:
+    - Microsoft Teams
+    - Teams
+    - Google Meet
+    - Meet
+    BundleIdPrefixes:
+    - com.microsoft.teams
+    FromKit: 1
+  - Label: Terminal
+    Skill: {fileID: 11400000, guid: 68fa2123f5f8c402588ae6d91ed7f0f2, type: 2}
+    AppNames:
+    - Terminal
+    - "\u30BF\u30FC\u30DF\u30CA\u30EB"
+    BundleIdPrefixes:
+    - com.apple.Terminal
+    FromKit: 1
   - Label: Unity
-    Skill: {fileID: 11400000, guid: fd9ed260d001f43b9b524b6a8e4287e9, type: 2}
+    Skill: {fileID: 11400000, guid: cc994d1ca6c57414a9e3238a25fbc84b, type: 2}
     AppNames:
     - Unity
     - Unity Hub
     BundleIdPrefixes:
     - com.unity3d.
-  - Label: Steam
-    Skill: {fileID: 11400000, guid: ba2228fa3d4bc47d28763faae5da8c79, type: 2}
+    FromKit: 1
+  - Label: Word
+    Skill: {fileID: 11400000, guid: 68b82cedfbce34a3f99275c53c0554eb, type: 2}
     AppNames:
-    - Steam
+    - Word
+    - Microsoft Word
+    - Pages
     BundleIdPrefixes:
-    - com.valvesoftware.steam
+    - com.microsoft.Word
+    - com.apple.iWork.Pages
+    FromKit: 1
+  - Label: Xcode
+    Skill: {fileID: 11400000, guid: 3164ae6fe0d564fc0aa7a82ef5c44b55, type: 2}
+    AppNames:
+    - Xcode
+    BundleIdPrefixes:
+    - com.apple.dt.Xcode
+    FromKit: 1
   _templates:
   - Name: "\u30D4\u30E9\u30FC"
     Attack: {fileID: 11400000, guid: 9eb594a4112d143cf9c37b3bdd2c56d7, type: 2}

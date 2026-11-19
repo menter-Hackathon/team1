@@ -54,7 +54,9 @@ public static class ArtAssets
         R("Generated/Stage/Tile_Floor.png", pivot: new Vector2(0.5f, 1f), border: new Vector4(0, 0, 0, 3), readable: true),
         R("Generated/Stage/Tile_Wall.png", border: new Vector4(3, 0, 3, 0), readable: true),
         R("Generated/Stage/Platform_Folder.png", pivot: new Vector2(0.5f, 5f / 6f), border: new Vector4(9, 0, 3, 0), readable: true),
-        R("Generated/Stage/Platform_Window.png", pivot: new Vector2(0.5f, 1f), border: new Vector4(3, 0, 3, 0), readable: true),
+        R("Generated/Stage/Platform_Window.png", pivot: new Vector2(0.5f, 1f), border: new Vector4(8, 0, 3, 0), readable: true), // 2026-11-19：左の信号機の点（Mac）を伸ばさない
+        R("Generated/Stage/Mac_Frame.png", border: new Vector4(3, 3, 3, 9)),   // 2026-11-19：Mac のウィンドウのふち（盾のウィンドウ）
+        R("Generated/Stage/Mac_Lights.png"),                                   // 2026-11-19：信号機の3つの丸
         R("Generated/Stage/Room_Editor.png"),
         R("Generated/Stage/Room_TitleBar.png", border: new Vector4(1, 0, 1, 0), readable: true),
         R("Generated/Hazards/Hazard_Notification.png"),

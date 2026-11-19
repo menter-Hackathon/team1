@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce805219d4fca46b4aaaa1f93f172b71, type: 3}
+  m_Name: PaceAssets
+  m_EditorClassIdentifier: 
+  Rain: {fileID: 11400000, guid: e9e2ade33dfa24a1b837f17526920a54, type: 2}
+  RainSmall: {fileID: 11400000, guid: 6e2d6c6adb0ab4429aea904ff7753652, type: 2}
+  RainBig: {fileID: 11400000, guid: 711f9166e8dce4b759d7d012a66a795f, type: 2}
+  Pillar: {fileID: 11400000, guid: aaf23aab8aa454b5a920ca6a03545173, type: 2}
+  PillarRhythm: {fileID: 11400000, guid: 77c06d38827b64145a8a87afe28e58f1, type: 2}
+  Floor: {fileID: 11400000, guid: 31d9d0a5f8f924bbe8a218decb2e9352, type: 2}
+  FloorReboot: {fileID: 11400000, guid: 068f99e8b66014b84ab16786c658c678, type: 2}
+  HazardRunner: {fileID: 7927559145771669390, guid: 2851cb0ae13cf4d0fac29baa0f422ac1, type: 3}

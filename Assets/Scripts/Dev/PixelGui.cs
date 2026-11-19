@@ -16,9 +16,9 @@ public static class PixelGui
     public static readonly Color Ink = new Color32(0x1e, 0x08, 0x30, 0xff);
     /// <summary>ウイルス（マゼンタ）。ロゴの影・ゲームオーバー・ボスが出るまでのゲージ</summary>
     public static readonly Color Magenta = new Color32(0xed, 0x38, 0xff, 0xff);
-    /// <summary>小さな見出し（USAGE_SCAN.EXE・固有能力）</summary>
+    /// <summary>小さな見出し（ウィンドウの題名・固有能力）</summary>
     public static readonly Color LabelPurple = new Color32(0x6a, 0x2a, 0x8c, 0xff);
-    /// <summary>うまくいったときの小さな見出し（SCAN_REPORT.TXT）</summary>
+    /// <summary>うまくいったときの小さな見出し（リザルトのウィンドウの題名）</summary>
     public static readonly Color LabelGreen = new Color32(0x1e, 0x6c, 0x13, 0xff);
     public static readonly Color Orange = new Color32(0xdf, 0x71, 0x26, 0xff);
     public static readonly Color OrangeHover = new Color32(0xef, 0x8a, 0x43, 0xff);
@@ -245,17 +245,54 @@ public static class PixelGui
         }
     }
 
-    // ───────── 部品（画面イメージの形） ─────────
+    // ───────── Mac のウィンドウ（2026-11-19【仮】） ─────────
+    // docs/mac-look-design.md 6章の 2（まさぴ〜が「Mac にする」と決めた）。前は灰色の3重のふちと、右上の大きいオレンジの ×。
+    // 形は MacUi.Gui.Window（Mac 担当1 の共通の部品）で描く。ここでは、中の面を前と同じ明るい灰（Panel）に塗り直すだけ。
+    // 外の大きさと、返す中の四角（外から 9 ドット内側）は前と同じ。上の 9 ドット（ふち 1・バー 7・線 1）がタイトルバーで、前の枠と同じ厚さ。
 
-    /// <summary>ウィンドウ：外から濃い灰・灰・白の縁（3ドットずつ）、中は明るい灰</summary>
-    public static Rect Window(Rect r)
+    /// <summary>ウィンドウ（Mac の形・題名なし）。中の四角を返す（前と同じ、外から 9 ドット内側）</summary>
+    public static Rect Window(Rect r) => Window(r, null, Ink);
+
+    /// <summary>
+    /// Mac のウィンドウ（MacUi.Gui.Window）：角の丸い 1 ドットのふち・影・明るいタイトルバー・左上の信号機・まん中の題名（英字 8）。
+    /// 中は前と同じ明るい灰（Panel）。active＝前のウィンドウ（信号機に色）。false なら後ろのウィンドウ（信号機は 3 つとも灰）。
+    /// 閉じるボタンにするときは、このあと WindowClose を呼ぶ。中の四角を返す（前と同じ、外から 9 ドット内側）
+    /// </summary>
+    public static Rect Window(Rect r, string title, Color titleColor, bool active = true)
     {
-        Fill(r, FrameDark);
-        Fill(Inset(r, 3f), Frame);
-        Fill(Inset(r, 6f), White);
-        Fill(Inset(r, 9f), Panel);
+        Rect body = MacUi.Gui.Window(r, title, MacLook.Light, active, titleColor: titleColor, lightD: 5); // 2026-11-19：大きいウィンドウでは信号機を少し大きく
+        // 中の面を Panel に塗り直す。下の角は MacUi と同じ欠き方（ふちの角の段より 1 つ少ない）
+        FillRoundBottom(body, MacUi.CornerFor(Mathf.RoundToInt(r.width)) - 1, Panel);
         return Inset(r, 9f);
     }
+
+    /// <summary>
+    /// ウィンドウの左上の赤い丸を、閉じるボタンにする（Window のあとに呼ぶ）。押されたら true。
+    /// 赤い丸は小さい（3 ドット）ので、押せる所は丸のまわり 13×14 ドット。ウィンドウの外の左上にもはみ出す
+    /// （前の右上の × も外へはみ出していた）。黄色い丸とタイトルバーの下の線にはかからない
+    /// </summary>
+    public static bool WindowClose(Rect win)
+    {
+        float x = Mathf.Round(win.x), y = Mathf.Round(win.y);
+        float right = x + MacUi.LightX + MacUi.LightD + MacUi.LightGap; // 黄色い丸の左の端
+        float bottom = y + 1f + MacUi.TitleHeightFor(Mathf.RoundToInt(win.height)); // タイトルバーの下の線
+        return Click(new Rect(x - 6f, y - 6f, right - (x - 6f), bottom - (y - 6f)));
+    }
+
+    // 下の角だけ r 段欠いた四角を塗る（MacUi.Gui.RoundFill と同じ欠き方）
+    static void FillRoundBottom(Rect rc, int r, Color color)
+    {
+        if (rc.width <= 0f || rc.height <= 0f) return;
+        r = Mathf.Clamp(r, 0, Mathf.FloorToInt(Mathf.Min(rc.width, rc.height) * 0.5f));
+        for (int i = 0; i < r; i++)
+        {
+            float inset = r - i;
+            Fill(new Rect(rc.x + inset, rc.yMax - 1f - i, rc.width - inset * 2f, 1f), color);
+        }
+        Fill(new Rect(rc.x, rc.y, rc.width, rc.height - r), color);
+    }
+
+    // ───────── 部品（画面イメージの形） ─────────
 
     /// <summary>カード：選んでいなければ灰の縁と薄い灰、選んでいれば濃い赤とオレンジの縁と白</summary>
     public static void CardBox(Rect r, bool selected)
@@ -339,27 +376,11 @@ public static class PixelGui
         return Click(r);
     }
 
-    /// <summary>大きな × ボタン（ウィンドウの右上）：オレンジに白い ×、右下に濃い赤の影</summary>
-    public static bool CloseButton(Rect r)
-    {
-        bool hover = r.Contains(Event.current.mousePosition);
-        float sh = Mathf.Max(2f, Mathf.Round(r.width * 0.1f));
-        Fill(new Rect(r.x + sh, r.y + sh, r.width - sh, r.height - sh), DarkRed);
-        var face = new Rect(r.x, r.y, r.width - sh, r.height - sh);
-        Fill(face, hover ? OrangeHover : Orange);
-        // 白い ×（太さ face の 1/6 の四角を斜めに並べる）
-        float t = Mathf.Max(2f, Mathf.Round(face.width / 6f));
-        float pad = Mathf.Round(face.width * 0.2f);
-        float span = face.width - pad * 2f - t;
-        int steps = Mathf.Max(1, Mathf.RoundToInt(span / (t * 0.5f)));
-        for (int i = 0; i <= steps; i++)
-        {
-            float d = Mathf.Round(span * i / steps);
-            Fill(new Rect(face.x + pad + d, face.y + pad + d, t, t), White);
-            Fill(new Rect(face.xMax - pad - t - d, face.y + pad + d, t, t), White);
-        }
-        return Click(r);
-    }
+    /// <summary>
+    /// 【仮】前の閉じるボタン（右上の大きいオレンジの ×）。2026-11-19：Mac には右上の × が無いので、何も描かず押せる所だけ残す。
+    /// ウィンドウの閉じるボタンには WindowClose を使う（左上の信号機の赤い丸を押せるようにする）
+    /// </summary>
+    public static bool CloseButton(Rect r) => Click(r);
 
     /// <summary>オレンジの小さな札（「▶ 選択中」）</summary>
     public static void Chip(Rect r, string text)
@@ -378,6 +399,93 @@ public static class PixelGui
         Fill(Inset(r, 1f), White);
         Text(new Rect(r.x, r.y - 1f, r.width, r.height), text, 12, BodyText, TextAnchor.MiddleCenter);
         return w;
+    }
+
+    // ───────── 能力の絵のタグ・届く所の図（2026-11-19：docs/ui-text-and-dex-design.md 2-2・2-3） ─────────
+
+    /// <summary>白い型の絵を、色を掛けて描く（Fill と同じく OnGUI の色に直す）</summary>
+    public static void DrawTint(Rect r, Texture tex, Color color)
+    {
+        if (Event.current.type != EventType.Repaint || tex == null) return;
+        Color saved = GUI.color;
+        GUI.color = ToGui(color);
+        GUI.DrawTexture(Snap(r), tex);
+        GUI.color = saved;
+    }
+
+    /// <summary>絵のタグの絵だけ（9×9 を scale 倍。左上をそろえる）</summary>
+    public static void DrawPicto(float x, float y, Picto p, float scale = 1f)
+    {
+        float s = SkillPictos.Size * scale;
+        DrawTint(new Rect(x, y, s, s), SkillPictos.Texture(p), SkillPictos.ColorOf(p));
+    }
+
+    /// <summary>絵のタグの札の幅（label＝false なら絵だけの札）</summary>
+    public static float PictoTagWidth(Picto p, bool label = true)
+        => label ? 3f + SkillPictos.Size + 3f + Mathf.Ceil(Measure(SkillPictos.Label(p), Style(false, 12))) + 4f : SkillPictos.Size + 6f;
+
+    /// <summary>絵のタグの札：白い札（縁 FrameDark 1、高さ 16）に、絵（左 3・上 3）とラベル（12）。label＝false なら絵だけ。幅を返す</summary>
+    public static float PictoTag(float x, float y, Picto p, bool label = true)
+    {
+        float w = PictoTagWidth(p, label);
+        var r = new Rect(x, y, w, 16f);
+        Fill(r, FrameDark);
+        Fill(Inset(r, 1f), White);
+        DrawPicto(x + 3f, y + 3f, p);
+        if (label) Text(new Rect(x + 3f + SkillPictos.Size + 3f, y - 1f, w, 16f), SkillPictos.Label(p), 12, BodyText);
+        return w;
+    }
+
+    /// <summary>絵のタグを横に並べる（間 gap）。幅 maxWidth に入らないときは、後ろの札から絵だけにする</summary>
+    public static void PictoTags(float x, float y, IReadOnlyList<Picto> pictos, float maxWidth, float gap = 4f)
+    {
+        if (pictos == null || pictos.Count == 0) return;
+        int n = Mathf.Min(3, pictos.Count);
+        var labels = new bool[n];
+        for (int i = 0; i < n; i++) labels[i] = true;
+        float Total()
+        {
+            float t = gap * (n - 1);
+            for (int i = 0; i < n; i++) t += PictoTagWidth(pictos[i], labels[i]);
+            return t;
+        }
+        for (int i = n - 1; i >= 0 && Total() > maxWidth; i--) labels[i] = false;
+        for (int i = 0; i < n; i++) x += PictoTag(x, y, pictos[i], labels[i]) + gap;
+    }
+
+    /// <summary>
+    /// 届く所の図（横7×縦2のマス。1マス 8、間 1。上＝空中、下＝床）。自分は左から2番目・下（Ink）、当たる所は Orange。
+    /// 大きさは 57×17（まわりにも 1 の地）。None なら描かない
+    /// </summary>
+    public static void ReachMap(float x, float y, SkillReach reach)
+    {
+        if (reach == SkillReach.None) return;
+        Fill(new Rect(x, y, 57f, 17f), Muted);
+        Rect Cell(int col, int row) => new Rect(x + 1f + (col - 1) * 8f, y + 1f + row * 8f, 7f, 7f); // col は 1〜7、row 0＝上
+        bool Hit(int col, int row) => reach switch
+        {
+            SkillReach.Front => row == 1 && (col == 3 || col == 4),
+            SkillReach.Far => row == 1 && col >= 3,
+            SkillReach.Pillar => col == 3 || col == 4,
+            SkillReach.Up => row == 0 && col >= 2 && col <= 4,
+            SkillReach.Around => col <= 3,
+            SkillReach.All => true,
+            _ => false,
+        };
+        for (int row = 0; row < 2; row++)
+            for (int col = 1; col <= 7; col++)
+                Fill(Cell(col, row), Hit(col, row) ? Orange : White);
+        Rect self = Cell(2, 1);
+        Fill(self, Ink);
+        if (reach == SkillReach.Self)
+        {
+            // 自分を Orange の縁で囲み、右の 3〜5（下）に「移動」の絵
+            Border(new Rect(self.x - 1f, self.y - 1f, 9f, 9f), Orange, 1f);
+            Rect a = Cell(3, 1), b = Cell(5, 1);
+            var lane = new Rect(a.x, a.y, b.xMax - a.x, 7f);
+            Fill(lane, White);
+            DrawPicto(Mathf.Round(lane.center.x - SkillPictos.Size * 0.5f), lane.y - 1f, Picto.Move);
+        }
     }
 
     /// <summary>濃い紫の名札（ウィンドウの左上「■ YouTube」）</summary>
@@ -408,7 +516,12 @@ public static class PixelGui
 
     public static Rect Inset(Rect r, float d) => new Rect(r.x + d, r.y + d, r.width - d * 2f, r.height - d * 2f);
 
-    static bool Click(Rect r) => GUI.enabled && GUI.Button(r, GUIContent.none, GUIStyle.none);
+    static bool Click(Rect r)
+    {
+        bool clicked = GUI.enabled && GUI.Button(r, GUIContent.none, GUIStyle.none);
+        if (clicked) GameAudio.Event("ui_decide"); // ボタンの音（画面の決定・戻るの音が同じフレームにあれば、そちらが鳴る）
+        return clicked;
+    }
 
     // ───────── 絵 ─────────
 

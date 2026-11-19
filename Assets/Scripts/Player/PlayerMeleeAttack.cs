@@ -70,6 +70,7 @@ public class PlayerMeleeAttack : MonoBehaviour
         if (IsLocked)
         {
             SwingBlocked?.Invoke();
+            GameAudio.Event("player_swing_blocked");
             return false;
         }
         if (_hitbox == null || !_controller.IsControllable || Time.time < _nextAttackTime) return false;
@@ -80,6 +81,7 @@ public class PlayerMeleeAttack : MonoBehaviour
         _nextAttackTime = Time.time + CooldownTime;
         if (_effect != null) _effect.enabled = true;
         Swung?.Invoke();
+        GameAudio.Event("player_swing");
         return true;
     }
 

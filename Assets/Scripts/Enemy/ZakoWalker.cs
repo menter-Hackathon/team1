@@ -66,7 +66,7 @@ public class ZakoWalker : MonoBehaviour
         bool stopped = _health.IsDead || Time.time < _pauseUntil;
 
         if (stopped) _velocity.x = Mathf.MoveTowards(_velocity.x, 0f, 20f * dt);
-        else _velocity.x = Direction * _speed * StatModifiers.SpeedOf(this); // バフ（Steam ボスの実績解除）
+        else _velocity.x = Direction * _speed * GameBuffs.ZakoSpeed; // 2026-11-19：雑魚の速さの倍率（アプリのキット）
 
         // 足場の端に来たら、落ちる前に折り返す
         if (!stopped && _turnAtLedges && _body.IsGrounded && !HasGroundAhead()) Turn();
@@ -96,7 +96,7 @@ public class ZakoWalker : MonoBehaviour
     void Turn()
     {
         Direction = -Direction;
-        _velocity.x = Direction * _speed;
+        _velocity.x = Direction * _speed * GameBuffs.ZakoSpeed;
     }
 
     /// <summary>進む方向の足元の少し先に床があるか</summary>

@@ -43,8 +43,13 @@ public class AppBossEntry
     public IntRange GaugeMax;
     [Tooltip("第2形態の、攻撃の後の待ち時間（秒。使用時間で変える）")]
     public FloatRange Phase2Wait;
+    [Tooltip("【仮】アプリのキットの行か（2026-11-19。AppKitsBuilder が入れる）。AppKits.Enabled = false・キットのボスのスイッチが切れていれば使わない")]
+    public bool FromKit;
 
     public bool Matches(AppUsageRow row) => AppMatch.Matches(row, AppNames, BundleIdPrefixes);
+
+    /// <summary>今使ってよい行か（キットの行は、キットのスイッチを見る）</summary>
+    public bool IsActive => !(FromKit || (Profile != null && Profile.name.StartsWith("Boss_Kit_"))) || AppKits.IsOn(Label, KitPart.Boss);
 }
 
 /// <summary>
@@ -66,11 +71,8 @@ public class AppEntry
     public BossController BossPrefab;
     [Tooltip("ボスの設定。使用時間で数値を変えた複製を作って渡す。手に入る能力もここから読む")]
     public BossProfile Profile;
-    [Tooltip("オン：対応表に無いアプリの代用ボスの、ひな形にしない（Office・Unity・Steam のボスは、そのアプリ専用の技なので。2026-11-18）")]
-    public bool ExcludeFromStandIn;
-    [Tooltip("オン：着ているウィンドウとゲージの横のアイコンを、Mac の本物のアプリのアイコンから作る（代用ボス・Terminal と同じ作り方。2026-11-19）。" +
-             "ステージの色が空なら、アイコンの色を使う")]
-    public bool IconLook;
+    [Tooltip("【仮】本物のこのアプリのときだけ使うボスの設定（2026-11-19：Chrome・VS Code の専用の技）。空なら Profile。代用ボスは Profile を借りるので、こちらは使わない")]
+    public BossProfile OwnProfile;
     [Tooltip("ボスが出てくる位置（部屋の床の真ん中が (0, 0)）")]
     public Vector2 SpawnPosition;
     [Tooltip("このアプリのステージのシーン名（Build Settings に登録しておく）")]
@@ -127,7 +129,7 @@ public class AppCatalog : ScriptableObject
     {
         foreach (var e in AppBosses)
         {
-            if (e != null && e.Profile != null && e.Matches(row)) return e;
+            if (e != null && e.Profile != null && e.IsActive && e.Matches(row)) return e; // キットの行はスイッチを見る（2026-11-19）
         }
         return null;
     }

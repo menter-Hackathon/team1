@@ -1,0 +1,88 @@
+{
+ "id": "bgm_loadout",
+ "desc": "能力のカードを3枚選ぶ画面。設定アプリをいじっているような、軽く考えごとをするグルーヴ。後半で少しずつ「さあ行くぞ」と盛り上がる。Dマイナー（ドリアン）",
+ "bpm": 104,
+ "steps_per_beat": 4,
+ "beats_per_bar": 4,
+ "swing": 0.1,
+ "instruments": {
+  "lead": {
+   "wave": "pulse",
+   "duty": 0.125,
+   "env": {
+    "a": 0.003,
+    "d": 0.1,
+    "s": 0.5,
+    "r": 0.05
+   },
+   "vol": 0.3,
+   "vib": [
+    0.15,
+    5.5,
+    0.15
+   ],
+   "echo": [
+    3,
+    0.3,
+    0.22
+   ]
+  },
+  "harm": {
+   "wave": "pulse",
+   "duty": 0.25,
+   "env": {
+    "a": 0.002,
+    "d": 0.06,
+    "s": 0.3,
+    "r": 0.03
+   },
+   "vol": 0.285,
+   "arp_rate": 0.04
+  },
+  "bass": {
+   "wave": "triangle",
+   "env": {
+    "a": 0.002,
+    "d": 0.05,
+    "s": 0.9,
+    "r": 0.03
+   },
+   "vol": 0.331
+  },
+  "drums": {
+   "kit": "chip",
+   "vol": 0.517
+  }
+ },
+ "patterns": {
+  "lead_a": "D5 . F5 . A5 . . G5 . F5 . D5 . . C5 . | D5 - - . . . A4 . C5 . D5 . . . . . | D5 . G5 . B5 . . A5 . G5 . D5 . . B4 . | D5 - - . . . B4 . D5 . E5 . . . . . | F5 . D5 . Bb4 . . D5 . F5 . Bb5 . . A5 . | G5 . E5 . C5 . . E5 . G5 . C6 . . Bb5 . | A5 - - . F5 . D5 . A5 - - . F5 . D5 . | E5 - - . C#5 . A4 . C#5 . E5 . G5 . A5 . |",
+  "lead_b": "A5 - - - - - G5 - F5 - - - C5 - - - | G5 - - - - - F5 - E5 - - - C5 - - - | F5 - - - - - E5 - D5 - - - A4 - D5 - | F5 - - - D5 - - - Bb4 - - - D5 - F5 - | A5 - - - - - G5 - F5 - A5 - C6 - - - | Bb5 - - - G5 - - - E5 - G5 - C6 - - - | A5 - - - E5 - C#5 - A4 - C#5 - E5 - A5 - | G5 - E5 - C#5 - A4 - . . A4 . C#5 . E5 . |",
+  "harm_a": ". . A3+D4+F4 . . . A3+D4+F4 . . . A3+D4+F4 . . A3+D4+F4 . . | . . A3+D4+F4 . . . A3+D4+F4 . . . A3+D4+F4 . . A3+D4+F4 . . | . . G3+B3+D4 . . . G3+B3+D4 . . . G3+B3+D4 . . G3+B3+D4 . . | . . G3+B3+D4 . . . G3+B3+D4 . . . G3+B3+D4 . . G3+B3+D4 . . | . . Bb3+D4+F4 . . . Bb3+D4+F4 . . . Bb3+D4+F4 . . Bb3+D4+F4 . . | . . G3+C4+E4 . . . G3+C4+E4 . . . G3+C4+E4 . . G3+C4+E4 . . | . . A3+D4+F4 . . . A3+D4+F4 . . . A3+D4+F4 . . A3+D4+F4 . . | . . A3+C#4+E4 . . . A3+C#4+E4 . . . A3+C#4+E4 . . A3+C#4+E4 . . |",
+  "harm_b": "A3+C4+F4 - - - - - - - - - - - A3+C4+F4 - . . | G3+C4+E4 - - - - - - - - - - - G3+C4+E4 - . . | A3+D4+F4 - - - - - - - - - - - A3+D4+F4 - . . | Bb3+D4+F4 - - - - - - - - - - - Bb3+D4+F4 - . . | A3+C4+F4 - - - - - - - - - - - A3+C4+F4 - . . | G3+C4+E4 - - - - - - - - - - - G3+C4+E4 - . . | A3+C#4+E4 - - - - - - - - - - - A3+C#4+E4 - . . | A3+C#4+E4 - - - - - - - - - - - A3+C#4+E4 - . . |",
+  "bass_a": "D3 - . D3 . . D3 . D3 - . D3 A2 . D3 . | D3 - . D3 . . D3 . D3 - . D3 A2 . D3 . | G2 - . G2 . . G3 . G2 - . G2 D3 . G3 . | G2 - . G2 . . G3 . G2 - . G2 D3 . G3 . | Bb2 - . Bb2 . . Bb3 . Bb2 - . Bb2 F3 . Bb3 . | C3 - . C3 . . C3 . C3 - . C3 G2 . C3 . | D3 - . D3 . . D3 . D3 - . D3 A2 . D3 . | A2 - . A2 . . A3 . A2 - . A2 E3 . A3 . |",
+  "bass_b": "F2 - . F2 . F2 F3 . F2 - . F2 C3 . F3 C3 | C3 - . C3 . C3 C3 . C3 - . C3 G2 . C3 G2 | D3 - . D3 . D3 D3 . D3 - . D3 A2 . D3 A2 | Bb2 - . Bb2 . Bb2 Bb3 . Bb2 - . Bb2 F3 . Bb3 F3 | F2 - . F2 . F2 F3 . F2 - . F2 C3 . F3 C3 | C3 - . C3 . C3 C3 . C3 - . C3 G2 . C3 G2 | A2 - . A2 . A2 A3 . A2 - . A2 E3 . A3 E3 | A2 - . A2 . A2 A3 . A2 - . A2 E3 . A3 E3 |",
+  "drum_a": "k . h . s . h k . k h . s . h h | k . h . s . h k . k h . s . h o | k . h . s . h k . k h . s . h h | k . h . s . h k . k h . s . h o | k . h . s . h k . k h . s . h h | k . h . s . h k . k h . s . h o | k . h . s . h k . k h . s . h h | k . h . s . h k . k s . s . t t |",
+  "drum_b": "k+c . h h p . h k . k h . p . h o | k . h h p . h k . k h k p . h h | k . h h p . h k . k h . p . h o | k . h h p . h k . k h k p . h h | k . h h p . h k . k h . p . h o | k . h h p . h k . k h k p . h h | k . h h s . h k . k h k s . s . | k . s . k . s s k s s s t t m m |"
+ },
+ "sections": {
+  "A": {
+   "bars": 8,
+   "lead": "lead_a",
+   "harm": "harm_a",
+   "bass": "bass_a",
+   "drums": "drum_a"
+  },
+  "B": {
+   "bars": 8,
+   "lead": "lead_b",
+   "harm": "harm_b",
+   "bass": "bass_b",
+   "drums": "drum_b"
+  }
+ },
+ "loop": [
+  "A",
+  "B"
+ ],
+ "jingle": false
+}

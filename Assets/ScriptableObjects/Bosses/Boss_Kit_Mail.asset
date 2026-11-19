@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Kit_Mail
+  m_EditorClassIdentifier: 
+  _displayName: Mail
+  _icon: {fileID: 21300000, guid: cff00d750c9014cf4961165058c7867a, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: febc98f2784ec448eb7c09cb558cf40b, type: 2}
+    - {fileID: 11400000, guid: 04ab82b6762dc410f8583ab032f78afd, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: c2b8bcd6cdd3f4034b508ed3720d687d, type: 2}
+    - {fileID: 11400000, guid: 819cf6a95397645e09205884fbbd0e09, type: 2}
+    - {fileID: 11400000, guid: 226ba236c5f7b4d15889f17adb98c194, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 2
+  _movement: 1
+  _warpAttack: {fileID: 0}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 0}
+  _extensions: []

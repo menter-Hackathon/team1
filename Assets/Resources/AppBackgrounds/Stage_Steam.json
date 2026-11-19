@@ -1,0 +1,94 @@
+{
+ "label": "Steam",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "cap_l",
+   "x": -3.4667,
+   "y": 2.5667,
+   "w": 3.2,
+   "h": 0.9333,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Steam__cap_l",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "cap_r",
+   "x": 3.6,
+   "y": 2.5667,
+   "w": 3.2,
+   "h": 0.9333,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Steam__cap_r",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "download",
+   "x": -0.4,
+   "y": 4.8,
+   "w": 2.9333,
+   "h": 0.6,
+   "top": 5.1,
+   "sprite": "AppBackgrounds/Parts/Steam__download",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": 2.933333333333333,
+    "dy": 0.0,
+    "period": 8,
+    "offset": 0
+   }
+  },
+  {
+   "id": "libr",
+   "x": -8.3333,
+   "y": 4.5333,
+   "w": 2.8,
+   "h": 0.6,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Steam__libr",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "sale",
+   "x": 8.2,
+   "y": 4.4333,
+   "w": 2.8,
+   "h": 0.8,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Steam__sale",
+   "behavior": "blink",
+   "params": {
+    "type": "blink",
+    "on": 6,
+    "off": 3,
+    "warn": 1.2,
+    "offset": 0
+   }
+  },
+  {
+   "id": "play",
+   "x": -8.5333,
+   "y": 1.2333,
+   "w": 2.4,
+   "h": 0.8,
+   "top": 1.6333,
+   "sprite": "AppBackgrounds/Parts/Steam__play",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "refill",
+    "cooldown": 25
+   }
+  }
+ ]
+}

@@ -53,8 +53,11 @@ public class PremiereThrownIcon : MonoBehaviour
         icon._castRadius = Mathf.Max(0.02f, hitSize * 0.5f);
         icon._spin = spin;
         // 絵は回すので、判定（親）とは別の子にする
-        icon._visual = RuntimeSprites.Show(go.transform, PremiereArt.Icon(kind), Vector2.zero, 21, visualSize, "Icon").transform;
+        SpriteRenderer visual = RuntimeSprites.Show(go.transform, PremiereArt.Icon(kind), Vector2.zero, 21, visualSize, "Icon");
+        icon._visual = visual.transform;
+        PremiereSkinTrail.Attach(go, visual); // 後ろに同じアイコンのうすい残像 2枚（12-1。2026-11-18）
         icon._hitbox = owner.AddHitbox(go, direct, col);
+        icon._hitbox.SetErrorKind("IconThrow_" + kind); // 当たった絵はアイコンごと（PremiereSkin）
         icon._hitbox.Hit += icon.OnHit;
         icon._hitbox.Activate();
         return icon;
@@ -109,7 +112,17 @@ public class PremiereThrownIcon : MonoBehaviour
     void Burst(Vector2 point, Vector2 normal)
     {
         if (_dead) return;
-        if (_owner != null && _effect != null) PremiereFx.IconEffect(_owner, _effect, _kind, point, normal);
+        if (_owner != null && _effect != null)
+        {
+            AreaStrike strike = PremiereFx.IconEffect(_owner, _effect, _kind, point, normal);
+            // 効果の判定にも、投げたアイコンと同じスキン（Premiere）を入れる（当たった絵がアイコンごとになるように。2026-11-18）。
+            // 効果の攻撃データは能力として覚えていないので、ほかの能力を使ったあとだと、別のスキンになってしまうため
+            if (strike != null && strike.TryGetComponent(out Hitbox hb))
+            {
+                SkinId skin = _hitbox != null && _hitbox.Skin != SkinId.None ? _hitbox.Skin : SkinId.Premiere;
+                hb.SetSkin(skin, "PremierePro_" + _kind, _effect, _hitbox != null ? _hitbox.SkinTheme : null, _hitbox != null ? _hitbox.SkinIcon : null);
+            }
+        }
         Die();
     }
 

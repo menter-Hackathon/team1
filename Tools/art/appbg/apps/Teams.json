@@ -1,0 +1,752 @@
+{
+ "id": "Teams",
+ "desc": "左に藍色の細い列とチャットの一覧。チャットの行と会議のカードが足場（通話のバーは左右に動く）。JOIN でボスがひるむ",
+ "base": "#cccdd9",
+ "elements": [
+  {
+   "type": "rect",
+   "x": 0,
+   "y": 0,
+   "w": 320,
+   "h": 22,
+   "color": "#5a5e96"
+  },
+  {
+   "type": "rrect",
+   "x": 152,
+   "y": 5,
+   "w": 86,
+   "h": 10,
+   "color": "#7478ac",
+   "r": 2
+  },
+  {
+   "type": "icon",
+   "name": "search",
+   "x": 155,
+   "y": 7,
+   "size": 6,
+   "color": "#c3c5e0"
+  },
+  {
+   "type": "text",
+   "x": 164,
+   "y": 8,
+   "text": "SEARCH",
+   "color": "#c3c5e0",
+   "scale": 1
+  },
+  {
+   "type": "rect",
+   "x": 10,
+   "y": 22,
+   "w": 16,
+   "h": 148,
+   "color": "#4c5082"
+  },
+  {
+   "type": "icon",
+   "name": "bell",
+   "x": 14,
+   "y": 28,
+   "size": 8,
+   "color": "#9396c4"
+  },
+  {
+   "type": "rect",
+   "x": 10,
+   "y": 44,
+   "w": 2,
+   "h": 12,
+   "color": "#b3b6ee"
+  },
+  {
+   "type": "rect",
+   "x": 12,
+   "y": 44,
+   "w": 14,
+   "h": 12,
+   "color": "#5a5e96"
+  },
+  {
+   "type": "icon",
+   "name": "chat",
+   "x": 14,
+   "y": 46,
+   "size": 8,
+   "color": "#d6d8f2"
+  },
+  {
+   "type": "icon",
+   "name": "user",
+   "x": 14,
+   "y": 64,
+   "size": 8,
+   "color": "#9396c4"
+  },
+  {
+   "type": "icon",
+   "name": "grid",
+   "x": 14,
+   "y": 82,
+   "size": 8,
+   "color": "#9396c4"
+  },
+  {
+   "type": "icon",
+   "name": "file",
+   "x": 14,
+   "y": 100,
+   "size": 8,
+   "color": "#9396c4"
+  },
+  {
+   "type": "icon",
+   "name": "puzzle",
+   "x": 14,
+   "y": 152,
+   "size": 8,
+   "color": "#9396c4"
+  },
+  {
+   "type": "rect",
+   "x": 26,
+   "y": 22,
+   "w": 44,
+   "h": 148,
+   "color": "#c6c8d6"
+  },
+  {
+   "type": "rect",
+   "x": 70,
+   "y": 22,
+   "w": 1,
+   "h": 148,
+   "color": "#aeb0c2"
+  },
+  {
+   "type": "text",
+   "x": 29,
+   "y": 26,
+   "text": "CHAT",
+   "color": "#5d6080",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 29,
+   "y": 36,
+   "text": "RECENT",
+   "color": "#8f92aa",
+   "scale": 1
+  },
+  {
+   "type": "rect",
+   "x": 26,
+   "y": 43,
+   "w": 44,
+   "h": 15,
+   "color": "#dcdde8"
+  },
+  {
+   "type": "circle",
+   "cx": 33,
+   "cy": 50,
+   "r": 4,
+   "color": "#9a9ed6",
+   "fill": true
+  },
+  {
+   "type": "text",
+   "x": 40,
+   "y": 46,
+   "text": "TEAM 1",
+   "color": "#5d6080",
+   "scale": 1
+  },
+  {
+   "type": "rect",
+   "x": 40,
+   "y": 53,
+   "w": 16,
+   "h": 2,
+   "color": "#a3a5ba"
+  },
+  {
+   "type": "circle",
+   "cx": 33,
+   "cy": 66,
+   "r": 4,
+   "color": "#d6b79a",
+   "fill": true
+  },
+  {
+   "type": "text",
+   "x": 40,
+   "y": 62,
+   "text": "MENTOR",
+   "color": "#5d6080",
+   "scale": 1
+  },
+  {
+   "type": "rect",
+   "x": 40,
+   "y": 69,
+   "w": 21,
+   "h": 2,
+   "color": "#a3a5ba"
+  },
+  {
+   "type": "circle",
+   "cx": 33,
+   "cy": 82,
+   "r": 4,
+   "color": "#9cc8b0",
+   "fill": true
+  },
+  {
+   "type": "text",
+   "x": 40,
+   "y": 78,
+   "text": "KEN",
+   "color": "#5d6080",
+   "scale": 1
+  },
+  {
+   "type": "rect",
+   "x": 40,
+   "y": 85,
+   "w": 16,
+   "h": 2,
+   "color": "#a3a5ba"
+  },
+  {
+   "type": "circle",
+   "cx": 33,
+   "cy": 98,
+   "r": 4,
+   "color": "#c8a3cf",
+   "fill": true
+  },
+  {
+   "type": "text",
+   "x": 40,
+   "y": 94,
+   "text": "DESIGN",
+   "color": "#5d6080",
+   "scale": 1
+  },
+  {
+   "type": "rect",
+   "x": 40,
+   "y": 101,
+   "w": 21,
+   "h": 2,
+   "color": "#a3a5ba"
+  },
+  {
+   "type": "circle",
+   "cx": 33,
+   "cy": 114,
+   "r": 4,
+   "color": "#a9b3c8",
+   "fill": true
+  },
+  {
+   "type": "text",
+   "x": 40,
+   "y": 110,
+   "text": "ALL",
+   "color": "#5d6080",
+   "scale": 1
+  },
+  {
+   "type": "rect",
+   "x": 40,
+   "y": 117,
+   "w": 16,
+   "h": 2,
+   "color": "#a3a5ba"
+  },
+  {
+   "type": "rect",
+   "x": 71,
+   "y": 22,
+   "w": 239,
+   "h": 11,
+   "color": "#d5d6e0"
+  },
+  {
+   "type": "circle",
+   "cx": 78,
+   "cy": 27,
+   "r": 3,
+   "color": "#9a9ed6",
+   "fill": true
+  },
+  {
+   "type": "text",
+   "x": 84,
+   "y": 25,
+   "text": "TEAM 1",
+   "color": "#5d6080",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 116,
+   "y": 25,
+   "text": "CHAT",
+   "color": "#5a5e96",
+   "scale": 1
+  },
+  {
+   "type": "rect",
+   "x": 116,
+   "y": 31,
+   "w": 16,
+   "h": 2,
+   "color": "#6f73c4"
+  },
+  {
+   "type": "text",
+   "x": 140,
+   "y": 25,
+   "text": "FILES",
+   "color": "#8f92aa",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 168,
+   "y": 25,
+   "text": "NOTES",
+   "color": "#8f92aa",
+   "scale": 1
+  },
+  {
+   "type": "rrect",
+   "x": 200,
+   "y": 24,
+   "w": 36,
+   "h": 7,
+   "color": "#6f73c4",
+   "r": 2
+  },
+  {
+   "type": "icon",
+   "name": "camera",
+   "x": 202,
+   "y": 24,
+   "size": 6,
+   "color": "#dcdcf4"
+  },
+  {
+   "type": "text",
+   "x": 211,
+   "y": 25,
+   "text": "MEET",
+   "color": "#dcdcf4",
+   "scale": 1
+  },
+  {
+   "type": "rect",
+   "x": 71,
+   "y": 33,
+   "w": 239,
+   "h": 1,
+   "color": "#b6b8c8"
+  },
+  {
+   "type": "rrect",
+   "x": 76,
+   "y": 152,
+   "w": 230,
+   "h": 14,
+   "color": "#d9dae4",
+   "r": 2
+  },
+  {
+   "type": "rect",
+   "x": 76,
+   "y": 165,
+   "w": 230,
+   "h": 1,
+   "color": "#6f73c4"
+  },
+  {
+   "type": "text",
+   "x": 81,
+   "y": 157,
+   "text": "TYPE A MESSAGE",
+   "color": "#a3a5ba",
+   "scale": 1
+  },
+  {
+   "type": "icon",
+   "name": "upload",
+   "x": 286,
+   "y": 155,
+   "size": 7,
+   "color": "#8f92aa"
+  },
+  {
+   "type": "icon",
+   "name": "play",
+   "x": 296,
+   "y": 155,
+   "size": 7,
+   "color": "#6f73c4"
+  }
+ ],
+ "veil": [
+  {
+   "x": 71,
+   "y": 34,
+   "w": 239,
+   "h": 117,
+   "color": "#cccdd9",
+   "alpha": 0.2
+  },
+  {
+   "x": 10,
+   "y": 22,
+   "w": 300,
+   "h": 148,
+   "color": "#4a5060",
+   "alpha": 0.1
+  }
+ ],
+ "stage": {
+  "hide_folders": true,
+  "platforms": [
+   {
+    "id": "chat1",
+    "x": 88,
+    "y": 127,
+    "w": 58,
+    "h": 13,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 58,
+      "h": 13,
+      "color": "#8f92b0",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 56,
+      "h": 11,
+      "color": "#eeeef5",
+      "r": 1
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 54,
+      "h": 1,
+      "color": "#fbfbfe"
+     },
+     {
+      "type": "circle",
+      "cx": 7,
+      "cy": 6,
+      "r": 3,
+      "color": "#9cc8b0",
+      "fill": true
+     },
+     {
+      "type": "rect",
+      "x": 13,
+      "y": 3,
+      "w": 18,
+      "h": 2,
+      "color": "#6d7090"
+     },
+     {
+      "type": "rect",
+      "x": 13,
+      "y": 7,
+      "w": 31,
+      "h": 2,
+      "color": "#b0b2c4"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "chat2",
+    "x": 176,
+    "y": 127,
+    "w": 60,
+    "h": 13,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 60,
+      "h": 13,
+      "color": "#8f92b0",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 58,
+      "h": 11,
+      "color": "#eeeef5",
+      "r": 1
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 56,
+      "h": 1,
+      "color": "#fbfbfe"
+     },
+     {
+      "type": "circle",
+      "cx": 7,
+      "cy": 6,
+      "r": 3,
+      "color": "#c8a3cf",
+      "fill": true
+     },
+     {
+      "type": "rect",
+      "x": 13,
+      "y": 3,
+      "w": 18,
+      "h": 2,
+      "color": "#6d7090"
+     },
+     {
+      "type": "rect",
+      "x": 13,
+      "y": 7,
+      "w": 38,
+      "h": 2,
+      "color": "#b0b2c4"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "meet",
+    "x": 80,
+    "y": 96,
+    "w": 64,
+    "h": 18,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 64,
+      "h": 18,
+      "color": "#8f92b0",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 62,
+      "h": 16,
+      "color": "#eeeef5",
+      "r": 1
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 60,
+      "h": 1,
+      "color": "#fbfbfe"
+     },
+     {
+      "type": "rect",
+      "x": 1,
+      "y": 1,
+      "w": 2,
+      "h": 16,
+      "color": "#6f73c4"
+     },
+     {
+      "type": "icon",
+      "name": "camera",
+      "x": 6,
+      "y": 3,
+      "size": 7,
+      "color": "#6f73c4"
+     },
+     {
+      "type": "text",
+      "x": 16,
+      "y": 4,
+      "text": "STANDUP",
+      "color": "#5d6080",
+      "scale": 1
+     },
+     {
+      "type": "rect",
+      "x": 16,
+      "y": 12,
+      "w": 36,
+      "h": 2,
+      "color": "#b0b2c4"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "callbar",
+    "x": 180,
+    "y": 97,
+    "w": 66,
+    "h": 12,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 66,
+      "h": 12,
+      "color": "#34375e",
+      "r": 3
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 64,
+      "h": 10,
+      "color": "#555a92",
+      "r": 3
+     },
+     {
+      "type": "rrect",
+      "x": 44,
+      "y": 2,
+      "w": 18,
+      "h": 8,
+      "color": "#c98f72",
+      "r": 2
+     }
+    ],
+    "behavior": {
+     "type": "move",
+     "dx": 54,
+     "dy": 0,
+     "period": 8,
+     "offset": 0
+    }
+   },
+   {
+    "id": "mine",
+    "x": 244,
+    "y": 127,
+    "w": 56,
+    "h": 13,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 56,
+      "h": 13,
+      "color": "#7f82b8",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 54,
+      "h": 11,
+      "color": "#c3c5ee",
+      "r": 2
+     },
+     {
+      "type": "rect",
+      "x": 5,
+      "y": 4,
+      "w": 40,
+      "h": 2,
+      "color": "#9396c8"
+     },
+     {
+      "type": "rect",
+      "x": 5,
+      "y": 8,
+      "w": 28,
+      "h": 2,
+      "color": "#9396c8"
+     }
+    ],
+    "behavior": {
+     "type": "blink",
+     "on": 6,
+     "off": 3,
+     "warn": 1.0,
+     "offset": 2
+    }
+   },
+   {
+    "id": "join",
+    "x": 272,
+    "y": 150,
+    "w": 30,
+    "h": 12,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 30,
+      "h": 12,
+      "color": "#f4f4f6",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 28,
+      "h": 10,
+      "color": "#6f73c4",
+      "r": 2
+     },
+     {
+      "type": "text",
+      "x": 7,
+      "y": 4,
+      "text": "JOIN",
+      "color": "#f0f0fa",
+      "scale": 1
+     }
+    ],
+    "behavior": {
+     "type": "button",
+     "effect": "stun_boss",
+     "cooldown": 25
+    }
+   }
+  ]
+ }
+}

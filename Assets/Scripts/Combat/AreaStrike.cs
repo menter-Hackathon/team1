@@ -19,6 +19,8 @@ public class AreaStrike : MonoBehaviour
     Hitbox _hitbox;
     SpriteRenderer _visual;
     SpriteRenderer _telegraph;
+    int _index;       // 何個目か（スキンの絵の番号。2026-11-18）
+    Vector2 _size;    // 判定の大きさ（円は x が直径）
     Sprite[] _frames;
 
     public AttackData Data => _data;
@@ -29,7 +31,8 @@ public class AreaStrike : MonoBehaviour
 
     /// <summary>
     /// 判定を1つ出す。point は狙った位置（床の上に出すときは、その真下の床に置く）。
-    /// normal は面の向き（弾が当たった位置に出すとき）。delay 秒たってから予告を始める
+    /// normal は面の向き（弾が当たった位置に出すとき）。delay 秒たってから予告を始める。
+    /// index：同時に出す物の何個目か（スキンの絵の番号。2026-11-18）
     /// </summary>
     public static AreaStrike Spawn(AttackRunner owner, AttackData data, Vector2 point, Vector2 normal, float delay, int index = 0)
     {
@@ -96,25 +99,8 @@ public class AreaStrike : MonoBehaviour
         var strike = go.AddComponent<AreaStrike>();
         strike._owner = owner;
         strike._data = data;
-        if (data.HasFrames)
-        {
-            // コマ送りの絵（Office の棒グラフ・折れ線など）：元の大きさのまま、絵の中心を判定の中心に合わせる
-            strike._frames = data.GetFrameRow(index);
-            var vgo = new GameObject("Visual");
-            vgo.layer = go.layer;
-            vgo.transform.SetParent(go.transform, false);
-            strike._visual = vgo.AddComponent<SpriteRenderer>();
-            strike._visual.sprite = strike._frames[0];
-            strike._visual.flipX = facing < 0;
-            strike._visual.color = data.Color;
-            strike._visual.sortingOrder = 18;
-            vgo.transform.localPosition = SpriteFrames.CenterOffset(strike._frames[0], facing);
-            strike._visual.enabled = false;
-            strike._hitbox = owner.AddHitbox(go, data, col);
-            strike.CreateTelegraph(surface, up, size);
-            strike.StartCoroutine(strike.RunAnimated(delay));
-            return strike;
-        }
+        strike._index = index;
+        strike._size = size;
         Sprite sprite = data.Sprite != null ? data.Sprite : (data.Shape == AreaShape.Circle ? PlaceholderSprites.Circle : PlaceholderSprites.Square);
         Vector2 visualSize = data.Shape == AreaShape.Circle ? new Vector2(size.x, size.x) : size;
         Color color = data.Color;
@@ -165,6 +151,7 @@ public class AreaStrike : MonoBehaviour
         // 予告（点滅させる）
         if (_telegraph != null)
         {
+            NotifySkin(DressPhase.Telegraph, _telegraph, _data.TelegraphTime);
             float end = Time.time + _data.TelegraphTime;
             while (Time.time < end)
             {
@@ -178,6 +165,7 @@ public class AreaStrike : MonoBehaviour
         IsHitActive = true;
         _visual.enabled = true;
         _hitbox.Activate();
+        NotifySkin(DressPhase.Active, _visual, _data.HitWindow);
         float hitEnd = Time.time + _data.HitWindow;
         if (_data.PersistDuration > 0f)
         {
@@ -200,64 +188,14 @@ public class AreaStrike : MonoBehaviour
 
         IsHitActive = false;
         _hitbox.Deactivate();
+        NotifySkin(DressPhase.Vanish, null, 0f);
         Destroy(gameObject);
     }
 
-    /// <summary>
-    /// コマ送りの絵がある判定の流れ：（ずらす時間）→ 絵を出す → 「判定までの秒数」後に判定を出す（判定時間のあいだ）→
-    /// 絵を最後まで再生して消える。「止めるコマ」があれば、判定を出している間はそのコマで止める（ボスの折れ線の光る時間）
-    /// </summary>
-    IEnumerator RunAnimated(float delay)
+    /// <summary>スキンに場面を知らせる（2026-11-18：スキルの見た目 1-1）。付けたら今の絵をかくす</summary>
+    void NotifySkin(DressPhase phase, SpriteRenderer current, float duration)
     {
-        if (delay > 0f) yield return new WaitForSeconds(delay);
-        yield return BlinkTelegraph();
-
-        _visual.enabled = true;
-        float start = Time.time;
-        float hitStart = start + _data.HitDelay;
-        float hitEnd = hitStart + _data.HitWindow;
-        int count = _frames.Length;
-        int hold = _data.HoldFrame >= 0 ? Mathf.Min(_data.HoldFrame, count - 1) : -1;
-        float holdAt = hold >= 0 ? hold / Mathf.Max(0.1f, _data.FrameRate) : 0f; // 止めるコマに着く時刻（始まりから）
-        float nextTick = hitStart + _data.TickInterval;
-
-        while (true)
-        {
-            float now = Time.time;
-            if (!IsHitActive && now >= hitStart && now < hitEnd)
-            {
-                IsHitActive = true;
-                _hitbox.Activate();
-            }
-            if (IsHitActive && _data.PersistDuration > 0f && now >= nextTick)
-            {
-                _hitbox.Activate();
-                nextTick += _data.TickInterval;
-            }
-            if (IsHitActive && now >= hitEnd)
-            {
-                IsHitActive = false;
-                _hitbox.Deactivate();
-            }
-
-            // 止めるコマで待った分だけ、時間を差し引いてコマを進める
-            float elapsed = now - start;
-            if (hold >= 0)
-            {
-                float stopped = Mathf.Max(0f, Mathf.Min(now, hitEnd) - (start + holdAt));
-                if (now < hitEnd && elapsed >= holdAt) elapsed = holdAt;
-                else if (now >= hitEnd) elapsed -= stopped;
-            }
-            int frame = SpriteFrames.Index(elapsed, _data.FrameRate, count, _data.LoopFrames);
-            _visual.sprite = _frames[frame];
-
-            bool animDone = !_data.LoopFrames && elapsed >= SpriteFrames.Duration(count, _data.FrameRate);
-            if (now >= hitEnd && (animDone || _data.LoopFrames)) break;
-            yield return null;
-        }
-
-        IsHitActive = false;
-        _hitbox.Deactivate();
-        Destroy(gameObject);
+        if (_data == null) return;
+        SkinDresser.Dress(_owner, _data, gameObject, phase, current, _size, _index, transform.up, Mathf.Max(1, _data.AreaCount), duration);
     }
 }

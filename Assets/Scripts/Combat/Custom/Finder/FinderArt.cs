@@ -168,8 +168,14 @@ public static class FinderArt
         }
     }
 
-    /// <summary>zip の大きさ（縦のドット）。空 10・1〜2個 13・3個以上 16（docs 2-3）</summary>
-    public static int ZipHeight(int count) => count <= 0 ? 10 : count <= 2 ? 13 : 16;
+    /// <summary>zip の大きさ（縦のドット）。2026-11-19（docs/app-feedback-v2-design.md 4-2）：空 10・1個 13・2〜3個 16・4個以上 18</summary>
+    public static int ZipHeight(int count) => ZipTierHeight(ZipTier(count));
+
+    /// <summary>zip の段（0＝空、1＝1個、2＝2〜3個、3＝4個以上）。2026-11-19</summary>
+    public static int ZipTier(int count) => count <= 0 ? 0 : count == 1 ? 1 : count <= 3 ? 2 : 3;
+
+    /// <summary>段ごとの zip の縦のドット</summary>
+    public static int ZipTierHeight(int tier) => tier <= 0 ? 10 : tier == 1 ? 13 : tier == 2 ? 16 : 18;
 
     static int ZipWidth(int h) => Mathf.RoundToInt(h * 0.8f);
 
@@ -201,6 +207,105 @@ public static class FinderArt
         DrawDoc(g, (canvas - w) / 2, (canvas - h) / 2, w, h, Mathf.Max(2, w / 4), true);
         return ZipIconCache[h] = RuntimeSprites.FromAscii($"Finder_ZipIcon_{h}", Rows(g), DocPalette());
     }
+
+    // ───────── 段ごとの zip（2026-11-19。docs/app-feedback-v2-design.md 4-2）【仮】 ─────────
+
+    static readonly Sprite[] TierCache = new Sprite[4];
+    static readonly Sprite[] TierIconCache = new Sprite[4];
+    static readonly Sprite[] ShotCache = new Sprite[3];
+
+    /// <summary>
+    /// 段ごとの zip（ゲームの世界）。1＝ファスナーの上から書類の角が1枚のぞく、2＝ふくらんで書類が3枚のぞく、3＝同じで、ファスナーが白い。
+    /// 上に書類がのぞく分、絵は zip より 4ドット高い（原点は zip の真ん中より少し上になる）
+    /// </summary>
+    public static Sprite ZipTierSprite(int tier)
+    {
+        tier = Mathf.Clamp(tier, 0, 3);
+        if (TierCache[tier] != null) return TierCache[tier];
+        return TierCache[tier] = DrawTier(tier, 0, $"Finder_ZipTier_{tier}");
+    }
+
+    /// <summary>HUD の枠に出す段ごとの zip（22×22 の中に描く）</summary>
+    public static Sprite ZipTierIcon(int tier)
+    {
+        tier = Mathf.Clamp(tier, 0, 3);
+        if (TierIconCache[tier] != null) return TierIconCache[tier];
+        return TierIconCache[tier] = DrawTier(tier, 22, $"Finder_ZipTierIcon_{tier}");
+    }
+
+    static Sprite DrawTier(int tier, int canvas, string key)
+    {
+        int h = ZipTierHeight(tier);
+        int w = ZipWidth(h) + (tier >= 2 ? 2 : 0); // ふくらむ
+        const int peek = 4;
+        int cw = canvas > 0 ? canvas : w;
+        int ch = canvas > 0 ? canvas : h + peek;
+        var g = Grid(cw, ch);
+        int ox = (cw - w) / 2;
+        int oy = canvas > 0 ? (ch - h) / 2 + peek / 2 : peek;
+        // のぞく書類（zip の後ろ。上の端から 3〜4ドット出る）
+        if (tier == 1) PeekDoc(g, ox + w - 6, oy - 3, 4, 6);
+        if (tier >= 2)
+        {
+            PeekDoc(g, ox + 1, oy - 2, 4, 6);
+            PeekDoc(g, ox + w / 2 - 2, oy - 4, 4, 7);
+            PeekDoc(g, ox + w - 5, oy - 3, 4, 6);
+        }
+        DrawDoc(g, ox, oy, w, h, Mathf.Max(2, w / 4), true);
+        var pal = DocPalette();
+        if (tier >= 3) pal['Z'] = (Color32)Cyan; // ファスナーが光る【仮】（白は書類の地と見分けられないので、明るい水色）
+        return RuntimeSprites.FromAscii(key, Rows(g), pal);
+    }
+
+    static void PeekDoc(char[,] g, int x0, int y0, int w, int h)
+    {
+        int gh = g.GetLength(0), gw = g.GetLength(1);
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                int gx = x0 + x, gy = y0 + y;
+                if (gx < 0 || gy < 0 || gx >= gw || gy >= gh) continue;
+                g[gy, gx] = x == 0 || y == 0 || x == w - 1 ? 'O' : 'W';
+            }
+        }
+    }
+
+    /// <summary>
+    /// 弾幕の弾（2026-11-19）。0＝書類、1＝フォルダ（Finder の青）、2＝画像（山と太陽）。どれも 5〜6ドット
+    /// </summary>
+    public static Sprite Shot(int kind)
+    {
+        kind = Mathf.Clamp(kind, 0, 2);
+        if (kind == 0) return Pellet;
+        if (ShotCache[kind] != null) return ShotCache[kind];
+        if (kind == 1)
+        {
+            return ShotCache[1] = RuntimeSprites.FromAscii("Finder_ShotFolder", new[]
+            {
+                "DDD...",
+                "DDDDDD",
+                "LLLLLL",
+                "BBBBBB",
+                "BBBBBB",
+            }, new Dictionary<char, Color32> { { 'B', RuntimeSprites.Hex("5AB0F0") }, { 'D', RuntimeSprites.Hex("2F7FC4") }, { 'L', RuntimeSprites.Hex("8FCBF7") } });
+        }
+        return ShotCache[2] = RuntimeSprites.FromAscii("Finder_ShotImage", new[]
+        {
+            "OOOOOO",
+            "OWWWYO",
+            "OWGWWO",
+            "OGGGWO",
+            "OGGGGO",
+            "OOOOOO",
+        }, new Dictionary<char, Color32>
+        {
+            { 'O', RuntimeSprites.Hex("6E6E73") }, { 'W', (Color32)Paper }, { 'G', RuntimeSprites.Hex("34C759") }, { 'Y', RuntimeSprites.Hex("FFD60A") },
+        });
+    }
+
+    /// <summary>空の zip の1発（白い書類、5ドット）。散弾の書類と同じ絵</summary>
+    public static Sprite SingleShot => Pellet;
 
     /// <summary>散弾の小さい書類（5ドット）</summary>
     public static Sprite Pellet

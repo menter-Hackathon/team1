@@ -9,7 +9,9 @@ using UnityEngine;
 /// ・雑魚はダメージで倒す（倒した数・ボスが出るまでのゲージに入る）。弾はその場で消す
 /// ・zip はプレイヤーの後ろに浮いて付いてくる（プレイヤーの子。プレイヤーが消えると一緒に消える）。時間切れ・被弾で落とすことはない
 /// ・この能力が枠から外れたら（捨てる・入れ替える）、zip ごと自分を消す。ステージが変わると、シーンごと消える
-/// 見た目は【仮】：青い選択の四角が正面にパッと出て、中の物の写しが縮みながら zip へ集まる。zip は大きさ3段階（数字は出さない）
+/// 見た目は【仮】：青い選択の四角が正面にパッと出て、中の物の写しが縮みながら zip へ集まる。
+/// 2026-11-19（docs/app-feedback-v2-design.md 4-2）：zip は段ごとに変わる（空＝うすい 10ドット、1＝13ドットで書類が1枚のぞく、
+/// 2〜3＝16ドットで3枚のぞく、4以上＝18ドットでふるえ、ファスナーが光り、青い点が回る）。数字は出さない。発射も4段（Fire）
 /// </summary>
 public class FinderZipHolder : MonoBehaviour
 {
@@ -49,6 +51,9 @@ public class FinderZipHolder : MonoBehaviour
     Transform _select;
     SpriteRenderer _selectFill;
     SpriteRenderer[] _selectEdges;
+    // 2026-11-18：スキルの見た目（docs/app-skill-visuals-design.md 11-3）【仮】
+    SpriteRenderer _barBg, _barFill;    // 圧縮の進みのバー（20×4ドット。Mac の進みのバー：両端を 1ドット丸め、地 #D1D1D6、中は青。2026-11-19）
+    const int BarW = 20, BarH = 4;
 
     public ZipState State { get; private set; }
     /// <summary>吸いこんだ数</summary>
@@ -98,6 +103,7 @@ public class FinderZipHolder : MonoBehaviour
         _compressEnd = Time.time + _attack.CompressTime;
         EnsureVisuals();
         _zip.position = GatherPoint();
+        _zipBase = _zip.position;
         _zip.gameObject.SetActive(true);
         _shownHeight = 0;
         UpdateZipSprite();
@@ -106,44 +112,96 @@ public class FinderZipHolder : MonoBehaviour
         Absorb();
     }
 
-    /// <summary>2回目：zip を正面へ散弾として撃つ。弾の数＝基本の数＋吸いこんだ数（最大あり）</summary>
+    /// <summary>
+    /// 2回目：zip を正面へ撃つ。2026-11-19（docs/app-feedback-v2-design.md 4-2）吸いこんだ数で4段：
+    /// 0＝書類1発、1＝散弾、2〜3＝弾幕（半分ずつ2回）、4以上＝解凍レーザー
+    /// </summary>
     public void Fire(AttackData data)
     {
         if (_attack == null || _runner == null || data == null) return;
         LastFireFrame = Time.frameCount;
-        int n = _attack.PelletCount(Count);
+        int count = Mathf.Min(Count, _attack.CountCap);
+        int tier = FinderArt.ZipTier(count);
         int f = _runner.Facing;
         Vector2 origin = _runner.OriginPoint + new Vector2(f * data.SpawnOffset.x, data.SpawnOffset.y);
-        Vector2 baseDir = new Vector2(f, 0f);
-        float spread = _attack.Spread;
-        for (int i = 0; i < n; i++)
+        switch (tier)
         {
-            float angle = n > 1 ? -spread * 0.5f + spread * i / (n - 1) : 0f;
-            Vector2 dir = Quaternion.Euler(0f, 0f, angle) * baseDir;
-            Dress(Projectile.Spawn(_runner, data, origin, dir));
+            case 0:
+                Dress(Projectile.Spawn(_runner, _attack.SingleData(_runner, data) ?? data, origin, new Vector2(f, 0f)), 0);
+                break;
+            case 1:
+                Fan(data, origin, f, _attack.ScatterCount, _attack.ScatterSpread, 0f, false);
+                break;
+            case 2:
+            {
+                int n = Mathf.Max(2, _attack.BarrageCount(count));
+                int first = (n + 1) / 2;
+                Fan(data, origin, f, first, _attack.BarrageSpread, 0f, true);
+                StartCoroutine(SecondVolley(data, f, n - first, _attack.BarrageSpread, _attack.BarrageGap));
+                break;
+            }
+            default:
+                FinderZipLaser.Spawn(_runner, _attack.LaserData(_runner, data) ?? data, () => MuzzleFor(f), f, _attack.LaserWidth(count), _attack.LaserTime);
+                break;
         }
-        // zip がはじける
+        // zip がはじける。ファスナーが開いた白い光（11-3。2026-11-18）
         if (_zip != null && _zipSr != null && _zip.gameObject.activeSelf)
         {
             FinderGhost.Pop(_zipSr.sprite, origin, 1f, 1.8f, PopTime, ZipOrder + 30);
             _zip.gameObject.SetActive(false);
         }
+        Transform flash = GenericFrameKit.Loose("Gen4_ZipFlash", origin);
+        SpriteRenderer fs = GenericFrameKit.Spr(flash, FinderArt.Disc(14), Vector2.zero, Color.white, SelectOrder + 5, 1f, "Flash");
+        GenericFrameTweens.Of(flash.gameObject).Scale(flash, Vector3.one, Vector3.one * 2.2f, 0.1f).Alpha(fs, 1f, 0f, 0.1f).Kill(0.11f);
         if (_select != null) _select.gameObject.SetActive(false);
         State = ZipState.None;
         Count = 0;
         _taken.Clear();
     }
 
-    /// <summary>散弾の見た目を小さい書類にする（判定・速さは攻撃データのまま）</summary>
-    static void Dress(Projectile p)
+    /// <summary>扇に撃つ。offsetHalf：角度を半分ずらす（弾幕の2回目を、1回目のすき間に入れる）。mixed：書類・フォルダ・画像を混ぜる</summary>
+    void Fan(AttackData data, Vector2 origin, int f, int n, float spread, float offsetHalf, bool mixed)
+    {
+        Vector2 baseDir = new Vector2(f, 0f);
+        float step = n > 1 ? spread / (n - 1) : 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float angle = n > 1 ? -spread * 0.5f + step * i : 0f;
+            angle += offsetHalf * step * 0.5f;
+            Vector2 dir = Quaternion.Euler(0f, 0f, angle) * baseDir;
+            Dress(Projectile.Spawn(_runner, data, origin, dir), mixed ? i % 3 : 0);
+        }
+    }
+
+    System.Collections.IEnumerator SecondVolley(AttackData data, int f, int n, float spread, float gap)
+    {
+        if (n <= 0) yield break;
+        yield return new WaitForSeconds(gap);
+        if (_runner == null) yield break;
+        Vector2 origin = _runner.OriginPoint + new Vector2(f * data.SpawnOffset.x, data.SpawnOffset.y);
+        Fan(data, origin, f, n, spread * 0.9f, 1f, true);
+    }
+
+    /// <summary>レーザーの根元：撃った向き（f）の体の前の端、体の高さのまん中（向きは撃った瞬間に固定）</summary>
+    Vector2 MuzzleFor(int f)
+    {
+        Bounds b = BodyBounds();
+        return new Vector2((f > 0 ? b.max.x : b.min.x) + f * 0.1f, b.center.y);
+    }
+
+    /// <summary>散弾の見た目を小さい書類にする（判定・速さは攻撃データのまま）。kind：0＝書類、1＝フォルダ、2＝画像（弾幕）</summary>
+    static void Dress(Projectile p, int kind)
     {
         if (p == null) return;
         SpriteRenderer sr = p.GetComponentInChildren<SpriteRenderer>();
         if (sr == null) return;
         sr.drawMode = SpriteDrawMode.Simple;
-        sr.sprite = FinderArt.Pellet;
+        sr.sprite = FinderArt.Shot(kind);
         sr.transform.localScale = Vector3.one;
         sr.color = Color.white;
+        // 書類の弾の後ろに、うすい青の線（弾は進む向きに回るので、後ろ＝ローカルの左。11-3。2026-11-18）
+        SpriteRenderer trail = AttackRunner.AddVisual(p.transform, PlaceholderSprites.Square, new Color(0.35f, 0.78f, 0.98f, 0.55f), new Vector2(0.55f, FinderArt.Dot), sr.sortingOrder - 1, "Trail");
+        trail.transform.localPosition = new Vector3(-0.32f, 0f, 0f);
     }
 
     // ───────── 毎フレーム ─────────
@@ -186,9 +244,51 @@ public class FinderZipHolder : MonoBehaviour
         }
         UpdateZipSprite();
         Vector2 target = State == ZipState.Compressing ? GatherPoint() : FollowPoint();
-        _zip.position = Vector2.Lerp(_zip.position, target, 1f - Mathf.Exp(-FollowSharpness * Time.deltaTime));
+        _zipBase = Vector2.Lerp(_zipBase, target, 1f - Mathf.Exp(-FollowSharpness * Time.deltaTime));
+        _zip.position = (Vector3)_zipBase + TierShake();
         float pop = Time.time < _popUntil ? 1f + 0.35f * (_popUntil - Time.time) / PopTime : 1f;
+        // 持っている間：0.6秒ごとに 1ドットふくらんで戻る（「ぱんぱん」）。数が多いほど大きく（11-3。2026-11-18）
+        if (State == ZipState.Holding && _shownHeight > 0)
+        {
+            float bump = Mathf.Max(0f, 1f - Mathf.Repeat(Time.time, 0.6f) / 0.15f);
+            pop += bump * (1f + 0.5f * Mathf.Min(Count, 5)) / _shownHeight;
+        }
         _zip.localScale = new Vector3(pop, pop, 1f);
+        UpdateTierLook();
+    }
+
+    // ───────── 段ごとの見た目（2026-11-19。docs/app-feedback-v2-design.md 4-2）【仮】 ─────────
+    // 空＝うすい。4個以上＝小さくふるえ、まわりに青い点が回る（ファスナーの光は絵の中）
+    readonly SpriteRenderer[] _orbit = new SpriteRenderer[3];
+    Vector2 _zipBase; // ふるえを足す前の位置
+
+    /// <summary>4個以上：0.05秒ごとに 1ドットふるえる</summary>
+    Vector3 TierShake()
+    {
+        if (State != ZipState.Holding || FinderArt.ZipTier(Count) < 3) return Vector3.zero;
+        int step = Mathf.FloorToInt(Time.time / 0.05f);
+        return new Vector3(((step * 7) % 3 - 1) * FinderArt.Dot, ((step * 5) % 3 - 1) * FinderArt.Dot, 0f);
+    }
+
+    void UpdateTierLook()
+    {
+        if (_zipSr == null) return;
+        int tier = FinderArt.ZipTier(Count);
+        _zipSr.color = new Color(1f, 1f, 1f, tier == 0 && State == ZipState.Holding ? 0.6f : 1f);
+        bool hot = tier >= 3 && State == ZipState.Holding;
+        for (int i = 0; i < _orbit.Length; i++)
+        {
+            if (_orbit[i] == null)
+            {
+                if (!hot) continue;
+                _orbit[i] = RuntimeSprites.Show(_zip, FinderArt.Disc(3), Vector2.zero, ZipOrder + 1, 1f, "Orbit");
+                _orbit[i].color = FinderArt.Blue;
+            }
+            _orbit[i].enabled = hot;
+            if (!hot) continue;
+            float a = Time.time * 5f + i * Mathf.PI * 2f / _orbit.Length;
+            _orbit[i].transform.localPosition = new Vector3(Mathf.Cos(a) * 0.62f, Mathf.Sin(a) * 0.45f, 0f);
+        }
     }
 
     /// <summary>この能力（zip圧縮）が、まだどれかの枠に入っているか</summary>
@@ -256,8 +356,25 @@ public class FinderZipHolder : MonoBehaviour
             HitStun = 0f,
             HitPoint = hurtbox.Collider != null ? (Vector2)hurtbox.Collider.bounds.center : (Vector2)h.transform.position,
             Source = gameObject,
+            Skin = SkinId.Finder,
+            ErrorKind = "Zip",
         };
-        if (h.TryTakeDamage(info)) Count++;
+        if (h.TryTakeDamage(info))
+        {
+            Count++;
+            // 吸い込みは攻撃の判定（Hitbox）を通らないので、当たったエフェクトを自分で出す（1-2。2026-11-18）
+            Vector2 toZip = (_zip != null ? (Vector2)_zip.position : GatherPoint()) - info.HitPoint;
+            HitFx.Play(new HitInfo
+            {
+                Point = info.HitPoint,
+                Direction = toZip.sqrMagnitude > 0.0001f ? toZip.normalized : Vector2.up,
+                Strength = HitStrength.Light,
+                Target = h.gameObject,
+                TargetIsPlayer = false,
+                Skin = SkinId.Finder,
+                ErrorKind = "Zip",
+            });
+        }
     }
 
     /// <summary>敵の弾か（自分の散弾は吸わない）。弾の Hitbox の陣営で見る（撃った人が消えていても分かる）</summary>
@@ -355,6 +472,10 @@ public class FinderZipHolder : MonoBehaviour
             {
                 _selectEdges[i] = AttackRunner.AddVisual(_select, PlaceholderSprites.Square, FinderArt.Blue, Vector2.one, SelectOrder + 1, "Edge");
             }
+            // 圧縮の進みのバー（四角の上）。Mac の進みのバー（docs/mac-look-design.md 1-6）：両端を 1ドット丸めた地に、同じ形の青が左から伸びる
+            Sprite bar = GenericFrameKit.RoundRect(BarW, BarH, 1);
+            _barBg = AttackRunner.AddVisual(_select, bar, GenericMac.Light3, new Vector2(BarW, BarH) * FinderArt.Dot, SelectOrder + 2, "BarBg");
+            _barFill = AttackRunner.AddVisual(_select, bar, FinderArt.Blue, new Vector2(BarW, BarH) * FinderArt.Dot, SelectOrder + 3, "BarFill");
             go.SetActive(false);
         }
     }
@@ -366,7 +487,7 @@ public class FinderZipHolder : MonoBehaviour
         if (h == _shownHeight) return;
         if (_shownHeight != 0) _popUntil = Time.time + PopTime; // 大きくなったら、ぽんと膨らむ
         _shownHeight = h;
-        _zipSr.sprite = FinderArt.Zip(h);
+        _zipSr.sprite = FinderArt.ZipTierSprite(FinderArt.ZipTier(Count)); // 2026-11-19：段ごとの絵（書類がのぞく）
     }
 
     /// <summary>選択の四角を範囲に合わせる（中は青を薄く、ふちは青1ドット）。alpha は消えていく途中の濃さ</summary>
@@ -382,6 +503,16 @@ public class FinderZipHolder : MonoBehaviour
         SetBox(_selectEdges[1], new Vector2(0f, -size.y * 0.5f + t * 0.5f), new Vector2(size.x, t), alpha);
         SetBox(_selectEdges[2], new Vector2(-size.x * 0.5f + t * 0.5f, 0f), new Vector2(t, size.y), alpha);
         SetBox(_selectEdges[3], new Vector2(size.x * 0.5f - t * 0.5f, 0f), new Vector2(t, size.y), alpha);
+        // 進みのバー：吸いこみの間に 0 → 100%
+        if (_barBg != null && _barFill != null)
+        {
+            float k = _attack != null && State == ZipState.Compressing ? 1f - Mathf.Clamp01((_compressEnd - Time.time) / Mathf.Max(0.01f, _attack.CompressTime)) : 1f;
+            float y = size.y * 0.5f + (BarH * 0.5f + 3f) * t;
+            float full = BarW * t;
+            SetBox(_barBg, new Vector2(0f, y), new Vector2(BarW, BarH) * t, alpha);
+            _barBg.color = GenericFrameKit.WithAlpha(GenericMac.Light3, alpha);
+            SetBox(_barFill, new Vector2(-full * 0.5f + full * k * 0.5f, y), new Vector2(Mathf.Max(0.001f, full * k), BarH * t), alpha);
+        }
     }
 
     static void SetBox(SpriteRenderer sr, Vector2 localPos, Vector2 size, float alpha)

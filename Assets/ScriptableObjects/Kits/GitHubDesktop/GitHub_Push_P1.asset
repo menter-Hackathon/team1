@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7193911a308a24bc6977c8e0401badc8, type: 3}
+  m_Name: GitHub_Push_P1
+  m_EditorClassIdentifier: 
+  _bullet: {fileID: 11400000, guid: 50247932df12e4d74a973f62d92af1b8, type: 2}
+  _count: 3
+  _interval: 0.2
+  _telegraph: 0.8
+  _branch: 0
+  _branchAt: 2
+  _branchAngle: 22

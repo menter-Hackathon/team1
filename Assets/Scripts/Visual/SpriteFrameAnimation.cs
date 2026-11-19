@@ -21,6 +21,10 @@ public class SpriteFrameAnimation : MonoBehaviour
     float _start;
 
     public bool IsDone { get; private set; }
+    /// <summary>コマ（読むだけ。2026-11-19：図鑑のボスの絵がプレハブから読む）</summary>
+    public System.Collections.Generic.IReadOnlyList<Sprite> Frames => _frames;
+    /// <summary>1秒あたりのコマ数（読むだけ）</summary>
+    public float Fps => _fps;
 
     /// <summary>コードから設定する（エフェクトを作るとき）</summary>
     public void Setup(SpriteRenderer target, Sprite[] frames, float fps, bool loop, bool destroyWhenDone, bool randomStart = false)

@@ -7,7 +7,7 @@ using UnityEngine;
 ///
 /// 演出（3.5秒の表。演出の長さが違っても、同じ割合で進める）
 /// ・0〜0.6秒：一瞬止まる（ヒットストップ）。ゲージの棒が満タンで白く光る。ボスのウィンドウが真っ黒になり、ノイズがはじける
-/// ・0.6〜2.6秒：画面全体が暗くなる（黒を8割）。中央に「System Rebooting...」（点が1つずつ増える）と、白い進み具合の棒（横6マス）
+/// ・0.6〜2.6秒：画面全体が暗くなる（黒を8割）。中央に印（リンゴの代わり）と、細い白い進みのバー（横6マス。2026-11-19：Mac の起動の画面。字は無し）
 /// ・2.6〜3.5秒：背景がカーネル・パニック（TerminalKernelPanic）に切り替わる。棒が右から左へくずれて空・赤になる。
 ///   ボスが赤いちらつきと一緒に立ち上がる。画面が強くゆれる
 /// 演出の間はダメージなし：始まりに場に残っている物を全部消し、体当たり（と被弾範囲）を切る。演出が終わったら戻す
@@ -27,22 +27,19 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
     const float DimFadeOut = 0.25f;
     const float DimAlpha = 0.8f;
     const float BarUnits = 6f;
-    /// <summary>【仮】ヒットストップ（実時間の秒）と、その間の時間の速さ</summary>
+    /// <summary>【仮】ヒットストップ（実時間の秒）。止める速さは共通の入口（HitStop.StopScale）</summary>
     const float HitStopRealTime = 0.12f;
-    const float HitStopScale = 0.02f;
     /// <summary>【仮】第2形態のちらつき（0.5秒に1回、0.08秒）</summary>
     const float GlitchInterval = 0.5f;
     const float GlitchTime = 0.08f;
     const int NoiseCount = 14;
 
     static readonly Color FrameDark = RuntimeSprites.Hex("7A1712");
-    static readonly Color FrameLight = RuntimeSprites.Hex("FF8A80");
     static readonly Color NoiseGray = RuntimeSprites.Hex("8E8E93");
 
     BossController _boss;
     TerminalKernelPanic _panic;
     bool _hitStop;
-    float _hitStopEnd;
     bool _shookPanic;
     bool _contactOff;
 
@@ -98,6 +95,7 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
     {
         if (!IsTerminal(_boss)) return;
         _shookPanic = false;
+        GameAudio.Event("gm_terminal_reboot");
         DestroyPanic();
         BeginHitStop();
         FindWindow();
@@ -116,7 +114,7 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
 
     void Update()
     {
-        if (_hitStop && Time.unscaledTime >= _hitStopEnd) EndHitStop();
+        if (_hitStop && !HitStop.IsStopping) _hitStop = false; // 入口が時間で戻した
         if (_boss == null || !IsTerminal(_boss))
         {
             DestroyPanic();
@@ -139,6 +137,7 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
                 if (!_shookPanic)
                 {
                     _shookPanic = true;
+                    GameAudio.Event("gm_terminal_panic");
                     TerminalCameraShake.Shake(TableTime - PanicAt, 0.35f);
                 }
             }
@@ -170,21 +169,20 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
     // 時間の速さ（Time.timeScale）は GameSession も使う（ゲームオーバー・デスクトップの画面で 0）。
     // 1 のときだけ変え、自分の値のままのときだけ 1 に戻す
 
+    // 2026-11-18：ヒットストップは共通の入口（HitStop）に直した（docs/app-skill-visuals-design.md 1-3）。
+    // 時間の速さが 1 のときだけ止め、自分の値のままのときだけ戻す決まりは、入口の中にある。形態変化の1回きりなので、1秒 0.2秒の決まりは使わない
     void BeginHitStop()
     {
         GameSession s = GameSession.Instance;
         if (s != null && (s.IsTransitioning || s.IsGameOver)) return;
-        if (!Mathf.Approximately(Time.timeScale, 1f)) return;
-        Time.timeScale = HitStopScale;
-        _hitStop = true;
-        _hitStopEnd = Time.unscaledTime + HitStopRealTime;
+        _hitStop = HitStop.Request(HitStopRealTime, true);
     }
 
     void EndHitStop()
     {
         if (!_hitStop) return;
         _hitStop = false;
-        if (Mathf.Approximately(Time.timeScale, HitStopScale)) Time.timeScale = 1f;
+        HitStop.Release();
     }
 
     // ───────── ボスのウィンドウに重ねる絵 ─────────
@@ -309,7 +307,11 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
         if (_noiseRoot != null && _noiseRoot.gameObject.activeSelf) _noiseRoot.gameObject.SetActive(false);
     }
 
-    /// <summary>ウィンドウの絵と同じ大きさで、ふち（3重）とタイトルバーだけを赤くした絵（閉じるボタンは残す）</summary>
+    /// <summary>
+    /// ウィンドウの絵と同じ大きさで、ふちとタイトルバーだけを赤くした絵。
+    /// 2026-11-19【仮】BossWindowArt の Mac の形に合わせた（docs/mac-look-design.md 2章 3）：
+    /// ふち（1ドット。角の丸みに沿う）を赤、その内側の 1ドットを暗い赤、タイトルバー（1〜7行目）を赤。左の信号機はよける。題名の棒は暗い赤
+    /// </summary>
     Sprite FrameSprite(Sprite src)
     {
         if (src == null) return null;
@@ -322,6 +324,15 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
             Rect tr = src.textureRect;
             source = src.texture.GetPixels(Mathf.RoundToInt(tr.x), Mathf.RoundToInt(tr.y), w, h);
         }
+        // 上から数えた (x, y) が、絵のある所か（読めない絵は、角を 2ドット欠いた四角とみなす）
+        bool Solid(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= w || y >= h) return false;
+            if (source == null) return MacUi.InRound(x, y, w, h, 2);
+            return source[(h - 1 - y) * w + x].a > 0.01f;
+        }
+        bool Edge(int x, int y) => Solid(x, y) && (!Solid(x - 1, y) || !Solid(x + 1, y) || !Solid(x, y - 1) || !Solid(x, y + 1));
+        bool mac = w == BossWindowArt.W && h == BossWindowArt.H;
         var px = new Color32[w * h];
         for (int row = 0; row < h; row++)
         {
@@ -329,13 +340,17 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
             for (int x = 0; x < w; x++)
             {
                 int i = row * w + x;
-                if (source != null && source[i].a <= 0.01f) continue; // 欠けた角などは塗らない
-                int ring = Mathf.Min(Mathf.Min(x, w - 1 - x), Mathf.Min(y, h - 1 - y));
+                if (!Solid(x, y)) continue; // 欠けた角などは塗らない
                 Color c;
-                if (ring == 0) c = FrameDark;
-                else if (ring == 1) c = TerminalArt.Red;
-                else if (ring == 2) c = FrameLight;
-                else if (y >= 3 && y <= 6 && x < w - 9) c = TerminalArt.Red; // タイトルバー
+                if (Edge(x, y)) c = TerminalArt.Red;
+                else if (Edge(x - 1, y) || Edge(x + 1, y) || Edge(x, y - 1) || Edge(x, y + 1)) c = FrameDark;
+                else if (y >= BossWindowArt.TitleTop && y <= BossWindowArt.TitleBottom)
+                {
+                    if (mac && BossWindowArt.IsLight(x, y)) continue; // 信号機は残す
+                    bool titleBar = mac && y >= BossWindowArt.TitleBarY && y < BossWindowArt.TitleBarY + MacUi.TitleBarH
+                        && x >= BossWindowArt.TitleBarX && x < BossWindowArt.TitleBarX + BossWindowArt.TitleBarW;
+                    c = titleBar ? FrameDark : TerminalArt.Red;
+                }
                 else continue;
                 px[i] = c;
             }
@@ -399,7 +414,7 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
         }
     }
 
-    // ───────── 画面の上の表示（System Rebooting...） ─────────
+    // ───────── 画面の上の表示（Mac の起動の画面） ─────────
 
     void OnGUI()
     {
@@ -419,21 +434,21 @@ public class TerminalReboot : MonoBehaviour, IBossGaugeDisplay
 
         if (t < PanicAt)
         {
+            // 2026-11-19【仮】Mac の起動の画面（docs/mac-look-design.md 2章 12）：字は無し。まん中に印（リンゴの代わり。白、24ドット）、
+            // その下に細い進みのバー（幅 6マス・高さ 3ドット、両端を丸める、地 #3A3A3C、中は白）
             Color white = TerminalArt.WithAlpha(TerminalArt.White, k);
-            GUIStyle style = PixelGui.Style(true, 16);
-            // 点の数が変わっても文字が左右に動かないように、「...」まで入れた幅で左をそろえる
-            float tw = Mathf.Ceil(PixelGui.Measure("System Rebooting...", style));
-            float x = Mathf.Round((sw - tw) * 0.5f);
-            float y = Mathf.Round(sh * 0.5f - 16f);
-            int dots = 1 + Mathf.FloorToInt((t - BlackoutEnd) / 0.3f) % 3;
-            PixelGui.Draw(new Rect(x, y, tw + 16f, 16f), "System Rebooting" + new string('.', dots), style, white);
+            const float mark = 24f;
+            float my = Mathf.Round(sh * 0.5f - mark * 0.5f - 8f);
+            MacUi.Gui.Sprite(new Rect(Mathf.Round((sw - mark) * 0.5f), my, mark, mark), MacUi.Mark(24), white);
 
-            // 進み具合の棒（白、横6マス）
             float bw = Mathf.Round(BarUnits * TerminalArt.GuiPerUnit());
-            var bar = new Rect(Mathf.Round((sw - bw) * 0.5f), y + 26f, bw, 6f);
-            PixelGui.Border(bar, white, 1f);
+            var bar = new Rect(Mathf.Round((sw - bw) * 0.5f), my + mark + 14f, bw, 3f);
             float p = Mathf.Clamp01((t - BlackoutEnd) / (PanicAt - BlackoutEnd));
-            PixelGui.Fill(new Rect(bar.x + 2f, bar.y + 2f, Mathf.Round((bar.width - 4f) * p), bar.height - 4f), white);
+            Color trough = MacUi.Gray4;
+            trough.a = k;
+            MacUi.Gui.RoundFill(bar, 1, trough);
+            float fw = Mathf.Round(bar.width * p);
+            if (fw >= 1f) MacUi.Gui.RoundFill(new Rect(bar.x, bar.y, Mathf.Max(2f, fw), bar.height), fw >= 3f ? 1 : 0, white);
         }
         PixelGui.End();
     }

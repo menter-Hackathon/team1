@@ -204,6 +204,7 @@ public class BossController : MonoBehaviour, IWarpable
         StopAllCoroutines();
         MoveSpeedMultiplier = 1f;
         WaitMultiplier = 1f;
+        _stunUntil = 0f;
         _brain = _transition = null;
         IsMoving = false;
         if (_runner != null) _runner.Cancel();
@@ -216,6 +217,26 @@ public class BossController : MonoBehaviour, IWarpable
     public float MoveSpeedMultiplier { get; set; } = 1f;
     /// <summary>【仮】攻撃のあとの待ち時間の倍率（2026-11-18：スピードデュレーション）。変えた技が、終わるときに 1 に戻す</summary>
     public float WaitMultiplier { get; set; } = 1f;
+
+    // ───────── 2026-11-19：ひるむ（アプリのキット E5。KitBoss.Stun） ─────────
+    float _stunUntil;
+
+    /// <summary>
+    /// 【仮】seconds 秒、次の技を始めない・移動しない（技の途中は止めない）。
+    /// 続けてかけても伸びない（残りの時間が seconds に戻るだけ）。戦っている間だけ効く
+    /// </summary>
+    public void Stun(float seconds)
+    {
+        if (State != BossState.Fighting || seconds <= 0f) return;
+        _stunUntil = Time.time + seconds;
+    }
+
+    /// <summary>ひるんでいるか</summary>
+    public bool IsStunned => State == BossState.Fighting && Time.time < _stunUntil;
+    /// <summary>ひるみの残り秒数</summary>
+    public float StunRemaining => IsStunned ? _stunUntil - Time.time : 0f;
+    /// <summary>技の途中か（予告も含む）</summary>
+    public bool InMove => _runner != null && _runner.IsRunning;
 
     readonly System.Collections.Generic.HashSet<BossExtension> _attached = new System.Collections.Generic.HashSet<BossExtension>();
 
@@ -237,6 +258,7 @@ public class BossController : MonoBehaviour, IWarpable
         if (initialDelay > 0f) yield return new WaitForSeconds(initialDelay);
         while (true)
         {
+            while (IsStunned) yield return null; // ひるんでいる間は、次の技を始めない（2026-11-19）
             BossPhaseSettings phase = _profile.GetPhase(Phase);
             AttackData move = phase.Sequential ? PickSequential(phase.Moves) : PickMove(phase.Moves);
             if (move != null)
@@ -252,9 +274,10 @@ public class BossController : MonoBehaviour, IWarpable
 
             if (move != null && phase.AttacksPerMove > 0 && _attackCount > 0 && _attackCount % phase.AttacksPerMove == 0)
             {
+                while (IsStunned) yield return null; // ひるんでいる間は、移動しない（2026-11-19）
                 yield return Reposition();
             }
-            yield return new WaitForSeconds(phase.WaitAfterAttack * Mathf.Max(0.05f, WaitMultiplier));
+            yield return new WaitForSeconds(phase.WaitAfterAttack * Mathf.Max(0.05f, WaitMultiplier * GameBuffs.BossWait));
         }
     }
 
@@ -311,8 +334,9 @@ public class BossController : MonoBehaviour, IWarpable
                 MovementStarted?.Invoke();
                 while (!Mathf.Approximately(transform.position.x, targetX))
                 {
+                    if (IsStunned) { yield return null; continue; } // 移動の途中でひるんだら、その場で止まる（2026-11-19）
                     Vector3 p = transform.position;
-                    p.x = Mathf.MoveTowards(p.x, targetX, _profile.HoverSpeed * Mathf.Max(0.05f, MoveSpeedMultiplier) * Time.deltaTime);
+                    p.x = Mathf.MoveTowards(p.x, targetX, _profile.HoverSpeed * Mathf.Max(0.05f, MoveSpeedMultiplier * GameBuffs.BossSpeed) * Time.deltaTime);
                     transform.position = p;
                     yield return null;
                 }
@@ -363,6 +387,7 @@ public class BossController : MonoBehaviour, IWarpable
         State = BossState.Transition;
         _gauge.Invincible = true;
         TransitionStarted?.Invoke();
+        GameAudio.Event("boss_phase2");
         _transition = StartCoroutine(TransitionRoutine());
     }
 
@@ -382,6 +407,7 @@ public class BossController : MonoBehaviour, IWarpable
         _attackCount = 0;
         _transition = null;
         PhaseChanged?.Invoke(Phase);
+        GameAudio.BossPhase(Phase);
         _brain = StartCoroutine(Brain(_profile.Phase2.WaitAfterAttack));
     }
 
@@ -446,7 +472,7 @@ public class BossController : MonoBehaviour, IWarpable
             if (skills == null) skills = FindObjectOfType<PlayerSkills>();
             if (skills != null) skills.TryAcquire(reward);
         }
-        AcquiredReward = reward;
+        GameAudio.BossNormalized();
         Normalized?.Invoke(reward);
     }
 

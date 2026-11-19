@@ -1,0 +1,90 @@
+{
+ "label": "Finder",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "work",
+   "x": -3.4667,
+   "y": 2.1,
+   "w": 2.1333,
+   "h": 1.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Finder__work",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "game",
+   "x": 3.5333,
+   "y": 2.1,
+   "w": 2.1333,
+   "h": 1.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Finder__game",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "memo",
+   "x": 0.1333,
+   "y": 4.0333,
+   "w": 2.1333,
+   "h": 1.8667,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Finder__memo",
+   "behavior": "fall",
+   "params": {
+    "type": "fall",
+    "delay": 0.8,
+    "respawn": 5
+   }
+  },
+  {
+   "id": "save",
+   "x": 6.9333,
+   "y": 4.0333,
+   "w": 2.1333,
+   "h": 1.8667,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Finder__save",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "movie",
+   "x": -4.6667,
+   "y": 4.1,
+   "w": 2.1333,
+   "h": 1.8667,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/Finder__movie",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "drag",
+   "x": 3.4667,
+   "y": 6.0333,
+   "w": 2.1333,
+   "h": 1.8667,
+   "top": 6.9667,
+   "sprite": "AppBackgrounds/Parts/Finder__drag",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": -3.3333333333333335,
+    "dy": 0.0,
+    "period": 8,
+    "offset": 0
+   }
+  }
+ ]
+}

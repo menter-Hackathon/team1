@@ -42,6 +42,8 @@ public class BossTestDirector : MonoBehaviour
         }
     }
 
+    void Start() => GameAudio.BossFightStarted(Current); // ボスの曲（このシーンはボスがすぐ動く）
+
     void OnEnable()
     {
         _switch.Enable();
@@ -80,6 +82,7 @@ public class BossTestDirector : MonoBehaviour
         _index = (_index + 1) % _bosses.Length;
         _bosses[_index].gameObject.SetActive(true); // OnEnable で最初から始まる
         ResetPlayer();
+        GameAudio.BossFightStarted(Current);
     }
 
     /// <summary>今のボスとプレイヤーを最初に戻す</summary>
@@ -88,6 +91,7 @@ public class BossTestDirector : MonoBehaviour
         if (Current != null) Current.ResetBoss();
         ResetPlayer();
         foreach (var shield in FindObjectsOfType<ShieldWindow>()) shield.ResetWindow();
+        GameAudio.BossFightStarted(Current);
     }
 
     void ResetPlayer()

@@ -5,7 +5,8 @@ using UnityEngine;
 /// 【仮】カーネル・パニックの背景（2026-11-18：Terminal の第2形態。docs/app-boss-skills-design.md 4-4・5章）。
 /// Mac のカーネル・パニック画面のように、真っ黒に小さい文字がびっしり。
 /// ・空・雲・丘（壁紙）の上に、真っ黒 #000000 の面をかぶせる（壁紙より手前、床・足場より奥）。カメラの背景の色も黒
-/// ・飾りの文字：暗い緑 #0F3D1E、5ドットの小さい字を、びっしり並べて、ゆっくり上へ流す（当たらない）
+/// ・飾りの文字：灰 #48484A（2026-11-19：Mac のパニックは黒に白い字。暗い緑 #0F3D1E から変えた。docs/mac-look-design.md 2章 11）、
+///   5ドットの小さい字を、びっしり並べて、ゆっくり上へ流す（当たらない）
 /// ・床の上の線・足場のふち：緑 #33FF66 を、うすい灰色 #C8C8C8 に変える（赤にはしない。赤は「危ない」の予告だけに使う）
 /// 消えるときに（Destroy）、床・足場の絵とカメラの色を元に戻す
 /// </summary>
@@ -63,6 +64,9 @@ public class TerminalKernelPanic : MonoBehaviour
         return panic;
     }
 
+    /// <summary>飾りの文字の色【仮】（Mac の灰。床の塗り替えの緑とは別）</summary>
+    static readonly Color RowColor = MacUi.Gray3;
+
     void Build()
     {
         Rect view = ScreenUi.ViewRect();
@@ -81,7 +85,7 @@ public class TerminalKernelPanic : MonoBehaviour
         int chars = Mathf.CeilToInt((view.width + 2f) / RowHeight) + 4;
         for (int i = 0; i < rows; i++)
         {
-            TextMesh tm = WorldText.Create(transform, MakeLine(rng, chars), RowHeight, TerminalArt.DarkGreen, TextOrder,
+            TextMesh tm = WorldText.Create(transform, MakeLine(rng, chars), RowHeight, RowColor, TextOrder,
                 true, TextAnchor.MiddleLeft, "Row");
             tm.richText = false;
             tm.alignment = TextAlignment.Left;

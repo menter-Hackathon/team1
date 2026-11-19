@@ -1,0 +1,103 @@
+{
+ "label": "Notion",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "toggle1",
+   "x": -3.4667,
+   "y": 2.7,
+   "w": 3.2,
+   "h": 0.6667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Notion__toggle1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "toggle2",
+   "x": 3.4667,
+   "y": 2.7,
+   "w": 3.2,
+   "h": 0.6667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Notion__toggle2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "callout",
+   "x": 0.0,
+   "y": 4.6,
+   "w": 2.9333,
+   "h": 0.8667,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/Notion__callout",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "heading",
+   "x": -4.6667,
+   "y": 4.6,
+   "w": 2.6667,
+   "h": 0.7333,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Notion__heading",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "dragblock",
+   "x": 7.2,
+   "y": 4.4333,
+   "w": 3.2,
+   "h": 0.8,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Notion__dragblock",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": 0.0,
+    "dy": 1.6,
+    "period": 6,
+    "offset": 0
+   }
+  },
+  {
+   "id": "dbrow",
+   "x": 0.0,
+   "y": 1.1,
+   "w": 5.3333,
+   "h": 0.6667,
+   "top": 1.4333,
+   "sprite": "AppBackgrounds/Parts/Notion__dbrow",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "done",
+   "x": 7.1667,
+   "y": 1.1333,
+   "w": 2.0667,
+   "h": 0.7333,
+   "top": 1.5,
+   "sprite": "AppBackgrounds/Parts/Notion__done",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "clear_bullets",
+    "cooldown": 12
+   }
+  }
+ ]
+}

@@ -6,6 +6,8 @@ using UnityEngine;
 /// ・幅5マスの縦の帯（床から天井まで）。中はうすい赤、左右のふちに赤い鎖が天井から下りてくる。帯の上に開いた南京錠
 /// ・鎖が床に着く瞬間が判定（判定そのものは TerminalChmodAttack がする）。中にいたら南京錠が閉まって白く光り、外なら帯が砕けて消える
 /// 判定は持たない（絵だけ）。形態変化・正常化で消える（CustomEffect）
+/// 2026-11-19（docs/app-feedback-v2-design.md 6-2）：南京錠の下（r w x の下）に、ジャンプと近接の印（赤い斜めの線つき）を2つ。
+/// プレイヤーの目の高さ（床から 2マス）にも、うすく1組。「ここにいると、この2つが使えなくなる」が、かかる前に分かる
 /// </summary>
 public class TerminalChmodZone : CustomEffect
 {
@@ -21,7 +23,21 @@ public class TerminalChmodZone : CustomEffect
         public SpriteRenderer Fill;
         public SpriteRenderer Lock;
         public readonly List<SpriteRenderer> Links = new List<SpriteRenderer>();
+        public readonly List<Transform> Perm = new List<Transform>(); // r w x の字（2026-11-18：スキルの見た目 13-2）
+        public int PermDashes = -1;
+        public readonly List<SpriteRenderer> Icons = new List<SpriteRenderer>(); // 使えなくなる印（2026-11-19）
+        public readonly List<float> IconAlpha = new List<float>();
     }
+
+    const float IconBelowPerm = 0.6f;  // r w x の下から印まで（マス）
+    const float IconStep = 0.6f;       // 2つの印の間（真ん中どうし）
+    const float EyeHeight = 2f;        // 床から、目の高さの印まで
+    const float EyeAlpha = 0.45f;      // 目の高さの印のうすさ
+
+    const float PermHeight = 0.4f;   // r w x の字の高さ（マス）
+    const float PermStep = 0.42f;    // 字の間
+    const float PermBelowLock = 0.85f; // 南京錠の下から字まで（上は HUD に隠れることがあるので、下に出す）
+    static readonly Color PermGreen = RuntimeSprites.Hex("33FF66");
 
     readonly List<Band> _bands = new List<Band>();
     float _start, _telegraph, _fadeTime, _resolvedAt = -1f;
@@ -66,7 +82,35 @@ public class TerminalChmodZone : CustomEffect
                 }
             }
             band.Lock = RuntimeSprites.Show(transform, TerminalArt.LockOpen, new Vector2(cx, _ceiling - LockTopInset), LockOrder, 1.4f, "Lock");
+            // 南京錠の下に r w x（緑）。鎖が下りる間に、1字ずつ赤い - に変わる（予告の残り時間が字で見える）
+            string perm = "rwx";
+            for (int i = 0; i < 3; i++)
+            {
+                var ch = new GameObject("Perm").transform;
+                ch.SetParent(transform, false);
+                ch.position = new Vector3(cx + (i - 1) * PermStep, _ceiling - LockTopInset - PermBelowLock, 0f);
+                FxKit.AddText(ch, perm[i].ToString(), Vector2.zero, PermHeight, PermGreen, LockOrder, TerminalArt.Black);
+                band.Perm.Add(ch);
+            }
+            SetPerm(band, 0);
+            // 使えなくなる2つの印（ジャンプ・近接）：r w x の下と、目の高さ（うすく）
+            AddIcons(band, new Vector2(cx, _ceiling - LockTopInset - PermBelowLock - IconBelowPerm), 1f);
+            AddIcons(band, new Vector2(cx, _floor + EyeHeight), EyeAlpha);
             _bands.Add(band);
+        }
+    }
+
+    /// <summary>ジャンプと近接の印（使えない形）を、center を真ん中に2つ並べる</summary>
+    void AddIcons(Band band, Vector2 center, float alpha)
+    {
+        TerminalArt.Perm[] perms = { TerminalArt.Perm.Jump, TerminalArt.Perm.Melee };
+        for (int i = 0; i < perms.Length; i++)
+        {
+            Vector2 at = center + new Vector2((i - 0.5f) * IconStep, 0f);
+            SpriteRenderer sr = RuntimeSprites.Show(transform, TerminalArt.PermOff(perms[i]), at, LockOrder, 1f, $"Icon_{perms[i]}");
+            sr.color = new Color(1f, 1f, 1f, alpha);
+            band.Icons.Add(sr);
+            band.IconAlpha.Add(alpha);
         }
     }
 
@@ -79,13 +123,42 @@ public class TerminalChmodZone : CustomEffect
         foreach (var b in _bands)
         {
             if (b.Lock != null) b.Lock.sprite = caught ? TerminalArt.LockClosed : TerminalArt.LockOpen;
+            SetPerm(b, 3); // ---：判定の瞬間
         }
         if (!caught) TerminalCameraShake.Shake(0.15f, 0.05f);
+    }
+
+    /// <summary>r w x のうち、左から dashes 字を赤い - にする</summary>
+    void SetPerm(Band b, int dashes)
+    {
+        if (b.PermDashes == dashes) return;
+        b.PermDashes = dashes;
+        string perm = "rwx";
+        for (int i = 0; i < b.Perm.Count; i++)
+        {
+            if (b.Perm[i] == null) continue;
+            bool dash = i < dashes;
+            TextMesh[] tms = b.Perm[i].GetComponentsInChildren<TextMesh>();
+            for (int k = 0; k < tms.Length; k++)
+            {
+                tms[k].text = dash ? "-" : perm[i].ToString();
+                if (k == tms.Length - 1) WorldText.SetColor(tms[k], dash ? TerminalArt.Red : PermGreen); // ふちの字が先、本体の字が最後
+            }
+            // 変わった字は、少し大きくはねる
+            if (dash && i == dashes - 1) b.Perm[i].localScale = Vector3.one * 1.35f;
+        }
     }
 
     void Update()
     {
         float now = Time.time;
+        foreach (var b in _bands)
+        {
+            foreach (var ch in b.Perm)
+            {
+                if (ch != null && ch.localScale.x > 1f) ch.localScale = Vector3.one * Mathf.MoveTowards(ch.localScale.x, 1f, Time.deltaTime * 4f);
+            }
+        }
         if (_resolvedAt < 0f)
         {
             // 予告：鎖が天井から床へ下りていく。中のうすい赤は、判定が近づくほど点滅が速くなる
@@ -97,6 +170,7 @@ public class TerminalChmodZone : CustomEffect
                 for (int i = 0; i < b.Links.Count; i++) b.Links[i].enabled = (i % perEdge) < shown;
                 float blink = k > 0.6f && Mathf.FloorToInt(now / 0.08f) % 2 == 0 ? 1.8f : 1f;
                 b.Fill.color = TerminalArt.WithAlpha(TerminalArt.Red, FillAlpha * blink);
+                SetPerm(b, Mathf.Clamp(Mathf.FloorToInt(k * 3f), 0, 2)); // rwx → -wx → --x（--- は判定の瞬間）
             }
             return;
         }
@@ -119,6 +193,25 @@ public class TerminalChmodZone : CustomEffect
                 Color c = b.Lock.color;
                 c.a = _caught ? 1f : 1f - t;
                 b.Lock.color = c;
+            }
+            for (int i = 0; i < b.Icons.Count; i++)
+            {
+                SpriteRenderer sr = b.Icons[i];
+                if (sr == null) continue;
+                if (!_caught) sr.transform.localPosition += Vector3.down * (4f * Time.deltaTime);
+                sr.color = new Color(1f, 1f, 1f, b.IconAlpha[i] * (1f - t));
+            }
+            foreach (var ch in b.Perm)
+            {
+                if (ch == null) continue;
+                if (!_caught) ch.localPosition += Vector3.down * (4f * Time.deltaTime);
+                TextMesh[] tms = ch.GetComponentsInChildren<TextMesh>();
+                for (int k = 0; k < tms.Length; k++)
+                {
+                    Color c = k == tms.Length - 1 ? (_caught && Mathf.FloorToInt(now / 0.08f) % 2 == 0 ? TerminalArt.White : TerminalArt.Red) : TerminalArt.Black;
+                    c.a = 1f - t;
+                    WorldText.SetColor(tms[k], c);
+                }
             }
         }
         if (t >= 1f) Destroy(gameObject);

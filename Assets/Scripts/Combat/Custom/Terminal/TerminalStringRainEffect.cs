@@ -188,18 +188,46 @@ public class TerminalStringRainEffect : CustomEffect
         string text = sb.ToString();
         float spacing = length / n;
 
-        // 赤いふち（上下左右に1ドットずらした4枚）と、白い芯
+        // 赤いふち（上下左右に1ドットずらした4枚）と、芯（2026-11-18：スキルの見た目 13-2。先頭の1字だけ白、後ろは緑がだんだん暗く 3段）
         float d = TerminalArt.Pixel;
         var offsets = new[] { new Vector2(-d, 0f), new Vector2(d, 0f), new Vector2(0f, -d), new Vector2(0f, d) };
-        foreach (var o in offsets)
+        string[] chars = text.Split('\n');
+        for (int i = 0; i < chars.Length; i++)
         {
-            TextMesh edge = WorldText.Create(holder, text, CharHeight, TerminalArt.Red, EdgeOrder, true, TextAnchor.MiddleCenter, "Edge");
-            edge.richText = false;
-            edge.lineSpacing = spacing / CharHeight;
-            edge.transform.localPosition = o;
+            Vector2 at = new Vector2(0f, ((chars.Length - 1) * 0.5f - i) * spacing);
+            foreach (var o in offsets)
+            {
+                TextMesh edge = WorldText.Create(holder, chars[i], CharHeight, TerminalArt.Red, EdgeOrder, true, TextAnchor.MiddleCenter, "Edge");
+                edge.richText = false;
+                edge.transform.localPosition = at + o;
+            }
+            int fromHead = chars.Length - 1 - i; // 落ちる向きの先頭（いちばん下）が 0
+            Color c = fromHead == 0 ? TerminalArt.White : TrailGreens[Mathf.Clamp((fromHead - 1) * 3 / Mathf.Max(1, chars.Length - 1), 0, 2)];
+            TextMesh core = WorldText.Create(holder, chars[i], CharHeight, c, CoreOrder, true, TextAnchor.MiddleCenter, "Core");
+            core.richText = false;
+            core.transform.localPosition = new Vector3(at.x, at.y, -0.001f);
         }
-        TextMesh core = WorldText.Create(holder, text, CharHeight, TerminalArt.White, CoreOrder, true, TextAnchor.MiddleCenter, "Core");
-        core.richText = false;
-        core.lineSpacing = spacing / CharHeight;
+        p.HitTerrain += OnStringLanded;
+    }
+
+    static readonly Color[] TrailGreens = { RuntimeSprites.Hex("33FF66"), RuntimeSprites.Hex("27CC52"), RuntimeSprites.Hex("1C9A3E") };
+
+    /// <summary>床に着いたら、字が左右へ 2個ずつはねる（13-2）</summary>
+    void OnStringLanded(Projectile p, Vector2 point)
+    {
+        AttackRunner owner = p != null ? p.Owner : _owner;
+        for (int i = 0; i < 4; i++)
+        {
+            float side = i < 2 ? -1f : 1f;
+            Vector2 v = new Vector2(side * Random.Range(2f, 4.5f), Random.Range(4f, 7f));
+            string ch = TerminalArt.RainChars[Random.Range(0, TerminalArt.RainChars.Length)].ToString();
+            FxAnim a = FxKit.Text(ch, point + Vector2.up * 0.2f, 0.4f, TrailGreens[i % 2], CoreOrder, Random.Range(0.35f, 0.5f), new Color(0f, 0f, 0f, 0.8f))
+                .Velocity(v).Gravity(26f).FadeFrom(0.5f);
+            if (owner != null)
+            {
+                a.gameObject.AddComponent<SkinFxMarker>();
+                owner.Register(a.gameObject);
+            }
+        }
     }
 }

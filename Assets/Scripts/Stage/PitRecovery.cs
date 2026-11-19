@@ -50,6 +50,7 @@ public class PitRecovery : MonoBehaviour
         _controller.SetVelocity(Vector2.zero);
         Vfx.SmokeSmall(back + new Vector2(0f, 0.5f));
         Fell?.Invoke();
+        GameAudio.Event("player_fall");
     }
 
     bool OnSafeGround(Vector2 feet)

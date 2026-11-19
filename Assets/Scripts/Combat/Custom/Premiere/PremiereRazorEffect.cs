@@ -3,12 +3,15 @@ using UnityEngine;
 
 /// <summary>
 /// レーザーツールの本体（2026-11-18。docs/app-boss-skills-design.md 3-3）。PremiereRazor が出し、あとは自分で進む。場に残る技の効果（Lingers）。
-/// ・予告（刃・点線・斜線）→ 切る（2本の線に判定）→ 削除（区間が黒くなって閉じる。区間の中の足場を消す。ボスが寄る）→ 足場が戻るまで残る
+/// 2026-11-19（docs/app-feedback-v2-design.md 5-3）：区間の列を、まるごと消して閉じる。
+/// ・予告（刃・赤い点線・赤むらさきの斜線）→ 切る（区間の全部に判定）→ 削除（区間の列が黒く抜ける。中は暗い市松。区間の中の足場を消す）→
+///   詰め（黒い列が左右から閉じる。画面がゆれる。ボスが寄る）→ つなぎ目の白い線 → 足場が戻るまで残る
+/// ・黒い列は絵だけ（当たり判定は無い）。重ねる順番は、ステージの絵・足場・タイムラインの飾り（8 まで）より前、キャラクター（11〜）と弾より後ろ（9）。
+///   床の絵は床の上面より下へはみ出しているので、列は画面の下の端から上の端まで
 /// ・消す足場：AttackRunner の「上に乗れる地形」のうち、すり抜け床（OneWayPlatform）のレイヤーで、真ん中が区間の中にある物。
 ///   部屋の床（部屋の幅の半分以上ある物）・落下物の足場・開いたり閉じたりする足場（BlinkingPlatform）は消さない
 /// ・消えた足場は当たり判定と絵を消し、点線の枠だけを残す。最後の1秒は点滅して戻る
-/// ・形態変化・正常化で消されたとき、自分で終わったときは、Restore で足場をすぐ戻す。寄ったボスはそのまま
-/// ・画面のゆれ：削除の瞬間に StageCamera.Shake で画面をゆらす。黒い帯と刃も少しゆらす【仮】
+/// ・形態変化・正常化で消されたとき、自分で終わったときは、Restore で足場をすぐ戻す（黒い列は子なので一緒に消える）。寄ったボスはそのまま
 /// </summary>
 public class PremiereRazorEffect : CustomEffect
 {
@@ -24,29 +27,41 @@ public class PremiereRazorEffect : CustomEffect
     const float FlashFade = 0.2f;
     const float BlinkInterval = 0.1f;
     const float ShakePixels = 2f;
-    const int GhostOrder = 6, HatchOrder = 7, BlackOrder = 40, DottedOrder = 41, FlashOrder = 42, BladeOrder = 43;
+    const int GhostOrder = 6, HatchOrder = 7, ColumnOrder = 9, SeamOrder = 10, DottedOrder = 41, FlashOrder = 42, BladeOrder = 43;
 
     AttackRunner _owner;
     PremiereRazor _config;
+    AttackData _hitData;
     Rect _arena;
+    Rect _view;
     float _center;
     float _half;
     float _top;        // 刃の上の端
     float _start;
     float _cutAt;
     float _deleteAt;
+    float _closeAt;
     float _doneAt;
     float _returnAt = float.PositiveInfinity;
     bool _cut;
     bool _deleted;
+    bool _closing;
     readonly List<Removed> _removed = new List<Removed>();
 
     readonly Transform[] _blades = new Transform[2];
     readonly SpriteRenderer[] _dotted = new SpriteRenderer[2];
     readonly SpriteRenderer[] _flashes = new SpriteRenderer[2];
     SpriteRenderer _hatch;
-    SpriteRenderer _black;
+    Transform _column;
+    SpriteRenderer _checker;
+    SpriteRenderer[] _columnEdges;
+    SpriteRenderer _seam;
+    Hitbox _hitbox;
     Transform _ghosts;
+    // 画面の上の帯（タイムライン）の、紫のクリップ（左・まん中・右）。2026-11-18：スキルの見た目 12-3
+    readonly Transform[] _clips = new Transform[3];
+    readonly SpriteRenderer[] _cutTicks = new SpriteRenderer[2];
+    const float ClipHeight = 0.35f, ClipMargin = 3f;
 
     BossController _boss;
     float _bossFromX;
@@ -54,26 +69,31 @@ public class PremiereRazorEffect : CustomEffect
     bool _approach;
 
     public override bool Lingers => true;
-    /// <summary>切って、ボスが寄り終えたら true（技はここまで待つ。足場が戻るまでは場に残る）</summary>
+    /// <summary>切って、閉じて、ボスが寄り終えたら true（技はここまで待つ。足場が戻るまでは場に残る）</summary>
     public bool ActionDone { get; private set; }
 
-    public static PremiereRazorEffect Spawn(AttackRunner owner, PremiereRazor config, float centerX)
+    public static PremiereRazorEffect Spawn(AttackRunner owner, PremiereRazor config, float centerX, AttackData hitData)
     {
         Rect arena = BattleArena.GetBounds();
         GameObject go = owner.CreateSpawnedObject("PremiereRazor", new Vector2(centerX, arena.center.y));
         var e = go.AddComponent<PremiereRazorEffect>();
         e._owner = owner;
         e._config = config;
+        e._hitData = hitData;
         e._arena = arena;
+        Rect view = ScreenUi.ViewRect();
+        e._view = view.height > 1f ? view : new Rect(arena.xMin, arena.yMin - 2f, arena.width, arena.height + 4f);
         e._center = centerX;
         e._half = config.SectionWidth * 0.5f;
         e._top = arena.yMax - config.TopInset;
         e._start = Time.time;
         e._cutAt = e._start + config.TelegraphTime;
         e._deleteAt = e._cutAt + config.CutTime;
-        e._doneAt = e._deleteAt + config.DeleteTime;
+        e._closeAt = e._deleteAt + config.BlackTime;
+        e._doneAt = e._closeAt + config.CloseTime;
         e._boss = owner.GetComponent<BossController>();
         e.BuildTelegraph();
+        e.BuildHitbox();
         e.Tick(Time.time);
         return e;
     }
@@ -84,22 +104,23 @@ public class PremiereRazorEffect : CustomEffect
     {
         float floor = _arena.yMin;
 
-        // ── 予告：刃・点線・斜線。最後の0.3秒は点線を点滅 ──
+        // ── 予告：刃・赤い点線・斜線。最後の0.3秒は点線を点滅 ──
         if (now < _cutAt)
         {
             bool blink = _cutAt - now < 0.3f && Mathf.FloorToInt(now / 0.06f) % 2 == 1;
             foreach (var d in _dotted) d.enabled = !blink;
+            foreach (var t in _cutTicks) if (t != null) t.enabled = !blink;
             return;
         }
+        UpdateClips(now);
 
-        // ── 切る：刃が上から下へ落ち、白い光が走る。2本の線に判定 ──
+        // ── 切る：刃が上から下へ落ち、白い光が走る。区間の全部に判定 ──
         if (!_cut)
         {
             _cut = true;
+            if (_hitbox != null) _hitbox.Activate();
             for (int i = 0; i < 2; i++)
             {
-                float x = LineX(i);
-                if (_owner != null && _config.Line != null) AreaStrike.Spawn(_owner, _config.Line, new Vector2(x, floor + 0.5f), Vector2.up, 0f);
                 _dotted[i].enabled = false;
                 _flashes[i].enabled = true;
             }
@@ -110,7 +131,7 @@ public class PremiereRazorEffect : CustomEffect
         {
             float x = LineX(i);
             float bladeY = Mathf.Lerp(_top - BladeHeight * 0.5f, floor + BladeHeight * 0.5f, cutK);
-            _blades[i].position = new Vector3(x + Shake(now, i), bladeY, 0f);
+            _blades[i].position = new Vector3(x, bladeY, 0f);
             float h = span * cutK;
             SetBox(_flashes[i], new Vector2(x, _top - h * 0.5f), new Vector2(FlashWidth, Mathf.Max(0.01f, h)));
             float fade = now < _deleteAt ? 1f : 1f - Mathf.Clamp01((now - _deleteAt) / FlashFade);
@@ -118,26 +139,40 @@ public class PremiereRazorEffect : CustomEffect
         }
         if (now < _deleteAt) return;
 
-        // ── 削除：区間が黒くなって左右から閉じる。足場を消し、ボスが寄る ──
+        // ── 削除：区間の列が黒く抜ける（暗い市松）。足場を消す ──
         if (!_deleted)
         {
             _deleted = true;
+            if (_hitbox != null) _hitbox.Deactivate();
             _hatch.enabled = false;
             foreach (var b in _blades) b.gameObject.SetActive(false);
-            _black.enabled = true;
+            _column.gameObject.SetActive(true);
+            SetColumnWidth(_config.SectionWidth, 0f);
             RemovePlatforms();
-            BeginApproach();
-            StageCamera.Shake(0.12f, 0.3f); // 画面が一瞬、横にゆれる（2026-11-18：カメラのゆれの入口を足した）
             _returnAt = now + _config.RemoveTime;
         }
-        float delK = _config.DeleteTime > 0f ? Mathf.Clamp01((now - _deleteAt) / _config.DeleteTime) : 1f;
-        if (delK < 1f)
+        if (now < _closeAt) { UpdateApproach(0f); return; }
+
+        // ── 詰め：黒い列が左右からまん中へ閉じる。画面が横に1回ゆれる。ボスが寄る ──
+        if (!_closing)
         {
-            float w = _config.SectionWidth * (1f - delK);
-            SetBox(_black, new Vector2(_center + Shake(now, 2), (floor + _top) * 0.5f), new Vector2(Mathf.Max(0.01f, w), span));
+            _closing = true;
+            BeginApproach();
+            StageCamera.Shake(0.12f, 0.3f);
         }
-        else _black.enabled = false;
-        UpdateApproach(delK);
+        float closeK = _config.CloseTime > 0f ? Mathf.Clamp01((now - _closeAt) / _config.CloseTime) : 1f;
+        if (closeK < 1f)
+        {
+            float ease = closeK * closeK * (3f - 2f * closeK);
+            SetColumnWidth(_config.SectionWidth * (1f - ease), Shake(now));
+        }
+        else if (_column.gameObject.activeSelf)
+        {
+            _column.gameObject.SetActive(false);
+            ShowSeam(now);
+        }
+        UpdateApproach(closeK);
+        UpdateSeam(now);
         if (now < _doneAt) return;
 
         // ── ここで技は終わり。足場が戻るまで残る ──
@@ -145,17 +180,22 @@ public class PremiereRazorEffect : CustomEffect
         {
             ActionDone = true;
             foreach (var f in _flashes) f.enabled = false;
-            if (_removed.Count == 0)
-            {
-                Destroy(gameObject);
-                return;
-            }
+        }
+        if (_removed.Count == 0 && (_seam == null || !_seam.enabled))
+        {
+            Destroy(gameObject);
+            return;
         }
 
         // 最後の1秒は点滅して戻る予告
         if (now >= _returnAt)
         {
-            Destroy(gameObject); // Restore で足場を戻す
+            if (_seam == null || !_seam.enabled)
+            {
+                Destroy(gameObject); // Restore で足場を戻す
+                return;
+            }
+            RestorePlatforms();
             return;
         }
         bool blinking = _returnAt - now <= _config.BlinkTime;
@@ -171,11 +211,10 @@ public class PremiereRazorEffect : CustomEffect
 
     float LineX(int i) => i == 0 ? _center - _half : _center + _half;
 
-    float Shake(float now, int salt)
+    float Shake(float now)
     {
-        // 【仮】画面のゆれの代わり：削除の間だけ、刃と黒い帯を横に少しゆらす
-        if (now < _deleteAt || now > _doneAt) return 0f;
-        return (Mathf.PerlinNoise(now * 40f, salt * 3.7f) - 0.5f) * 2f * ShakePixels * PremiereArt.Pixel;
+        // 【仮】閉じる間だけ、黒い列を横に少しゆらす
+        return (Mathf.PerlinNoise(now * 40f, 2.7f) - 0.5f) * 2f * ShakePixels * PremiereArt.Pixel;
     }
 
     static void SetBox(SpriteRenderer sr, Vector2 worldCenter, Vector2 size)
@@ -183,6 +222,27 @@ public class PremiereRazorEffect : CustomEffect
         sr.transform.position = new Vector3(worldCenter.x, worldCenter.y, 0f);
         Vector2 native = sr.sprite.bounds.size;
         sr.transform.localScale = new Vector3(size.x / Mathf.Max(native.x, 0.001f), size.y / Mathf.Max(native.y, 0.001f), 1f);
+    }
+
+    // ───────── 判定 ─────────
+
+    /// <summary>区間の全部（幅 × 床から天井まで）の判定。攻撃データはダメージ・ノックバックだけ使う</summary>
+    void BuildHitbox()
+    {
+        if (_owner == null || _hitData == null) return;
+        var go = new GameObject("RazorSection");
+        go.layer = gameObject.layer;
+        go.transform.SetParent(transform, false);
+        float h = Mathf.Max(1f, _arena.height);
+        go.transform.position = new Vector3(_center, _arena.yMin + h * 0.5f, 0f);
+        var rb = go.AddComponent<Rigidbody2D>();
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.useFullKinematicContacts = true;
+        var box = go.AddComponent<BoxCollider2D>();
+        box.isTrigger = true;
+        box.size = new Vector2(_config.SectionWidth, h);
+        _hitbox = _owner.AddHitbox(go, _hitData, box);
+        _hitbox.SetErrorKind("Razor");
     }
 
     // ───────── 足場 ─────────
@@ -206,6 +266,7 @@ public class PremiereRazorEffect : CustomEffect
             if (b.size.x >= _arena.width * 0.5f) continue;                       // 部屋の床
             if (col.GetComponentInParent<FallingObject>() != null) continue;     // 落下物の足場
             if (col.GetComponentInParent<BlinkingPlatform>() != null) continue;  // 開いたり閉じたりする足場
+            if (AppStagePlatforms.IsUnsteady(col)) continue;                     // 動く・消えるアプリの足場（自分で出し入れするので。2026-11-19）
             if (col.GetComponentInParent<CustomEffect>() != null) continue;      // 技が出した物
 
             var r = new Removed { Collider = col };
@@ -228,7 +289,7 @@ public class PremiereRazorEffect : CustomEffect
         }
     }
 
-    protected override void Restore()
+    void RestorePlatforms()
     {
         foreach (var r in _removed)
         {
@@ -239,7 +300,10 @@ public class PremiereRazorEffect : CustomEffect
             }
         }
         _removed.Clear();
+        if (_ghosts != null) Destroy(_ghosts.gameObject);
     }
+
+    protected override void Restore() => RestorePlatforms();
 
     // ───────── ボスの寄り ─────────
 
@@ -283,8 +347,8 @@ public class PremiereRazorEffect : CustomEffect
         float dottedTop = _top - BladeHeight;
         float dottedLen = Mathf.Max(0.1f, dottedTop - floor);
 
-        // 切られる区間：うすい紫の斜線（床から刃の下まで）
-        _hatch = RuntimeSprites.Show(transform, PremiereArt.Hatch(_config.SectionWidth, dottedLen), Vector2.zero, HatchOrder, 1f, "Hatch");
+        // 切られる区間：赤むらさきの斜線（床から刃の下まで）
+        _hatch = PremiereTimelineArt.Tiled(transform, PremiereTimelineArt.RedPurpleHatch, Vector2.zero, new Vector2(_config.SectionWidth, dottedLen), Color.white, HatchOrder, "Hatch");
         _hatch.transform.position = new Vector3(_center, floor + dottedLen * 0.5f, 0f);
 
         for (int i = 0; i < 2; i++)
@@ -292,13 +356,118 @@ public class PremiereRazorEffect : CustomEffect
             float x = LineX(i);
             _blades[i] = RuntimeSprites.Show(transform, PremiereArt.RazorBlade, Vector2.zero, BladeOrder, 1f, "Blade").transform;
             _blades[i].position = new Vector3(x, _top - BladeHeight * 0.5f, 0f);
+            // 切る線：赤い点線（太さ 2ドット）
             _dotted[i] = RuntimeSprites.Show(transform, PremiereArt.DottedColumn(dottedLen), Vector2.zero, DottedOrder, 1f, "CutLine");
             _dotted[i].transform.position = new Vector3(x, floor + dottedLen * 0.5f, 0f);
+            _dotted[i].color = PremiereTimelineArt.EnemyRed;
             _flashes[i] = PremiereArt.Box(transform, Vector2.zero, new Vector2(FlashWidth, 0.01f), Color.white, FlashOrder, "CutFlash");
             _flashes[i].enabled = false;
         }
 
-        _black = PremiereArt.Box(transform, Vector2.zero, new Vector2(_config.SectionWidth, 1f), Color.black, BlackOrder, "Delete");
-        _black.enabled = false;
+        // 黒く抜ける列（画面の下の端から上の端まで。中は暗い市松。左右のふちは黒 1ドット）
+        _column = PremiereArt.Child(transform, "DeletedColumn", Vector2.zero);
+        _column.position = new Vector3(_center, _view.center.y, 0f);
+        _checker = PremiereTimelineArt.Tiled(_column, PremiereTimelineArt.Checker, Vector2.zero, new Vector2(_config.SectionWidth, _view.height + 2f), Color.white, ColumnOrder, "Checker");
+        _columnEdges = new SpriteRenderer[2];
+        for (int i = 0; i < 2; i++)
+        {
+            _columnEdges[i] = PremiereArt.Box(_column, Vector2.zero, new Vector2(PremiereArt.Pixel, _view.height + 2f), Color.black, ColumnOrder, "Edge");
+        }
+        _column.gameObject.SetActive(false);
+        BuildClips();
+    }
+
+    /// <summary>黒い列の幅を変える（まん中は区間のまん中のまま）</summary>
+    void SetColumnWidth(float w, float shake)
+    {
+        if (_column == null) return;
+        w = Mathf.Max(0.001f, w);
+        _column.position = new Vector3(_center + shake, _view.center.y, 0f);
+        PremiereTimelineArt.SetTiledSize(_checker, new Vector2(w, _view.height + 2f));
+        if (_columnEdges == null) return;
+        _columnEdges[0].transform.localPosition = new Vector3(-w * 0.5f, 0f, 0f);
+        _columnEdges[1].transform.localPosition = new Vector3(w * 0.5f, 0f, 0f);
+    }
+
+    /// <summary>閉じた所に、白い たての線（1ドット）が残る</summary>
+    void ShowSeam(float now)
+    {
+        _seam = PremiereArt.Box(transform, Vector2.zero, new Vector2(PremiereArt.Pixel, _view.height + 2f), Color.white, SeamOrder, "Seam");
+        _seam.transform.position = new Vector3(_center, _view.center.y, 0f);
+        _seamUntil = now + _config.SeamTime;
+        GenericFrameKit.Shards(new Vector2(_center, _arena.yMin + (_top - _arena.yMin) * 0.4f), Vector2.up, 6, i => PremiereSkinArt.Film8, i => Color.white, 70f, 1.3f);
+    }
+
+    float _seamUntil = float.NegativeInfinity;
+
+    void UpdateSeam(float now)
+    {
+        if (_seam == null || !_seam.enabled) return;
+        float left = _seamUntil - now;
+        if (left <= 0f)
+        {
+            _seam.enabled = false;
+            return;
+        }
+        float a = Mathf.Clamp01(left / 0.2f);
+        _seam.color = new Color(1f, 1f, 1f, a);
+    }
+
+    /// <summary>画面の上の帯（タイムライン）に、紫のクリップの帯。切る所に白い印（12-3。2026-11-18）</summary>
+    void BuildClips()
+    {
+        float y = _top + ClipHeight * 0.5f + 2f * PremiereArt.Pixel;
+        float left = Mathf.Max(_arena.xMin + 0.2f, _center - _half - ClipMargin);
+        float right = Mathf.Min(_arena.xMax - 0.2f, _center + _half + ClipMargin);
+        float[] xs = { left, LineX(0), LineX(1), right };
+        for (int i = 0; i < 3; i++)
+        {
+            float w = Mathf.Max(0.05f, xs[i + 1] - xs[i]);
+            Transform c = PremiereArt.Child(transform, "Clip", Vector2.zero);
+            c.position = new Vector3((xs[i] + xs[i + 1]) * 0.5f, y, 0f);
+            PremiereArt.Box(c, Vector2.zero, new Vector2(w, ClipHeight), PremiereSkinArt.ClipDark, BladeOrder - 2, "Edge");
+            PremiereArt.Box(c, Vector2.zero, new Vector2(w - 2f * PremiereArt.Pixel, ClipHeight - 2f * PremiereArt.Pixel), PremiereTimelineArt.ClipPurple, BladeOrder - 1, "Fill");
+            PremiereArt.Box(c, new Vector2(-w * 0.5f + Mathf.Min(0.6f, w * 0.3f), 1.5f * PremiereArt.Pixel), new Vector2(Mathf.Min(0.9f, w * 0.5f), PremiereArt.Pixel), Color.white, BladeOrder, "Name");
+            PremiereArt.Box(c, new Vector2(0f, -2f * PremiereArt.Pixel), new Vector2(w - 4f * PremiereArt.Pixel, PremiereArt.Pixel), PremiereSkinArt.ClipDark, BladeOrder, "Wave");
+            _clips[i] = c;
+        }
+        for (int i = 0; i < 2; i++)
+        {
+            _cutTicks[i] = PremiereArt.Box(transform, Vector2.zero, new Vector2(PremiereArt.Pixel, ClipHeight + 4f * PremiereArt.Pixel), PremiereTimelineArt.EnemyRed, BladeOrder, "CutMark");
+            _cutTicks[i].transform.position = new Vector3(LineX(i), y, 0f);
+        }
+    }
+
+    /// <summary>切った所で2つに分かれて、左右へ 2ドット離れる。詰めで、まん中のクリップは閉じる。技が終わったら消える</summary>
+    void UpdateClips(float now)
+    {
+        if (_clips[0] == null) return;
+        foreach (var t in _cutTicks) if (t != null) t.enabled = false;
+        float k = Mathf.Clamp01((now - _cutAt) / 0.06f);
+        float gap = 2f * PremiereArt.Pixel * k;
+        float baseY = _clips[1].position.y;
+        _clips[0].position = new Vector3((Mathf.Max(_arena.xMin + 0.2f, _center - _half - ClipMargin) + LineX(0)) * 0.5f - gap, baseY, 0f);
+        _clips[2].position = new Vector3((LineX(1) + Mathf.Min(_arena.xMax - 0.2f, _center + _half + ClipMargin)) * 0.5f + gap, baseY, 0f);
+        if (now >= _deleteAt)
+        {
+            float closeK = now < _closeAt ? 0f : (_config.CloseTime > 0f ? Mathf.Clamp01((now - _closeAt) / _config.CloseTime) : 1f);
+            _clips[1].localScale = new Vector3(Mathf.Max(0.001f, 1f - closeK), 1f, 1f);
+            foreach (var sr in _clips[1].GetComponentsInChildren<SpriteRenderer>()) sr.color = Color.Lerp(sr.color, Color.black, 0.25f);
+        }
+        // 技が終わったら（足場が戻るのを待つ間は）、帯はうすくなって消える
+        float fade = now < _doneAt ? 1f : 1f - Mathf.Clamp01((now - _doneAt) / 0.25f);
+        for (int i = 0; i < 3; i++)
+        {
+            if (_clips[i] == null) continue;
+            bool on = fade > 0f;
+            if (_clips[i].gameObject.activeSelf != on) _clips[i].gameObject.SetActive(on);
+            if (!on) continue;
+            foreach (var sr in _clips[i].GetComponentsInChildren<SpriteRenderer>())
+            {
+                Color c = sr.color;
+                c.a = fade;
+                sr.color = c;
+            }
+        }
     }
 }

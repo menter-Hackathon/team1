@@ -13,12 +13,10 @@ MonoBehaviour:
   m_Name: Custom_Premiere_Playhead_P1
   m_EditorClassIdentifier: 
   _markerCount: 3
-  _fireCount: 2
+  _extraMarkers: 0
   _firstMarkerRange: 1
   _minSpacing: 3
   _maxCoverage: 12
-  _thunderHeight: 1
-  _fireHeight: 1.5
   _sideMargin: 1
   _stripTime: 0.3
   _placeTime: 0.8
@@ -26,5 +24,5 @@ MonoBehaviour:
   _roundTrip: 0
   _triggerDelay: 0.25
   _topInset: 1.9
-  _explosion: {fileID: 11400000, guid: d63545931b9a04d639ddce64fd84db0c, type: 2}
+  _dip: {fileID: 11400000, guid: 6f5b5acf24355407ea2f30264b12d4ad, type: 2}
   _bolt: {fileID: 11400000, guid: e3fab9bdec4464150ae170ca275eaf51, type: 2}

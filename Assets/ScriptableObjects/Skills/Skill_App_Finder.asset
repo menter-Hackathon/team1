@@ -17,3 +17,4 @@ MonoBehaviour:
   _category: 0
   _attack: {fileID: 11400000, guid: 3acafe3b413da4c29bd401c22521b573, type: 2}
   _theme: {fileID: 0}
+  _skin: 0

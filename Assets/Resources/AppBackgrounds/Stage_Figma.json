@@ -1,0 +1,90 @@
+{
+ "label": "Figma",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "button",
+   "x": -3.6667,
+   "y": 2.7,
+   "w": 3.0667,
+   "h": 0.6667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Figma__button",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "card",
+   "x": 3.8667,
+   "y": 2.6333,
+   "w": 2.9333,
+   "h": 0.8,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Figma__card",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "drag",
+   "x": -0.4,
+   "y": 4.5,
+   "w": 2.4,
+   "h": 1.2,
+   "top": 5.1,
+   "sprite": "AppBackgrounds/Parts/Figma__drag",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": 2.6666666666666665,
+    "dy": 0.0,
+    "period": 7,
+    "offset": 0
+   }
+  },
+  {
+   "id": "layer",
+   "x": -8.2667,
+   "y": 4.5333,
+   "w": 3.2,
+   "h": 0.6,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Figma__layer",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "fill",
+   "x": 8.2667,
+   "y": 4.5333,
+   "w": 2.9333,
+   "h": 0.6,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Figma__fill",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "share",
+   "x": 8.3333,
+   "y": 1.1667,
+   "w": 2.5333,
+   "h": 0.8,
+   "top": 1.5667,
+   "sprite": "AppBackgrounds/Parts/Figma__share",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "refill",
+    "cooldown": 25
+   }
+  }
+ ]
+}
