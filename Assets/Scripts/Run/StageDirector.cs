@@ -24,6 +24,10 @@ public class StageDirector : MonoBehaviour
     [SerializeField, Min(0f)] float _clearDelay = 2.5f;
     [Tooltip("ライフが0になってから、やり直すまでの秒数")]
     [SerializeField, Min(0f)] float _retryDelay = 1.5f;
+    [Tooltip("この距離以内でボス由来の感染ノイズが最大になる（ワールド単位）")]
+    [SerializeField, Min(0f)] float _noiseNearDistance = 3f;
+    [Tooltip("この距離からボス由来の感染ノイズが強まり始める（ワールド単位）")]
+    [SerializeField, Min(0f)] float _noiseFarDistance = 24f;
 
     GameSession _session;
     Health _playerHealth;
@@ -92,6 +96,16 @@ public class StageDirector : MonoBehaviour
     void Start()
     {
         if (Plan == null) return;
+        foreach (var camera in FindObjectsOfType<Camera>())
+        {
+            Transform background = camera.transform.Find("Background");
+            if (background == null || !background.TryGetComponent(out SpriteRenderer wallpaper)) continue;
+            var decay = background.gameObject.AddComponent<DesktopDecay>();
+            decay.Initialize(wallpaper, _session.Run.CurrentIndex, _session.Run.Stages.Count);
+            decay.BindProximity(_player != null ? _player.transform : null, Boss,
+                _noiseNearDistance, _noiseFarDistance);
+            decay.BindBattle(_entrance, _wave);
+        }
         if (_player != null)
         {
             _player.Bind(_session.Run.Loadout);

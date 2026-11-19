@@ -71,6 +71,16 @@ public class PlayerController : MonoBehaviour
     int _dashDirection = 1;
 
     public Vector2 Velocity => _velocity;
+    float _moveBoostUntil;
+    float _moveBoostMultiplier = 1f;
+
+    public void GrantMoveSpeedBoost(float multiplier, float seconds)
+    {
+        _moveBoostMultiplier = Mathf.Max(1f, multiplier);
+        _moveBoostUntil = Time.time + Mathf.Max(0f, seconds);
+    }
+
+    public void ClearMoveSpeedBoost() => _moveBoostUntil = 0f;
     public bool IsGrounded => _body.IsGrounded;
     /// <summary>右向きなら 1、左向きなら -1。攻撃の向きなどに使う</summary>
     public int FacingDirection { get; private set; } = 1;
@@ -87,9 +97,15 @@ public class PlayerController : MonoBehaviour
 
     /// <summary>
     /// 【仮】横の速さの倍率（2026-11-18：Premiere Pro のスピードデュレーションの「スローの場」）。ジャンプ・落ちる速さ・ダッシュは変えない。
-    /// 変えた技が、終わるとき（場から出たとき・消えたとき）に 1 に戻す
+    /// 変えた技が、終わるとき（場から出たとき・消えたとき）に 1 に戻す。
+    /// 2026-11-19：main の GrantMoveSpeedBoost（時間つきの加速。技のデモ）と1つにまとめた。読むと両方を掛けた値、書くとスローの場の分だけ変わる
     /// </summary>
-    public float MoveSpeedMultiplier { get; set; } = 1f;
+    public float MoveSpeedMultiplier
+    {
+        get => _moveSpeedMultiplier * (Time.time < _moveBoostUntil ? _moveBoostMultiplier : 1f);
+        set => _moveSpeedMultiplier = value;
+    }
+    float _moveSpeedMultiplier = 1f;
 
     float _jumpLockedUntil = float.NegativeInfinity;
     /// <summary>ジャンプを封じられているか（2026-11-18：Terminal の chmod 000 player）</summary>
