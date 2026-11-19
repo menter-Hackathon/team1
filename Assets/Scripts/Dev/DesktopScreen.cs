@@ -27,14 +27,8 @@ public class DesktopScreen : MonoBehaviour
     const float FinalDelay = 0.45f; // 前のアプリが元に戻ってから、ラスボスが Dock に現れるまで
     const float FinalGlitch = 0.35f; // ラスボスが現れるときに乱れている時間
 
-    static readonly Color WallClean = new Color32(0x4f, 0x86, 0xb8, 0xff);
-    static readonly Color WallInfected = new Color32(0x2a, 0x0c, 0x3e, 0xff);
-    // Mac の青いフォルダ（1-5：#5AB0F0・影 #2F7FC4・光 #8FCBF7）
-    static Color FolderBody => MacUi.FolderBlue;
-    static Color FolderTab => MacUi.FolderShade;
-    static Color FolderShine => MacUi.FolderShine;
-    static readonly string[] WeekJa = { "日", "月", "火", "水", "木", "金", "土" };
-    static readonly string[] Menus = { "ファイル", "編集", "表示", "移動", "ウインドウ", "ヘルプ" };
+    static readonly Color FolderBody = new Color32(0x7c, 0xb7, 0xe8, 0xff);
+    static readonly Color FolderTab = new Color32(0x5a, 0x95, 0xcc, 0xff);
     static readonly Color InfectTint = new Color(1f, 0.55f, 1f, 1f);
     static readonly string[] Folders = { "書類", "スクショ", "ダウンロード" };
 
@@ -62,33 +56,14 @@ public class DesktopScreen : MonoBehaviour
         _openAt = -1f;
         IsDone = false;
         _visible = true;
-        _sounded = 0;
-        GameAudio.PlayBgm("bgm_desktop");
-    }
-
-    int _sounded; // 鳴らした音（ビット）。早送りで時刻が飛んでも、1回ずつ鳴らす
-
-    // 音（2026-11-19）：元に戻る・ラスボスが現れて乱れる・クリック・ウィンドウが開く の瞬間に1回ずつ
-    void PlaySounds()
-    {
-        float t = T;
-        if (_restored >= 0 && t >= RestoreAt) SoundOnce(1, "desktop_cure");
-        if (TargetIsFinal && t >= FinalAppearAt) SoundOnce(2, "desktop_glitch");
-        if (_target >= 0 && _openAt < 0f && t >= TargetStart + CursorTime) SoundOnce(4, "desktop_click");
-        if (_openAt >= 0f) SoundOnce(8, "desktop_open");
-    }
-
-    void SoundOnce(int bit, string key)
-    {
-        if ((_sounded & bit) != 0) return;
-        _sounded |= bit;
-        GameAudio.Event(key);
+        MacDesktopWallpaper.Ensure(this,()=>_visible&&_run!=null);
     }
 
     public void Hide()
     {
         _visible = false;
         _run = null;
+        GetComponent<MacDesktopWallpaper>()?.Refresh();
     }
 
     float T => Time.unscaledTime - _shownAt;
@@ -176,13 +151,6 @@ public class DesktopScreen : MonoBehaviour
 
     static void DrawWallpaper(float W, float H, float infectedRatio, int infected)
     {
-        Color baseColor = Color.Lerp(WallClean, WallInfected, infectedRatio);
-        const int bands = 12; // 上を明るく、下を暗く（ドット絵の階調）
-        for (int i = 0; i < bands; i++)
-        {
-            float y0 = Mathf.Round(H * i / bands), y1 = Mathf.Round(H * (i + 1) / bands);
-            PixelGui.Fill(new Rect(0f, y0, W, y1 - y0), Shade(baseColor, Mathf.Lerp(1.18f, 0.78f, i / (float)(bands - 1))));
-        }
         if (infected <= 0) return;
 
         // 乱れ：感染したアプリの数だけ、マゼンタと黒のかけらがチラつく。ときどき横に裂ける
@@ -201,16 +169,13 @@ public class DesktopScreen : MonoBehaviour
         }
     }
 
-    // 明るさだけ変える（不透明のまま。下の前のステージを透かさない）
-    static Color Shade(Color c, float k) => new Color(Mathf.Clamp01(c.r * k), Mathf.Clamp01(c.g * k), Mathf.Clamp01(c.b * k), 1f);
-
     // 右上のフォルダ（感染したアプリの数だけ、上から紫に染まって乱れる）
     static void DrawFolders(float W, int infected)
     {
         int step = Mathf.FloorToInt(Time.unscaledTime * 6f);
         for (int i = 0; i < Folders.Length; i++)
         {
-            float cx = W - 44f, y = 30f + i * 58f;
+            float cx = W - 44f, y = 43f + i * 58f;
             bool bad = i < infected;
             Color body = bad ? PixelGui.Lilac : FolderBody, tab = bad ? PixelGui.LabelPurple : FolderTab;
             float jx = bad && (step + i) % 5 == 0 ? 2f : 0f;
@@ -224,25 +189,8 @@ public class DesktopScreen : MonoBehaviour
         }
     }
 
-    // Mac のメニューバー（1-5。MacUi.Gui.MenuBar）：左に印（リンゴの代わり）→ 太字の Finder → メニュー。右に Wi-Fi・電池・スイッチの印 → 日付と時刻。
-    // 高さは今の 16（下の線を入れて 17）。ウイルスの数は、右の印の左（今と同じ並び）
-    static void DrawMenuBar(float W, int infected)
-    {
-        // 日付と時刻（11月19日(木) 15:39 の形。曜日は表から＝言語の設定に左右されない）
-        System.DateTime now = System.DateTime.Now;
-        string clock = $"{now.Month}月{now.Day}日({WeekJa[(int)now.DayOfWeek]}) {now:H:mm}";
-        MacUi.Gui.MenuBar(new Rect(0f, 0f, W, 17f), "Finder", Menus, clock);
-        if (infected <= 0) return;
-        // 右の印の左の端（MacUi.Gui.MenuBar の並び：右の端から 6、時刻、8 あけて、印 3つ＝7ドットと間 5）
-        float cw = PixelGui.Measure(clock, PixelGui.Style(false, 12));
-        float iconsLeft = W - 6f - (cw + 8f) - 3f * 12f + 5f;
-        Sprite zako = ZakoFrame(0f);
-        string count = $"x{infected}";
-        float nw = Mathf.Ceil(PixelGui.Measure(count, PixelGui.Style(true, 8)));
-        float vx = Mathf.Round(iconsLeft - 8f - nw);
-        PixelGui.TextEn(new Rect(vx, 4f, nw + 2f, 8f), count, 8, PixelGui.Magenta);
-        if (zako != null) PixelGui.DrawSprite(new Rect(vx - 17f, 0f, 16f, 16f), zako);
-    }
+    static void DrawMenuBar(float W,int infected)
+        => MacDesktopGui.MenuBar(W,"Finder",infected>0?$"感染 {infected}":null);
 
     // ───────── Dock ─────────
 
@@ -260,10 +208,7 @@ public class DesktopScreen : MonoBehaviour
         float appsW = n * icon + (n - 1) * gap;
         float dockW = pad + appsW + gap + 1f + gap + icon + pad, dockH = icon + pad * 2f;
         var dock = new Rect(Mathf.Round((W - dockW) * 0.5f), Mathf.Round(H - dockH - 6f), dockW, dockH);
-        MacUi.Gui.Dock(dock);
-        float sepX = dock.x + pad + appsW + gap;
-        MacUi.Gui.DockDivider(sepX, dock.y + pad, icon);
-        DrawTrash(new Rect(sepX + 1f + gap, dock.y + pad, icon, icon));
+        MacDesktopGui.DockPlate(dock);
 
         Rect target = new Rect(W * 0.5f - 16f, H * 0.5f - 16f, 32f, 32f);
         targetHome = target;
@@ -401,23 +346,18 @@ public class DesktopScreen : MonoBehaviour
             Mathf.Round(Mathf.Lerp(from.x, to.x, p)), Mathf.Round(Mathf.Lerp(from.y, to.y, p)),
             Mathf.Round(Mathf.Lerp(from.width, to.width, p)), Mathf.Round(Mathf.Lerp(from.height, to.height, p)));
         AppTheme theme = stage != null ? stage.App.Theme : null;
-        Color band = theme != null ? theme.Main : PixelGui.Magenta;
+        Color bar = new Color32(231,234,240,255);
         Color body = theme != null ? theme.Sky : PixelGui.Panel;
-        int corner = r.width >= 40f && r.height >= 30f ? 4 : 2;
-        string title = p >= 0.6f ? TitleOf(stage) : null;
-        Rect inner = MacUi.Gui.Window(r, title, MacLook.Light, true, corner);
-        if (inner.height <= 0f) return;
-        // アプリの色の帯（ツールバー）と、中の面（ステージの空の色）
-        float tb = Mathf.Min(inner.height, Mathf.Round(Mathf.Lerp(1f, 5f, p)));
-        PixelGui.Fill(new Rect(inner.x, inner.y, inner.width, tb), band);
-        var face = new Rect(inner.x, inner.y + tb, inner.width, inner.height - tb);
-        if (face.height > 0f) GenericMac.Gui.RoundFill(face, 0, Mathf.Min(corner - 1, Mathf.FloorToInt(face.height)), body);
-        // 2026-11-19：ステージと同じ、そのアプリの画面の背景の絵があれば、中の面にそれを出す（そのままステージへつながる）。そのときアイコンは出さない
-        if (_targetBg != null && face.height > 0f) DrawAppBackground(face, _targetBg);
-        else if (stage != null && stage.Icon16 != null && face.height > 46f)
+        PixelGui.Fill(r, MacDesktopGui.BorderColor);
+        Rect inner = PixelGui.Inset(r, 1f);
+        float barH = Mathf.Round(Mathf.Lerp(3f, 24f, p));
+        PixelGui.Fill(new Rect(inner.x, inner.y, inner.width, barH), bar);
+        PixelGui.Fill(new Rect(inner.x, inner.y + barH, inner.width, inner.height - barH), body);
+        if (barH >= 20f && inner.width>=80f)
         {
-            float s = Mathf.Clamp(Mathf.Floor(face.height / 64f), 1f, 3f) * 16f;
-            PixelGui.DrawSprite(new Rect(Mathf.Round(face.center.x - s * 0.5f), Mathf.Round(face.center.y - s * 0.5f), s, s), stage.Icon16);
+            MacDesktopGui.TrafficLights(inner);
+            if(inner.width>230f&&stage!=null)
+                PixelGui.TextFit(new Rect(inner.x+65,inner.y+3,inner.width-130,18),stage.App.DisplayName,12,MacDesktopGui.Ink,TextAnchor.MiddleCenter);
         }
     }
 
