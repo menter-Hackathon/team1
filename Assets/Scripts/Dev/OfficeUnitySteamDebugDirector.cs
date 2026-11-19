@@ -10,6 +10,8 @@ using UnityEngine.InputSystem;
 ///   ボス版は、右側の「ボス版の発射台」から出す（ボスを出していなくても試せる）
 /// ・I／F4：プレイヤーの Steam の実績を1つ解除（通知・バフを見る）
 /// ・B：ボスを切り替える（なし → Office → Unity → Steam → なし）
+/// ・O：Office のボスの見た目を Excel → Word → PowerPoint と切り替える
+///   ボスの見た目は、ランと同じく Mac の本物のアプリのアイコンから作る（入っていないアプリは、名前から決まる色の仮のアイコン。2026-11-19）
 /// ・N：ゲージ +10　P：ゲージを満タンにする（追い出し → ウイルス本体を倒すと正常化してスキルを獲得）
 /// ・Z：雑魚を出す　R：やり直し
 /// </summary>
@@ -20,6 +22,17 @@ public class OfficeUnitySteamDebugDirector : MonoBehaviour
     [SerializeField] SkillDefinition[] _playerSkills;
     [Tooltip("ボス（Office・Unity・Steam の順）。最初は全部隠しておく")]
     [SerializeField] BossController[] _bosses;
+
+    [Header("ボスの見た目（本物のアプリのアイコンから作る）")]
+    [Tooltip("Office のボスの見た目にするアプリ（O キーで順に切り替える）")]
+    [SerializeField] LookApp[] _officeApps =
+    {
+        new LookApp { Name = "Excel", BundleId = "com.microsoft.Excel" },
+        new LookApp { Name = "Word", BundleId = "com.microsoft.Word" },
+        new LookApp { Name = "PowerPoint", BundleId = "com.microsoft.Powerpoint" },
+    };
+    [SerializeField] LookApp _unityApp = new LookApp { Name = "Unity", BundleId = "com.unity3d.UnityEditor5.x" };
+    [SerializeField] LookApp _steamApp = new LookApp { Name = "Steam", BundleId = "com.valvesoftware.steam" };
 
     [Header("ボス版の発射台")]
     [SerializeField] AttackRunner _bossCaster;
@@ -32,7 +45,19 @@ public class OfficeUnitySteamDebugDirector : MonoBehaviour
     [SerializeField] GameObject _zakoTemplate;
     [SerializeField] Vector2 _zakoSpawn = new Vector2(2f, 0.05f);
 
+    [System.Serializable]
+    public struct LookApp
+    {
+        public string Name;
+        [Tooltip("Mac のバンドルID（アイコンを探す。見つからなければ名前で探す）")]
+        public string BundleId;
+        public AppUsageRow Row => new AppUsageRow { Name = Name, BundleId = BundleId, Seconds = 1 };
+    }
+
     readonly List<InputAction> _actions = new List<InputAction>();
+    BossProfile[] _baseProfiles;
+    AppVisual[] _looks;
+    int _officeLook;
     readonly List<GameObject> _zakos = new List<GameObject>();
     Vector3 _playerStart;
     int _bossIndex = -1; // -1 = ボスなし
@@ -55,7 +80,7 @@ public class OfficeUnitySteamDebugDirector : MonoBehaviour
         return a;
     }
 
-    InputAction _office, _unity, _steamBoss, _steamPlayer, _switchBoss, _gauge, _purify, _zako, _reset;
+    InputAction _office, _unity, _steamBoss, _steamPlayer, _switchBoss, _officeLookKey, _gauge, _purify, _zako, _reset;
 
     void Awake()
     {
@@ -64,6 +89,7 @@ public class OfficeUnitySteamDebugDirector : MonoBehaviour
         _steamBoss = Key("DebugSteamBoss", "u", "f3");
         _steamPlayer = Key("DebugSteamPlayer", "i", "f4");
         _switchBoss = Key("DebugSwitchBoss", "b");
+        _officeLookKey = Key("DebugOfficeLook", "o");
         _gauge = Key("DebugGauge", "n");
         _purify = Key("DebugPurify", "p");
         _zako = Key("DebugZako", "z");
@@ -85,6 +111,49 @@ public class OfficeUnitySteamDebugDirector : MonoBehaviour
         }
         AchievementRunner.AnyUnlocked += OnUnlocked;
         foreach (var b in _bosses) if (b != null) b.Normalized += OnNormalized;
+        PrepareLooks();
+    }
+
+    /// <summary>ボスの見た目を、アプリのアイコンから作る（アイコンはまとめて1回で読む）</summary>
+    void PrepareLooks()
+    {
+        if (_bosses == null) return;
+        _baseProfiles = new BossProfile[_bosses.Length];
+        _looks = new AppVisual[_bosses.Length];
+        for (int i = 0; i < _bosses.Length; i++) _baseProfiles[i] = _bosses[i] != null ? _bosses[i].Profile : null;
+        var rows = new List<AppUsageRow>();
+        if (_officeApps != null) foreach (var a in _officeApps) rows.Add(a.Row);
+        rows.Add(_unityApp.Row);
+        rows.Add(_steamApp.Row);
+        AppVisuals.Prepare(rows);
+        if (_officeApps != null && _officeApps.Length > 0) ApplyLook(0, _officeApps[0]);
+        ApplyLook(1, _unityApp);
+        ApplyLook(2, _steamApp);
+    }
+
+    void ApplyLook(int index, LookApp app)
+    {
+        if (_bosses == null || index >= _bosses.Length || _bosses[index] == null) return;
+        AppVisual visual = AppVisuals.Get(app.Row);
+        if (visual == null) return;
+        _looks[index] = visual;
+        BossController boss = _bosses[index];
+        AppBossLook.ApplyWindow(boss, visual, null, app.Name);
+        BossProfile baseProfile = _baseProfiles[index];
+        if (baseProfile == null) return;
+        // ゲージの横のアイコンと名前（設定の複製に入れる。アセットは変えない）
+        BossProfile copy = baseProfile.CreateScaledCopy(baseProfile.GaugeMax, baseProfile.Phase2.WaitAfterAttack, baseProfile.Reward);
+        copy.SetLook(app.Name, visual.Icon12);
+        boss.SetProfile(copy);
+        if (!visual.HasRealIcon) Log($"{app.Name} のアイコンが見つからないので、仮のアイコンにしました");
+    }
+
+    void SwitchOfficeLook()
+    {
+        if (_officeApps == null || _officeApps.Length == 0 || _looks == null) return;
+        _officeLook = (_officeLook + 1) % _officeApps.Length;
+        ApplyLook(0, _officeApps[_officeLook]);
+        Log($"Office のボスの見た目：{_officeApps[_officeLook].Name}");
     }
 
     void OnEnable() { foreach (var a in _actions) a.Enable(); }
@@ -122,6 +191,7 @@ public class OfficeUnitySteamDebugDirector : MonoBehaviour
         }
         if (_steamPlayer.WasPressedThisFrame()) UnlockPlayerSteam();
         if (_switchBoss.WasPressedThisFrame()) SwitchBoss();
+        if (_officeLookKey.WasPressedThisFrame()) SwitchOfficeLook();
         if (_gauge.WasPressedThisFrame() && CurrentBoss != null) CurrentBoss.Gauge.Add(10);
         if (_purify.WasPressedThisFrame() && CurrentBoss != null) CurrentBoss.Gauge.Add(CurrentBoss.Gauge.Max);
         if (_zako.WasPressedThisFrame()) SpawnZako();
@@ -221,7 +291,8 @@ public class OfficeUnitySteamDebugDirector : MonoBehaviour
         {
             string state = boss.State == BossState.Normalized ? "正常化" : boss.State == BossState.Ejected ? "とどめ待ち（ウイルス本体を倒す）" : $"第{boss.Phase}形態";
             GUI.Label(new Rect(Screen.width - 460f, y, 450f, 22f), $"{boss.Profile.DisplayName}　{boss.Gauge.Current}/{boss.Gauge.Max}　{state}", _style);
-            Sprite icon = boss.State == BossState.Normalized ? boss.NormalizedIcon : null;
+            AppVisual look = _looks != null && _bossIndex >= 0 && _bossIndex < _looks.Length ? _looks[_bossIndex] : null;
+            Sprite icon = boss.State == BossState.Normalized ? (look != null ? look.Icon24 : boss.NormalizedIcon) : null;
             if (icon != null) DrawSprite(new Rect(Screen.width - 72f, y + 26f, 64f, 64f), icon);
         }
 
@@ -250,7 +321,7 @@ public class OfficeUnitySteamDebugDirector : MonoBehaviour
 
         GUI.Label(new Rect(10f, Screen.height - 36f, Screen.width - 20f, 34f),
             "【確認用】1/2/3：Office・Unity・Steam（プレイヤー版）　T/F1：Office ボス版　Y/F2：Unity ボス版　U/F3：Steam ボス版の実績　I/F4：プレイヤーの実績\n" +
-            "B：ボス切替　N：ゲージ+10　P：ゲージ満タン　Z：雑魚　R：やり直し　J/F：近接　K：ダッシュ", _small);
+            "B：ボス切替　O：Office の見た目　N：ゲージ+10　P：ゲージ満タン　Z：雑魚　R：やり直し　J/F：近接　K：ダッシュ", _small);
     }
 
     static void DrawSprite(Rect r, Sprite s)

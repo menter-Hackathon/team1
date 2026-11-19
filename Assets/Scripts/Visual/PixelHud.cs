@@ -240,7 +240,7 @@ public class PixelHud : MonoBehaviour
         Rect fillArea = GaugeFrame(gauge);
         float ratio = boss.Gauge != null ? Mathf.Clamp01(boss.Gauge.Ratio) : 0f;
         // ゲージの色：そのステージのアプリの色（4色なら左から4つに区切る）。形態変化中は赤く点滅、正常化で白
-        AppTheme theme = _director != null && _director.Plan != null ? _director.Plan.App.Theme : null;
+        AppTheme theme = _director != null && _director.Plan != null ? _director.Plan.Theme : null;
         Color[] colors = theme != null && theme.Accents != null && theme.Accents.Length > 0 ? theme.Accents : new[] { GaugeColor };
         bool angry = boss.State == BossState.Transition && Mathf.FloorToInt(Time.time / 0.1f) % 2 == 0;
         bool done = boss.State == BossState.Normalized || boss.State == BossState.Ejected;

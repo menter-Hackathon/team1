@@ -58,7 +58,7 @@ public class StageDirector : MonoBehaviour
 
         Plan = _session.Run.Current;
         // ステージの色を、そのアプリのアイコンの色にする（壁紙・床・壁・足場）
-        if (TryGetComponent(out StageTheme theme)) theme.Apply(Plan.App.Theme);
+        if (TryGetComponent(out StageTheme theme)) theme.Apply(Plan.Theme);
         // 出てくる位置は、ボス部屋（BattleArena）の床の真ん中からのずれ（ボス部屋がステージの端にあるステージもあるため）
         var arena = FindObjectOfType<BattleArena>();
         Vector2 roomFloor = arena != null ? new Vector2(arena.Bounds.center.x, arena.Bounds.yMin) : Vector2.zero;
@@ -66,12 +66,11 @@ public class StageDirector : MonoBehaviour
         Boss.name = Plan.App.BossPrefab.name;
         Boss.gameObject.SetActive(false); // プレハブは非表示で保存してあるが、念のため
         Boss.SetProfile(Plan.Profile);
-        // 代用ボス（対応表に無いアプリ）：着ているウィンドウを、そのアプリのアイコンから作ったものにする
+        // 代用ボス・ラスボス・アイコンから見た目を作る行（Office・Unity・Steam。2026-11-19）：着ているウィンドウを、そのアプリのアイコンから作ったものにする
         if (Plan.Visual != null)
         {
-            Boss.name = $"StandIn_{Plan.App.DisplayName}";
-            var armor = Boss.GetComponentInChildren<BossArmorVisual>(true);
-            if (armor != null) armor.SetWindowStages(BossWindowArt.Create(Plan.Visual.Icon24, Plan.App.Theme, $"BossWindow_{Plan.App.DisplayName}"));
+            if (Plan.IsStandIn) Boss.name = $"StandIn_{Plan.App.DisplayName}";
+            AppBossLook.ApplyWindow(Boss, Plan.Visual, Plan.Theme, Plan.App.DisplayName);
         }
         if (_player != null && Boss.TryGetComponent(out AttackRunner runner)) runner.Target = _player.transform;
         if (_entrance != null) _entrance.SetBoss(Boss);

@@ -31,9 +31,9 @@ public static class OfficeUnitySteamBuilder
     static readonly Vector2 Left = new Vector2(0f, 0.5f);
 
     /// <summary>ボスの体の中心の、床からの高さ（素材 168 ドット＝3.1マス。オーラの下の余白ぶん少し下げる）</summary>
-    const float BossCenterY = 1.45f;
+    const float BossCenterY = 1.5f;
     /// <summary>ボスの被弾範囲（本体 96 ドット＝1.8マス）</summary>
-    static readonly Vector2 BossBodySize = new Vector2(1.9f, 1.9f);
+    static readonly Vector2 BossBodySize = new Vector2(4f, 3f); // ほかのボス（Chrome・VS Code）と同じ
     /// <summary>ボスの出る位置（部屋の床の真ん中が (0, 0)）</summary>
     static readonly Vector2 BossSpawn = new Vector2(6f, BossCenterY);
 
@@ -614,70 +614,13 @@ public static class OfficeUnitySteamBuilder
     // ───────── ボス ─────────
 
     /// <summary>
-    /// アプリボスを作る（原点＝体の中心）。見た目は素材の合成版（オーラ込み）1枚を AppBossAnimator でコマ送りする。
-    /// 被弾範囲・体当たり・ゲージ・攻撃・ゲージ100%で追い出されるウイルス本体は、ほかのボスと同じ
+    /// アプリボスを作る（原点＝体の中心）。見た目は、ほかのボスと同じ B「ウイルスがアプリを着ている」（2026-11-19 変更）。
+    /// 着ているウィンドウとゲージの横のアイコンは、ゲームの中で Mac の本物のアプリのアイコンから作る
+    /// （ラン：対応アプリ表の「アイコンから見た目を作る」＋ StageDirector、確認用のシーン：OfficeUnitySteamDebugDirector）。
+    /// 被弾範囲・体当たり・ゲージ・攻撃・ゲージ100%で追い出されるウイルス本体も、ほかのボスと同じ
     /// </summary>
-    public static BossController CreateAppBoss(string app, BossProfile profile, Vector2 position, Sprite square, Transform player)
-    {
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
-        var boss = new GameObject($"Boss_{app}");
-        boss.layer = enemyLayer;
-        boss.transform.position = position;
-
-        var bodyGo = new GameObject("Body");
-        bodyGo.layer = enemyLayer;
-        bodyGo.transform.SetParent(boss.transform, false);
-        bodyGo.transform.localScale = new Vector3(BossBodySize.x, BossBodySize.y, 1f); // AddHurtbox は 1×1 の四角
-        var hurtCol = PlayerTestSceneBuilder.AddHurtbox(bodyGo);
-        var hurtbox = bodyGo.GetComponent<Hurtbox>();
-        var contact = PlayerTestSceneBuilder.AddHitbox(bodyGo, Team.Enemy, 1 << playerLayer, damage: 1,
-            knockback: new Vector2(6f, 5f), hitStun: 0.25f, hitOnce: false, activeOnStart: true, area: hurtCol);
-
-        var gauge = boss.AddComponent<VirusGauge>();
-        PlayerTestSceneBuilder.SetProps(gauge, so => so.FindProperty("_max").intValue = profile.GaugeMax);
-        BossTestSceneBuilder.AddAttackRunner(boss, Team.Enemy, 1 << playerLayer, player);
-
-        var artGo = new GameObject("Art");
-        artGo.layer = enemyLayer;
-        artGo.transform.SetParent(boss.transform, false);
-        var sr = artGo.AddComponent<SpriteRenderer>();
-        Sprite[] idle = Frames($"AppBoss/{app}/AppBoss_{app}_Idle.png");
-        sr.sprite = idle.Length > 0 ? idle[0] : null;
-        sr.sortingOrder = 12;
-
-        var controller = boss.AddComponent<BossController>();
-        Health ejected = BossTestSceneBuilder.CreateEjectedVirus(boss.transform, square);
-        PlayerTestSceneBuilder.SetProps(controller, so =>
-        {
-            so.FindProperty("_profile").objectReferenceValue = profile;
-            so.FindProperty("_contactHitbox").objectReferenceValue = contact;
-            so.FindProperty("_hurtbox").objectReferenceValue = hurtbox;
-            so.FindProperty("_externalVisuals").boolValue = false; // 点滅・形態変化の色は BossController が付ける
-            var arr = so.FindProperty("_renderers");
-            arr.arraySize = 1;
-            arr.GetArrayElementAtIndex(0).objectReferenceValue = sr;
-            so.FindProperty("_normalizedColor").colorValue = Color.white;
-            so.FindProperty("_ejectedVirus").objectReferenceValue = ejected;
-        });
-
-        var anim = artGo.AddComponent<AppBossAnimator>();
-        PlayerTestSceneBuilder.SetProps(anim, so =>
-        {
-            so.FindProperty("_boss").objectReferenceValue = controller;
-            so.FindProperty("_renderer").objectReferenceValue = sr;
-            SetSprites(so, "_idle", idle);
-            F(so, "_idleFps", 8f);
-            SetSprites(so, "_attack", Frames($"AppBoss/{app}/AppBoss_{app}_Attack.png"));
-            F(so, "_attackFps", 10f);
-            SetSprites(so, "_hit", Frames($"AppBoss/{app}/AppBoss_{app}_Hit.png"));
-            F(so, "_hitFps", 12f);
-            SetSprites(so, "_purify", Frames($"AppBoss/{app}/AppBoss_{app}_Purify.png"));
-            F(so, "_purifyFps", 10f);
-            R(so, "_normalIcon", First($"AppBoss/{app}/AppIcon_{app}_Normal.png"));
-        });
-        return controller;
-    }
+    public static BossController CreateAppBoss(string app, BossProfile profile, Vector2 position, Sprite square, Transform player) =>
+        BossTestSceneBuilder.CreateBoss(app, profile, position, BossBodySize, Color.white, square, player);
 
     /// <summary>ボスのプレハブを作る（あれば同じパスに上書き。GUID は変わらない）</summary>
     static BossController BuildBossPrefab(string app, BossProfile profile, Sprite square)
@@ -749,7 +692,9 @@ public static class OfficeUnitySteamBuilder
                     e.FindPropertyRelative("Theme").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AppTheme>($"Assets/ScriptableObjects/Themes/{row.Theme}.asset");
                 }
             }
-            e.FindPropertyRelative("ExcludeFromStandIn").boolValue = true; // 代用ボスのひな形にしない（ボス B の部品が無い）
+            e.FindPropertyRelative("ExcludeFromStandIn").boolValue = true; // 代用ボスのひな形にしない（このアプリ専用の技）
+            e.FindPropertyRelative("IconLook").boolValue = true; // 見た目は本物のアイコンから作る（2026-11-19）
+            e.FindPropertyRelative("SpawnPosition").vector2Value = BossSpawn; // 体の大きさを変えたので、出てくる高さも合わせる
             e.FindPropertyRelative("BossPrefab").objectReferenceValue = bosses[row.Boss].prefab;
             e.FindPropertyRelative("Profile").objectReferenceValue = bosses[row.Boss].profile;
         }

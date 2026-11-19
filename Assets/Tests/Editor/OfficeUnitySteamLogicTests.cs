@@ -297,4 +297,21 @@ public class OfficeUnitySteamLogicTests
         Assert.AreEqual(0, StatModifiers.Scale(0, 1.3f), "ゲージが増えない攻撃は 0 のまま");
         Assert.AreEqual(5, StatModifiers.Scale(5, 1f));
     }
+
+    [Test]
+    public void IconLook_OnlyForFlaggedRows_AndThemeFallsBackToIcon()
+    {
+        var plain = new AppEntry { DisplayName = "Chrome", IconLook = false };
+        Assert.IsNull(RunPlanner.IconLookOf(plain, null), "フラグが無い行は、アイコンから見た目を作らない");
+
+        var visual = new AppVisual { Theme = ScriptableObject.CreateInstance<AppTheme>() };
+        var office = new AppEntry { DisplayName = "Excel", IconLook = true };
+        var plan = new StagePlan { App = office, Visual = visual };
+        Assert.IsFalse(plan.IsStandIn, "アイコンから見た目を作る行は、代用ボスではない");
+        Assert.AreSame(visual.Theme, plan.Theme, "表の色が空なら、アイコンの色");
+
+        office.Theme = ScriptableObject.CreateInstance<AppTheme>();
+        Assert.AreSame(office.Theme, plan.Theme, "表の色があれば、それを使う");
+        Assert.IsTrue(new StagePlan { App = new AppEntry { DisplayName = "Foo" }, Visual = visual }.IsStandIn);
+    }
 }
