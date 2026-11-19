@@ -314,6 +314,7 @@ public class RunTitleMenu : MonoBehaviour
             if (topApps.Count > 0)
             {
                 _detectedApps = usages;
+                Session.RememberUsages(usages,false);
                 _topApps = topApps;
                 _targets = usages.Where(app => !IsExcluded(Session, app)).OrderByDescending(app => app.UsageSeconds).Take(10)
                     .Select(app => new AppUsageRow { Name = app.DisplayName, BundleId = app.Id, Seconds = app.UsageSeconds }).ToList();
