@@ -172,6 +172,8 @@ public class AttackData : ScriptableObject
     [SerializeField] GameObject _summonPrefab;
     [Tooltip("この技で出した雑魚が、同時にいられる数（Minion のとき。0なら制限なし）。いっぱいなら出さない")]
     [SerializeField, Min(0)] int _summonMaxAlive;
+    [Tooltip("オン：出す前に、マウスカーソルが伸びてきて選択ツールで四角く選び、その中に出す（Minion のとき。Photoshop のボス）")]
+    [SerializeField] bool _summonMarquee;
 
     // ───────── 直線のレーザー（Beam） ─────────
     [Header("直線のレーザー（Beam のとき。AI チャットのボス）")]
@@ -200,6 +202,44 @@ public class AttackData : ScriptableObject
     [SerializeField] Vector2 _chatAnchor = new Vector2(2.1f, 1.1f);
     [Tooltip("メッセージが当たったときのエフェクト（コマ）")]
     [SerializeField] Sprite[] _chatHitFrames;
+
+    // ───────── 筆（Brush） ─────────
+    [Header("筆（Brush のとき。Photoshop）")]
+    [Tooltip("筆の長さ（マス）。判定も同じ長さ。絵は「見た目」の絵（右向き。原点は持ち手の端）")]
+    [SerializeField, Min(0.2f)] float _brushLength = 2.4f;
+    [Tooltip("筆の太さ（判定の太さ、マス）")]
+    [SerializeField, Min(0.05f)] float _brushWidth = 0.45f;
+    [Tooltip("振るのにかける秒数")]
+    [SerializeField, Min(0.02f)] float _brushSwingTime = 0.2f;
+    [Tooltip("振り始めと振り終わりの角度（度。右向きのとき、0＝前、マイナス＝下、プラス＝上）")]
+    [SerializeField] Vector2 _brushAngles = new Vector2(-75f, 80f);
+    [Tooltip("筆を持つ位置（持ち主の足元から。x は向きの前を正）")]
+    [SerializeField] Vector2 _brushPivot = new Vector2(0.25f, 0.55f);
+    [Tooltip("飛び出すインクの攻撃データ（ダメージ・ゲージ・大きさ「形の大きさ」・残る秒数「持続時間」・当たり直す間隔「ヒット間隔」・絵）。空ならインクは出ない")]
+    [SerializeField] AttackData _brushInk;
+    [Tooltip("1回振るあいだに飛び出すインクの数")]
+    [SerializeField, Min(0)] int _brushInkCount = 3;
+    [Tooltip("インクが飛ぶ距離（マス）。飛んだ先にとどまる")]
+    [SerializeField, Min(0f)] float _brushInkFling = 0.8f;
+    [Tooltip("インクが飛ぶいちばん短い距離（マス）。上の距離との間でばらける（同じなら、いつも同じ距離）")]
+    [SerializeField, Min(0f)] float _brushInkFlingMin = 0.8f;
+    [Tooltip("オン：インクを前の方へ広くまき散らす（Photoshop のボス）。オフ：振る向きへ飛ばす")]
+    [SerializeField] bool _brushInkScatter;
+    [Tooltip("筆そのものにも判定があるか（Photoshop のボスはオフ。インクだけで攻撃する）")]
+    [SerializeField] bool _brushHits = true;
+    [Tooltip("オン：振る前に、部屋の端（狙う相手と反対側）へ寄る（寄っている間と振っている間は、体当たり・被弾なし）")]
+    [SerializeField] bool _brushMoveToEdge;
+    [Tooltip("部屋の端へ寄るのにかける秒数")]
+    [SerializeField, Min(0f)] float _brushMoveTime = 0.8f;
+
+    // ───────── 画面のフィルター（Filter） ─────────
+    [Header("画面のフィルター（Filter のとき。Photoshop のボスの大技）")]
+    [Tooltip("状態異常が続く秒数（そのあと画面の色も元に戻る）")]
+    [SerializeField, Min(1f)] float _filterDuration = 30f;
+    [Tooltip("一度にかける状態異常の数（速い・遅い・クールタイムが長い・ジャンプが高い から、ランダムに。速いと遅いは同時にかけない）")]
+    [SerializeField, Range(1, 3)] int _filterEffectCount = 2;
+    [Tooltip("画面の色（ランダムに1つ。半透明で重ねる）")]
+    [SerializeField] Color[] _filterTints;
 
     // ───────── 通知のアラーム（Alarm） ─────────
     [Header("通知のアラーム（Alarm のとき。チャットのボスの大技）")]
@@ -302,6 +342,23 @@ public class AttackData : ScriptableObject
     public Vector2 ChatAnchor => _chatAnchor;
     public Sprite[] ChatHitFrames => _chatHitFrames ?? System.Array.Empty<Sprite>();
     public bool FixedColors => _fixedColors;
+    public float BrushLength => _brushLength;
+    public float BrushWidth => _brushWidth;
+    public float BrushSwingTime => _brushSwingTime;
+    public Vector2 BrushAngles => _brushAngles;
+    public Vector2 BrushPivot => _brushPivot;
+    public AttackData BrushInk => _brushInk;
+    public int BrushInkCount => _brushInkCount;
+    public float BrushInkFling => _brushInkFling;
+    public float BrushInkFlingMin => _brushInkFlingMin;
+    public bool BrushInkScatter => _brushInkScatter;
+    public bool BrushHits => _brushHits;
+    public bool BrushMoveToEdge => _brushMoveToEdge;
+    public float BrushMoveTime => _brushMoveTime;
+    public bool SummonMarquee => _summonMarquee;
+    public float FilterDuration => _filterDuration;
+    public int FilterEffectCount => _filterEffectCount;
+    public Color[] FilterTints => _filterTints ?? System.Array.Empty<Color>();
     public GameObject SummonPrefab => _summonPrefab;
     public int SummonMaxAlive => _summonMaxAlive;
     public int AlarmRings => _alarmRings;
@@ -354,6 +411,8 @@ public class AttackData : ScriptableObject
             // チャットのメッセージ（2つ目以降の絵・当たったときのエフェクト。チャットのボス）
             if (_chatBodySprite != null) copy._chatBodySprite = recolor(_chatBodySprite);
             copy._chatHitFrames = RecolorAll(_chatHitFrames, recolor);
+            // 筆から飛ぶインク（Photoshop のボス）
+            if (_brushInk != null) copy._brushInk = _brushInk.CreateRecoloredCopy(recolor);
         }
         return copy;
     }

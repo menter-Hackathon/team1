@@ -82,6 +82,7 @@ public static class RunScenesBuilder
         FinalBossBuilder.BuildFinalBoss(); // ラスボス Terminal（無ければ作る。2026-11-18）
         AiChatBossBuilder.BuildForRun();   // AI チャットのボス（プレハブ・ステージ・対応アプリ表の行。2026-11-19）
         ChatBossBuilder.BuildForRun();     // チャットのボス（プレハブ・チャットbot・対応アプリ表の行。2026-11-19）
+        PhotoshopBossBuilder.BuildForRun(); // Photoshop のボス（プレハブ・インクの生命体・対応アプリ表の行。2026-11-19）
 
         AssetDatabase.SaveAssets();
         Debug.Log($"ランのシーンを作成しました: {titlePath}, {loadoutPath}, {stagePath}, {scrollPath}, {windowsPath}, {resultPath}");

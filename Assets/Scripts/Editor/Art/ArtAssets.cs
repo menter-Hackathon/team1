@@ -110,6 +110,15 @@ public static class ArtAssets
         R("Generated/Enemies/Zako_Chatbot.png", frame: 16, pivot: Feet, readable: true),
         R("Generated/Attacks/Fx_Bell.png", frame: 24),
         R("Generated/Attacks/Fx_NotifBadge.png", frame: 11),
+        // Photoshop の能力（2026-11-19）：筆（原点は持ち手の端）とインク
+        R("Generated/Attacks/Brush_Photoshop.png", pivot: new Vector2(0f, 0.5f), readable: true), // ボスの大きな筆で、アプリの色に塗り替える
+        // Photoshop のボス（2026-11-19）
+        R("Generated/Attacks/Fx_BossInk.png", readable: true),
+        R("Generated/Attacks/Fx_InkDanger.png"),
+        R("Generated/Enemies/Zako_InkBlob.png", frame: 30, pivot: Feet),
+        R("Generated/Attacks/Fx_MouseCursor.png", pivot: new Vector2(0f, 1f)),
+        R("Generated/Attacks/Fx_Marquee.png", frame: 8),
+        R("Generated/Attacks/Fx_PhotoshopInk.png"),
         R("Generated/Bosses/Boss_AiDefaultIcon.png"),
         R("Generated/Attacks/Fx_Shadow.png"),
         R("Generated/Attacks/Fx_Alert.png"),
@@ -163,6 +172,11 @@ public static class ArtAssets
         R("Generated/UI/Icon_ChatLine.png"),
         R("Generated/UI/Icon_ChatSlack.png"),
         R("Generated/UI/Icon_ChatDiscord.png"),
+        R("Generated/UI/Icon_Photoshop.png"),
+        R("Generated/UI/Status_Fast.png"),
+        R("Generated/UI/Status_Slow.png"),
+        R("Generated/UI/Status_Cooldown.png"),
+        R("Generated/UI/Status_Jump.png"),
     };
 
     [MenuItem("Tools/Team1/グラフィックを適用")]
@@ -368,6 +382,15 @@ public static class ArtAssets
             Set(so, "_buttonHover", LoadSprite("Generated/UI/Ui_ButtonHover.png"));
             SetArray(so, "_playerWalk", LoadFrames("Provided/Player_Walk.png"));
             SetArray(so, "_zakoWalk", LoadFrames("Generated/Enemies/Zako_Walker.png"));
+            // Photoshop のボス（2026-11-19）：インクの攻撃範囲・選択ツールのカーソルと点線・状態異常の印
+            Set(so, "_inkDanger", LoadSprite("Generated/Attacks/Fx_InkDanger.png"));
+            Set(so, "_mouseCursor", LoadSprite("Generated/Attacks/Fx_MouseCursor.png"));
+            SetArray(so, "_marqueeDash", LoadFrames("Generated/Attacks/Fx_Marquee.png"));
+            SetArray(so, "_statusIcons", new[]
+            {
+                LoadSprite("Generated/UI/Status_Fast.png"), LoadSprite("Generated/UI/Status_Slow.png"),
+                LoadSprite("Generated/UI/Status_Cooldown.png"), LoadSprite("Generated/UI/Status_Jump.png"),
+            });
             Set(so, "_fontJa", AssetDatabase.LoadAssetAtPath<Font>(FontJaPath));
             Set(so, "_fontEn", AssetDatabase.LoadAssetAtPath<Font>(FontEnPath));
         });
@@ -467,6 +490,11 @@ public static class ArtAssets
             SetFrames($"{AttackFolder}/{a}.asset", "_telegraphFrames", "Generated/Attacks/Fx_AiSpark.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_AIChat.asset", "Generated/Bosses/Boss_AiDefaultIcon.png");
         ApplyChatApps();
+        // Photoshop の能力（2026-11-19）：筆とインクの絵（絵の色のまま）・アプリの色・アイコン
+        SetSpriteWhite($"{AttackFolder}/Player/App/Attack_App_Photoshop.asset", "Generated/Attacks/Brush_Photoshop.png");
+        SetSpriteWhite($"{AttackFolder}/Player/App/Attack_App_Photoshop_Ink.asset", "Generated/Attacks/Fx_PhotoshopInk.png");
+        SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_App_Photoshop.asset", "_theme", GetOrCreateTheme("Theme_Photoshop", PhotoshopTheme));
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_App_Photoshop.asset", "Generated/UI/Icon_Photoshop.png");
         SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "_theme", GetOrCreateTheme("Theme_AI", AiTheme));
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "Generated/UI/Icon_AiAssistant.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_Chrome.asset", "Generated/Bosses/Icon_Browser.png");
@@ -544,6 +572,33 @@ public static class ArtAssets
         Col(so, "_folder", "5865f2"); Col(so, "_folderShade", "3a43a8"); Col(so, "_folderTab", "a5adff");
         Col(so, "_main", "5865f2");
         Colors(so, "_accents", "5865f2", "a5adff");
+    }
+
+    /// <summary>攻撃データの絵を入れ、色を白（絵の色のまま）にする。同じなら書き換えない</summary>
+    static void SetSpriteWhite(string assetPath, string sprite)
+    {
+        var data = AssetDatabase.LoadAssetAtPath<AttackData>(assetPath);
+        if (data == null) return;
+        Sprite s = LoadSprite(sprite);
+        if (data.Sprite == s && data.Color == Color.white) return;
+        PlayerTestSceneBuilder.SetProps(data, so =>
+        {
+            so.FindProperty("_sprite").objectReferenceValue = s;
+            so.FindProperty("_color").colorValue = Color.white;
+        });
+        EditorUtility.SetDirty(data);
+    }
+
+    // Photoshop：アイコンの紺と青（2026-11-19。【仮】）
+    static void PhotoshopTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "001e36"); Col(so, "_cloud", "0d3556");
+        Colors(so, "_hills", "000f1c", "001e36", "0d4a7a", "31a8ff", "8fd3ff");
+        Col(so, "_floor", "35394a"); Col(so, "_floorTop", "31a8ff");
+        Col(so, "_wall", "0a1622"); Col(so, "_wallHighlight", "1a2c40");
+        Col(so, "_folder", "31a8ff"); Col(so, "_folderShade", "1473c2"); Col(so, "_folderTab", "8fd3ff");
+        Col(so, "_main", "31a8ff");
+        Colors(so, "_accents", "31a8ff", "001e36");
     }
 
     /// <summary>召喚する味方の絵（コマ）を、攻撃データに入れる。同じなら書き換えない</summary>

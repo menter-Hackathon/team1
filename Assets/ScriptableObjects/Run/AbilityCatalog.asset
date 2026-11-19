@@ -189,6 +189,13 @@ MonoBehaviour:
     - Discord
     BundleIdPrefixes:
     - com.hnc.Discord
+  - Label: Photoshop
+    Skill: {fileID: 11400000, guid: 5fef6b5a6be9d49f88185fc058f6e957, type: 2}
+    AppNames:
+    - Photoshop
+    - Adobe Photoshop
+    BundleIdPrefixes:
+    - com.adobe.Photoshop
   _templates:
   - Name: "\u30D4\u30E9\u30FC"
     Attack: {fileID: 11400000, guid: 9eb594a4112d143cf9c37b3bdd2c56d7, type: 2}

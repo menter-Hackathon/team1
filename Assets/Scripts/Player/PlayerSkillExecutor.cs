@@ -17,6 +17,10 @@ public class PlayerSkillExecutor : MonoBehaviour
     PlayerSkills _skills;
     AttackRunner _runner;
     readonly Dictionary<SkillDefinition, float> _readyAt = new Dictionary<SkillDefinition, float>();
+    readonly Dictionary<SkillDefinition, float> _cooldownTotal = new Dictionary<SkillDefinition, float>(); // 今のクールタイムの長さ（ゲージの割合用）
+
+    /// <summary>クールタイムの倍率（状態異常「クールタイムが長い」。ふだんは1。使った瞬間の倍率で決まる。2026-11-19）</summary>
+    public float CooldownMultiplier { get; set; } = 1f;
     // 終わってからクールタイムを数える能力（攻撃データ → 能力）。攻撃が終わったら、そこからクールタイムを数え直す
     readonly Dictionary<AttackData, SkillDefinition> _waitingFinish = new Dictionary<AttackData, SkillDefinition>();
 
@@ -47,7 +51,9 @@ public class PlayerSkillExecutor : MonoBehaviour
     {
         if (attack == null || !_waitingFinish.TryGetValue(attack, out SkillDefinition skill)) return;
         _waitingFinish.Remove(attack);
-        _readyAt[skill] = Time.time + attack.Cooldown;
+        float cd = attack.Cooldown * CooldownMultiplier;
+        _readyAt[skill] = Time.time + cd;
+        _cooldownTotal[skill] = cd;
     }
 
     void OnSkillUseRequested(int index, SkillDefinition skill) => TryUse(index, skill);
@@ -93,7 +99,9 @@ public class PlayerSkillExecutor : MonoBehaviour
         }
         else
         {
-            _readyAt[skill] = Time.time + attack.Cooldown;
+            float cd = attack.Cooldown * CooldownMultiplier;
+            _readyAt[skill] = Time.time + cd;
+            _cooldownTotal[skill] = cd;
         }
         SkillUsed?.Invoke(index, skill);
         return true;
@@ -112,6 +120,7 @@ public class PlayerSkillExecutor : MonoBehaviour
     public float GetCooldownRatio(SkillDefinition skill)
     {
         if (skill == null || skill.Attack == null || skill.Attack.Cooldown <= 0f) return 0f;
-        return Mathf.Clamp01(GetCooldownRemaining(skill) / skill.Attack.Cooldown);
+        float total = _cooldownTotal.TryGetValue(skill, out float t) && t > 0f ? t : skill.Attack.Cooldown;
+        return Mathf.Clamp01(GetCooldownRemaining(skill) / total);
     }
 }

@@ -34,6 +34,16 @@ public enum AttackKind
     /// 部屋全体に攻撃が来る（NotificationAlarm）。出している間、持ち主は動かない
     /// </summary>
     Alarm = 8,
+    /// <summary>
+    /// 筆（2026-11-19。Photoshop の能力）。持ち主の前で、筆を下から上へ振る（筆にも判定）。振る途中でインクが飛び出し、
+    /// その場にしばらく残って当たり続ける（BrushSwing・InkBlot）
+    /// </summary>
+    Brush = 9,
+    /// <summary>
+    /// 画面のフィルター（2026-11-19。Photoshop のボスの大技）。画面の色を変え、狙う相手（プレイヤー）にランダムに状態異常をかける。
+    /// しばらくすると元に戻る（ScreenFilter・PlayerStatusEffects）
+    /// </summary>
+    Filter = 10,
 }
 
 /// <summary>レーザーの見せ方（Beam のとき）</summary>

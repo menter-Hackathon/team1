@@ -76,6 +76,10 @@ public class PlayerController : MonoBehaviour
     public int FacingDirection { get; private set; } = 1;
     /// <summary>false の間は入力を受け付けない（被弾のけぞり・ステージ遷移中など）</summary>
     public bool CanControl { get; set; } = true;
+    /// <summary>移動（歩き・ダッシュ）の速さの倍率（状態異常。ふだんは1。2026-11-19）</summary>
+    public float SpeedMultiplier { get; set; } = 1f;
+    /// <summary>ジャンプの高さの倍率（状態異常。ふだんは1。2026-11-19）</summary>
+    public float JumpMultiplier { get; set; } = 1f;
     /// <summary>被弾でのけぞっている間 true（入力を受け付けない）</summary>
     public bool IsStunned => Time.time < _stunUntil;
     /// <summary>今プレイヤーが操作できるか（CanControl かつ のけぞり中でない）</summary>
@@ -162,13 +166,13 @@ public class PlayerController : MonoBehaviour
 
         // --- 横移動 ---
         float inputX = controllable ? _input.Move.x : 0f;
-        float targetX = inputX * _moveSpeed;
+        float targetX = inputX * _moveSpeed * SpeedMultiplier;
         bool hasInput = Mathf.Abs(targetX) > 0.01f;
         float accel;
         if (stunned) accel = _knockbackDeceleration; // のけぞり中は弱い減速で吹き飛ばす
         else if (grounded) accel = hasInput ? _groundAcceleration : _groundDeceleration;
         else accel = hasInput ? _airAcceleration : _airDeceleration;
-        if (dashing) _velocity.x = _dashDirection * _dashSpeed;
+        if (dashing) _velocity.x = _dashDirection * _dashSpeed * SpeedMultiplier;
         else _velocity.x = Mathf.MoveTowards(_velocity.x, targetX, accel * dt);
 
         // --- ジャンプ（先行入力 × コヨーテタイム） ---
@@ -176,7 +180,7 @@ public class PlayerController : MonoBehaviour
         bool canJump = now - _lastGroundedTime <= _coyoteTime;
         if (controllable && jumpBuffered && canJump)
         {
-            _velocity.y = JumpVelocity;
+            _velocity.y = JumpVelocity * Mathf.Sqrt(Mathf.Max(0.1f, JumpMultiplier)); // 重力はそのままで、高さが倍率の分だけ変わる
             _isJumpRising = true;
             if (dashing) EndDash(); // ジャンプでダッシュは終わる
             dashing = false;
@@ -248,7 +252,7 @@ public class PlayerController : MonoBehaviour
         _dashUntil = now + _dashDuration;
         _nextDashTime = now + _dashCooldown;
         _isJumpRising = false;
-        _velocity = new Vector2(_dashDirection * _dashSpeed, 0f);
+        _velocity = new Vector2(_dashDirection * _dashSpeed * SpeedMultiplier, 0f);
         Dashed?.Invoke();
     }
 
@@ -256,7 +260,7 @@ public class PlayerController : MonoBehaviour
     void EndDash()
     {
         _dashUntil = float.NegativeInfinity;
-        _velocity.x = _dashDirection * _moveSpeed;
+        _velocity.x = _dashDirection * _moveSpeed * SpeedMultiplier;
     }
 
     /// <summary>速度を直接上書きする（スキルの移動など）</summary>

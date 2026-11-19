@@ -292,8 +292,78 @@ public static class AbilitiesBuilder
         });
         EnsureAppSkills();
         EnsureChatSkills();
+        EnsurePhotoshopSkill();
         AssetDatabase.SaveAssets();
         return skills;
+    }
+
+    // ───────── Photoshop の能力（2026-11-19：筆とインク。数値は【仮】） ─────────
+
+    [MenuItem("Tools/Team1/Photoshopの能力を用意")]
+    public static void EnsurePhotoshopSkillFromMenu()
+    {
+        EnsurePhotoshopSkill();
+        ArtAssets.Apply(); // 筆とインクの絵・アプリの色・アイコンを入れる
+        AssetDatabase.SaveAssets();
+        Debug.Log("Photoshop の能力を用意しました（能力えらびの表の「アプリ専用の能力」に足しました）");
+    }
+
+    /// <summary>
+    /// Photoshop の能力（取り回しのよい近距離の武器）：
+    /// ・筆 Attack_App_Photoshop（種類 Brush）：長さ3.2マス（近接の約3倍のリーチ）を、0.2秒で下（-75°）から上（80°）へ振る。
+    ///   筆にもダメージ2・ゲージ +6。振る途中で、インクが3つ飛び出す。クールタイム2.5秒
+    /// ・インク Attack_App_Photoshop_Ink：直径1.4マス。1.8秒その場に残り、敵に当たるとダメージ1・ゲージ +2 で消える
+    /// ・能力 Skill_App_Photoshop と、能力えらびの表の「アプリ専用の能力」の行（無いときだけ足す）。絵と色は ArtAssets が入れる
+    /// </summary>
+    public static SkillDefinition EnsurePhotoshopSkill()
+    {
+        AttackData ink = BossTestSceneBuilder.GetOrCreateAttack("Player/App/Attack_App_Photoshop_Ink", so =>
+        {
+            Kind(so, AttackKind.Area); // 中身は「残り続ける判定」と同じ項目を使う（大きさ・持続時間・ヒット間隔）
+            I(so, "_damage", 1);
+            I(so, "_gaugeGain", 2);
+            V(so, "_knockback", new Vector2(1f, 1f));
+            F(so, "_hitStun", 0.1f);
+            V(so, "_areaSize", new Vector2(1.4f, 1.4f)); // 2026-11-19：1 から大きくした
+            B(so, "_destroyOnHit", true);                // 敵に当たったら消える
+            F(so, "_telegraphTime", 0f);                 // 予告なし（出た瞬間から当たる。予告があるとボスのインクのように点滅してから攻撃する）
+            F(so, "_persistDuration", 1.8f);
+            F(so, "_tickInterval", 0.5f);
+        });
+        AttackData brush = BossTestSceneBuilder.GetOrCreateAttack("Player/App/Attack_App_Photoshop", so =>
+        {
+            Kind(so, AttackKind.Brush);
+            F(so, "_windup", 0f);
+            F(so, "_cooldown", 2.5f);
+            I(so, "_damage", 2);
+            I(so, "_gaugeGain", 6);
+            V(so, "_knockback", new Vector2(4f, 4f));
+            F(so, "_hitStun", 0.2f);
+            F(so, "_brushLength", 58f / GameArt.PixelsPerUnit); // 絵の長さ（58ドット）と同じ
+            F(so, "_brushWidth", 0.5f);
+            F(so, "_brushSwingTime", 0.2f);
+            V(so, "_brushAngles", new Vector2(-75f, 80f));
+            V(so, "_brushPivot", new Vector2(0.25f, 0.55f));
+            R(so, "_brushInk", ink);
+            I(so, "_brushInkCount", 3);
+            F(so, "_brushInkFling", 0.8f);
+        });
+        SkillDefinition skill = BossTestSceneBuilder.GetOrCreateSkill("Skill_App_Photoshop", "Photoshop", SkillCategory.Creative, brush);
+
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
+        if (catalog == null) return skill;
+        PlayerTestSceneBuilder.SetProps(catalog, so =>
+        {
+            var arr = so.FindProperty("_appSkills");
+            for (int i = 0; i < arr.arraySize; i++)
+            {
+                if (arr.GetArrayElementAtIndex(i).FindPropertyRelative("Label").stringValue == "Photoshop") return;
+            }
+            arr.arraySize++;
+            AppSkill(arr.GetArrayElementAtIndex(arr.arraySize - 1), "Photoshop", skill, new[] { "Photoshop", "Adobe Photoshop" }, new[] { "com.adobe.Photoshop" });
+        });
+        EditorUtility.SetDirty(catalog);
+        return skill;
     }
 
     // ───────── チャットアプリの能力（2026-11-19：Slack・Discord・LINE。数値は【仮】） ─────────

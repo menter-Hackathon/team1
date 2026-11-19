@@ -206,6 +206,12 @@ public class AttackRunner : MonoBehaviour
             case AttackKind.Alarm:
                 yield return AlarmRoutine(data);
                 break;
+            case AttackKind.Brush:
+                yield return BrushRoutine(data);
+                break;
+            case AttackKind.Filter:
+                yield return FilterRoutine(data);
+                break;
             default:
                 Debug.LogWarning($"{name}: 攻撃の種類 {data.Kind} はまだ実行できません（{data.name}）", this);
                 break;
@@ -605,6 +611,16 @@ public class AttackRunner : MonoBehaviour
             int n = data.SummonCount;
             for (int i = 0; i < n; i++)
             {
+                if (data.SummonMarquee)
+                {
+                    // 選択ツール：カーソルが伸びてきて、狙う相手の近くの床を四角く選び、その中に出す（Photoshop のボス）
+                    if (data.SummonMaxAlive > 0 && data.SummonPrefab != null && AliveMinions(data.SummonPrefab.name) >= data.SummonMaxAlive) break;
+                    MarqueeSelect m = MarqueeSelect.Spawn(this, OriginPoint, PickMarqueeRect());
+                    while (m != null && !m.IsDone) yield return null;
+                    if (m != null) SpawnMinion(data, m.SpawnPoint);
+                    Released?.Invoke(data);
+                    continue;
+                }
                 float spread = n > 1 ? (i / (float)(n - 1) - 0.5f) * Mathf.Min(4f, 1.2f * (n - 1)) : 0f;
                 SpawnMinion(data, OriginPoint + new Vector2(spread, -0.4f));
                 Released?.Invoke(data);
@@ -652,6 +668,57 @@ public class AttackRunner : MonoBehaviour
         while (volley != null && volley.IsOpen) yield return null;
     }
 
+    // ───────── 筆（Photoshop） ─────────
+
+    /// <summary>筆を振り終わるまで待つ（飛び出したインクは、そのあとも残る）</summary>
+    IEnumerator BrushRoutine(AttackData data)
+    {
+        // 振る前に、部屋の端（狙う相手と反対側）へ寄る（Photoshop のボス。寄っている間と振っている間は、体当たり・被弾なし）
+        var warpable = GetComponent<IWarpable>();
+        bool moved = data.BrushMoveToEdge;
+        if (moved)
+        {
+            if (warpable != null) warpable.SetContactEnabled(false);
+            yield return MoveToFarEdge(data, warpable);
+        }
+        BrushSwing swing = BrushSwing.Spawn(this, data);
+        Released?.Invoke(data);
+        while (swing != null && !swing.IsDone) yield return null;
+        if (moved && warpable != null) warpable.SetContactEnabled(true);
+    }
+
+    /// <summary>部屋の端のうち、狙う相手から遠い方へ飛んでいく（高さは部屋の真ん中より少し上）。着いたら相手の方を向く</summary>
+    IEnumerator MoveToFarEdge(AttackData data, IWarpable warpable)
+    {
+        Rect arena = BattleArena.GetBounds();
+        float halfW = warpable != null ? warpable.BodyBounds.extents.x : 1f;
+        Vector2 target = TargetPoint ?? arena.center;
+        bool goLeft = target.x >= arena.center.x;
+        var to = new Vector2(goLeft ? arena.xMin + halfW + 0.3f : arena.xMax - halfW - 0.3f, arena.yMin + arena.height * 0.55f);
+        Vector2 from = transform.position;
+        float start = Time.time;
+        while (Time.time - start < data.BrushMoveTime)
+        {
+            Vector2 p = Vector2.Lerp(from, to, Mathf.SmoothStep(0f, 1f, (Time.time - start) / data.BrushMoveTime));
+            if (warpable != null) warpable.Teleport(p);
+            else transform.position = p;
+            yield return null;
+        }
+        if (warpable != null) warpable.Teleport(to);
+        else transform.position = to;
+        Facing = goLeft ? 1 : -1;
+    }
+
+    // ───────── 画面のフィルター（Photoshop のボスの大技） ─────────
+
+    /// <summary>フィルターをかけ終わるまで待つ（状態異常と画面の色は、そのあとも決まった秒数続く）</summary>
+    IEnumerator FilterRoutine(AttackData data)
+    {
+        ScreenFilter filter = ScreenFilter.Spawn(this, data);
+        Released?.Invoke(data);
+        while (filter != null && !filter.IsCastDone) yield return null;
+    }
+
     // ───────── 通知のアラーム（チャットのボスの大技） ─────────
 
     /// <summary>通知を置いてベルを鳴らし、回収されるか攻撃が終わるまで待つ（その間、持ち主は動かない）</summary>
@@ -684,6 +751,20 @@ public class AttackRunner : MonoBehaviour
             if (anim != null) anim.Setup(anim.GetComponent<SpriteRenderer>(), frames, 7f, loop: true, destroyWhenDone: false);
         }
         Vfx.SmokeSmall(position + Vector2.up * 0.4f);
+    }
+
+    /// <summary>選択ツールで選ぶ四角：狙う相手から横に2〜4マス離れた床・足場の上（横2.2×高さ2.6）</summary>
+    Rect PickMarqueeRect()
+    {
+        Rect arena = BattleArena.GetBounds();
+        Vector2 target = TargetPoint ?? arena.center;
+        const float w = 2.2f, h = 2.6f;
+        float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
+        float x = target.x + side * UnityEngine.Random.Range(2f, 4f);
+        if (x < arena.xMin + w * 0.5f + 0.3f || x > arena.xMax - w * 0.5f - 0.3f) x = target.x - side * UnityEngine.Random.Range(2f, 4f);
+        x = Mathf.Clamp(x, arena.xMin + w * 0.5f + 0.3f, arena.xMax - w * 0.5f - 0.3f);
+        TryFindGround(x, target.y + 1f, out float groundY);
+        return new Rect(x - w * 0.5f, groundY, w, h);
     }
 
     /// <summary>この人が出した、その名前の雑魚のうち、まだ倒れていない数</summary>

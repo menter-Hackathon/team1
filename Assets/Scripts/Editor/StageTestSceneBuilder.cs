@@ -139,7 +139,7 @@ public static class StageTestSceneBuilder
     /// 見た目はウイルスの煙の絵（コマ送り）。判定は体の大きさの四角（絵は外してある）。debugLabel なら HP の仮表示を出す
     /// </summary>
     static GameObject CreateZakoBase(string name, Vector2 feet, Vector2 size, Color color, Transform parent, Sprite square,
-        Sprite[] frames, bool debugLabel, out Transform bodyTransform, out SpriteRenderer art)
+        Sprite[] frames, bool debugLabel, out Transform bodyTransform, out SpriteRenderer art, int hp = 1)
     {
         int playerLayer = LayerMask.NameToLayer("Player");
         int enemyLayer = LayerMask.NameToLayer("Enemy");
@@ -153,7 +153,7 @@ public static class StageTestSceneBuilder
         PlayerTestSceneBuilder.SetProps(health, so =>
         {
             so.FindProperty("_team").enumValueIndex = (int)Team.Enemy;
-            so.FindProperty("_max").intValue = 1;
+            so.FindProperty("_max").intValue = Mathf.Max(1, hp);
             so.FindProperty("_oneDamagePerHit").boolValue = false;
             so.FindProperty("_invincibleTimeAfterHit").floatValue = 0f;
         });
@@ -228,21 +228,25 @@ public static class StageTestSceneBuilder
         return spawner;
     }
 
-    internal static void CreateWalker(string name, Vector2 feet, int direction, Transform parent, Sprite square, bool debugLabel = false)
+    /// <summary>
+    /// 歩く雑魚を作る。size・hp・frames を渡すと、大きさ・HP・絵を変えられる（2026-11-19：Photoshop のボスのインクの生命体。渡さなければ今までどおり）
+    /// </summary>
+    internal static void CreateWalker(string name, Vector2 feet, int direction, Transform parent, Sprite square, bool debugLabel = false,
+        Vector2? size = null, int hp = 1, string frames = "Generated/Enemies/Zako_Walker.png")
     {
         int ground = LayerMask.NameToLayer("Ground");
         int oneWay = LayerMask.NameToLayer("OneWayPlatform");
-        var size = new Vector2(0.8f, 0.8f);
-        var go = CreateZakoBase(name, feet, size, WalkerColor, parent, square,
-            ArtAssets.LoadFrames("Generated/Enemies/Zako_Walker.png"), debugLabel, out _, out _);
+        Vector2 bodySize = size ?? new Vector2(0.8f, 0.8f);
+        var go = CreateZakoBase(name, feet, bodySize, WalkerColor, parent, square,
+            ArtAssets.LoadFrames(frames), debugLabel, out _, out _, hp);
 
         var rb = go.AddComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.useFullKinematicContacts = true;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         var box = go.AddComponent<BoxCollider2D>();
-        box.size = size;
-        box.offset = new Vector2(0f, size.y * 0.5f);
+        box.size = bodySize;
+        box.offset = new Vector2(0f, bodySize.y * 0.5f);
         var body = go.AddComponent<KinematicBody2D>();
         PlayerTestSceneBuilder.SetProps(body, so =>
         {

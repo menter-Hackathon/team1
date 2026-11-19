@@ -7,6 +7,7 @@ using UnityEngine;
 ///   枠の右下には、その能力の元になったアプリのアイコンを小さく重ねる（RunState.SourceIcon。2026-11-18）
 ///   選択中の枠は白い縁、ほかの枠の縁はその能力のアプリの色。クールタイム中は、残りの割合だけ上から暗くする
 ///   入れ替え待ちのときは、新しい能力を枠の右に出して点滅させる。X 長押しの進み具合は、選んでいる枠の下に赤い棒で出す
+///   状態異常（2026-11-19：Photoshop のボスのフィルター）：枠の下に印と残り時間の棒。クールタイムが長い間は、枠の縁が紫で、右上に時計の印
 /// ・右上：「STAGE 1/3  02:31」（何ステージ目か・遊んだ時間）。その下に、ボスが出るまでのゲージ（暗いボスのアイコン・マゼンタ）、
 ///   ボスが出たらアプリのアイコンとウイルス解除ゲージ（アプリの色。第2形態の印。形態変化中は赤く点滅、正常化で白）
 /// UI 担当の本番の画面ができたら差し替える。
@@ -33,6 +34,8 @@ public class PixelHud : MonoBehaviour
 
     BossController _boss;
     float _nextBossSearch;
+    PlayerStatusEffects _status;
+    static readonly Color StatusPurple = new Color32(0xb3, 0x4d, 0xff, 0xff);
 
     void Start()
     {
@@ -116,6 +119,8 @@ public class PixelHud : MonoBehaviour
             Number(r, "+");
         }
 
+        DrawStatus(x, y + size + 8f);
+
         float hold = _skills.DiscardHoldProgress;
         if (hold > 0f)
         {
@@ -146,6 +151,16 @@ public class PixelHud : MonoBehaviour
         float ratio = _executor != null ? _executor.GetCooldownRatio(skill) : 0f;
         if (ratio > 0f) PixelGui.Fill(new Rect(icon.x, icon.y, icon.width, Mathf.Ceil(icon.height * ratio)), CooldownColor);
 
+        // 状態異常「クールタイムが長い」：枠の縁を紫にして、右上に時計の印（点滅）
+        if (Status != null && Status.Has(StatusEffect.LongCooldown))
+        {
+            PixelGui.Border(r, StatusPurple, 2f);
+            var mark = new Rect(r.xMax - 12f, r.y - 4f, 14f, 14f);
+            bool on = Mathf.FloorToInt(Time.unscaledTime / 0.3f) % 2 == 0;
+            PixelGui.Fill(mark, PixelGui.Ink);
+            PixelGui.DrawSprite(PixelGui.Inset(mark, 1f), StatusIcon(StatusEffect.LongCooldown), on ? Color.white : new Color(1f, 1f, 1f, 0.6f));
+        }
+
         // 元になったアプリのアイコンを右下に小さく重ねる（どのアプリの技か、絵で分かるように。2026-11-18：メンターのFB）
         if (source != null && skill.Icon != null)
         {
@@ -153,6 +168,44 @@ public class PixelHud : MonoBehaviour
             PixelGui.Fill(badge, PixelGui.FrameDark);
             PixelGui.Fill(PixelGui.Inset(badge, 1f), PixelGui.White);
             PixelGui.DrawSprite(PixelGui.Inset(badge, 1f), source);
+        }
+    }
+
+    PlayerStatusEffects Status
+    {
+        get
+        {
+            if (_status == null && _skills != null) _status = _skills.GetComponent<PlayerStatusEffects>(); // フィルターを受けたときに付く
+            return _status;
+        }
+    }
+
+    static Sprite StatusIcon(StatusEffect e)
+    {
+        Sprite[] icons = GameArt.Instance != null ? GameArt.Instance.StatusIcons : null;
+        int i = (int)e;
+        return icons != null && i < icons.Length ? icons[i] : null;
+    }
+
+    /// <summary>かかっている状態異常：印と、残り時間の棒（だんだん短くなる）を横に並べる</summary>
+    void DrawStatus(float x, float y)
+    {
+        PlayerStatusEffects s = Status;
+        if (s == null || !s.HasAny) return;
+        const float size = 16f, gap = 4f;
+        int i = 0;
+        foreach (StatusEffect e in s.Active)
+        {
+            var box = new Rect(x + i * (size + gap), y, size, size);
+            PixelGui.Fill(box, PixelGui.Ink);
+            Sprite icon = StatusIcon(e);
+            if (icon != null) PixelGui.DrawSprite(PixelGui.Inset(box, 1f), icon);
+            else PixelGui.Fill(PixelGui.Inset(box, 3f), StatusPurple);
+            // 残り時間の棒
+            var bar = new Rect(box.x, box.yMax + 1f, size, 2f);
+            PixelGui.Fill(bar, PixelGui.HpOff);
+            PixelGui.Fill(new Rect(bar.x, bar.y, Mathf.Round(size * s.RemainingRatio(e)), bar.height), StatusPurple);
+            i++;
         }
     }
 

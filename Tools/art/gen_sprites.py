@@ -1739,6 +1739,189 @@ def make_chat_boss():
     save(sheet(badges), "Attacks/Fx_NotifBadge.png")
 
 
+# ───────── Photoshop の能力（2026-11-19：筆とインク） ─────────
+
+PS_NAVY = C("001e36")
+PS_BLUE = C("31a8ff")
+PS_BLUE_L = C("8fd3ff")
+PS_BLUE_D = C("1473c2")
+
+
+def make_photoshop():
+    # 筆（56×8、線込みで 58×10＝約3.2マス。近接の約3倍の長さ。右向き。原点は持ち手の端＝左の真ん中）：
+    # 紺の持ち手に青い帯、銀の口金、先に青いインクの付いた毛
+    im = new(56, 8)
+    rect(im, 0, 3, 28, 4, PS_NAVY)                 # 持ち手
+    hline(im, 1, 27, 3, C("0d3556"))
+    rect(im, 20, 3, 22, 4, PS_BLUE)                # 青い帯
+    rect(im, 29, 2, 34, 5, C("c8ccd4"))            # 口金
+    hline(im, 29, 34, 2, WHITE); hline(im, 29, 34, 5, C("8a8f99"))
+    for x in range(35, 56):                        # 毛（先へ細くなる）
+        t = (x - 35) / 20
+        half = 3 - int(t * 2.6)
+        for y in range(4 - half, 4 + half):
+            c = C("e8d9b5") if t < 0.45 else (PS_BLUE if t < 0.85 else PS_BLUE_L)
+            put(im, x, y, c)
+    put(im, 55, 3, PS_BLUE_D); put(im, 54, 4, PS_BLUE_D)
+    save(outline_alpha(im, C("0a0f1a")), "Attacks/Brush_Photoshop.png")
+
+    # インク（20×20）：スプラトゥーンのインクのような、ふちが波打つしぶきと、まわりの小さな粒
+    ink = new(20, 20)
+    for y in range(20):
+        for x in range(20):
+            dx, dy = x + 0.5 - 10, y + 0.5 - 10.5
+            ang = math.atan2(dy, dx)
+            r = 6.6 + 0.7 * math.sin(ang * 5 + 0.6) + 0.5 * math.sin(ang * 3 - 1.1) + 0.3 * math.sin(ang * 8)
+            d = math.hypot(dx, dy)
+            if d <= r:
+                c = PS_BLUE_D if d > r - 1.2 else PS_BLUE
+                if dy < -2 and d < r - 2.2 and dx < 1:
+                    c = PS_BLUE_L
+                put(ink, x, y, c)
+    for (x, y, rr) in ((2.5, 5.5, 1.5), (17.5, 4.5, 1.2), (16.5, 18.0, 1.3)):  # 粒
+        ellipse(ink, x, y, rr, rr, PS_BLUE)
+    put(ink, 7, 6, WHITE); put(ink, 8, 6, WHITE); put(ink, 7, 7, WHITE)  # つや
+    save(outline_alpha(ink, C("0a2a4a")), "Attacks/Fx_PhotoshopInk.png")
+
+    # アイコン（16×16）：紺の四角に、青い筆の跡としぶき
+    ic = new(16, 16, PS_NAVY)
+    outline_rect(ic, 0, 0, 15, 15, K)
+    for i, (x, y) in enumerate(line_points(3, 12, 11, 4)):
+        put(ic, x, y, C("e8d9b5") if i < 3 else PS_BLUE)
+        put(ic, x + 1, y, PS_BLUE_D)
+    ellipse(ic, 11.5, 11.5, 2.4, 2.4, PS_BLUE)
+    put(ic, 13, 8, PS_BLUE_L); put(ic, 8, 13, PS_BLUE_L); put(ic, 11, 10, WHITE)
+    save(ic, "UI/Icon_Photoshop.png")
+
+
+# ───────── Photoshop のボス（2026-11-19） ─────────
+
+def rough_splat(im, cx, cy, base, rng, colors, rough=0.9):
+    """ふちが荒れたしぶき（colors：外側から内側の順）"""
+    w, h = im.size
+    for y in range(h):
+        for x in range(w):
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            ang = math.atan2(dy, dx)
+            r = base + 1.1 * math.sin(ang * 5 + 0.4) + 0.7 * math.sin(ang * 9 - 1.3) + rng.uniform(-rough, rough)
+            d = math.hypot(dx, dy)
+            if d <= r:
+                k = d / max(0.1, r)
+                c = colors[0] if k > 0.82 else colors[1] if k > 0.45 else colors[2]
+                put(im, x, y, c)
+
+
+def make_photoshop_boss():
+    rng = random.Random(2611)
+    # ボスのインク（26×26。荒れていて、汚れの点が入る。灰色：ゲームの中でアプリの色に塗り替える）
+    im = new(26, 26)
+    rough_splat(im, 13, 13.5, 8.2, rng, (C("3a3a3a"), C("7a7a7a"), C("a8a8a8")))
+    for (x, y, rr) in ((3.0, 5.0, 1.6), (22.5, 4.0, 1.3), (21.5, 22.0, 1.8), (4.5, 21.5, 1.2), (13.0, 1.8, 1.0)):
+        ellipse(im, x, y, rr, rr, C("7a7a7a"))
+    corrupt(im, 77, (C("1a1a1a"), C("2a2a2a"), C("cfcfcf")), 26)
+    put(im, 9, 8, WHITE); put(im, 10, 8, WHITE); put(im, 9, 9, WHITE)
+    save(outline_alpha(im, C("101010")), "Attacks/Fx_BossInk.png")
+
+    # 攻撃の範囲（30×30、白。ゲームの中で赤く塗って点滅させる）：プレイヤーのインクと同じしぶきの形で、ふちが荒れている
+    im = new(30, 30)
+    rough_splat(im, 15, 15, 11.0, rng, (WHITE, WHITE, WHITE), rough=1.4)
+    for _ in range(18):  # 欠け
+        x, y = rng.randrange(4, 26), rng.randrange(4, 26)
+        if math.hypot(x - 15, y - 15) > 7:
+            put(im, x, y, CLEAR)
+    for (x, y, rr) in ((2.5, 6.0, 1.4), (27.0, 8.0, 1.2), (25.5, 26.0, 1.6), (4.0, 25.0, 1.1)):
+        ellipse(im, x, y, rr, rr, WHITE)
+    save(im, "Attacks/Fx_InkDanger.png")
+
+    # インクの生命体（歩く2コマ、28×30。原点は足元）：カラフルなインクでドロドロの人形
+    mag, cya, yel, pur = C("ff3ea5"), C("29d3ff"), C("ffd23f"), C("8a4dff")
+    frames = []
+    for f in range(2):
+        im = new(28, 30)
+        ellipse(im, 14, 8.5, 7.5, 7.0, mag)                  # 頭
+        ellipse(im, 11, 6.5, 3.5, 3.0, pur)
+        rect(im, 8, 13, 19, 23, cya)                          # 体
+        ellipse(im, 13.5, 18, 6.5, 6.0, cya)
+        ellipse(im, 16, 20, 3.0, 3.0, yel)
+        # 腕（だらんと垂れる。コマで少し揺れる）
+        sway = 1 if f == 0 else -1
+        for (x0, y0, x1, y1, c) in ((7, 14, 4, 21 + sway, mag), (20, 14, 23, 21 - sway, yel)):
+            for (x, y) in line_points(x0, y0, x1, y1):
+                put(im, x, y, c); put(im, x + 1, y, c)
+        # 足（2コマで入れ替える）
+        if f == 0:
+            rect(im, 9, 24, 11, 29, pur); rect(im, 16, 24, 18, 27, mag)
+        else:
+            rect(im, 9, 24, 11, 27, pur); rect(im, 16, 24, 18, 29, mag)
+        # 垂れるインク
+        for (x, y0, ln, c) in ((6, 10, 3, mag), (21, 11, 4, mag), (12, 22, 3, cya), (19, 22, 2, yel), (4, 21, 3, mag)):
+            vline(im, x, y0, y0 + ln + f, c)
+            put(im, x, y0 + ln + f + 1, c)
+        # 目
+        rect(im, 10, 7, 12, 9, WHITE); rect(im, 15, 7, 17, 9, WHITE)
+        put(im, 11, 8, K); put(im, 16, 8, K)
+        hline(im, 11, 16, 11, C("5a1040"))
+        frames.append(outline_alpha(im, C("2a1030")))
+    save(sheet(frames), "Enemies/Zako_InkBlob.png")
+
+    # マウスカーソル（12×18。原点は矢印の先＝左上）
+    rows = [
+        "K...........",
+        "KK..........",
+        "KWK.........",
+        "KWWK........",
+        "KWWWK.......",
+        "KWWWWK......",
+        "KWWWWWK.....",
+        "KWWWWWWK....",
+        "KWWWWWWWK...",
+        "KWWWWWWWWK..",
+        "KWWWWWWKKKK.",
+        "KWWWKWWK....",
+        "KWWKKWWK....",
+        "KWK..KWWK...",
+        "KK...KWWK...",
+        "K.....KWWK..",
+        "......KWWK..",
+        ".......KK...",
+    ]
+    save(ascii_art(rows, {"K": K, "W": WHITE}), "Attacks/Fx_MouseCursor.png")
+
+    # 選択範囲の点線（2コマ、8×2。横に並べる。コマを替えると点線が流れる）
+    frames = []
+    for f in range(2):
+        im = new(8, 2)
+        for x in range(8):
+            c = K if ((x + f * 4) // 4) % 2 == 0 else WHITE
+            vline(im, x, 0, 1, c)
+        frames.append(im)
+    save(sheet(frames), "Attacks/Fx_Marquee.png")
+
+    # 状態異常の印（14×14）：速い（黄色の稲妻）・遅い（青い下向きの矢印）・クールタイムが長い（紫の時計に＋）・ジャンプが高い（緑の上向きの矢印）
+    def status(draw):
+        im = new(14, 14, C("1e1e2a"))
+        draw(im)
+        return im
+    def fast(im):
+        for (x, y) in line_points(8, 1, 4, 7) + line_points(4, 7, 9, 7) + line_points(9, 7, 5, 12):
+            put(im, x, y, GOLD); put(im, x + 1, y, GOLD)
+    def slow(im):
+        for k in (0, 5):
+            for i in range(4):
+                hline(im, 3 + i, 10 - i, 3 + k + i, C("6ab0ff"))
+    def cooldown(im):
+        ellipse(im, 6.5, 7.5, 5.2, 5.2, C("b34dff"))
+        ellipse(im, 6.5, 7.5, 4.0, 4.0, C("1e1e2a"))
+        vline(im, 6, 4, 7, WHITE); hline(im, 6, 8, 7, WHITE)
+        hline(im, 10, 13, 2, GOLD); vline(im, 11, 0, 4, GOLD); put(im, 12, 1, GOLD); put(im, 12, 3, GOLD)
+    def jump(im):
+        for i in range(5):
+            hline(im, 6 - i, 7 + i, 2 + i, C("39cf16"))
+        rect(im, 5, 7, 8, 12, C("39cf16"))
+    for name, fn in (("Fast", fast), ("Slow", slow), ("Cooldown", cooldown), ("Jump", jump)):
+        save(status(fn), f"UI/Status_{name}.png")
+
+
 SECTIONS = {
     "background": lambda: make_background(),
     "terrain": lambda: make_terrain(),
@@ -1757,6 +1940,8 @@ SECTIONS = {
     "ai_boss": lambda: make_ai_boss(),
     "chat_apps": lambda: make_chat_apps(),
     "chat_boss": lambda: make_chat_boss(),
+    "photoshop": lambda: make_photoshop(),
+    "photoshop_boss": lambda: make_photoshop_boss(),
 }
 
 
