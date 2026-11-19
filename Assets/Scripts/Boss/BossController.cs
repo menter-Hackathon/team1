@@ -84,6 +84,13 @@ public class BossController : MonoBehaviour, IWarpable
     public event Action Ejected;
     /// <summary>追い出されたウイルス本体（逃げている間だけ表示）</summary>
     public Health EjectedVirus => _ejectedVirus;
+    /// <summary>正常化したあとのきれいなアイコン（リザルトなどで使う）。設定が無ければ null</summary>
+    public Sprite NormalizedIcon => _profile != null ? _profile.NormalIcon : null;
+    /// <summary>正常化して手に入った能力（まだなら null）</summary>
+    public SkillDefinition AcquiredReward { get; private set; }
+
+    IDisposable _passive; // ボスの常に効く効果（Steam ボスの実績解除）
+    int _sequenceIndex;   // 技を順に出すときの、次の番号
 
     void Awake()
     {
@@ -111,6 +118,7 @@ public class BossController : MonoBehaviour, IWarpable
         if (_ejectedVirus != null) _ejectedVirus.Died -= OnEjectedVirusDied;
         StopAll();
         _runner.ClearSpawned();
+        DetachPassive();
     }
 
     void Start()
@@ -169,10 +177,25 @@ public class BossController : MonoBehaviour, IWarpable
         _hoverIndex = NearestHoverIndex();
         _lastMove = null;
         _attackCount = 0;
+        _sequenceIndex = 0;
+        AcquiredReward = null;
+        AttachPassive();
         SetVisibility(1f);
         SetContactEnabled(true);
         HideEjectedVirus();
         if (_profile != null && isActiveAndEnabled) _brain = StartCoroutine(Brain(_profile.StartDelay));
+    }
+
+    void AttachPassive()
+    {
+        DetachPassive();
+        if (_profile != null && _profile.Passive != null && isActiveAndEnabled) _passive = _profile.Passive.Attach(gameObject);
+    }
+
+    void DetachPassive()
+    {
+        _passive?.Dispose();
+        _passive = null;
     }
 
     void StopAll()
@@ -215,7 +238,7 @@ public class BossController : MonoBehaviour, IWarpable
         while (true)
         {
             BossPhaseSettings phase = _profile.GetPhase(Phase);
-            AttackData move = PickMove(phase.Moves);
+            AttackData move = phase.Sequential ? PickSequential(phase.Moves) : PickMove(phase.Moves);
             if (move != null)
             {
                 _lastMove = move;
@@ -371,6 +394,7 @@ public class BossController : MonoBehaviour, IWarpable
         SetContactEnabled(false); // 体当たりも被弾もなし（State を変える前に呼ぶと、体当たりが切れる）
         State = BossState.Ejected;
         TransitionProgress = 0f;
+        DetachPassive(); // 追い出したら、ボスの実績も止める
 
         // ボスの真ん中から、プレイヤーと反対の向きへ走り出す
         Transform v = _ejectedVirus.transform;
@@ -413,6 +437,7 @@ public class BossController : MonoBehaviour, IWarpable
         SetContactEnabled(false); // 体当たりも被弾もなし
         State = BossState.Normalized;
         TransitionProgress = 0f;
+        DetachPassive();
 
         SkillDefinition reward = _profile.Reward;
         if (reward != null)
@@ -421,6 +446,7 @@ public class BossController : MonoBehaviour, IWarpable
             if (skills == null) skills = FindObjectOfType<PlayerSkills>();
             if (skills != null) skills.TryAcquire(reward);
         }
+        AcquiredReward = reward;
         Normalized?.Invoke(reward);
     }
 

@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eda598ddd97e04827abf319cfbcb3239, type: 3}
+  m_Name: Passive_Steam
+  m_EditorClassIdentifier: 
+  _achievements:
+  - {fileID: 11400000, guid: 16c87ebf36e8e4d689f827d5af8b26cd, type: 2}
+  - {fileID: 11400000, guid: bc0dfccb8a41344ea8151599699a84bb, type: 2}
+  - {fileID: 11400000, guid: 168f6b326d1cb4585965acacf0265525, type: 2}
+  - {fileID: 11400000, guid: 223e5a1c213c44b3a9d013e3e67e75cb, type: 2}
+  _buff:
+    AttackBonus: 0.3
+    SpeedBonus: 0.15
+    Duration: 8
+    StackMode: 0
+  _targets: 0
+  _buffId: steam_achievement
+  _toastBackground: {fileID: -6462848323184086577, guid: a352718159f6b4b58b61e507b6e06991, type: 3}
+  _trophyFrames:
+  - {fileID: -4224239052158434338, guid: a927190d2975a46198f0d92c9dbdf5a4, type: 3}
+  - {fileID: 2189043688578700821, guid: a927190d2975a46198f0d92c9dbdf5a4, type: 3}
+  - {fileID: -6359468172515749848, guid: a927190d2975a46198f0d92c9dbdf5a4, type: 3}
+  - {fileID: 7461480182635238318, guid: a927190d2975a46198f0d92c9dbdf5a4, type: 3}
+  - {fileID: -2393374307497533611, guid: a927190d2975a46198f0d92c9dbdf5a4, type: 3}
+  - {fileID: -512949790641228298, guid: a927190d2975a46198f0d92c9dbdf5a4, type: 3}
+  _trophyFrameRate: 10
+  _toastTitle: "\u5B9F\u7E3E\u89E3\u9664"
+  _titleColor: {r: 0.75, g: 0.85, b: 1, a: 1}
+  _nameColor: {r: 1, g: 1, b: 1, a: 1}
+  _toastDuration: 3
+  _toastOnRight: 1
+  _burstFrames:
+  - {fileID: -2119037293870586096, guid: d7872f51205c746a98edba31122035ae, type: 3}
+  - {fileID: 343729136585820960, guid: d7872f51205c746a98edba31122035ae, type: 3}
+  - {fileID: 4159882262052523215, guid: d7872f51205c746a98edba31122035ae, type: 3}
+  - {fileID: 5992478878762967525, guid: d7872f51205c746a98edba31122035ae, type: 3}
+  - {fileID: 1239238151407136975, guid: d7872f51205c746a98edba31122035ae, type: 3}
+  - {fileID: -567954511940074358, guid: d7872f51205c746a98edba31122035ae, type: 3}
+  - {fileID: 2718796689522323566, guid: d7872f51205c746a98edba31122035ae, type: 3}
+  - {fileID: 2423648170343537130, guid: d7872f51205c746a98edba31122035ae, type: 3}
+  _burstFrameRate: 14
+  _auraFrames:
+  - {fileID: 794816746475167692, guid: 91e855053809f4fb083cc84d70a0cf26, type: 3}
+  - {fileID: -7037500277423822258, guid: 91e855053809f4fb083cc84d70a0cf26, type: 3}
+  - {fileID: -4174392180714274022, guid: 91e855053809f4fb083cc84d70a0cf26, type: 3}
+  - {fileID: -1837231611201664087, guid: 91e855053809f4fb083cc84d70a0cf26, type: 3}
+  - {fileID: 5879452317556030811, guid: 91e855053809f4fb083cc84d70a0cf26, type: 3}
+  - {fileID: -815194389601618981, guid: 91e855053809f4fb083cc84d70a0cf26, type: 3}
+  _auraFrameRate: 10

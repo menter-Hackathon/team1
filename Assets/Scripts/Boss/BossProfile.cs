@@ -22,6 +22,8 @@ public class BossPhaseSettings
     [Min(0f)] public float WaitAfterAttack = 1.2f;
     [Tooltip("何回攻撃するごとに移動するか。0なら移動しない")]
     [Min(0)] public int AttacksPerMove = 2;
+    [Tooltip("オン：技を一覧の順に出す（Office：棒グラフ → 円グラフ → 折れ線グラフ）。オフ：同じ技が続かないようにランダム")]
+    public bool Sequential;
 }
 
 /// <summary>
@@ -59,6 +61,12 @@ public class BossProfile : ScriptableObject
 
     [Header("正常化したときに手に入る能力")]
     [SerializeField] SkillDefinition _reward;
+    [Tooltip("正常化したあとのきれいなアイコン（AppIcon_<App>_Normal）。リザルトなどで使う。空なら「画面のアイコン」")]
+    [SerializeField] Sprite _normalIcon;
+
+    [Header("ボスの常に効く効果（Steam ボスの実績解除など）")]
+    [Tooltip("戦闘の間ずっと効く効果。空なら無し")]
+    [SerializeField] SkillPassive _passive;
 
     [Header("ボスに足す仕組み（2026-11-18）")]
     [Tooltip("そのボスだけの仕組み（Terminal の再起動の演出など）。プロフィールを受け取ったときに、ボスに足される")]
@@ -78,6 +86,9 @@ public class BossProfile : ScriptableObject
     public float[] HoverPointsX => _hoverPointsX;
     public SkillDefinition Reward => _reward;
     public BossExtension[] Extensions => _extensions;
+    /// <summary>正常化したあとのきれいなアイコン</summary>
+    public Sprite NormalIcon => _normalIcon != null ? _normalIcon : _icon;
+    public SkillPassive Passive => _passive;
 
     /// <summary>形態の設定（1 か 2）</summary>
     public BossPhaseSettings GetPhase(int phase) => phase >= 2 ? _phase2 : _phase1;

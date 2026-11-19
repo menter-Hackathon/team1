@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32015ae998734b8a83700e2a1c61f820, type: 3}
+  m_Name: Attack_Office_Line
+  m_EditorClassIdentifier: 
+  _kind: 1
+  _windup: 0
+  _activeTime: 0.5
+  _cooldown: 3
+  _damage: 1
+  _gaugeGain: 12
+  _knockback: {x: 3, y: 2}
+  _hitStun: 0.2
+  _repeatCount: 1
+  _repeatInterval: 0
+  _sprite: {fileID: -1264573413216149340, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _frames:
+  - {fileID: -1264573413216149340, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  - {fileID: -9072629442888565380, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  - {fileID: -6894041795852024274, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  - {fileID: 373349510330579978, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  - {fileID: -3555625401893883633, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  - {fileID: 9109159841083116327, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  - {fileID: 5555136736955453689, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  - {fileID: 2531671117399745632, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  - {fileID: 5900097990209487695, guid: 0b1a8907b81e749fb9328ecd2c279ccb, type: 3}
+  _framesPerRow: 0
+  _frameRate: 14
+  _loopFrames: 0
+  _hitDelay: 0
+  _holdFrame: -1
+  _windupFrames: []
+  _windupFrameRate: 12
+  _projectileCount: 1
+  _spreadAngle: 0
+  _speed: 7
+  _gravity: 0
+  _lifetime: 3
+  _hitSize: {x: 0.5, y: 0.5}
+  _aim: 0
+  _launchAngle: 0
+  _spawnOffset: {x: 0, y: 0.7}
+  _destroyOnTerrain: 1
+  _destroyOnHit: 1
+  _onTerrainHit: {fileID: 0}
+  _followUpOnHit: 0
+  _anchor: 1
+  _forwardDistance: 2.5111113
+  _snapToGround: 0
+  _alignToSurface: 1
+  _shape: 2
+  _areaSize: {x: 4.2222223, y: 1.6666666}
+  _areaCount: 1
+  _areaSpacing: 4
+  _areaStagger: 0
+  _areaForwardOrder: 0
+  _polylinePoints:
+  - {x: -1.8888888, y: -0.5}
+  - {x: -1.1666666, y: 0.11111111}
+  - {x: -0.44444445, y: -0.16666667}
+  - {x: 0.2777778, y: 0.5}
+  - {x: 1, y: 0.055555556}
+  - {x: 1.7777778, y: 0.6666667}
+  _polylineRadius: 0.12
+  _telegraphTime: 0
+  _persistDuration: 0
+  _tickInterval: 0.5
+  _placement: 0
+  _spawnCount: 2
+  _minDistanceFromTarget: 3
+  _objectSize: {x: 3, y: 2}
+  _fallSpeed: 12
+  _landRemainTime: 0
+  _becomesPlatform: 0
+  _placeInterval: 0.3
+  _placeSpacing: 3
+  _dropHoldTime: 0.5
+  _dropInterval: 0.25
+  _appearTopRange: {x: 2.5, y: 6}
+  _reachHeight: 3
+  _primitives: []
+  _maxAlive: 3
+  _objectLifetime: 8
+  _damageFallSpeed: 4
+  _impactSpeed: 5
+  _dropHeight: 4
+  _spawnFrames: []
+  _spawnFrameRate: 14
+  _spawnReleaseFrame: 1
+  _impactFrames: []
+  _impactFrameRate: 14
+  _warningFrames: []
+  _warningFrameRate: 8
+  _warpDestination: 0
+  _warpDistance: 6
+  _vanishTime: 0
+  _appearDelay: 0
+  _appearTelegraph: 0
+  _appearTime: 0
+  _disableContactUntilAppeared: 1

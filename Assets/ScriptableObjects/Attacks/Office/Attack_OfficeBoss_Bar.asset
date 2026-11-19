@@ -1,0 +1,135 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32015ae998734b8a83700e2a1c61f820, type: 3}
+  m_Name: Attack_OfficeBoss_Bar
+  m_EditorClassIdentifier: 
+  _kind: 1
+  _windup: 0.2
+  _activeTime: 0.33333334
+  _cooldown: 0
+  _damage: 1
+  _gaugeGain: 0
+  _knockback: {x: 6, y: 5}
+  _hitStun: 0.25
+  _repeatCount: 1
+  _repeatInterval: 0
+  _sprite: {fileID: -5116035769072007683, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _frames:
+  - {fileID: -5116035769072007683, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -6622758722450055993, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 1595037019016477080, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -4100474250058415298, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -7273424405046867852, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 2564894261590693490, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 6585588137137035372, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -7601387915437894420, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 6940411650119699590, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -1565513255882454745, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 5866116116802697723, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 2097914723569968225, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -3823229530204992447, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -4788221907112734827, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -5211476144156311790, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 1574072976555442922, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -6238746983338588107, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -2326252159834496059, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -4267438089231991118, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -1956270392428020266, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -2652318154016637762, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -5225046776947011616, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 860697543790771723, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 835199800342565939, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 7920306130793306007, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -5908626684445288846, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 8228665195905558602, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 4874549431228427474, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -3516900012742915276, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 2409172607879861363, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -3750744126115974163, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -4992704427775353607, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 7046458854932658515, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -1131995391034493075, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -7915345668144455223, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: 8513136855705282401, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -7235985061564849641, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -3907528870825115341, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -5621071679852355817, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  - {fileID: -1255352549862420191, guid: be21d6debd85a4cc79ed0d6ec4a7325a, type: 3}
+  _framesPerRow: 10
+  _frameRate: 12
+  _loopFrames: 0
+  _hitDelay: 0.083333336
+  _holdFrame: -1
+  _windupFrames: []
+  _windupFrameRate: 12
+  _projectileCount: 1
+  _spreadAngle: 0
+  _speed: 7
+  _gravity: 0
+  _lifetime: 3
+  _hitSize: {x: 0.5, y: 0.5}
+  _aim: 0
+  _launchAngle: 0
+  _spawnOffset: {x: 0, y: 0}
+  _destroyOnTerrain: 1
+  _destroyOnHit: 1
+  _onTerrainHit: {fileID: 0}
+  _followUpOnHit: 0
+  _anchor: 1
+  _forwardDistance: 1.8
+  _snapToGround: 1
+  _alignToSurface: 1
+  _shape: 0
+  _areaSize: {x: 0.6666667, y: 2.3333333}
+  _areaCount: 7
+  _areaSpacing: 1.4
+  _areaStagger: 0.12
+  _areaForwardOrder: 1
+  _polylinePoints: []
+  _polylineRadius: 0.12
+  _telegraphTime: 0
+  _persistDuration: 0
+  _tickInterval: 0.5
+  _placement: 0
+  _spawnCount: 2
+  _minDistanceFromTarget: 3
+  _objectSize: {x: 3, y: 2}
+  _fallSpeed: 12
+  _landRemainTime: 0
+  _becomesPlatform: 0
+  _placeInterval: 0.3
+  _placeSpacing: 3
+  _dropHoldTime: 0.5
+  _dropInterval: 0.25
+  _appearTopRange: {x: 2.5, y: 6}
+  _reachHeight: 3
+  _primitives: []
+  _maxAlive: 3
+  _objectLifetime: 8
+  _damageFallSpeed: 4
+  _impactSpeed: 5
+  _dropHeight: 4
+  _spawnFrames: []
+  _spawnFrameRate: 14
+  _spawnReleaseFrame: 1
+  _impactFrames: []
+  _impactFrameRate: 14
+  _warningFrames: []
+  _warningFrameRate: 8
+  _warpDestination: 0
+  _warpDistance: 6
+  _vanishTime: 0
+  _appearDelay: 0
+  _appearTelegraph: 0
+  _appearTime: 0
+  _disableContactUntilAppeared: 1

@@ -66,7 +66,7 @@ public class ZakoWalker : MonoBehaviour
         bool stopped = _health.IsDead || Time.time < _pauseUntil;
 
         if (stopped) _velocity.x = Mathf.MoveTowards(_velocity.x, 0f, 20f * dt);
-        else _velocity.x = Direction * _speed;
+        else _velocity.x = Direction * _speed * StatModifiers.SpeedOf(this); // バフ（Steam ボスの実績解除）
 
         // 足場の端に来たら、落ちる前に折り返す
         if (!stopped && _turnAtLedges && _body.IsGrounded && !HasGroundAhead()) Turn();

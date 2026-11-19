@@ -33,6 +33,21 @@ public class PixelHud : MonoBehaviour
 
     BossController _boss;
     float _nextBossSearch;
+    VirusGauge _testGauge;
+    SkillDefinition _testAbility;
+    Sprite _testIcon;
+    System.Func<float> _testCooldown;
+    float _testStartedAt;
+
+    /// <summary>独立した技テストでも、本編と同じHP・能力枠・ボスゲージを使う。</summary>
+    public void BindTest(VirusGauge gauge, Sprite icon, SkillDefinition ability, System.Func<float> cooldown)
+    {
+        _testGauge = gauge;
+        _testIcon = icon;
+        _testAbility = ability;
+        _testCooldown = cooldown;
+        _testStartedAt = Time.time;
+    }
 
     void Start()
     {
@@ -96,6 +111,17 @@ public class PixelHud : MonoBehaviour
 
     void DrawSlots(float x, float y)
     {
+        if (_testGauge != null)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                var slot = new Rect(x + i * 42f, y, 36f, 36f);
+                DrawSlot(slot, i == 0 ? _testAbility : null, i == 0,
+                    i == 0 && _testCooldown != null ? _testCooldown() : 0f);
+                Number(slot, (i + 1).ToString());
+            }
+            return;
+        }
         if (_skills == null) return;
         const float size = 36f, gap = 6f;
         bool pending = _skills.HasPending;
@@ -124,7 +150,7 @@ public class PixelHud : MonoBehaviour
         }
     }
 
-    void DrawSlot(Rect r, SkillDefinition skill, bool highlight)
+    void DrawSlot(Rect r, SkillDefinition skill, bool highlight, float? cooldownOverride = null)
     {
         if (skill == null)
         {
@@ -176,8 +202,9 @@ public class PixelHud : MonoBehaviour
     float DrawStage(GameSession session, float right, float y)
     {
         RunState run = session != null ? session.Run : null;
-        if (run == null || run.Current == null) return y;
-        string text = $"STAGE {run.CurrentIndex + 1}/{run.Stages.Count}  {PixelGui.Clock(run.PlaySeconds)}";
+        if (_testGauge == null && (run == null || run.Current == null)) return y;
+        string text = _testGauge != null ? $"STAGE 1/1  {PixelGui.Clock(Time.time - _testStartedAt)}"
+            : $"STAGE {run.CurrentIndex + 1}/{run.Stages.Count}  {PixelGui.Clock(run.PlaySeconds)}";
         float w = Mathf.Ceil(PixelGui.Measure(text, PixelGui.Style(true, 8))) + 20f;
         var box = new Rect(right - w, y, w, 22f);
         PixelGui.Fill(box, PixelGui.FrameDark);
@@ -192,6 +219,16 @@ public class PixelHud : MonoBehaviour
         const float gaugeW = 150f, gaugeH = 12f;
         var gauge = new Rect(right - gaugeW, y + 6f, gaugeW, gaugeH);
         var iconRect = new Rect(gauge.x - 28f, y, 24f, 24f);
+        if (_testGauge != null)
+        {
+            PixelGui.DrawSprite(iconRect, _testIcon);
+            Rect inside = GaugeFrame(gauge);
+            PixelGui.Fill(new Rect(inside.x, inside.y, Mathf.Round(inside.width * _testGauge.Ratio), inside.height),
+                _testGauge.IsFull ? PixelGui.White : GaugeColor);
+            if (!_testGauge.IsFull)
+                PixelGui.Fill(new Rect(inside.x + Mathf.Round(inside.width * 0.5f), gauge.y - 2, 2, gauge.height + 4), PixelGui.Ink);
+            return;
+        }
         BossController boss = FindBoss();
         if (boss == null)
         {
@@ -217,7 +254,7 @@ public class PixelHud : MonoBehaviour
             overrideColor = display.FillColor(boss);
         }
         // ゲージの色：そのステージのアプリの色（4色なら左から4つに区切る）。形態変化中は赤く点滅、正常化で白
-        AppTheme theme = _director != null && _director.Plan != null ? _director.Plan.App.Theme : null;
+        AppTheme theme = _director != null && _director.Plan != null ? _director.Plan.Theme : null;
         Color[] colors = theme != null && theme.Accents != null && theme.Accents.Length > 0 ? theme.Accents : new[] { GaugeColor };
         bool angry = display == null && boss.State == BossState.Transition && Mathf.FloorToInt(Time.time / 0.1f) % 2 == 0;
         bool done = boss.State == BossState.Normalized || boss.State == BossState.Ejected;
