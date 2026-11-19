@@ -1922,6 +1922,84 @@ def make_photoshop_boss():
         save(status(fn), f"UI/Status_{name}.png")
 
 
+# ───────── ブラウザの能力「パケット」（2026-11-19） ─────────
+
+def make_packet():
+    blue, blue_l, blue_d = C("4285f4"), C("8ab4ff"), C("1a4fb0")
+    green, green_l, green_d = C("34a853"), C("8ee6a4"), C("16692f")
+
+    def bar(main, light, dark, plus):
+        # 16×4（右向き）：先が明るく、データの白い点が並ぶ棒
+        im = new(16, 4)
+        rect(im, 0, 0, 15, 3, main)
+        hline(im, 0, 15, 0, light)
+        hline(im, 0, 15, 3, dark)
+        for x in range(1, 12, 3):
+            put(im, x, 1, WHITE); put(im, x + 1, 2, WHITE if plus else light)
+        rect(im, 13, 0, 15, 3, WHITE)                  # 先（明るい）
+        put(im, 0, 0, CLEAR); put(im, 0, 3, CLEAR)
+        if plus:                                      # 応答：先に「＋」
+            put(im, 14, 1, green_d); put(im, 14, 2, green_d); put(im, 13, 1, green_d); put(im, 15, 2, green_d)
+        return im
+    save(bar(blue, blue_l, blue_d, False), "Attacks/Fx_Packet.png")
+    save(bar(green, green_l, green_d, True), "Attacks/Fx_PacketResponse.png")
+
+    # アイコン（16×16）：地球（ブラウザ）から、パケットが3本飛んでいく
+    im = new(16, 16, WHITE)
+    outline_rect(im, 0, 0, 15, 15, K)
+    ellipse(im, 5.5, 10.5, 4.2, 4.2, blue)
+    vline(im, 5, 7, 14, blue_l); hline(im, 2, 9, 10, blue_l)
+    ellipse(im, 5.5, 10.5, 2.0, 4.2, None)
+    for (x, y) in ((8, 3), (10, 5), (9, 7)):          # パケット（枠の内側に収める）
+        hline(im, x, x + 3, y, blue_d); put(im, x + 3, y, blue_l)
+    put(im, 12, 9, green); put(im, 13, 9, green)        # 応答
+    save(im, "UI/Icon_Packet.png")
+
+
+# ───────── ブラウザのボス（2026-11-19） ─────────
+
+def browser_window(content_bg, favicon):
+    """ブラウザのウィンドウ（48×34）：枠・タブ1つ（左に小さなアイコン）・アドレスバー（鍵）・中身の色"""
+    W, H = 48, 34
+    im = new(W, H, content_bg)
+    rect(im, 0, 0, W - 1, 8, C("dee1e6"))            # タブの並び
+    rect(im, 3, 2, 20, 8, WHITE)                      # タブ
+    rect(im, 5, 4, 6, 5, favicon)
+    hline(im, 8, 17, 4, C("9aa0a6"))
+    for (x, c) in ((W - 10, C("fbbc05")), (W - 7, C("34a853")), (W - 4, C("ea4335"))):  # ウィンドウのボタン
+        rect(im, x, 3, x + 1, 4, c)
+    rect(im, 0, 9, W - 1, 13, WHITE)                  # アドレスバーの帯
+    rect(im, 3, 10, W - 4, 12, C("f1f3f4"))
+    rect(im, 5, 10, 6, 12, C("5f6368"))               # 鍵
+    hline(im, 9, 26, 11, C("9aa0a6"))
+    outline_rect(im, 0, 0, W - 1, H - 1, C("3c4043"))
+    return im
+
+
+def make_browser_boss():
+    # 爆弾のマークのサイト（下の3行は、ゲームの中で読み込みバーを描くので空けておく）
+    im = browser_window(WHITE, C("ea4335"))
+    ellipse(im, 24.0, 21.5, 6.2, 6.2, C("202124"))    # 爆弾
+    ellipse(im, 24.0, 21.5, 5.0, 5.0, C("3c4043"))
+    put(im, 21, 18, WHITE); put(im, 22, 18, WHITE); put(im, 21, 19, WHITE)
+    rect(im, 27, 14, 29, 15, C("5f6368"))             # 口金
+    put(im, 30, 13, C("b07d12")); put(im, 31, 12, ORANGE); put(im, 32, 11, GOLD); put(im, 31, 11, GOLD); put(im, 32, 12, RED)  # 導火線と火花
+    hline(im, 9, 15, 17, C("dadce0")); hline(im, 33, 39, 17, C("dadce0"))  # 本文の線（飾り）
+    hline(im, 9, 14, 24, C("dadce0")); hline(im, 34, 39, 24, C("dadce0"))
+    save(im, "Attacks/Window_BombSite.png")
+
+    # 雑魚を出し続けるウィンドウ：暗い赤の中に、ウイルスの顔と「!」
+    im = browser_window(C("2a0a12"), C("ff3b30"))
+    blob = smoke_blob(20, 16, 10, 9, 7, 6, seed=1119, wisps=5)
+    paste(im, blob, 14, 15)
+    for (x, y) in ((20, 20), (26, 20)):
+        rect(im, x, y, x + 1, y + 1, RED)
+    for x0 in (6, 38):                                 # 「!」
+        rect(im, x0, 17, x0 + 1, 24, GOLD)
+        rect(im, x0, 27, x0 + 1, 28, GOLD)
+    save(im, "Enemies/Window_Spawner.png")
+
+
 SECTIONS = {
     "background": lambda: make_background(),
     "terrain": lambda: make_terrain(),
@@ -1942,6 +2020,8 @@ SECTIONS = {
     "chat_boss": lambda: make_chat_boss(),
     "photoshop": lambda: make_photoshop(),
     "photoshop_boss": lambda: make_photoshop_boss(),
+    "packet": lambda: make_packet(),
+    "browser_boss": lambda: make_browser_boss(),
 }
 
 

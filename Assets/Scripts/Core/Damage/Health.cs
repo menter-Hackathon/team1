@@ -80,6 +80,16 @@ public class Health : MonoBehaviour, IDamageable
         _invincibleUntil = Mathf.Max(_invincibleUntil, Time.time + seconds);
     }
 
+    /// <summary>今の値を決まった値にする（テストシーン用：ライフ1から始めて回復を確かめる。2026-11-19）。倒れた後は変えない</summary>
+    public void SetCurrent(int value)
+    {
+        if (IsDead) return;
+        int v = Mathf.Clamp(value, 1, _max);
+        if (v == Current) return;
+        Current = v;
+        Changed?.Invoke(Current, _max);
+    }
+
     /// <summary>最大値まで戻して生き返らせる（リトライなど）</summary>
     public void ResetHealth()
     {

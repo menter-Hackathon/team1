@@ -13,8 +13,11 @@ public static class SkillTestSceneBuilder
 {
     static readonly Rect ArenaBounds = new Rect(-10f, 0f, 20f, 11.5f);
 
-    /// <summary>テストシーンを作って保存する（呼ぶ前に、能力のアセットと絵を用意しておく）</summary>
-    public static void Build(string scenePath, SkillDefinition[] skills, string label)
+    /// <summary>
+    /// テストシーンを作って保存する（呼ぶ前に、能力のアセットと絵を用意しておく）。
+    /// startLife が1以上なら、プレイヤーはそのライフから始まる（H キーで戻せる。回復を確かめるとき用）
+    /// </summary>
+    public static void Build(string scenePath, SkillDefinition[] skills, string label, int startLife = 0)
     {
         int ground = LayerMask.NameToLayer("Ground");
         int oneWay = LayerMask.NameToLayer("OneWayPlatform");
@@ -49,6 +52,11 @@ public static class SkillTestSceneBuilder
         // --- プレイヤー（最初から能力を持つ） ---
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-7f, 0.05f, 0f), attacks.PlayerMelee, loaded);
         PlayerTestSceneBuilder.SetProps(player.GetComponent<SkillDebugGiver>(), so => so.FindProperty("_giveOnStart").boolValue = true);
+        if (startLife > 0)
+        {
+            var life = player.AddComponent<DebugStartLife>();
+            PlayerTestSceneBuilder.SetProps(life, so => so.FindProperty("_life").intValue = startLife);
+        }
 
         // --- 雑魚ウイルス（HP の仮表示つき）。そのあとも出し続ける ---
         var enemies = new GameObject("Enemies").transform;
@@ -85,7 +93,7 @@ public static class SkillTestSceneBuilder
 public static class BossBattleTestSceneBuilder
 {
     public static void Build(string scenePath, string[] skillPaths, System.Func<Vector2, Transform, BossController> createBoss,
-        string[] names, string[] bundleIds, bool showUpdateBar, string label)
+        string[] names, string[] bundleIds, bool showUpdateBar, string label, Vector2? spawn = null)
     {
         int ground = LayerMask.NameToLayer("Ground");
         int oneWay = LayerMask.NameToLayer("OneWayPlatform");
@@ -113,7 +121,7 @@ public static class BossBattleTestSceneBuilder
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-8f, 0.05f, 0f), attacks.PlayerMelee, skills);
         PlayerTestSceneBuilder.SetProps(player.GetComponent<SkillDebugGiver>(), so => so.FindProperty("_giveOnStart").boolValue = true);
 
-        BossController boss = createBoss(new Vector2(arenaBounds.center.x, arenaBounds.yMin) + AiChatBossBuilder.SpawnPosition, player.transform);
+        BossController boss = createBoss(new Vector2(arenaBounds.center.x, arenaBounds.yMin) + (spawn ?? AiChatBossBuilder.SpawnPosition), player.transform);
         var director = new GameObject("BossTestDirector").AddComponent<BossTestDirector>();
         PlayerTestSceneBuilder.SetProps(director, so =>
         {
@@ -180,5 +188,30 @@ public static class PhotoshopTestSceneBuilder
             (pos, player) => PhotoshopBossBuilder.CreateBoss(pos, player),
             new[] { "Photoshop", "Figma", "Illustrator" }, new[] { "com.adobe.Photoshop", "com.figma.Desktop", "com.adobe.illustrator" },
             false, "Photoshop の能力（Photoshop のボス戦。1：Photoshop　C：ボスのアプリを切り替え　R：やり直し　N：ゲージ+10）");
+    }
+}
+
+/// <summary>
+/// ブラウザの能力「パケット」を試すテストシーン（2026-11-19）。メニュー「Tools/Team1/パケットの能力のテストシーンを作成」から実行する。
+/// プレイヤーは最初から 1：パケット を持ち、ライフ1から始まる（倒すと応答のパケットで回復するのを見るため。H キーでライフ1に戻す）。雑魚が出続ける
+/// </summary>
+public static class PacketTestSceneBuilder
+{
+    const string ScenePath = "Assets/Scenes/Test/PacketTest.unity";
+
+    [MenuItem("Tools/Team1/パケットの能力のテストシーンを作成")]
+    public static void BuildFromMenu()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        Build();
+    }
+
+    /// <summary>コマンドラインから実行する用（-executeMethod PacketTestSceneBuilder.Build）</summary>
+    public static void Build()
+    {
+        AbilitiesBuilder.EnsurePacketSkill();
+        ArtAssets.Apply(); // パケットの絵・アイコンの割り当て
+        SkillDefinition skill = AssetDatabase.LoadAssetAtPath<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Packet.asset");
+        SkillTestSceneBuilder.Build(ScenePath, new[] { skill }, "パケットの能力（1：パケット　H：ライフを1に戻す）", startLife: 1);
     }
 }

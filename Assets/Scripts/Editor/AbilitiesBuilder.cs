@@ -293,8 +293,69 @@ public static class AbilitiesBuilder
         EnsureAppSkills();
         EnsureChatSkills();
         EnsurePhotoshopSkill();
+        EnsurePacketSkill();
         AssetDatabase.SaveAssets();
         return skills;
+    }
+
+    // ───────── ブラウザの能力「パケット」（2026-11-19。数値は【仮】） ─────────
+
+    [MenuItem("Tools/Team1/パケットの能力を用意")]
+    public static void EnsurePacketSkillFromMenu()
+    {
+        EnsurePacketSkill();
+        ArtAssets.Apply(); // パケットの絵・色・アイコンを入れる
+        AssetDatabase.SaveAssets();
+        Debug.Log("ブラウザの能力「パケット」を用意しました（能力えらびの表のブラウザの能力にしました）");
+    }
+
+    /// <summary>
+    /// ブラウザの能力「パケット」：
+    /// ・攻撃 Attack_Ability_Packet（種類 Packet）：12マス以内の敵を1体ロックオンして、棒状のパケットを5発（0.06秒おき、最初は70°の扇）撃ち、追尾させる。
+    ///   1発ダメージ1・ゲージ +2。ロックオンした敵が倒れると、応答のパケットが届いてライフが1回復。クールタイム4秒
+    /// ・能力 Skill_Packet（カテゴリ ブラウザ）。能力えらびの表のブラウザの能力が「新しいタブ」のままなら、これに替える（手で直した表は残す）。
+    ///   Chrome のボスを倒したときの能力は、ボスの設定のまま（新しいタブ）
+    /// </summary>
+    public static SkillDefinition EnsurePacketSkill()
+    {
+        AttackData attack = BossTestSceneBuilder.GetOrCreateAttack("Player/Attack_Ability_Packet", so =>
+        {
+            Kind(so, AttackKind.Packet);
+            F(so, "_windup", 0f);
+            F(so, "_cooldown", 4f);
+            I(so, "_damage", 1);
+            I(so, "_gaugeGain", 2);
+            V(so, "_knockback", new Vector2(1.5f, 1f));
+            F(so, "_hitStun", 0.1f);
+            I(so, "_projectileCount", 5);
+            F(so, "_spreadAngle", 70f);
+            F(so, "_speed", 11f);
+            F(so, "_lifetime", 2.2f);
+            V(so, "_hitSize", new Vector2(16f / GameArt.PixelsPerUnit, 4f / GameArt.PixelsPerUnit)); // 絵（16×4 ドット）と同じ
+            B(so, "_destroyOnHit", true);
+            F(so, "_packetRange", 12f);
+            F(so, "_packetInterval", 0.06f);
+            F(so, "_packetTurnRate", 540f);
+            I(so, "_packetHeal", 1);
+        });
+        SkillDefinition skill = BossTestSceneBuilder.GetOrCreateSkill("Skill_Packet", "パケット", SkillCategory.Browser, attack);
+
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
+        if (catalog == null) return skill;
+        var newTab = AssetDatabase.LoadAssetAtPath<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_NewTab.asset");
+        PlayerTestSceneBuilder.SetProps(catalog, so =>
+        {
+            var arr = so.FindProperty("_categories");
+            for (int i = 0; i < arr.arraySize; i++)
+            {
+                var e = arr.GetArrayElementAtIndex(i);
+                if (e.FindPropertyRelative("Category").intValue != (int)SkillCategory.Browser) continue;
+                var s = e.FindPropertyRelative("Skill");
+                if (s.objectReferenceValue == null || s.objectReferenceValue == newTab) s.objectReferenceValue = skill;
+            }
+        });
+        EditorUtility.SetDirty(catalog);
+        return skill;
     }
 
     // ───────── Photoshop の能力（2026-11-19：筆とインク。数値は【仮】） ─────────

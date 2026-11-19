@@ -212,6 +212,12 @@ public class AttackRunner : MonoBehaviour
             case AttackKind.Filter:
                 yield return FilterRoutine(data);
                 break;
+            case AttackKind.Packet:
+                yield return PacketRoutine(data);
+                break;
+            case AttackKind.BombSite:
+                yield return BombSiteRoutine(data);
+                break;
             default:
                 Debug.LogWarning($"{name}: 攻撃の種類 {data.Kind} はまだ実行できません（{data.name}）", this);
                 break;
@@ -709,6 +715,52 @@ public class AttackRunner : MonoBehaviour
         Facing = goLeft ? 1 : -1;
     }
 
+    // ───────── パケット（ブラウザの能力） ─────────
+
+    /// <summary>パケットを撃ち終わるまで待つ（追尾・応答のパケットは、そのあとも続く）</summary>
+    IEnumerator PacketRoutine(AttackData data)
+    {
+        PacketVolley volley = PacketVolley.Spawn(this, data);
+        Released?.Invoke(data);
+        while (volley != null && !volley.IsFired) yield return null;
+    }
+
+    // ───────── 爆弾のサイト（ブラウザのボス） ─────────
+
+    /// <summary>
+    /// 爆弾のサイトのウィンドウを、少しずつずらして開く（1つ目は狙う相手の近く、ほかは部屋のあちこち。ウィンドウどうしは離す）。
+    /// 開き終わったら終わる（読み込み・爆発は、ウィンドウが自分で進める）
+    /// </summary>
+    IEnumerator BombSiteRoutine(AttackData data)
+    {
+        Rect arena = BattleArena.GetBounds();
+        Vector2 half = data.ObjectSize * 0.5f + new Vector2(0.3f, 0.3f);
+        Vector2 target = TargetPoint ?? arena.center;
+        var placed = new List<Vector2>();
+        for (int i = 0; i < data.SpawnCount; i++)
+        {
+            Vector2 best = arena.center;
+            float bestScore = float.NegativeInfinity;
+            for (int attempt = 0; attempt < 30; attempt++)
+            {
+                Vector2 c = i == 0
+                    ? target + new Vector2(UnityEngine.Random.Range(-1.5f, 1.5f), UnityEngine.Random.Range(-0.5f, 1.5f))
+                    : new Vector2(UnityEngine.Random.Range(arena.xMin + half.x, arena.xMax - half.x), UnityEngine.Random.Range(arena.yMin + half.y + 0.5f, arena.yMax - half.y));
+                c.x = Mathf.Clamp(c.x, arena.xMin + half.x, arena.xMax - half.x);
+                c.y = Mathf.Clamp(c.y, arena.yMin + half.y, arena.yMax - half.y);
+                float score = 10f;
+                foreach (var q in placed) score = Mathf.Min(score, Vector2.Distance(c, q));
+                if (score > bestScore) { bestScore = score; best = c; }
+                if (score >= data.AreaSize.x) break;
+            }
+            placed.Add(best);
+            BombSiteWindow.Spawn(this, data, best);
+            Released?.Invoke(data);
+            if (i < data.SpawnCount - 1) yield return new WaitForSeconds(0.15f);
+        }
+        yield return new WaitForSeconds(0.3f);
+    }
+
     // ───────── 画面のフィルター（Photoshop のボスの大技） ─────────
 
     /// <summary>フィルターをかけ終わるまで待つ（状態異常と画面の色は、そのあとも決まった秒数続く）</summary>
@@ -744,6 +796,7 @@ public class AttackRunner : MonoBehaviour
         go.name = data.SummonPrefab.name;
         go.SetActive(true);
         Register(go);
+        foreach (var s in go.GetComponents<ISummonedBy>()) s.SetSummoner(this); // 出した物がさらに雑魚を出すとき（ブラウザのボスのウィンドウ）
         Sprite[] frames = data.SummonFrames;
         if (frames.Length > 0 && frames[0] != null)
         {

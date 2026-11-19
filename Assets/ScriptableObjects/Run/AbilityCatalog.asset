@@ -16,7 +16,7 @@ MonoBehaviour:
   _pickCount: 1
   _categories:
   - Category: 1
-    Skill: {fileID: 11400000, guid: 9ef23ca1ac7b9443c8b04fa55802f50b, type: 2}
+    Skill: {fileID: 11400000, guid: 704ad26bd82aa402a97fca5034729dcf, type: 2}
     AppNames:
     - Google Chrome
     - Chrome

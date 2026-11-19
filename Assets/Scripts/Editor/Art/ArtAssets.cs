@@ -118,6 +118,12 @@ public static class ArtAssets
         R("Generated/Enemies/Zako_InkBlob.png", frame: 30, pivot: Feet),
         R("Generated/Attacks/Fx_MouseCursor.png", pivot: new Vector2(0f, 1f)),
         R("Generated/Attacks/Fx_Marquee.png", frame: 8),
+        // ブラウザの能力「パケット」（2026-11-19）
+        R("Generated/Attacks/Fx_Packet.png", readable: true), // ブラウザのボスのパケットで、アプリの色に塗り替える
+        R("Generated/Attacks/Fx_PacketResponse.png"),
+        // ブラウザのボス（2026-11-19）：爆弾のサイトのウィンドウと、雑魚を出し続けるウィンドウ
+        R("Generated/Attacks/Window_BombSite.png"),
+        R("Generated/Enemies/Window_Spawner.png"),
         R("Generated/Attacks/Fx_PhotoshopInk.png"),
         R("Generated/Bosses/Boss_AiDefaultIcon.png"),
         R("Generated/Attacks/Fx_Shadow.png"),
@@ -177,6 +183,7 @@ public static class ArtAssets
         R("Generated/UI/Status_Slow.png"),
         R("Generated/UI/Status_Cooldown.png"),
         R("Generated/UI/Status_Jump.png"),
+        R("Generated/UI/Icon_Packet.png"),
     };
 
     [MenuItem("Tools/Team1/グラフィックを適用")]
@@ -495,6 +502,11 @@ public static class ArtAssets
         SetSpriteWhite($"{AttackFolder}/Player/App/Attack_App_Photoshop_Ink.asset", "Generated/Attacks/Fx_PhotoshopInk.png");
         SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_App_Photoshop.asset", "_theme", GetOrCreateTheme("Theme_Photoshop", PhotoshopTheme));
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_App_Photoshop.asset", "Generated/UI/Icon_Photoshop.png");
+        // ブラウザの能力「パケット」（2026-11-19）：パケット・応答のパケットの絵、色はブラウザ（Chrome）と同じ、アイコン
+        SetSpriteWhite($"{AttackFolder}/Player/Attack_Ability_Packet.asset", "Generated/Attacks/Fx_Packet.png");
+        SetSpriteProp($"{AttackFolder}/Player/Attack_Ability_Packet.asset", "_packetResponseSprite", "Generated/Attacks/Fx_PacketResponse.png");
+        SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Packet.asset", "_theme", chrome);
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Packet.asset", "Generated/UI/Icon_Packet.png");
         SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "_theme", GetOrCreateTheme("Theme_AI", AiTheme));
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "Generated/UI/Icon_AiAssistant.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_Chrome.asset", "Generated/Bosses/Icon_Browser.png");
@@ -572,6 +584,18 @@ public static class ArtAssets
         Col(so, "_folder", "5865f2"); Col(so, "_folderShade", "3a43a8"); Col(so, "_folderTab", "a5adff");
         Col(so, "_main", "5865f2");
         Colors(so, "_accents", "5865f2", "a5adff");
+    }
+
+    /// <summary>攻撃データの絵の欄（1枚）に絵を入れる。同じなら書き換えない</summary>
+    static void SetSpriteProp(string assetPath, string prop, string sprite)
+    {
+        var data = AssetDatabase.LoadAssetAtPath<AttackData>(assetPath);
+        if (data == null) return;
+        Sprite s = LoadSprite(sprite);
+        var so0 = new SerializedObject(data);
+        if (so0.FindProperty(prop).objectReferenceValue == s) return;
+        PlayerTestSceneBuilder.SetProps(data, so => so.FindProperty(prop).objectReferenceValue = s);
+        EditorUtility.SetDirty(data);
     }
 
     /// <summary>攻撃データの絵を入れ、色を白（絵の色のまま）にする。同じなら書き換えない</summary>

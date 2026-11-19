@@ -209,7 +209,10 @@ public static class RunPlanner
             // カテゴリ：カテゴリの表で分からなければ、アプリ専用の能力のカテゴリ（Slack・Discord・LINE は SNS・チャット。2026-11-19）
             SkillCategory cat = category != null ? category.Category
                 : abilities?.FindAppSkill(row)?.Skill != null ? abilities.FindAppSkill(row).Skill.Category : SkillCategory.Unknown;
-            AppEntry template = cat != SkillCategory.Unknown ? templates.FirstOrDefault(a => a.Category == cat) : null;
+            // 同じカテゴリのひな形のうち、そのカテゴリ専用のひな形（ブラウザのボスなど）を優先する（2026-11-19。Chrome そのものは対応表のボスのまま）
+            AppEntry template = cat != SkillCategory.Unknown
+                ? templates.Where(a => a.Category == cat).OrderByDescending(a => a.StandInSameCategoryOnly).FirstOrDefault()
+                : null;
             if (template == null)
             {
                 // カテゴリの近いボスが無ければ、名前で決める（同じカテゴリ専用のひな形＝AI チャットのボスは選ばない。2026-11-19）

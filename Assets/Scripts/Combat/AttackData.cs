@@ -241,6 +241,32 @@ public class AttackData : ScriptableObject
     [Tooltip("画面の色（ランダムに1つ。半透明で重ねる）")]
     [SerializeField] Color[] _filterTints;
 
+    // ───────── パケット（Packet） ─────────
+    [Header("パケット（Packet のとき。ブラウザの能力）")]
+    [Tooltip("ロックオンする敵を探す範囲（持ち主からの半径、マス）。いなければ、前へまっすぐ撃つ")]
+    [SerializeField, Min(0.5f)] float _packetRange = 12f;
+    [Tooltip("パケットを1発ずつ撃つ間隔（秒）。数は「弾」の「1回に撃つ数」、最初に広がる角度は「扇の角度」")]
+    [SerializeField, Min(0f)] float _packetInterval = 0.06f;
+    [Tooltip("1秒に曲がれる角度（度）。大きいほど、よく追いかける")]
+    [SerializeField, Min(0f)] float _packetTurnRate = 540f;
+    [Tooltip("ロックオンした敵が倒れたとき、応答のパケットが届いて回復する量（ライフ）。0なら回復しない")]
+    [SerializeField, Min(0)] int _packetHeal = 1;
+    [Tooltip("応答のパケットの絵")]
+    [SerializeField] Sprite _packetResponseSprite;
+    [Tooltip("ロックオンして IP アドレスを出してから、撃ち始めるまでの秒数（ブラウザのボス。プレイヤーは0）")]
+    [SerializeField, Min(0f)] float _packetLockTime;
+    [Tooltip("オン：パケットを攻撃で壊せる（ブラウザのボスのパケット）")]
+    [SerializeField] bool _packetDestructible;
+
+    // ───────── 爆弾のサイト（BombSite） ─────────
+    [Header("爆弾のサイト（BombSite のとき。ブラウザのボス）")]
+    [Tooltip("読み込みバーが、最初にゆっくりたまる割合（0〜1）。ここまでを「予告時間」かけてため、残りを下の秒数で一気にためる")]
+    [SerializeField, Range(0f, 1f)] float _bombSlowPortion = 0.2f;
+    [Tooltip("残りを一気にためる秒数")]
+    [SerializeField, Min(0.02f)] float _bombFillTime = 0.25f;
+    [Tooltip("爆発の絵（大きさは「形の大きさ」の x＝直径）。ウィンドウの絵は「見た目」の絵、大きさは「落下物の大きさ」、数は「出す数」")]
+    [SerializeField] Sprite _bombBlastSprite;
+
     // ───────── 通知のアラーム（Alarm） ─────────
     [Header("通知のアラーム（Alarm のとき。チャットのボスの大技）")]
     [Tooltip("ベルが鳴る回数。最後に鳴ったときに、通知のベルが残っていれば部屋全体に攻撃（ベルの数は「出す数」）")]
@@ -342,6 +368,16 @@ public class AttackData : ScriptableObject
     public Vector2 ChatAnchor => _chatAnchor;
     public Sprite[] ChatHitFrames => _chatHitFrames ?? System.Array.Empty<Sprite>();
     public bool FixedColors => _fixedColors;
+    public float PacketRange => _packetRange;
+    public float PacketInterval => _packetInterval;
+    public float PacketTurnRate => _packetTurnRate;
+    public int PacketHeal => _packetHeal;
+    public Sprite PacketResponseSprite => _packetResponseSprite;
+    public float PacketLockTime => _packetLockTime;
+    public bool PacketDestructible => _packetDestructible;
+    public float BombSlowPortion => _bombSlowPortion;
+    public float BombFillTime => _bombFillTime;
+    public Sprite BombBlastSprite => _bombBlastSprite;
     public float BrushLength => _brushLength;
     public float BrushWidth => _brushWidth;
     public float BrushSwingTime => _brushSwingTime;

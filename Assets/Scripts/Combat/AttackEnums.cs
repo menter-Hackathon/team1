@@ -44,6 +44,16 @@ public enum AttackKind
     /// しばらくすると元に戻る（ScreenFilter・PlayerStatusEffects）
     /// </summary>
     Filter = 10,
+    /// <summary>
+    /// パケット（2026-11-19。ブラウザの能力）。近くの敵を1体ロックオンし（頭の上に IP アドレス）、棒状のパケットを何発か撃って追尾させる。
+    /// ロックオンした敵が倒れると、応答のパケットが持ち主へ飛んできて回復する（PacketVolley）
+    /// </summary>
+    Packet = 11,
+    /// <summary>
+    /// 爆弾のサイト（2026-11-19。ブラウザのボス）。ブラウザのウィンドウ（爆弾のマークのサイト）をあちこちに開き、
+    /// 読み込みバーがたまり終わったら、その場で爆発する。ウィンドウそのものには判定がない（BombSiteWindow）
+    /// </summary>
+    BombSite = 12,
 }
 
 /// <summary>レーザーの見せ方（Beam のとき）</summary>
