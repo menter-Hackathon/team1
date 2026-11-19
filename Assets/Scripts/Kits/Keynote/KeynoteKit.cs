@@ -16,6 +16,7 @@ public static class KeynoteKit
     {
         AppKits.Register(Label, Names, Bundles);
         StageRules.Register(Label, () => new KeynoteRule());
+        StageEvents.Register(Label, stage => new KeynoteMagicMoveEvent(stage)); // 場面③の出来事（2026-11-19。docs/stage-gimmick-variety-b.md）
         KitDress.RegisterArt("keynote.number", i => KeynoteArt.BigNumber(1 + (i % 3)));
     }
 }

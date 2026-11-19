@@ -72,7 +72,7 @@ public class Pickup : MonoBehaviour
         {
             float x = Mathf.MoveTowards(from.x, towardX, i * 0.5f);
             x = Mathf.Clamp(x, view.xMin + 0.6f, view.xMax - 0.6f);
-            RaycastHit2D hit = Physics2D.Raycast(new Vector2(x, from.y + 0.3f), Vector2.down, 30f, mask);
+            RaycastHit2D hit = AppStagePlatforms.RaycastSteady(new Vector2(x, from.y + 0.3f), Vector2.down, 30f, mask); // 動く・消えるアプリの足場は飛ばす（2026-11-19）
             if (hit.collider != null && hit.distance > 0.01f && hit.point.y > view.yMin - 1f)
             {
                 floor = hit.point;

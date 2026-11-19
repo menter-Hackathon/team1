@@ -62,6 +62,8 @@ public class ArcRule : StageRule
     {
         Follow();
         _timer -= dt;
+        // 場面③の出来事（スペースのスワイプ）の間は、ウイルスの Space を新しく始めない（色の切りかえが重ならないように。2026-11-19）
+        if (!_virus && Ctx.Phase == PacePhase.Event && _timer < 1.5f) _timer = 1.5f;
         if (!_virus && !_warned && _timer <= 1f) { _warned = true; GameAudio.Event("gm_arc_virus_warn"); }
         if (!_virus && _timer <= 0f) Swipe(true);
         else if (_virus && _timer <= 0f) Swipe(false);

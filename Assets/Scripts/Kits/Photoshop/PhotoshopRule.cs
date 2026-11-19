@@ -74,8 +74,21 @@ public class PhotoshopRule : StageRule
     Row Pick()
     {
         var list = new List<Row> { Row.Enemies, Row.Platforms, Row.Background };
+        if (_eventRunning) list.Remove(Row.Platforms); // 場面③の出来事の間は、足場を点線にしない
         if (InBossFight && _boss != null) { list.Remove(Row.Enemies); list.Add(Row.Boss); list.Add(Row.Boss); }
         return list[Random.Range(0, list.Count)];
+    }
+
+    bool _eventRunning;
+
+    /// <summary>
+    /// 【仮】場面③の出来事（PhotoshopSelectionEvent：足場へ逃げる出来事）の始まり・終わり（2026-11-19。docs/stage-gimmick-variety-c.md 11章）。
+    /// 出来事の間は Platforms の目を閉じない。始まった時に Platforms が点滅中・閉じていたら、すぐ戻す
+    /// </summary>
+    public void SetEventRunning(bool on)
+    {
+        _eventRunning = on;
+        if (on && _row == Row.Platforms && _state != State.Idle) ResetAll();
     }
 
     public override void OnPhase(PacePhase phase)

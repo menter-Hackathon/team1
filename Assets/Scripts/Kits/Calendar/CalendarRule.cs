@@ -7,7 +7,8 @@ using UnityEngine;
 /// ・予定の 8秒前：右上に通知（in 10 min）。足場の1つが、予定の色の枠で光る（会議室）
 /// ・予定の時刻に、その足場の上にいる＝出席：✓ と小さい紙吹雪。ごほうび：クールタイムを全部回復（E5）
 /// ・いない＝欠席：右上に Missed。罰はライフではなく、相手の強化を 8秒（雑魚の時間は雑魚の速さ ×1.2、ボス戦はボスの待ち時間 ×0.8。E2）
-/// ・締め切りの線（ボスの技）が出ている間・④ ひと休み・ボスの登場・形態変化の間は、時間の帯が止まる
+/// ・締め切りの線（ボスの技）が出ている間・③ 出来事（2026-11-19：ダブルブッキング）・④ ひと休み・ボスの登場・形態変化の間は、時間の帯が止まる
+/// ・2026-11-19：出来事の「空き時間」に立ちきると、次の欠席の罰を 1回なかったことにする（Excuse）
 /// ・足場が無い画面では、床の一か所（幅 3）を会議室にする
 /// </summary>
 public class CalendarRule : StageRule
@@ -20,6 +21,7 @@ public class CalendarRule : StageRule
 
     float _clock;
     bool _warned;
+    bool _excused; // 2026-11-19：次の欠席の罰を 1回なかったことにする（出来事の空き時間）
     int _color;
     bool _hasRoom;
     Bounds _room;
@@ -56,7 +58,7 @@ public class CalendarRule : StageRule
             if (_warned) PickRoom(); // 画面が変わったら、会議室を選び直す
         }
 
-        bool paused = CalendarDeadlineEffect.AnyActive || Ctx.Phase == PacePhase.Rest || Ctx.BossTransitioning;
+        bool paused = CalendarDeadlineEffect.AnyActive || (!Ctx.InBossFight && Ctx.Phase == PacePhase.Event) || Ctx.Phase == PacePhase.Rest || Ctx.BossTransitioning;
         if (!paused) _clock += dt;
         if (_strip != null)
         {
@@ -111,6 +113,9 @@ public class CalendarRule : StageRule
         {
             // プレイヤーから遠い方を少し選びやすく（動いて間に合う）
             var list = new List<Bounds>(_platforms);
+            // 2026-11-19：アプリの UI の足場のうち、消えている・会議までに消える・落ちる・動く足場は選ばない（全部だめなら今までどおり）
+            List<Bounds> steady = list.FindAll(b => AppStagePlatforms.IsSolidFor(b, Warn + 1f));
+            if (steady.Count > 0) list = steady;
             list.Sort((a, b) => Mathf.Abs(b.center.x - p.center.x).CompareTo(Mathf.Abs(a.center.x - p.center.x)));
             _room = list[Random.value < 0.65f || list.Count == 1 ? 0 : Random.Range(1, list.Count)];
         }
@@ -158,6 +163,19 @@ public class CalendarRule : StageRule
         return feet >= _room.max.y - 0.3f && feet <= _room.max.y + JumpAllowance;
     }
 
+    /// <summary>
+    /// 【仮】2026-11-19：次の予定の「欠席」の罰を 1回なかったことにする（出来事「ダブルブッキング」の空き時間のごほうび）。
+    /// カレンダーのステージでない・もう取ってあれば false（呼ぶ側がほかのごほうびにする）
+    /// </summary>
+    public static bool Excuse()
+    {
+        if (!(StageRules.Current is CalendarRule rule) || rule._excused) return false;
+        rule._excused = true;
+        if (CallKitUtil.TryPlayerBounds(out Bounds p))
+            FxAnim.Sprite(CalendarArt.Check, new Vector2(p.center.x, p.max.y + 0.6f), 60, 0.7f, Color.white, 2f, "Calendar_Excuse").Pop().Rise(0.5f);
+        return true;
+    }
+
     // ───────── 予定の時刻 ─────────
 
     void Resolve()
@@ -174,6 +192,14 @@ public class CalendarRule : StageRule
                 FxAnim.Sprite(CalendarArt.Check, head, 60, 0.7f, Color.white, 2f, "Calendar_Attend").Pop().Rise(0.5f);
                 FxKit.Fragments(head, Vector2.up, 10, null, new[] { c, CalendarArt.Red, Color.white }, 1f);
             }
+            return;
+        }
+        if (_excused)
+        {
+            // 出来事の空き時間で、予定をずらしておいた：罰なし
+            _excused = false;
+            KitToast.Show("Rescheduled", null, c);
+            GameAudio.Event("gm_calendar_attend");
             return;
         }
         KitToast.Show("Missed", null, CalendarArt.Red);

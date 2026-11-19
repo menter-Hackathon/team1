@@ -489,6 +489,37 @@ public class ChromeOfflineEffect : CustomEffect
         if (o.Hit != null) o.Hit.Deactivate();
     }
 
+    /// <summary>
+    /// 【仮】2026-11-19：次のサボテンを1つ消す（ステージの出来事のポップアップ広告の × を叩いたごほうび。docs/stage-gimmick-variety-a.md Chrome）。
+    /// 出ている物のうち、fromX より進む先（来る側）でいちばん近いサボテン。無ければ、まだ出ていない次のサボテン。消せたら true
+    /// </summary>
+    public bool RemoveNextCactus(float fromX)
+    {
+        Obstacle best = null;
+        float bestD = float.MaxValue;
+        foreach (Obstacle o in _obstacles)
+        {
+            if (o.Root == null || o.FadeAt >= 0f || o.Kind == ChromeObstacle.LowBird || o.Kind == ChromeObstacle.HighBird) continue;
+            float d = (o.Root.position.x - fromX) * -Dir; // 来る側が＋
+            if (d < -0.3f || d >= bestD) continue;
+            best = o;
+            bestD = d;
+        }
+        if (best != null)
+        {
+            FxKit.Ring(best.Root.position + Vector3.up * 0.5f, 1.2f, 0.2f, Color.white);
+            Fade(best);
+            return true;
+        }
+        for (int i = _next; i < _plan.Count; i++)
+        {
+            if (_plan[i].Kind == ChromeObstacle.LowBird || _plan[i].Kind == ChromeObstacle.HighBird) continue;
+            _plan.RemoveAt(i);
+            return true;
+        }
+        return false;
+    }
+
     Vector2 ScrollWarnPos(float lift)
     {
         Rect view = ScreenUi.ViewRect();

@@ -9,7 +9,8 @@ using UnityEngine.SceneManagement;
 /// ・画面の上のまん中にコマンドの行（ボスの技と同じ TerminalCommandLine）。場面が変わるたびに1行打たれる（飾り。場面の切り替えは StagePacer のまま）
 ///   ① 入り ls /virus：置いてある雑魚の頭の上に、番号の札 [1] [2]… が 1秒出る
 ///   ② 盛り上がり ./virus.sh &amp;：雑魚が出るたびに、行の下に [n] 4021 のような1行が流れる
-///   ③ 出来事 sudo reboot：今の出来事（床の全部。予告が長い）のまま
+///   ③ 出来事 sudo reboot：今の出来事（床の全部。予告が長い）。2026-11-19（docs/stage-gimmick-variety-a.md Terminal）：前半に kill -9 を 2回足し、
+///      床の全部は後半に 1回にする（TerminalKillEvent.Make を AppStageEvents に登録。行は kill -9 * → sudo reboot と打ち直す）
 ///   ⑤ 最高潮 yes virus：行の下に virus の字が流れ続ける
 ///   ボスの登場 clear：行と札が全部消える
 /// ・雑魚を倒したとき：倒れた所に、緑の小さい字 killed（0.4秒）
@@ -55,6 +56,8 @@ public class TerminalKit : MonoBehaviour
     {
         StagePacer.Started -= OnPacerStarted;
         StagePacer.Started += OnPacerStarted;
+        // 場面③：kill -9 ＋ sudo reboot（ラスボスのステージなので StageEvents ではなく、直接登録。作れなければ表の sudo reboot のまま）
+        AppStageEvents.Register(Label, AppNames, BundleIds, (stage, isFinal) => TerminalKillEvent.Make());
         // 能力のカード（倒す前は出さない・倒したら1枚だけ）は AbilityCatalog が決める（2026-11-19 担当0。ここでスイッチは切らない）
     }
 
@@ -62,6 +65,25 @@ public class TerminalKit : MonoBehaviour
     {
         if (pacer == null || !IsTerminal(pacer) || pacer.GetComponent<TerminalKit>() != null) return;
         pacer.gameObject.AddComponent<TerminalKit>().Setup(pacer);
+        // スキンで Terminal と分かったのに、出来事の表（名前・バンドルID）に当たらないときは、そのステージの名前を足して登録し直す（PremiereKit と同じ）
+        if (!AppStageEvents.Has(pacer.AppName, pacer.BundleId))
+        {
+            var names = new List<string>(AppNames);
+            var bundles = new List<string>(BundleIds);
+            if (!string.IsNullOrEmpty(pacer.AppName)) names.Add(pacer.AppName);
+            if (!string.IsNullOrEmpty(pacer.BundleId)) bundles.Add(pacer.BundleId);
+            AppStageEvents.Register(Label, names.ToArray(), bundles.ToArray(), (stage, isFinal) => TerminalKillEvent.Make());
+        }
+    }
+
+    /// <summary>【仮】2026-11-19：コマンドの行を打ち直す（出来事の kill -9 * など）。床を消している間・Terminal のステージでなければ何もしない</summary>
+    public static void Command(string command)
+    {
+        StagePacer p = StagePacer.Current;
+        TerminalKit kit = p != null ? p.GetComponent<TerminalKit>() : null;
+        if (kit == null || kit._done || kit._line == null || kit._rmEndAt >= 0f) return;
+        GameAudio.Event("gm_terminal_cmd");
+        kit._line.Retype(command);
     }
 
     static bool IsTerminal(StagePacer p)

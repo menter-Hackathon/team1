@@ -25,6 +25,7 @@ public class CursorRule : StageRule
         _timer -= dt;
         if (_timer > 0f) return;
         if (!Ctx.CanPlace) return; // 置けるまで待つ
+        if (Ctx.Phase == PacePhase.Event) return; // 場面③の出来事（ゴーストテキスト）の間は置かない（良い物が多くなりすぎないように。2026-11-19）
         if (Place()) _timer = Interval;
     }
 
@@ -67,7 +68,7 @@ public class CursorRule : StageRule
             if (probe != null)
             {
                 // 上から下へ探して、いちばん上の床・足場（足場の上に出ることもある）
-                if (!probe.TryFindGround(x, area.yMax - 0.5f, out gy)) continue;
+                if (!probe.TryFindGround(x, area.yMax - 0.5f, out gy, steadyOnly: true)) continue; // 動く・消えるアプリの足場の上には置かない（2026-11-19）
             }
             Vector2 pos = new Vector2(x, gy + 0.75f);
             _pickup = CursorTabPickup.Spawn(pos, player, OnAccepted, OnExpired);

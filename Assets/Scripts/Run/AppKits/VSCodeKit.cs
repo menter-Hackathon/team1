@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 【仮】本物の VS Code のステージのギミック（2026-11-19。docs/app-feedback-v2-design.md 3-4）。ほかの開発アプリ・代用ボスのステージは今のまま。
 /// ・A：デバッグ実行（場面③の出来事）。ボスの技と同じ「行のブレークポイント」が、ボスなしで起きる（ボス戦の前に、行の読み方を覚える所）。
-///   今の「ビルドエラーの雨」は、数を半分にして続ける（行の判定の前後 0.5秒は落とさない）
+///   2026-11-19：上から降る「ビルドエラーの雨」をやめて、床から出る「エラーの波線」にした（行の判定の前後 0.5秒は出さない）
 /// ・A：差分の足場（見た目だけ。ステージ全体）。開いたり閉じたりする足場を、Git の差分の行に見せる（緑の + → 赤の - → 赤い点線の枠）
 /// どちらも、ボスの登場（PacePhase.Done）とシーンが変わるときに全部消す
 /// </summary>
@@ -167,28 +167,32 @@ public class VSCodeDiffPlatform : MonoBehaviour
 /// 【仮】出来事「デバッグ実行」（2026-11-19。docs 3-4）。隅の通知は Debugging...。部屋の上のまん中に、デバッグの操作バーが出来事の間ずっと出る。
 /// ・床の行と、足場の行を、交互に。間は、強さ 1／2／3 で 3.0／2.5／2.0秒。予告 1.0秒は同じ（ボスの技と同じ見た目・同じ避け方）
 /// ・行の高さは、その部屋の床と、いちばん低い足場（床から 2〜5マスの上の面）から決める。足場が見つからなければ、床の行だけ
-/// ・ログの束の雨（今の出来事の型）は、数を半分にして続ける。行の判定の前後 0.5秒に着地しそうな物は落とさない
+/// ・2026-11-19（docs/stage-gimmick-variety-a.md VS Code）：ログの束の雨（上から）をやめて「エラーの波線」（KitMotion.Erupt。下から）。
+///   行のブレークポイントの合間に、プレイヤーの足元 ±2マスへ幅 2マスを 1本（強さ 2・3 は 2本。間を 3マス以上あける）。
+///   予告 1.0（床に赤い割れ目）→ せり上がり 0.25 → 止まる 0.6 → 引っこむ。高さ 2.5マス。出来事の間に 3／4／5回【仮】。
+///   せり上がる物は「問題」パネルの行（灰青の板に赤い × と文字の棒）。床からだけ出る（足場の上は安全）。穴の上には出さない。
+///   せり上がる時刻が行の判定の前後 0.5秒に入る時・当たる間が行の判定と重なる時は出さない（足場の行の時も、床の波線を重ねない）
 /// 危ない物は、出来事用の AttackRunner から出す。攻撃データは実行時に作る（名前に Breakpoint：当たると頭の上に ⏸）
 /// </summary>
 public class VSCodeDebugEvent : PaceEvent
 {
     const float Duration = 10.5f;     // 出来事の長さ（GateEventSeconds 12秒の中に収める）
-    const float RainInterval = 1.4f;  // 今の雨（0.7秒）の倍＝数を半分
-    const int RainMaxLive = 2;
-    const float RainSpread = 3f;
     const float RowQuiet = 0.5f;
+    // エラーの波線（下から）【仮】
+    const float WaveWarn = 1.0f, WaveRise = 0.25f, WaveHold = 0.6f, WaveHeight = 2.5f, WaveWidth = 2f, WaveSpread = 2f, WaveApart = 5f;
+    const float WaveFirst = 0.8f;
 
     readonly VSCodeLineSettings _cfg = new VSCodeLineSettings();
     AttackData _lineData;
-    AttackData _rainData;
     float _clock;
     float _nextLine;
-    float _nextRain;
+    float _nextWave;
+    int _wavesLeft;
+    float _waveGap;
     bool _platformTurn;
     int _lineNo = 12;
-    int _rainCount;
     readonly List<float> _hitTimes = new List<float>();   // 行の判定の時刻（_clock の上で）
-    readonly List<FallingObject> _rain = new List<FallingObject>();
+    readonly List<KitMotionErupt> _waves = new List<KitMotionErupt>();
     readonly List<VSCodeBreakpointLineEffect> _lines = new List<VSCodeBreakpointLineEffect>();
     GameObject _bar;
 
@@ -204,10 +208,10 @@ public class VSCodeDebugEvent : PaceEvent
         _lineData = ScriptableObject.CreateInstance<AttackData>(); // ダメージ 1・ノックバック (6, 5)・のけぞり 0.25
         _lineData.name = "Attack_VSCode_BreakpointLine_Stage";
         _lineData.hideFlags = HideFlags.DontSave;
-        PaceAssets a = PaceAssets.Load();
-        _rainData = a != null ? a.Rain : null;
         _nextLine = 0f;
-        _nextRain = 0.6f;
+        _wavesLeft = Strength <= 1 ? 3 : Strength == 2 ? 4 : 5;
+        _waveGap = (Duration - WaveFirst - WaveWarn - WaveRise * 2f - WaveHold - 0.3f) / Mathf.Max(1, _wavesLeft);
+        _nextWave = WaveFirst;
     }
 
     float Interval => Strength <= 1 ? 3.0f : Strength == 2 ? 2.5f : 2.0f;
@@ -216,7 +220,7 @@ public class VSCodeDebugEvent : PaceEvent
     {
         _clock += dt;
         _lines.RemoveAll(l => l == null);
-        _rain.RemoveAll(f => f == null || f.HasLanded);
+        _waves.RemoveAll(w => w == null || w.IsDone);
         if (_bar == null) ShowBar();
         else PlaceBar();
 
@@ -226,12 +230,17 @@ public class VSCodeDebugEvent : PaceEvent
             _nextLine = _clock + Interval;
             SpawnLine();
         }
-        // 雨（半分の数。行の判定の前後は落とさない）
-        if (_rainData != null && !Quiet && _clock >= _nextRain && _clock < Duration - (_rainData.TelegraphTime + 0.9f) && _rain.Count < RainMaxLive)
+        // エラーの波線（下から。行の判定の前後は出さない）
+        if (_wavesLeft > 0 && !Quiet && _clock >= _nextWave && _clock + WaveWarn + WaveRise * 2f + WaveHold < Duration)
         {
-            _nextRain = _clock + (TrySpawnRain() ? RainInterval : 0.2f);
+            if (TrySpawnWave())
+            {
+                _wavesLeft--;
+                _nextWave = _clock + _waveGap;
+            }
+            else _nextWave = _clock + 0.1f;
         }
-        bool more = _clock < Duration || _lines.Count > 0 || _rain.Count > 0;
+        bool more = _clock < Duration || _lines.Count > 0 || _waves.Count > 0;
         if (!more) GameAudio.Event("gm_vscode_debug_end"); // 自分で終わる時だけ（ボスで切られた時は鳴らない）
         return more;
     }
@@ -294,34 +303,67 @@ public class VSCodeDebugEvent : PaceEvent
         return found;
     }
 
-    bool TrySpawnRain()
+    bool TrySpawnWave()
     {
-        // 着地しそうな時刻（予告＋落ちる 約0.6秒）が、行の判定の前後 0.5秒に入るなら、今は落とさない
-        float landAt = _clock + _rainData.TelegraphTime + 0.6f;
-        bool Near(float h) => landAt > h - RowQuiet - 0.6f && landAt < h + _cfg.HitTime + RowQuiet;
+        // せり上がる時刻が行の判定の前後 0.5秒に入る・当たる間（せり上がり〜止まる）が行の判定と重なる（前後 0.15秒）なら、今は出さない
+        // （当たる間ぜんぶを前後 0.5秒あけると、強さ 3 の行の間 2秒に入らないため）
+        float hitFrom = _clock + WaveWarn, hitTo = hitFrom + WaveRise + WaveHold;
+        bool Near(float h) => Mathf.Abs(hitFrom - h) < RowQuiet || (hitTo > h - 0.15f && hitFrom < h + _cfg.HitTime + 0.15f);
         foreach (float h in _hitTimes) if (Near(h)) return false;
         if (Near(_nextLine + _cfg.Telegraph)) return false; // まだ出していない、次の行の判定も見る
         Rect a = Area;
         Vector2 player = PlayerPos;
-        Vector2 size = _rainData.ObjectSize;
-        float half = size.x * 0.5f;
+        float half = WaveWidth * 0.5f;
         float minX = a.xMin + half + 0.3f, maxX = a.xMax - half - 0.3f;
         if (minX >= maxX) return false;
-        float hangY = a.yMax - size.y * 0.5f - 1.1f;
-        for (int attempt = 0; attempt < 8; attempt++)
+        int columns = Strength >= 2 ? 2 : 1;
+        var placed = new List<float>();
+        for (int attempt = 0; attempt < 10 && placed.Count < columns; attempt++)
         {
-            float x = Mathf.Clamp(player.x + UnityEngine.Random.Range(-RainSpread, RainSpread), minX, maxX);
+            float x = placed.Count == 0
+                ? Mathf.Clamp(player.x + UnityEngine.Random.Range(-WaveSpread, WaveSpread), minX, maxX)
+                : placed[0] + (UnityEngine.Random.value < 0.5f ? -1f : 1f) * UnityEngine.Random.Range(WaveApart, WaveApart + 2f);
+            if (x < minX || x > maxX) continue;
             bool near = false;
-            foreach (var f in _rain) if (f != null && Mathf.Abs(f.transform.position.x - x) < size.x) near = true;
+            foreach (float p in placed) if (Mathf.Abs(p - x) < WaveApart) near = true;
             if (near) continue;
-            if (!Runner.TryFindGround(x, hangY, out float groundY)) continue; // 穴の上には落とさない
-            if (groundY > hangY - size.y) continue;
-            float now = Time.time;
-            FallingObject f2 = FallingObject.Spawn(Runner, _rainData, new Vector2(x, hangY), now, now + _rainData.TelegraphTime, true, false, _rainCount++ % 3);
-            if (f2 != null) _rain.Add(f2);
-            return f2 != null;
+            // 床（Ground）だけ。穴の上には出さない
+            RaycastHit2D hit = Physics2D.Raycast(new Vector2(x, player.y + 1.5f), Vector2.down, 8f, LayerMask.GetMask("Ground"));
+            if (hit.collider == null || hit.distance < 0.05f) continue;
+            if (!Physics2D.Raycast(new Vector2(x - half + 0.1f, hit.point.y + 0.2f), Vector2.down, 0.5f, LayerMask.GetMask("Ground"))) continue;
+            if (!Physics2D.Raycast(new Vector2(x + half - 0.1f, hit.point.y + 0.2f), Vector2.down, 0.5f, LayerMask.GetMask("Ground"))) continue;
+            KitMotionErupt e = KitMotion.Erupt(KitOwner.Of(Track, Runner), x, WaveWidth, WaveHeight, WaveWarn, WaveRise, WaveHold, ProblemRow, null, 1, hit.point.y);
+            if (e == null) continue;
+            _waves.Add(e);
+            placed.Add(x);
         }
-        return false;
+        if (placed.Count > 0) GameAudio.Event("gm_vscode_line", 0.8f);
+        return placed.Count > 0;
+    }
+
+    /// <summary>「問題」パネルの行（36×45）：灰青の板に、赤い × と文字の棒が並ぶ</summary>
+    static Sprite ProblemRow
+    {
+        get
+        {
+            char[,] g = GimmickA.Grid(36, 45);
+            GimmickA.Fill(g, 0, 0, 36, 45, 'O');
+            GimmickA.Fill(g, 1, 1, 34, 43, 'B');
+            GimmickA.Fill(g, 1, 1, 34, 1, 'R'); // 上のふち：波線の赤
+            for (int r = 0; r < 4; r++)
+            {
+                int y0 = 4 + r * 10;
+                for (int k = 0; k < 5; k++) { g[y0 + k, 3 + k] = 'R'; g[y0 + k, 7 - k] = 'R'; }
+                GimmickA.Fill(g, 11, y0 + 1, 20 - (r % 2) * 7, 2, 'T');
+                GimmickA.Fill(g, 11, y0 + 4, 12 + (r % 3) * 3, 1, 'D');
+            }
+            var pal = new Dictionary<char, Color32>
+            {
+                { 'O', RuntimeSprites.Hex("444C56") }, { 'B', RuntimeSprites.Hex("2D333B") }, { 'R', RuntimeSprites.Hex("F85149") },
+                { 'T', RuntimeSprites.Hex("ADBAC7") }, { 'D', RuntimeSprites.Hex("768390") },
+            };
+            return RuntimeSprites.FromAscii("VSCodeProblemRow", GimmickA.Rows(g), pal);
+        }
     }
 
     // ───────── デバッグの操作バー（出来事の間ずっと） ─────────

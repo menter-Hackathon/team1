@@ -102,6 +102,7 @@ public class PixelHud : MonoBehaviour
         const float size = 36f, gap = 6f;
         bool pending = _skills.HasPending;
         bool blinkOn = Mathf.FloorToInt(Time.unscaledTime / 0.25f) % 2 == 0;
+        bool boosted = StatMods.Player.CooldownRate.Value > 1.05f; // クールタイムが速く進んでいる（Discord の VC など）
         for (int i = 0; i < _skills.Capacity; i++)
         {
             var r = new Rect(x + i * (size + gap), y, size, size);
@@ -110,6 +111,7 @@ public class PixelHud : MonoBehaviour
             DrawSlot(r, _skills.GetSkill(i), highlight);
             if (_executor != null && _executor.IsSealed(i)) DrawSeal(r); // 封印（2026-11-19：アプリのキット）
             else if (_skills.GetSkill(i) != null && PermissionSealed()) DrawUsableGlow(r); // chmod の封印の間、能力は使える（緑に光る）
+            else if (_skills.GetSkill(i) != null && boosted) DrawBoost(r, i);
             Number(r, (i + 1).ToString());
         }
         float px = x + _skills.Capacity * (size + gap) + 6f;
@@ -203,6 +205,34 @@ public class PixelHud : MonoBehaviour
         Color c = UsableGreen;
         c.a = k;
         PixelGui.Border(r, c, 2f);
+    }
+
+    // クールタイムが速い間（2026-11-19：Discord の VC で分かりにくいと言われた）：緑のふちが脈打ち、緑の上向きの矢印が枠の中を上へ流れる
+    static void DrawBoost(Rect r, int index)
+    {
+        float k = 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 9f);
+        Color edge = UsableGreen;
+        edge.a = k;
+        PixelGui.Border(r, edge, 2f);
+        const float period = 0.6f, h = 8f;
+        float t = Mathf.Repeat(Time.unscaledTime / period + index * 0.33f, 1f);
+        float cx = r.center.x;
+        for (int j = 0; j < 2; j++)
+        {
+            float y = r.yMax - 4f - h - Mathf.Repeat(t + j * 0.5f, 1f) * (r.height - h - 8f);
+            Chevron(cx + 1f, y + 1f, new Color(0f, 0f, 0f, 0.6f)); // 影
+            Chevron(cx, y, UsableGreen);
+        }
+    }
+
+    // 上向きの「^」（太さ 2ドット、幅 14・高さ 8）
+    static void Chevron(float cx, float y, Color c)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            PixelGui.Fill(new Rect(cx - i * 2f - 2f, y + i * 2f, 2f, 2f), c);
+            PixelGui.Fill(new Rect(cx + i * 2f, y + i * 2f, 2f, 2f), c);
+        }
     }
 
     // 封印された枠：暗くして、赤い斜線と鍵（文字なし）

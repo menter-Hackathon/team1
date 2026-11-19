@@ -3,7 +3,8 @@ using UnityEngine;
 /// <summary>
 /// 【仮】Spotify のステージの決まり：広告と Premium（2026-11-19。docs/app-kits-2-design.md 4-2）。
 /// ・ふだんは無料プラン。22秒おきに広告：上に Advertisement 0:04 の帯（4秒）。その間、クールタイムの進みが ×1/1.5（遅い）
-/// ・雑魚を 6体倒すごと（ボス戦は 18秒おき）に、緑の Premium の札が落ちる（6秒残る）。拾うと 10秒 Premium：
+/// ・雑魚を 6体倒すごと（ボス戦は 18秒おき）に、緑の Premium の札が左右の端から交互に横に流れてくる（2026-11-19：上から落ちるのをやめた。
+///   床から 3.5・波打つ・3.5マス/秒＝約6秒で横切る。ボス戦は 3.0。KitMotion.Catch）。拾うと 10秒 Premium：
 ///   広告が来ない（出ている広告も消える）・クールタイムの進み ×1/0.6（速い）。帯は緑の Premium 0:10
 /// ・不利になるギミックなので、効きは弱く（【要相談⑧】の「弱く入れる」）
 /// ・札は置いた物（ボスの登場・50％・100％で消える）
@@ -105,24 +106,36 @@ public class SpotifyRule : StageRule
         if (_kills % KillsPerTicket == 0) _ticketsOwed = Mathf.Min(_ticketsOwed + 1, 2);
     }
 
+    /// <summary>【仮】札の流れ方（2026-11-19：docs/stage-gimmick-variety-c.md 9章。上から落とすのをやめて、左右の端から横に流す）</summary>
+    public const float TicketHeight = 3.5f, TicketWave = 1f, TicketSpeed = 3.5f, TicketSpeedBoss = 3f, TicketWarn = 0.8f, TicketSize = 1f;
+
+    bool _ticketFromRight;
+
     bool DropTicket()
     {
-        Rect area = Ctx.PlayArea;
-        Transform p = Ctx.Player;
-        float px = p != null ? p.position.x : area.center.x;
-        // プレイヤーから 3マス以上、両端から 2マス以上
-        float x = px;
-        for (int i = 0; i < 8; i++)
-        {
-            x = Random.Range(area.xMin + 2f, area.xMax - 2f);
-            if (Mathf.Abs(x - px) >= 3f) break;
-        }
-        var go = new GameObject("Spotify_Premium");
-        var t = go.AddComponent<SpotifyTicket>();
-        t.Setup(new Vector2(x, area.yMax - 0.5f), p, TicketLife, () => OnPicked());
-        Ctx.TrackPlaced(go);
+        KitSide side = _ticketFromRight ? KitSide.Right : KitSide.Left; // 左右は交互
+        _ticketFromRight = !_ticketFromRight;
+        SendTicket(side, Ctx.InBossFight ? TicketSpeedBoss : TicketSpeed, KitOwner.Of(go => Ctx.TrackPlaced(go)));
         GameAudio.Event("gm_spotify_ticket_drop");
         return true;
+    }
+
+    /// <summary>
+    /// 【仮】Premium の札を1枚、side の端から横に流す（KitMotion.Catch。床から 3.5 の高さ・上下に 1.0 波打つ）。
+    /// 出る 0.8秒前に、出る側の端に緑の矢印（良い物なので赤にしない）。触ると今の効き（OnPicked）。
+    /// owner：片づけ先（決まりは置いた物 ctx.TrackPlaced。場面③の出来事 SpotifyShuffleEvent も同じ物を使う）
+    /// </summary>
+    public KitMotionCatch SendTicket(KitSide side, float speed, KitOwner owner)
+    {
+        Rect area = KitMotion.Area;
+        float y = KitMotion.FloorY() + TicketHeight;
+        bool fromLeft = side != KitSide.Right;
+        KitMotionMark.Create(null, KitMotionArt.Arrow, new Vector2(fromLeft ? area.xMin + 0.55f : area.xMax - 0.55f, y), new Vector2(0.75f, 0.75f),
+            fromLeft ? 0f : 180f, (Color)SpotifyArt.Green, KitMotionItem.OrderMark, TicketWarn, "SpotifyTicketArrow");
+        // 矢印の間は画面の外で待ってから、波打って横切る
+        KitPath sweep = KitPath.Sweep(fromLeft ? KitSide.Left : KitSide.Right, y, Mathf.Max(0.5f, speed), TicketWave, 4f, TicketSize, area);
+        var path = new KitPath(t => sweep.At(t - TicketWarn), TicketWarn + sweep.Duration);
+        return KitMotion.Catch(owner, path, () => OnPicked(), SpotifyArt.Premium, null, TicketSize);
     }
 
     void OnPicked()
@@ -134,7 +147,7 @@ public class SpotifyRule : StageRule
     }
 }
 
-/// <summary>Premium の札（落ちて床で止まり、6秒残る。触ると拾う）</summary>
+/// <summary>Premium の札（落ちて床で止まり、6秒残る。触ると拾う）。2026-11-19 から決まりは使っていない（SendTicket の横に流れる札にした）</summary>
 public class SpotifyTicket : MonoBehaviour
 {
     const float FallSpeed = 9f, PickRadius = 0.9f;

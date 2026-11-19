@@ -88,6 +88,21 @@ public class KeynoteRule : StageRule
         Show();
     }
 
+    /// <summary>
+    /// 【仮】拍手のメーターを amount 進める（場面③の出来事「マジックムーブ」のスポットライトのごほうび。2026-11-19）。
+    /// スタンディングオベーションの間は進めない（false）
+    /// </summary>
+    public bool Applaud(float amount)
+    {
+        if (Ctx == null || _ovationUntil > 0f) return false;
+        _lastHit = Time.time;
+        _meter = Mathf.Min(1f, _meter + Mathf.Max(0f, amount));
+        if (_meter >= 0.999f) StartOvation();
+        else GameAudio.Event("gm_keynote_clap", 0.9f + 0.4f * _meter);
+        Show();
+        return true;
+    }
+
     void StartOvation()
     {
         _ovationUntil = Time.time + OvationSeconds;

@@ -126,6 +126,17 @@ public class SteamRule : StageRule
 
     // ───────── 実績 ─────────
 
+    /// <summary>
+    /// 【仮】プレイヤーの実績を外から解除する（2026-11-19：場面③の出来事 SteamTrophyEvent の「Trophy Hunter」。docs/stage-gimmick-variety-c.md 7章）。
+    /// 今の実績と同じ（1ステージに1回・通知・8秒の強化）。もう解除していれば何もしない（false）
+    /// </summary>
+    public bool UnlockPlayer(string name)
+    {
+        if (string.IsNullOrEmpty(name) || _done.Contains(name)) return false;
+        Unlock(name, false);
+        return true;
+    }
+
     void Unlock(string name, bool boss)
     {
         if (!_done.Add(name)) return;

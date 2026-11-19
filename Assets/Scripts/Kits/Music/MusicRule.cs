@@ -25,6 +25,16 @@ public class MusicRule : StageRule
     /// <summary>今のビートの位置（0〜1。0 がビートの瞬間）</summary>
     public static float Phase01 { get; private set; }
 
+    /// <summary>【仮】音符を取ったあとの広い窓の半分の幅（秒。2026-11-19：場面③の出来事 MusicBeatWaveEvent。docs/stage-gimmick-variety-c.md 8章）</summary>
+    public const float WideWindow = 0.2f;
+    static float _wideUntil = -1f;
+
+    /// <summary>今の窓の半分の幅（ふだんは Window。WidenWindow の間は WideWindow）</summary>
+    public static float CurrentWindow => Time.time < _wideUntil ? WideWindow : Window;
+
+    /// <summary>【仮】seconds 秒、Perfect の窓を広げる（重ねたら長い方）</summary>
+    public static void WidenWindow(float seconds) => _wideUntil = Mathf.Max(_wideUntil, Time.time + Mathf.Max(0f, seconds));
+
     /// <summary>
     /// ビートの時計（秒）。ミュージックのステージの曲が流れていれば、その再生位置（音とビートがずれない。2026-11-19：音）。
     /// 曲が無いとき・流れていないときは、今までどおり Time.time から数える
@@ -34,6 +44,7 @@ public class MusicRule : StageRule
     public override void Begin(StageRuleContext ctx)
     {
         _t0 = Time.time;
+        _wideUntil = -1f;
         GameAudio.PlayBgm(GameAudio.MusicStageBgm, 0f, true); // 曲の頭をビートの始まりに合わせる
         Hitbox.AnyHit += OnAnyHit;
         _hooked = true;
@@ -48,7 +59,8 @@ public class MusicRule : StageRule
         float t = Clock(_t0);
         float ph = Mathf.Repeat(t, Beat);
         Phase01 = ph / Beat;
-        bool inWin = ph <= Window || Beat - ph <= Window;
+        float win = CurrentWindow;
+        bool inWin = ph <= win || Beat - ph <= win;
         if (inWin == _inWindow) return;
         _inWindow = inWin;
         if (inWin) StatMods.Player.GaugeGain.Set(Key, PerfectGauge);
@@ -68,7 +80,8 @@ public class MusicRule : StageRule
     bool InWindow()
     {
         float ph = Mathf.Repeat(Clock(_t0), Beat);
-        return ph <= Window || Beat - ph <= Window;
+        float win = CurrentWindow;
+        return ph <= win || Beat - ph <= win;
     }
 
     void OnAnyHit(Hitbox hb, IDamageable target, DamageInfo info, bool first)
@@ -173,7 +186,8 @@ public class MusicBeatView : MonoBehaviour
             float scale = 0.55f + 0.9f * toNext;
             _ring.transform.parent.position = _player.position + new Vector3(0f, 0.5f, 0f);
             _ring.transform.localScale = new Vector3(scale, scale * 0.45f, 1f);
-            bool hit = ph < 0.12f / MusicRule.Beat || ph > 1f - 0.12f / MusicRule.Beat;
+            float win = MusicRule.CurrentWindow / MusicRule.Beat; // ふだんは 0.12秒（音符を取ったあとは広い窓）
+            bool hit = ph < win || ph > 1f - win;
             Color c = Time.time < _flashUntil ? Color.white : hit ? new Color(1f, 0.5f, 0.6f, 0.95f) : new Color(1f, 0.36f, 0.45f, 0.55f);
             _ring.color = c;
         }

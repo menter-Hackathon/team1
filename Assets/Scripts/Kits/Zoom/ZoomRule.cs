@@ -6,21 +6,24 @@ using UnityEngine;
 /// ・ボス戦：残り 10 で時計が赤く点滅。0 になると Meeting ended：画面が一瞬暗くなり、ボスのゲージが 8 戻る（E5。0 より下にはならない。
 ///   第2形態から第1形態には戻らない）。時計は 40:00 に戻る。
 ///   40秒の間にゲージを 25 以上増やしていれば、戻らない（時計が緑になり、そのまま次の 40秒へ）。攻め続ければ罰は無い
-/// ・雑魚の時間：時計は出すが、0 になっても何も戻らない。参加者のタイルが 4枚落ちてくるだけ（影と赤い「！」の予告つき）
+/// ・雑魚の時間：時計は出すが、0 になっても何も戻らない。参加者のタイルが 4枚、画面を横切って退出するだけ
+///   2026-11-19（docs/stage-gimmick-variety-a.md Zoom）：上から落とすのをやめて、左の壁から 2枚・右の壁から 2枚（右は 0.8秒あと）、
+///   床のすぐ上と下の段の足場の高さを横切る（GimmickA.SweepBox。予告 1.0・毎秒 6マス）。上の段の足場の高さは必ず空く
 /// ・形態変化・追い出しの演出・ボスの登場の間は、時計が止まる（StageRuleHost が Tick を呼ばない）
 /// </summary>
 public class ZoomRule : StageRule
 {
     // 【仮】数値
     const float Window = 40f, BlinkFrom = 10f;
-    const int Rewind = 8, Goal = 25, Tiles = 4;
+    const int Rewind = 8, Goal = 25;
+    const float TileWarn = 1.0f, TileSpeed = 6f, RightDelay = 0.8f; // 【仮】
+    static readonly Vector2 TileSize = new Vector2(2f, 1.5f);
 
     float _left = Window;
     int _startGauge;
     bool _met;
     bool _warned; // 残り 10 の音を1回だけ鳴らす
     ZoomClockGui _clock;
-    AttackData _tileData;
 
     public override void Begin(StageRuleContext ctx)
     {
@@ -74,7 +77,7 @@ public class ZoomRule : StageRule
         }
         else if (Ctx.CanSpawnHazard)
         {
-            DropTiles();
+            SweepTiles();
         }
         _left = Window;
         _warned = false;
@@ -84,36 +87,60 @@ public class ZoomRule : StageRule
     {
         if (_clock != null) Object.Destroy(_clock.gameObject);
         _clock = null;
-        if (_tileData != null) Object.Destroy(_tileData);
-        _tileData = null;
     }
 
-    /// <summary>参加者のタイルを 4枚落とす（出来事の雨の写し。名前から枠の語を外して、絵を参加者のタイルにする）</summary>
-    void DropTiles()
+    /// <summary>
+    /// Meeting ended で参加者が退出する：タイル 4枚が、左の壁から 2枚・右の壁から 2枚（0.8秒あと。同時にはさまない）、
+    /// 床のすぐ上と下の段の足場の高さを横切る（上の段は空ける）
+    /// </summary>
+    void SweepTiles()
     {
-        AttackRunner runner = Ctx.Hazard;
-        if (runner == null || runner.IsRunning) return;
-        if (_tileData == null)
-        {
-            PaceAssets assets = PaceAssets.Load();
-            if (assets == null || assets.Rain == null) return;
-            _tileData = Object.Instantiate(assets.Rain);
-            _tileData.name = "Attack_Zoom_Tiles";
-            _tileData.hideFlags = HideFlags.DontSave;
-            JsonUtility.FromJsonOverwrite("{\"_placement\":0,\"_spawnCount\":" + Tiles + ",\"_objectSize\":{\"x\":2,\"y\":1.5},\"_telegraphTime\":0.8,"
-                + "\"_minDistanceFromTarget\":2.5,\"_landRemainTime\":0,\"_becomesPlatform\":false}", _tileData);
-        }
+        Rect area = Ctx.PlayArea;
+        float floor = KitMotion.FloorY();
+        float low = GimmickA.LowTier(area, floor, 3f);
+        float[] heights = { TileSize.y * 0.5f + 0.05f, low + TileSize.y * 0.5f + 0.1f };
+        KitOwner owner = Ctx;
         int index = 0;
-        System.Action<GameObject> dress = go =>
+        foreach (float y in heights)
         {
-            if (go == null || !go.TryGetComponent(out FallingObject f) || f.Data != _tileData) return;
-            KitDress.Swap(go, ZoomKitArt.ParticipantTile(index++));
-            CallKitUtil.AddExclaim(f);
-        };
+            int look = index++;
+            GimmickA.SweepBox(owner, KitSide.Left, y, TileSize, TileSpeed, 1, 0f, 0f, TileWarn, ZoomKitArt.ParticipantTile(look));
+        }
+        GameObject later = Ctx.TrackHazard(new GameObject("Zoom_TilesRight"));
+        later.AddComponent<ZoomDelayedCall>().Setup(RightDelay, () =>
+        {
+            int i = 2;
+            foreach (float y in heights)
+            {
+                int look = i++;
+                GimmickA.SweepBox(owner, KitSide.Right, y, TileSize, TileSpeed, 1, 0f, 0f, TileWarn, ZoomKitArt.ParticipantTile(look));
+            }
+        });
         GameAudio.Event("gm_zoom_tiles");
-        runner.Spawned += dress;
-        try { runner.Run(_tileData); }
-        finally { runner.Spawned -= dress; }
+    }
+}
+
+/// <summary>【仮】seconds 秒あとに1回だけ呼んで消える（2026-11-19：退出のタイルの右側を 0.8秒ずらす）。片づけで消されたら呼ばない</summary>
+public class ZoomDelayedCall : MonoBehaviour
+{
+    float _at;
+    System.Action _act;
+
+    public void Setup(float seconds, System.Action act)
+    {
+        _at = Time.time + Mathf.Max(0f, seconds);
+        _act = act;
+    }
+
+    void Update()
+    {
+        if (Time.time < _at) return;
+        System.Action a = _act;
+        _act = null;
+        Destroy(gameObject);
+        if (a == null) return;
+        try { a(); }
+        catch (System.Exception e) { Debug.LogException(e); }
     }
 }
 

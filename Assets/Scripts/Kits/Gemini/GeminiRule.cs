@@ -124,7 +124,7 @@ public class GeminiRule : StageRule
         {
             float x = Mathf.Clamp(p.x + offs[i] + 1.5f, view.xMin + 1f, view.xMax - 1f);
             float ground = p.y;
-            if (probe != null && probe.TryFindGround(x, p.y + 2.5f, out float g) && g > p.y - 4f) ground = g;
+            if (probe != null && probe.TryFindGround(x, p.y + 2.5f, out float g, steadyOnly: true) && g > p.y - 4f) ground = g; // 動く・消えるアプリの足場の上には置かない（2026-11-19）
             list[i] = new Vector2(x, ground + TagSize * 0.5f + 0.35f);
         }
         return list;

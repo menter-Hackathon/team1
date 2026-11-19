@@ -35,6 +35,19 @@ public class FinderTrash : MonoBehaviour
     bool _leaving;
     int _shownLevel = -1;
 
+    /// <summary>【仮】2026-11-19：今のステージのゴミ箱（無ければ null。出来事「ドラッグ＆ドロップ」のフォルダのごほうび）</summary>
+    public static FinderTrash Current { get; private set; }
+
+    /// <summary>
+    /// 【仮】2026-11-19：from から小さい書類を count 枚、ゴミ箱へ飛ばす（雑魚を count 体倒したのと同じ数え方。docs/stage-gimmick-variety-a.md Finder）。
+    /// 空にしている途中・去る途中は何もしない
+    /// </summary>
+    public void Feed(Vector2 from, int count)
+    {
+        if (_leaving || _purging) return;
+        for (int i = 0; i < count; i++) FlyDoc(from + new Vector2(i * 0.3f, 0f));
+    }
+
     public static FinderTrash Attach(StagePacer pacer)
     {
         if (pacer == null) return null;
@@ -48,6 +61,7 @@ public class FinderTrash : MonoBehaviour
     void Setup(StagePacer pacer)
     {
         _pacer = pacer;
+        Current = this;
         _arena = BattleArena.GetBounds();
         _root = transform;
         _root.position = new Vector3(_arena.xMax - WallGap, _arena.yMin, 0f);
@@ -60,6 +74,7 @@ public class FinderTrash : MonoBehaviour
 
     void OnDestroy()
     {
+        if (Current == this) Current = null;
         Health.AnyDied -= OnAnyDied;
         if (_pacer != null) _pacer.PhaseChanged -= OnPhase;
     }

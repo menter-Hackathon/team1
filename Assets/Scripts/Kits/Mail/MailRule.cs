@@ -2,7 +2,9 @@ using UnityEngine;
 
 /// <summary>
 /// 【仮】メールのステージのギミック「新着メール」（2026-11-19。docs/app-kits-1-design.md 15章）。StageRule。
-/// ・15秒おき（ボス戦は 20秒おき）に、右上に通知（New Mail）。封筒が 1通、プレイヤーから 3〜5マスの所へ、ゆっくり降りてくる（痛くない。床に 6秒残る）
+/// ・15秒おき（ボス戦は 20秒おき）に、右上に通知（New Mail）。封筒が 1通、プレイヤーから 3〜5マスの所へ届く（痛くない。床に 6秒残る）
+///   2026-11-19（docs/stage-gimmick-variety-a.md Mail）：上から降りるのをやめて、右上の通知の所から山なりに飛んで（0.9秒）、床か足場の上に着く。
+///   飛んでいる間は取れない（着いてから）。動く足場（swipe）・落ちる足場（spam）には着かせない（AppStagePlatforms.RaycastSteady）
 /// ・触ると開く。中身は封筒の見た目で分かる
 ///   - ふつうのメール（白い封筒に青い帯。7割）：ごほうび。クールタイムを全部回復（E5）
 ///   - 迷惑メール（紫の「！」・文字化けの帯。3割）：開けると、赤く 0.8秒点滅して直径 3 の爆発。開けてから離れれば当たらない。開けなければ何も起きない
@@ -14,7 +16,7 @@ public class MailRule : StageRule
     const float Interval = 15f, BossInterval = 20f, RetryDelay = 1f;
     const float SpamChance = 0.3f;
     const float Life = 6f, Fuse = 0.8f, Blast = 3f, BlastActive = 0.15f;
-    const float DescendSpeed = 2.5f;
+    const float FlyTime = 0.9f, FlyArc = 2f; // 【仮】右上から山なりに飛ぶ秒数・ふくらみ
 
     float _timer;
     AttackData _blastData;
@@ -57,9 +59,9 @@ public class MailRule : StageRule
         x = Mathf.Clamp(x, area.xMin + 1f, area.xMax - 1f);
         bool spam = Ctx.CanSpawnHazard && Random.value < SpamChance;
         var go = new GameObject("Mail_NewMail");
-        go.transform.position = new Vector3(x, area.yMax + 0.5f, 0f);
+        go.transform.position = new Vector3(area.xMax - 1.2f, area.yMax - 1.2f, 0f); // 右上の通知（New Mail）の所から
         Ctx.TrackPlaced(go);
-        go.AddComponent<MailNewEnvelope>().Setup(this, spam);
+        go.AddComponent<MailNewEnvelope>().Setup(this, spam, x, area.yMax - 0.5f);
         KitToast.Show("New Mail", null, MailArt.Blue);
         GameAudio.Event("gm_mail_new");
     }
@@ -77,64 +79,72 @@ public class MailRule : StageRule
         if (hit != null) Ctx.TrackHazard(hit.gameObject);
     }
 
-    internal static float Descend => DescendSpeed;
+    internal static float Fly => FlyTime;
+    internal static float Arc => FlyArc;
     internal static float EnvelopeLife => Life;
 }
 
-/// <summary>新着メールの封筒：ゆっくり降りて床に残る。プレイヤーが触ると開く（ふつう：クールタイム回復／迷惑：爆発の予告）</summary>
+/// <summary>
+/// 新着メールの封筒：右上から山なりに飛んで（0.9秒）床か足場に着き、6秒残る。着いてからプレイヤーが触ると開く（ふつう：クールタイム回復／迷惑：爆発の予告）。
+/// 2026-11-19：上からゆっくり降りる → 右上から飛んで来る（飛んでいる間は取れない）
+/// </summary>
 public class MailNewEnvelope : MonoBehaviour
 {
     const int Order = 23;
     MailRule _rule;
     bool _spam, _landed, _opened;
-    float _groundY, _landedAt;
+    float _landedAt, _born;
+    Vector2 _from, _to;
     SpriteRenderer _art;
     readonly Vector2 _size = new Vector2(1.0f, 0.69f);
 
-    public void Setup(MailRule rule, bool spam)
+    /// <summary>x：着く所の x。fromY：そこから下へ着く面を探す高さ</summary>
+    public void Setup(MailRule rule, bool spam, float x, float fromY)
     {
         _rule = rule;
         _spam = spam;
+        _born = Time.time;
         _art = MailArt.Put(transform, spam ? MailArt.SpamEnvelope : MailArt.Envelope, Vector2.zero, _size, Color.white, Order, "Art");
+        // 着く所：床か、動かない足場の上（動く・落ちる UI の足場は飛ばす）
         int mask = LayerMask.GetMask("Ground", "OneWayPlatform");
-        RaycastHit2D hit = Physics2D.Raycast(new Vector2(transform.position.x, transform.position.y - 1f), Vector2.down, 40f, mask);
-        _groundY = hit.collider != null ? hit.point.y : BattleArena.GetBounds().yMin;
+        RaycastHit2D hit = AppStagePlatforms.RaycastSteady(new Vector2(x, fromY), Vector2.down, 40f, mask);
+        float groundY = hit.collider != null ? hit.point.y : BattleArena.GetBounds().yMin;
+        _from = transform.position;
+        _to = new Vector2(x, groundY + _size.y * 0.5f);
     }
 
     void Update()
     {
         if (_opened) return;
-        Vector3 pos = transform.position;
         if (!_landed)
         {
-            float targetY = _groundY + _size.y * 0.5f;
-            pos.y = Mathf.MoveTowards(pos.y, targetY, MailRule.Descend * Time.deltaTime);
-            pos.x += Mathf.Sin(Time.time * 3f) * 0.6f * Time.deltaTime; // ひらひら
-            transform.position = pos;
-            if (_art != null) _art.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 4f) * 10f);
-            if (pos.y <= targetY + 0.001f)
+            // 山なりに飛ぶ（まわりながら）。飛んでいる間は取れない
+            float k = Mathf.Clamp01((Time.time - _born) / Mathf.Max(0.05f, MailRule.Fly));
+            Vector2 p = Vector2.Lerp(_from, _to, k) + Vector2.up * (4f * MailRule.Arc * k * (1f - k));
+            transform.position = p;
+            if (_art != null) _art.transform.localRotation = Quaternion.Euler(0f, 0f, (1f - k) * 360f);
+            if (k >= 1f)
             {
                 _landed = true;
                 _landedAt = Time.time;
                 if (_art != null) _art.transform.localRotation = Quaternion.identity;
+                FxKit.Ring(_to, 0.9f, 0.2f, Color.white);
             }
+            return;
         }
-        else
+        float left = MailRule.EnvelopeLife - (Time.time - _landedAt);
+        if (left <= 0f)
         {
-            float left = MailRule.EnvelopeLife - (Time.time - _landedAt);
-            if (left <= 0f)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            if (_art != null) _art.enabled = left > 1.5f || Mathf.FloorToInt(Time.time / 0.12f) % 2 == 0;
+            Destroy(gameObject);
+            return;
         }
-        // 触ると開く（降りている間も）
-        if (CallKitUtil.TryPlayerBounds(out Bounds p))
+        if (_art != null) _art.enabled = left > 1.5f || Mathf.FloorToInt(Time.time / 0.12f) % 2 == 0;
+        // 触ると開く（着いてから）
+        if (CallKitUtil.TryPlayerBounds(out Bounds pb))
         {
             var mine = new Bounds(transform.position, new Vector3(_size.x + 0.2f, _size.y + 0.2f, 1f));
-            p.extents = new Vector3(p.extents.x, p.extents.y, 1f);
-            if (mine.Intersects(p)) Open();
+            pb.extents = new Vector3(pb.extents.x, pb.extents.y, 1f);
+            if (mine.Intersects(pb)) Open();
         }
     }
 

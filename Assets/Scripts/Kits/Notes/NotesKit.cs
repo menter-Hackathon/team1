@@ -24,6 +24,7 @@ public static class NotesKit
     {
         AppKits.Register(Label, AppNames, BundleIds);
         StageRules.Register(Label, () => new NotesRule());
+        StageEvents.Register(Label, stage => new NotesChecklistEvent(stage)); // 場面③の出来事（2026-11-19。docs/stage-gimmick-variety-b.md）
         KitDress.RegisterArt(ArtPaper, i => NotesArt.Paper2(i));
         KitDress.RegisterArt(ArtQuick, i => NotesArt.QuickMemo());
         KitDress.RegisterArt(ArtPin, i => NotesArt.Pin());

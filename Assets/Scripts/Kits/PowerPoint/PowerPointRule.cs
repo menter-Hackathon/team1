@@ -3,9 +3,11 @@ using UnityEngine;
 /// <summary>
 /// 【仮】PowerPoint のステージのギミック「レーザーポインター」（2026-11-19。docs/app-kits-1-design.md 11章）。数値はすべて【仮】。
 /// ・赤い点（直径 1.2 の輪と、まん中の点）が、いつも画面にいて、プレイヤーをゆっくり追う（毎秒 2.5マス）。点そのものは痛くない
-/// ・12秒おき（ボス戦は 18秒おき）に「指される」：点が止まり、輪が縮む（予告 0.8秒）→ その場所にスライドが1枚落ちる（3×2）
-/// ・歩いていれば、点は追いつけない。立ち止まって攻撃し続けると、指される
-/// ・ボス戦で落ちるのは1枚だけ。ボスの技の途中・場に残る技の間（ctx.CanSpawnHazard が false）は、止まらずに追うだけ
+/// ・12秒おき（ボス戦は 18秒おき）に「指される」：点が止まり、輪が縮む（予告 0.8秒）→ 点の高さに、スライド（3×2）が
+///   プレイヤーから遠い方の端から横に「スライドイン」して、反対の端へ抜ける（2026-11-19：上から落とすのをやめた。
+///   docs/stage-gimmick-variety-b.md 7章。入る端に矢印と赤い線。足場にはならない）
+/// ・歩いていれば、点は追いつけない。立ち止まって攻撃し続けると、指される（点が重なったら、段を変えてよける）
+/// ・ボス戦で出るのは1枚だけ。ボスの技の途中・場に残る技の間（ctx.CanSpawnHazard が false）は、止まらずに追うだけ
 /// </summary>
 public class PowerPointRule : StageRule
 {
@@ -14,6 +16,9 @@ public class PowerPointRule : StageRule
     public const float BossInterval = 18f;
     public const float Telegraph = 0.8f;
     public const float RingCells = 1.2f;
+    /// <summary>スライドインの速さ（マス/秒）と大きさ【仮】</summary>
+    public const float SlideSpeed = 14f;
+    public static readonly Vector2 SlideSize = new Vector2(3f, 2f);
 
     Transform _dot;
     SpriteRenderer _ring;
@@ -22,6 +27,7 @@ public class PowerPointRule : StageRule
     float _pointUntil = -1f;
     Vector2 _pos;
     bool _placed;
+    KitMotionMover _slide; // 来ているスライド（指すのをやめたら消す）
 
     /// <summary>点の位置（テスト用）</summary>
     public Vector2 DotPosition => _pos;
@@ -43,12 +49,14 @@ public class PowerPointRule : StageRule
     {
         _timer = BossInterval;
         _pointUntil = -1f;
+        CancelSlide();
     }
 
     public override void OnBossPhase(int phase)
     {
         _pointUntil = -1f;
         _timer = Mathf.Max(_timer, 4f);
+        CancelSlide();
     }
 
     public override void Tick(float dt)
@@ -68,8 +76,7 @@ public class PowerPointRule : StageRule
                 _pointUntil = -1f;
                 _ring.transform.localScale = RingScale(1f);
                 _ring.enabled = true;
-                GameAudio.Event("gm_powerpoint_click");
-                DropSlide();
+                GameAudio.Event("gm_powerpoint_click"); // スライドは指し始めに出してある（輪が縮みきると入ってくる）
                 _timer = Ctx.InBossFight ? BossInterval : Interval;
             }
             return;
@@ -87,6 +94,7 @@ public class PowerPointRule : StageRule
         if (!Ctx.CanSpawnHazard || (Ctx.InBossFight && Ctx.HazardCount > 0)) { _timer = 0.5f; return; } // 出せないときは、追うだけ
         _pointUntil = Time.time + Telegraph;
         GameAudio.Event("gm_powerpoint_point");
+        SlideIn();
     }
 
     Vector3 RingScale(float s)
@@ -97,30 +105,33 @@ public class PowerPointRule : StageRule
         return new Vector3(k, k, 1f);
     }
 
-    void DropSlide()
+    /// <summary>
+    /// スライドイン：点の高さ（床・足場の上なら、その上に乗る高さ）に、プレイヤーから遠い方の端からスライドが横切る。
+    /// 予告は指している 0.8秒（輪）と同じ長さ（入る端に矢印と赤い線）なので、輪が縮みきった時に入ってくる
+    /// </summary>
+    void SlideIn()
     {
         AttackRunner owner = Ctx.Hazard;
         if (owner == null) return;
-        AttackData slide = SlideData();
-        owner.TryFindGround(_pos.x, _pos.y + 0.5f, out float ground);
         Rect view = Ctx.PlayArea;
-        float x = Mathf.Clamp(_pos.x, view.xMin + 1.5f, view.xMax - 1.5f);
-        float hang = Mathf.Min(view.yMax + 1f, ground + 5f);
-        float now = Time.time;
-        // 影の予告（指していた 0.8秒のあとに、短い距離を速く落ちる）
-        FallingObject.Spawn(owner, slide, new Vector2(x, hang), now, now + 0.25f, true);
-        owner.NotifyReleased(slide);
+        float px = Ctx.Player != null ? Ctx.Player.position.x : _pos.x;
+        KitSide side = px < view.center.x ? KitSide.Right : KitSide.Left;
+        float y = _pos.y;
+        if (owner.TryFindGround(_pos.x, _pos.y + 0.5f, out float ground, steadyOnly: true)) y = Mathf.Max(y, ground + SlideSize.y * 0.5f);
+        y = Mathf.Clamp(y, view.yMin + SlideSize.y * 0.5f, view.yMax - SlideSize.y * 0.5f);
+        _slide = GroupBMotion.SweepRect(Ctx, side, y, SlideSpeed, SlideSize, OfficeArt.Slide(Ctx.Theme), Color.white, Telegraph, objectName: "PPT_SlideIn");
     }
 
-    /// <summary>落ちるスライド（3×2。着地後 2秒、足場として残る）。名前の ErrorWindowFall で Office のスキンのスライドの絵</summary>
-    static AttackData SlideData() => OfficeKitTools.RuntimeData("Attack_PowerPoint_Pointer_ErrorWindowFall",
-        "{\"_kind\":2,\"_damage\":1,\"_knockback\":{\"x\":6,\"y\":5},\"_hitStun\":0.25,\"_activeTime\":0.1," +
-        "\"_placement\":0,\"_spawnCount\":1,\"_objectSize\":{\"x\":3,\"y\":2},\"_fallSpeed\":18,\"_landRemainTime\":2," +
-        "\"_becomesPlatform\":true,\"_telegraphTime\":0.8,\"_color\":{\"r\":1,\"g\":1,\"b\":1,\"a\":1}}");
+    void CancelSlide()
+    {
+        if (_slide != null) _slide.Cancel();
+        _slide = null;
+    }
 
     public override void End()
     {
         _placed = false;
+        CancelSlide();
         if (_dot != null) Object.Destroy(_dot.gameObject);
         _dot = null;
     }

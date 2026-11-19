@@ -713,7 +713,8 @@ public class AttackRunner : MonoBehaviour
     // ───────── 共通の道具 ─────────
 
     /// <summary>x の位置で、fromY から真下にある床の上面を探す</summary>
-    public bool TryFindGround(float x, float fromY, out float groundY)
+    /// <param name="steadyOnly">2026-11-19：true なら、動く・消えるアプリの足場（AppStagePlatforms）は床にしない（置いた物・着地した物が宙に残らないように）</param>
+    public bool TryFindGround(float x, float fromY, out float groundY, bool steadyOnly = false)
     {
         var filter = new ContactFilter2D { useTriggers = false, useLayerMask = true };
         filter.SetLayerMask(_groundMask);
@@ -722,6 +723,7 @@ public class AttackRunner : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             if (hits[i].distance <= 0f) continue; // 始点が地形の中
+            if (steadyOnly && AppStagePlatforms.IsUnsteady(hits[i].collider)) continue;
             groundY = hits[i].point.y;
             return true;
         }

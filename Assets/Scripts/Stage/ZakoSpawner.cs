@@ -232,6 +232,7 @@ public class ZakoSpawner : MonoBehaviour
             var from = new Vector2(x, view.yMax - 0.5f);
             RaycastHit2D hit = Physics2D.Raycast(from, Vector2.down, view.height, _groundMask);
             if (hit.collider == null || hit.distance < 0.2f) continue; // 床が無い（穴）・壁の中
+            if (AppStagePlatforms.IsUnsteady(hit.collider)) continue; // 動く・消えるアプリの足場の上には出さない（撃つ雑魚が宙に残るため）
             Vector2 feet = hit.point;
             if (_avoidBossRoom && arena.Contains(feet + Vector2.up * 0.5f)) continue;
             if (Vector2.Distance(feet, _player.position) < _minDistance) continue;

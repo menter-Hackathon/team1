@@ -15,5 +15,6 @@ public static class ExcelKit
     {
         AppKits.Register(Label, Names, Bundles);
         StageRules.Register(Label, () => new ExcelRule());
+        StageEvents.Register(Label, stage => new ExcelBarChartEvent(stage)); // 場面③の出来事（2026-11-19。docs/stage-gimmick-variety-b.md）
     }
 }

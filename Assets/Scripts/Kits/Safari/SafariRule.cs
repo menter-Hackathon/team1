@@ -78,6 +78,16 @@ public class SafariRule : StageRule
         FxKit.Text(_total.ToString(), at + new Vector2(0.3f, 0.9f), 0.45f, Color.white, 41, 0.8f, SafariArt.Blue).Rise(0.6f);
     }
 
+    /// <summary>【仮】盾を 1枚あげる（場面③の出来事「コンパス」のブックマークの星。2026-11-19）。もう付いていれば false</summary>
+    public bool GiveShield()
+    {
+        if (_shield != null || Ctx == null || Ctx.Player == null) return false;
+        _count = 0;
+        Give();
+        UpdateMeter();
+        return _shield != null;
+    }
+
     void Give()
     {
         Transform player = Ctx.Player;

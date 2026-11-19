@@ -4,7 +4,9 @@ using UnityEngine;
 /// <summary>
 /// 【仮】Firefox のステージの決まり：アドオン（2026-11-19。docs/app-kits-2-design.md 4-6）。
 /// ・右上にツールバー（パズルのピースの枠が 3つ）
-/// ・雑魚を 5体倒すごと（ボス戦は 15秒おき）に、パズルのピースが落ちる（6秒残る）。拾うとアドオンが1つ入る（そのステージの間ずっと。同じ物は出ない）
+/// ・雑魚を 5体倒すごと（ボス戦は 15秒おき）に、パズルのピースが来る（止まってから 6秒残る）。拾うとアドオンが1つ入る（そのステージの間ずっと。同じ物は出ない）
+///   2026-11-19：上から落とすのをやめて、プレイヤーから遠い方の端の高さ 4 から、床で 2回跳ねながら入ってきて止まる（KitMotion.Catch。
+///   docs/stage-gimmick-variety-b.md 11章）。入る端に紫の小さい矢印（0.5秒）
 ///   Speed：速さ ×1.1 ／ Power：与えるゲージ ×1.2 ／ Cooldown：クールタイムの進み ×1/0.85
 /// ・ボスも 50％でアドオンを1つ入れる（紫のピース。待ち時間 ×0.85。10秒だけ）。ボスのゲージの下に紫のピースの印
 /// ・Steam の実績は「条件で・8秒」、こちらは「拾って・ずっと」
@@ -15,6 +17,9 @@ public class FirefoxRule : StageRule
     public const int KillsPerPiece = 5;
     public const float BossPieceEvery = 15f, PieceLife = 6f, BossAddonSeconds = 10f;
     public const float SpeedMult = 1.1f, PowerMult = 1.2f, CoolRate = 1f / 0.85f, BossWait = 0.85f;
+    /// <summary>【仮】ピースの入り方：入る高さ（床から）・跳ねる高さ（2回）・重さ・横の速さ</summary>
+    const float PieceEnterHeight = 4f, PieceGravity = 25f, PieceSpeedMin = 3f, PieceSpeedMax = 5f;
+    static readonly float[] PieceHops = { 1.6f, 0.7f };
     public const string KeyBoss = "firefox.boss";
     static readonly string[] Names = { "Speed", "Power", "Cooldown" };
 
@@ -85,6 +90,17 @@ public class FirefoxRule : StageRule
         _bossAddonOn = false;
     }
 
+    /// <summary>
+    /// 【仮】ピースを 1つ来させる（場面③の出来事「しっぽの炎」で、追跡者の的を叩いたとき。2026-11-19）。
+    /// アドオンが全部入っている・もう 2つ待っていれば false
+    /// </summary>
+    public bool GrantPiece()
+    {
+        if (_installed.Count >= Names.Length || _owed >= 2) return false;
+        _owed++;
+        return true;
+    }
+
     void OnAnyDied(Health h)
     {
         if (Ctx.InBossFight || !RewardKit.IsZako(h)) return;
@@ -101,15 +117,23 @@ public class FirefoxRule : StageRule
         Rect area = Ctx.PlayArea;
         Transform p = Ctx.Player;
         float px = p != null ? p.position.x : area.center.x;
-        float x = px;
-        for (int i = 0; i < 8; i++)
+        // プレイヤーから遠い方の端の外（高さ 4）から、床で 2回跳ねて止まる。止まってから 6秒残る（最後の 1秒は点滅）
+        bool fromLeft = px >= area.center.x;
+        float floor = KitMotion.FloorY();
+        const float size = 14f / 18f; // ピースの絵の大きさ
+        float edge = fromLeft ? area.xMin - 0.5f : area.xMax + 0.5f;
+        float vx = (fromLeft ? 1f : -1f) * Random.Range(PieceSpeedMin, PieceSpeedMax);
+        KitPath hop = GroupBMotion.HopPath(new Vector2(edge, floor + PieceEnterHeight), vx, PieceGravity, PieceHops, floor, size * 0.5f, area);
+        // 拾う広さは前と同じくらい（触る判定を広く。絵はピースの大きさに戻す）
+        KitMotionCatch c = KitMotion.Catch(KitOwner.Of(go => Ctx.TrackPlaced(go)), hop.Then(PieceLife), () => Install(kind),
+            FirefoxArt.Piece, FirefoxArt.AddonColor(kind), 1.4f);
+        if (c != null && c.Visual != null)
         {
-            x = Random.Range(area.xMin + 2f, area.xMax - 2f);
-            if (Mathf.Abs(x - px) >= 3f) break;
+            c.Visual.transform.localScale = Vector3.one * (size / Mathf.Max(0.01f, c.Visual.sprite.bounds.size.x));
+            RuntimeSprites.Show(c.Body, FirefoxArt.PieceMark(kind), new Vector2(-0.03f, -0.03f), KitMotionItem.OrderBody + 1, 1f, "Mark");
         }
-        var go = new GameObject("Firefox_Piece");
-        go.AddComponent<FirefoxPiece>().Setup(new Vector2(x, area.yMax - 0.5f), p, kind, PieceLife, () => Install(kind));
-        Ctx.TrackPlaced(go);
+        KitMotionMark.Create(null, KitMotionArt.Arrow, new Vector2(fromLeft ? area.xMin + 0.55f : area.xMax - 0.55f, floor + PieceEnterHeight),
+            new Vector2(0.75f, 0.75f), fromLeft ? 0f : 180f, (Color)FirefoxArt.Purple, KitMotionItem.OrderMark, 0.5f, "FirefoxPieceArrow");
         GameAudio.Event("gm_firefox_piece_drop");
     }
 
@@ -154,7 +178,7 @@ public class FirefoxPiece : MonoBehaviour
         var hits = new RaycastHit2D[4];
         int n = Physics2D.Raycast(from, Vector2.down, filter, hits, 40f);
         _groundY = BattleArena.GetBounds().yMin + 0.5f;
-        for (int i = 0; i < n; i++) if (hits[i].distance > 0f) { _groundY = hits[i].point.y + 0.5f; break; }
+        for (int i = 0; i < n; i++) if (hits[i].distance > 0f && !AppStagePlatforms.IsUnsteady(hits[i].collider)) { _groundY = hits[i].point.y + 0.5f; break; } // 動く・消えるアプリの足場の上には落とさない（2026-11-19）
     }
 
     void Update()

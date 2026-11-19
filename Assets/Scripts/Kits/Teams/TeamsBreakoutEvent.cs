@@ -8,6 +8,10 @@ using UnityEngine;
 /// ・部屋が左右 2つに分かれる。雑魚は両方の部屋に出る（出来事が自分で出す）。壁は足場からジャンプすれば越えられる（床からは越えられない）
 /// ・12秒で Rooms closing：壁が 1.5秒点滅して、下がって消える
 /// ・壁は地形なので、終わり（End・ボスの登場）で必ず消す（Track）。ボス戦にはかからない
+/// ・2026-11-19（docs/stage-gimmick-variety-a.md Teams）：
+///   - 手を挙げる：壁が上がって 2秒後から、左右の部屋の足場の上に手の的（TeamsRaiseHands）。両方叩くと雑魚がひるみ、
+///     最後の組（強さ 1 は 1組、2・3 は 2組）がそろうと、残り 2秒で Rooms closing
+///   - 壁が上がる時、壁の足元から左右へ低い波が 1つずつ走る（KitMotion.FloorWave。高さ 0.6・毎秒 5マス・予告は赤い点線と同じ 1.0秒）。強さ 1 では出さない
 /// </summary>
 public class TeamsBreakoutEvent : PaceEvent
 {
@@ -20,6 +24,8 @@ public class TeamsBreakoutEvent : PaceEvent
     const float LowerTime = 0.4f;
     const float SpawnStep = 0.6f;
     const float MinFromPlayer = 4f;
+    const float HandsAfter = 2f, EarlyClose = 2f;          // 【仮】手を挙げる：壁が上がってから・そろってから閉じるまで
+    const float WaveHeight = 0.6f, WaveSpeed = 5f;        // 【仮】壁の足元の波
 
     enum Step { Mark, Rise, Open, Blink, Lower, Done }
 
@@ -32,6 +38,8 @@ public class TeamsBreakoutEvent : PaceEvent
     float _nextSpawn;
     int _side = 1;
     bool _exhausted;
+    TeamsRaiseHands _hands;
+    float _closeAt = -1f;
 
     public TeamsBreakoutEvent()
     {
@@ -51,6 +59,9 @@ public class TeamsBreakoutEvent : PaceEvent
         Track(_wall.gameObject);
         GameAudio.Event("gm_teams_breakout_mark");
         _stepAt = 0f;
+        // 壁の足元から左右へ低い波（予告は赤い点線と同じ時。強さ 2・3）
+        if (Strength >= 2)
+            KitMotion.FloorWave(KitOwner.Of(Track), KitSide.Both, WaveSpeed, WaveHeight, MarkTime, null, null, 1, 0.7f, false, _floorY, _wallX);
     }
 
     protected override bool OnTick(float dt)
@@ -69,8 +80,14 @@ public class TeamsBreakoutEvent : PaceEvent
                 break;
             case Step.Open:
                 SpawnZako();
-                if (t >= OpenTime)
+                if (_hands == null && t >= HandsAfter)
                 {
+                    _hands = new TeamsRaiseHands(KitOwner.Of(Track), _wallX, Strength >= 2 ? 2 : 1, () => _closeAt = _clock + EarlyClose);
+                    _hands.SpawnPair(Area, _floorY);
+                }
+                if (t >= OpenTime || (_closeAt >= 0f && _clock >= _closeAt))
+                {
+                    _hands?.Cancel();
                     Next(Step.Blink);
                     KitToast.Show("Rooms closing", TeamsArt.Icon, (Color)TeamsArt.Purple);
                     GameAudio.Event("gm_teams_closing");

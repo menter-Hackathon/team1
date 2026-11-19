@@ -1,0 +1,103 @@
+{
+ "label": "Gemini",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "chip1",
+   "x": -3.2667,
+   "y": 2.6333,
+   "w": 3.0667,
+   "h": 0.8,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Gemini__chip1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "chip2",
+   "x": 3.6667,
+   "y": 2.6333,
+   "w": 3.0667,
+   "h": 0.8,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Gemini__chip2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "reply1",
+   "x": -4.5333,
+   "y": 4.5333,
+   "w": 2.6667,
+   "h": 0.8667,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Gemini__reply1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "reply2",
+   "x": -0.4667,
+   "y": 4.5333,
+   "w": 2.8,
+   "h": 0.8667,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Gemini__reply2",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": 3.3333333333333335,
+    "dy": 0.0,
+    "period": 7,
+    "offset": 0
+   }
+  },
+  {
+   "id": "reply3",
+   "x": 7.5333,
+   "y": 4.5333,
+   "w": 3.0667,
+   "h": 0.8667,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Gemini__reply3",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "input",
+   "x": 0.0,
+   "y": 0.9,
+   "w": 8.0,
+   "h": 0.9333,
+   "top": 1.3667,
+   "sprite": "AppBackgrounds/Parts/Gemini__input",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "spark",
+   "x": 5.1667,
+   "y": 0.8667,
+   "w": 1.5333,
+   "h": 0.7333,
+   "top": 1.2333,
+   "sprite": "AppBackgrounds/Parts/Gemini__spark",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "stun_boss",
+    "cooldown": 15
+   }
+  }
+ ]
+}

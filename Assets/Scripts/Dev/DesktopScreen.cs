@@ -45,6 +45,7 @@ public class DesktopScreen : MonoBehaviour
     float _shownAt;
     float _openAt = -1f; // ウィンドウが開き始めた時刻（-1＝まだ）
     bool _visible;
+    Sprite _targetBg;    // 次に入るアプリの画面の背景の絵（AppBackgrounds。無ければ null）。描くたびに探さないよう、出すときに1回だけ
 
     public bool IsVisible => _visible;
     /// <summary>見せ終わった（GameSession が次のシーンを読み込む）</summary>
@@ -56,6 +57,7 @@ public class DesktopScreen : MonoBehaviour
         _run = run;
         _restored = restored;
         _target = run != null && run.Current != null ? run.CurrentIndex : -1;
+        _targetBg = _target >= 0 ? AppBackgrounds.Find(run.Current) : null;
         _shownAt = Time.unscaledTime;
         _openAt = -1f;
         IsDone = false;
@@ -410,11 +412,25 @@ public class DesktopScreen : MonoBehaviour
         PixelGui.Fill(new Rect(inner.x, inner.y, inner.width, tb), band);
         var face = new Rect(inner.x, inner.y + tb, inner.width, inner.height - tb);
         if (face.height > 0f) GenericMac.Gui.RoundFill(face, 0, Mathf.Min(corner - 1, Mathf.FloorToInt(face.height)), body);
-        if (stage != null && stage.Icon16 != null && face.height > 46f)
+        // 2026-11-19：ステージと同じ、そのアプリの画面の背景の絵があれば、中の面にそれを出す（そのままステージへつながる）。そのときアイコンは出さない
+        if (_targetBg != null && face.height > 0f) DrawAppBackground(face, _targetBg);
+        else if (stage != null && stage.Icon16 != null && face.height > 46f)
         {
             float s = Mathf.Clamp(Mathf.Floor(face.height / 64f), 1f, 3f) * 16f;
             PixelGui.DrawSprite(new Rect(Mathf.Round(face.center.x - s * 0.5f), Mathf.Round(face.center.y - s * 0.5f), s, s), stage.Icon16);
         }
+    }
+
+    // 背景の絵を、縦横の比を保って rect いっぱいに描く（はみ出した所は切る。上のバーが見えるように、上をそろえる）
+    static void DrawAppBackground(Rect rect, Sprite sprite)
+    {
+        Texture2D tex = sprite.texture;
+        Rect tr = sprite.textureRect;
+        if (tex == null || tr.width <= 0f || tr.height <= 0f) return;
+        float s = Mathf.Max(rect.width / tr.width, rect.height / tr.height);
+        float uw = rect.width / s, uh = rect.height / s; // 見せる所（絵のドット）
+        var uv = new Rect((tr.x + (tr.width - uw) * 0.5f) / tex.width, (tr.y + tr.height - uh) / tex.height, uw / tex.width, uh / tex.height);
+        GUI.DrawTextureWithTexCoords(rect, tex, uv);
     }
 
     // 題名に出すアプリ名（英数字だけの名前で 20字まで。日本語などの名前は出さない。

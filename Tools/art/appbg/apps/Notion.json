@@ -1,0 +1,44 @@
+{
+  "id": "Notion",
+  "desc": "ページ：題・ブロックの行・トグル・小さなデータベースの表。左にページの木",
+  "base": "#d1cfc9",
+  "elements": [
+    {"type": "rect", "x": 10, "y": 0, "w": 54, "h": 180, "color": "#bebbb4"},
+    {"type": "line", "x1": 64, "y1": 0, "x2": 64, "y2": 180, "color": "#b2afa8"},
+    {"type": "rrect", "x": 13, "y": 25, "w": 7, "h": 7, "color": "#8d8a83", "r": 1},
+    {"type": "text", "x": 23, "y": 26, "text": "WORKSPACE", "color": "#6b6862", "scale": 1},
+    {"type": "icon", "name": "search", "x": 14, "y": 37, "size": 5, "color": "#85827b"},
+    {"type": "text", "x": 22, "y": 37, "text": "SEARCH", "color": "#85827b", "scale": 1},
+    {"type": "icon", "name": "home", "x": 14, "y": 46, "size": 5, "color": "#85827b"},
+    {"type": "text", "x": 22, "y": 46, "text": "HOME", "color": "#85827b", "scale": 1},
+    {"type": "text", "x": 14, "y": 60, "text": "PRIVATE", "color": "#9a978f", "scale": 1},
+    {"type": "repeat", "count": 7, "dx": 0, "dy": 9, "items": [{"type": "icon", "name": "file", "x": 14, "y": 69, "size": 5, "color": "#8d8a83"}, {"type": "bars", "x": 22, "y": 70, "w": 36, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#96938c", "seed": 51, "min": 0.5, "indent": 0}]},
+    {"type": "rrect", "x": 12, "y": 76, "w": 50, "h": 9, "color": "#cac7c0", "r": 2, "alpha": 0.6},
+    {"type": "text", "x": 14, "y": 140, "text": "TEAMSPACES", "color": "#9a978f", "scale": 1},
+    {"type": "bars", "x": 22, "y": 150, "w": 36, "rows": 2, "row_h": 9, "bar_h": 2, "color": "#96938c", "seed": 57, "min": 0.5, "indent": 0},
+    {"type": "bars", "x": 156, "y": 10, "w": 22, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#a8a59e", "seed": 1, "min": 0.9, "indent": 0},
+    {"type": "text", "x": 181, "y": 8, "text": "/", "color": "#a8a59e", "scale": 1},
+    {"type": "bars", "x": 187, "y": 10, "w": 30, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#a8a59e", "seed": 2, "min": 0.9, "indent": 0},
+    {"type": "text", "x": 222, "y": 8, "text": "SHARE", "color": "#85827b", "scale": 1},
+    {"type": "icon", "name": "flag", "x": 86, "y": 34, "size": 9, "color": "#b99a6a"},
+    {"type": "text", "x": 86, "y": 48, "text": "ROADMAP", "color": "#77746d", "scale": 2},
+    {"type": "bars", "x": 86, "y": 66, "w": 130, "rows": 2, "row_h": 8, "bar_h": 2, "color": "#c0bdb6", "seed": 61, "min": 0.6, "indent": 0},
+    {"type": "rect", "x": 86, "y": 138, "w": 204, "h": 8, "color": "#c6c4be"},
+    {"type": "text", "x": 89, "y": 140, "text": "NAME", "color": "#9a978f", "scale": 1},
+    {"type": "text", "x": 157, "y": 140, "text": "STATUS", "color": "#9a978f", "scale": 1},
+    {"type": "text", "x": 225, "y": 140, "text": "DATE", "color": "#9a978f", "scale": 1},
+    {"type": "grid", "x": 86, "y": 138, "w": 204, "h": 24, "cell_w": 68, "cell_h": 8, "color": "#c0beb7"}
+  ],
+  "stage": {
+    "hide_folders": true,
+    "platforms": [
+      {"id": "toggle1", "x": 84, "y": 127, "w": 48, "h": 10, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 48, "h": 10, "color": "#85827b", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 46, "h": 8, "color": "#ebe9e4", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 44, "h": 1, "color": "#f6f5f1"}, {"type": "rect", "x": 5, "y": 4, "w": 34, "h": 2, "color": "#8d8a83"}], "behavior": {"type": "static"}},
+      {"id": "toggle2", "x": 188, "y": 127, "w": 48, "h": 10, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 48, "h": 10, "color": "#85827b", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 46, "h": 8, "color": "#ebe9e4", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 44, "h": 1, "color": "#f6f5f1"}, {"type": "rect", "x": 5, "y": 4, "w": 34, "h": 2, "color": "#8d8a83"}], "behavior": {"type": "static"}},
+      {"id": "callout", "x": 138, "y": 97, "w": 44, "h": 13, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 44, "h": 13, "color": "#85827b", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 42, "h": 11, "color": "#e6e0cf", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 40, "h": 1, "color": "#f2eee1"}, {"type": "icon", "name": "flag", "x": 4, "y": 4, "size": 5, "color": "#b99a6a"}, {"type": "rect", "x": 12, "y": 4, "w": 26, "h": 2, "color": "#8d8a83"}, {"type": "rect", "x": 12, "y": 8, "w": 18, "h": 2, "color": "#b4b1aa"}], "behavior": {"type": "static"}},
+      {"id": "heading", "x": 70, "y": 98, "w": 40, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 40, "h": 11, "color": "#85827b", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 38, "h": 9, "color": "#ebe9e4", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 36, "h": 1, "color": "#f6f5f1"}, {"type": "text", "x": 5, "y": 3, "text": "NOTES", "color": "#77746d", "scale": 1}], "behavior": {"type": "static"}},
+      {"id": "dragblock", "x": 244, "y": 100, "w": 48, "h": 12, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 48, "h": 12, "color": "#6f86a8", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 46, "h": 10, "color": "#dfe5ee", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 44, "h": 1, "color": "#eef2f8"}, {"type": "text", "x": 3, "y": 3, "text": "::", "color": "#6f86a8", "scale": 1}, {"type": "rect", "x": 13, "y": 5, "w": 28, "h": 2, "color": "#7f8fa8"}], "behavior": {"type": "move", "dx": 0, "dy": -24, "period": 6, "offset": 0}},
+      {"id": "dbrow", "x": 120, "y": 151, "w": 80, "h": 10, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 80, "h": 10, "color": "#85827b", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 78, "h": 8, "color": "#ebe9e4", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 76, "h": 1, "color": "#f6f5f1"}, {"type": "rect", "x": 5, "y": 4, "w": 26, "h": 2, "color": "#8d8a83"}, {"type": "rrect", "x": 40, "y": 3, "w": 20, "h": 5, "color": "#aebfa4", "r": 2}, {"type": "rect", "x": 64, "y": 4, "w": 10, "h": 2, "color": "#b4b1aa"}], "behavior": {"type": "static"}},
+      {"id": "done", "x": 252, "y": 150, "w": 31, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 31, "h": 11, "color": "#4d6a8c", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 29, "h": 9, "color": "#7f9fc4", "r": 2}, {"type": "rect", "x": 3, "y": 1, "w": 25, "h": 1, "color": "#f2f6fb66"}, {"type": "icon", "name": "check", "x": 3, "y": 3, "size": 5, "color": "#f2f6fb"}, {"type": "text", "x": 11, "y": 3, "text": "DONE", "color": "#f2f6fb", "scale": 1}], "behavior": {"type": "button", "effect": "clear_bullets", "cooldown": 12}}
+    ]
+  }
+}

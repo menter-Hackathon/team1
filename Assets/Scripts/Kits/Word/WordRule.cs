@@ -63,6 +63,9 @@ public class WordRule : StageRule
         return false;
     }
 
+    /// <summary>【仮】直した数を 1 進める（場面③の出来事「スペルチェックの波」で、波を叩いて直したとき。2026-11-19）</summary>
+    public void CountFix() => OnFixed(null);
+
     void OnFixed(WordSpellWave w)
     {
         _fixed++;

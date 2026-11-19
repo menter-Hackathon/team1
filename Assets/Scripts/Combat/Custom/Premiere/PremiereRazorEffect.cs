@@ -266,6 +266,7 @@ public class PremiereRazorEffect : CustomEffect
             if (b.size.x >= _arena.width * 0.5f) continue;                       // 部屋の床
             if (col.GetComponentInParent<FallingObject>() != null) continue;     // 落下物の足場
             if (col.GetComponentInParent<BlinkingPlatform>() != null) continue;  // 開いたり閉じたりする足場
+            if (AppStagePlatforms.IsUnsteady(col)) continue;                     // 動く・消えるアプリの足場（自分で出し入れするので。2026-11-19）
             if (col.GetComponentInParent<CustomEffect>() != null) continue;      // 技が出した物
 
             var r = new Removed { Collider = col };

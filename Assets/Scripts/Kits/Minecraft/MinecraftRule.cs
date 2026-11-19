@@ -47,6 +47,11 @@ public class MinecraftRule : StageRule
         float amount;
         if (!night) amount = t < Day - Fade ? 0f : (t - (Day - Fade)) / Fade;
         else amount = t < Day + Night - Fade ? 1f : 1f - (t - (Day + Night - Fade)) / Fade;
+        // 場面③の出来事（夜の襲撃）の間は夜に固定（2秒で暗く・終わったら 2秒で時計の暗さへ戻す）
+        _hold = Mathf.MoveTowards(_hold, _holdNight ? 1f : 0f, dt / Fade);
+        bool held = _hold >= 0.5f && !night;
+        if (_hold > 0f) amount = Mathf.Max(amount, _hold);
+        if (held) night = true;
         // 夜の2秒前（暗くなり始め）に1回だけ鳴らす
         if (!night && t < Day - Fade) _duskCued = false;
         else if (!night && !_duskCued)
@@ -63,10 +68,19 @@ public class MinecraftRule : StageRule
         if (_sky != null)
         {
             _sky.IsNight = night;
-            _sky.Progress = night ? (t - Day) / Night : t / Day;
+            _sky.Progress = held ? 0.5f : night ? (t - Day) / Night : t / Day; // 固定の夜は、月を空のまん中に
         }
         if (night != _nightOn) SetNight(night);
     }
+
+    bool _holdNight;
+    float _hold; // 0〜1（固定の夜の濃さ）
+
+    /// <summary>
+    /// 【仮】夜に固定する・戻す（2026-11-19：場面③の出来事 MinecraftNightRaidEvent の間だけ。docs/stage-gimmick-variety-c.md 3章）。
+    /// 固定の間は、ふつうの夜と同じ（暗い・雑魚の移動 ×1.3・ボスの待ち時間 ×0.85）。戻すと、今の時計の昼と夜へ
+    /// </summary>
+    public void HoldNight(bool on) => _holdNight = on;
 
     void SetNight(bool on)
     {
@@ -91,6 +105,8 @@ public class MinecraftRule : StageRule
         StatMods.Clear(Key);
         _nightOn = false;
         _duskCued = false;
+        _holdNight = false;
+        _hold = 0f;
         if (_sky != null) Object.Destroy(_sky.gameObject);
         if (_overlay != null) Object.Destroy(_overlay.transform.parent.gameObject);
         _sky = null;

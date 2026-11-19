@@ -48,7 +48,13 @@ public class PremiereTimelineStage : MonoBehaviour
         public SpriteRenderer Mark;
         public float FiredAt = -1f;   // 再生ヘッドが着いた時刻
         public bool Spawned;          // 柱を出したか
+        public bool Late;             // 2026-11-19：着いたが DipHold で待っている
     }
+
+    /// <summary>【仮】2026-11-19：true を返す x のマーカーは、今は光らせない（出来事の波が通る前後。再生ヘッドが通っても待ち、外れたら光る）</summary>
+    public System.Func<float, bool> DipHold;
+    /// <summary>【仮】2026-11-19：true を返す x には、マーカーを打たない（出来事の流れる床の間）</summary>
+    public System.Func<float, bool> PlaceBlock;
 
     StagePacer _pacer;
     Rect _arena;
@@ -104,10 +110,13 @@ public class PremiereTimelineStage : MonoBehaviour
         _look = PremiereArt.Child(transform, "Look", Vector2.zero);
         _rule = PremiereArt.Child(transform, "Rule", Vector2.zero);
         BuildPanel();
-        BuildRuler();
-        BuildTracks();
+        // 2026-11-19：アプリの UI の足場（AppStagePlatforms）を出しているときは、背景の絵（Bg_PremierePro）にルーラー・トラック・音声トラックが
+        // 描いてあり、足場のクリップもそれに合っているので、ここでは作らない（再生ヘッド・マーカー・白い柱は今のまま。高さは部屋とルーラーの位置で決まる）
+        bool painted = AppStagePlatforms.Active;
+        if (!painted) BuildRuler();
+        if (!painted) BuildTracks();
         DressPlatforms();
-        BuildAudio();
+        if (!painted) BuildAudio();
         BuildHead();
         PrepareHazard();
         _headX = _arena.xMin;
@@ -180,6 +189,7 @@ public class PremiereTimelineStage : MonoBehaviour
             float x = Random.Range(lo, hi);
             bool ok = true;
             foreach (var m in _markers) if (m.FiredAt < 0f && Mathf.Abs(m.X - x) < MarkerSpacing) ok = false;
+            if (ok && PlaceBlock != null && Held(PlaceBlock, x)) ok = false;
             if (!ok) continue;
             AddMarker(x);
             _toPlace--;
@@ -203,9 +213,16 @@ public class PremiereTimelineStage : MonoBehaviour
         foreach (var m in _markers)
         {
             if (m.FiredAt >= 0f || m.X < from || m.X > to) continue;
+            if (DipHold != null && Held(DipHold, m.X)) { m.Late = true; continue; } // 波が通る前後：待つ
             m.FiredAt = Time.time;
             GameAudio.Event("gm_premiere_dip");
         }
+    }
+
+    static bool Held(System.Func<float, bool> f, float x)
+    {
+        try { return f(x); }
+        catch (System.Exception e) { Debug.LogException(e); return false; }
     }
 
     void UpdateMarkers()
@@ -213,6 +230,12 @@ public class PremiereTimelineStage : MonoBehaviour
         for (int i = _markers.Count - 1; i >= 0; i--)
         {
             MarkerView m = _markers[i];
+            if (m.FiredAt < 0f && m.Late && (DipHold == null || !Held(DipHold, m.X)))
+            {
+                m.Late = false;
+                m.FiredAt = Time.time; // 待っていた分、遅れて光る
+                GameAudio.Event("gm_premiere_dip");
+            }
             if (m.FiredAt < 0f) continue;
             float age = Time.time - m.FiredAt;
             if (m.Mark != null) m.Mark.color = Mathf.FloorToInt(age / 0.05f) % 2 == 0 ? Color.white : PremiereTimelineArt.EnemyRed;
@@ -366,6 +389,8 @@ public class PremiereTimelineStage : MonoBehaviour
 
     void BuildPanel()
     {
+        // 2026-11-19：Premiere Pro の画面の背景の絵（AppBackgrounds）が出ているときは、幕を出さない（絵が暗くかくれるため）
+        if (AppBackgrounds.Current != null) return;
         // 壁紙の上に、パネルの暗い幕（6割）。壁紙はうっすら見える
         Rect r = new Rect(_view.xMin - 2f, _view.yMin - 2f, _view.width + 4f, _view.height + 4f);
         PremiereArt.Box(_look, r.center, r.size, PremiereTimelineArt.WithAlpha(PremiereTimelineArt.Panel, 0.6f), OrderPanel, "Panel");
@@ -479,6 +504,8 @@ public class PremiereTimelineStage : MonoBehaviour
     /// </summary>
     void DressPlatforms()
     {
+        // 2026-11-19：アプリの UI の足場（AppStagePlatforms）を出しているステージは、足場の絵がもうクリップなので、何もしない
+        if (AppStagePlatforms.Active) return;
         int oneWay = LayerMask.NameToLayer("OneWayPlatform");
         if (oneWay < 0) return;
         var hits = new List<Collider2D>();

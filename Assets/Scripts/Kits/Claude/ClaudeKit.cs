@@ -17,5 +17,6 @@ public static class ClaudeKit
     {
         AppKits.Register(Label, AppNames, BundleIds);
         StageRules.Register(Label, () => new ClaudeRule());
+        StageEvents.Register(Label, stage => new ClaudeArtifactEvent(stage)); // 場面③の出来事（2026-11-19。docs/stage-gimmick-variety-b.md）
     }
 }

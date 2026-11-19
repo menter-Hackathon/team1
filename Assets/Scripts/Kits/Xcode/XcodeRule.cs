@@ -49,6 +49,7 @@ public class XcodeRule : StageRule
             _failEndAt = -1f;
             GameAudio.Event("gm_xcode_failed_end");
         }
+        if (_eventOwnsStrip) return; // 場面③の出来事が帯を使っている間は、決まりの時計も止める
         switch (_step)
         {
             case Step.Indexing:
@@ -73,6 +74,25 @@ public class XcodeRule : StageRule
         Show();
     }
 
+    bool _eventOwnsStrip;
+
+    /// <summary>
+    /// 【仮】場面③の出来事（XcodeBuildEvent）が上の帯を使う間は true（2026-11-19。docs/stage-gimmick-variety-c.md 6章）。
+    /// その間、この決まりの時計（Indexing・Building・結果）は止まり、帯は出来事が ShowEventStrip で描く。false で今の表示に戻す
+    /// </summary>
+    public void SetEventStrip(bool on)
+    {
+        _eventOwnsStrip = on;
+        if (!on) Show();
+    }
+
+    /// <summary>【仮】出来事が帯を描く（SetEventStrip(true) の間だけ）。count：右の丸の数（Busy の間だけ見える）</summary>
+    public void ShowEventStrip(string text, float progress, int count, XcodeBuildStrip.Mode mode)
+    {
+        if (!_eventOwnsStrip || _strip == null) return;
+        _strip.Set(text, progress, count, mode == XcodeBuildStrip.Mode.Busy, mode);
+    }
+
     public override void OnPhase(PacePhase phase)
     {
         // ボスの登場：作りかけの Build はやめて、Indexing からやり直す（結果の倍率はそのまま）
@@ -88,6 +108,7 @@ public class XcodeRule : StageRule
         }
         _hooked = false;
         _failEndAt = -1f;
+        _eventOwnsStrip = false;
         StatMods.ClearPrefix("xcode.");
         if (_strip != null) Object.Destroy(_strip.gameObject);
         _strip = null;

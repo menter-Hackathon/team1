@@ -88,6 +88,7 @@ public class NotionRule : StageRule
             if (b.size.x >= area.width * 0.5f) continue;                       // 部屋の床
             if (col.GetComponentInParent<FallingObject>() != null) continue;     // 落下物の足場
             if (col.GetComponentInParent<BlinkingPlatform>() != null) continue;  // 開いたり閉じたりする足場
+            if (AppStagePlatforms.IsUnsteady(col)) continue;                     // 動く・消えるアプリの足場（2026-11-19。動かないアプリの足場は選んでよい）
             if (col.GetComponentInParent<CustomEffect>() != null) continue;      // 技が出した物
             // 左右それぞれ、まん中から 3.5マスに近い物
             if (b.center.x < cx) { if (left == null || Mathf.Abs(b.center.x - (cx - 3.5f)) < Mathf.Abs(left.bounds.center.x - (cx - 3.5f))) left = col; }

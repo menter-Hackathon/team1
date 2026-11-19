@@ -5,6 +5,7 @@ using UnityEngine;
 /// ・StagePacer.Started で、Premiere Pro のステージ（スキンが Premiere）なら、タイムラインのステージ（PremiereTimelineStage）を付ける
 ///   （見た目・再生ヘッドとマーカー。ボスの登場で決まりを片づけ、見た目は残す）
 /// ・場面③の出来事を、危ない物を出さない「書き出し」（PremiereRenderEvent）に入れ替える（今の Rendering... の帯は、再生ヘッドと重なるので出さない）
+///   2026-11-19（docs/stage-gimmick-variety-a.md Premiere Pro）：書き出しと同時に「波形」（PremiereWaveformEvent。床を走る波形の山・流れる床）を進める（MakeEvent）
 /// ・ほかのアプリのステージでは、何も付けない。StagePaceTable.Enabled = false（StagePacer が無い）のときも、何もしない
 /// </summary>
 public static class PremiereKit
@@ -17,7 +18,7 @@ public static class PremiereKit
     {
         StagePacer.Started -= OnStarted;
         StagePacer.Started += OnStarted;
-        AppStageEvents.Register("PremierePro", Names, Bundles, (stage, final) => new PremiereRenderEvent());
+        AppStageEvents.Register("PremierePro", Names, Bundles, (stage, final) => MakeEvent());
     }
 
     static void OnStarted(StagePacer pacer)
@@ -32,9 +33,12 @@ public static class PremiereKit
             var bundles = new System.Collections.Generic.List<string>(Bundles);
             if (!string.IsNullOrEmpty(pacer.AppName)) names.Add(pacer.AppName);
             if (!string.IsNullOrEmpty(pacer.BundleId)) bundles.Add(pacer.BundleId);
-            AppStageEvents.Register("PremierePro", names.ToArray(), bundles.ToArray(), (stage, final) => new PremiereRenderEvent());
+            AppStageEvents.Register("PremierePro", names.ToArray(), bundles.ToArray(), (stage, final) => MakeEvent());
         }
     }
+
+    /// <summary>【仮】場面③の出来事：書き出し＋波形（2026-11-19）。2つを同時に進める（始まりの通知 Rendering... と終わりの光は 1回）</summary>
+    public static StageEvent MakeEvent() => new ComboEvent("Rendering...", new PremiereRenderEvent(), new PremiereWaveformEvent());
 
     /// <summary>Premiere Pro のステージか（スキンが Premiere。スキンの表の専用の行と同じ決め方）</summary>
     public static bool IsPremiere(StagePacer pacer)

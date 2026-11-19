@@ -1,0 +1,598 @@
+{
+ "id": "ChatGPT",
+ "desc": "左に履歴のサイドバー、まん中に会話の列、下に入力の箱",
+ "base": "#c6c8cc",
+ "elements": [
+  {
+   "type": "rect",
+   "x": 10,
+   "y": 0,
+   "w": 56,
+   "h": 180,
+   "color": "#a4a7ae"
+  },
+  {
+   "type": "line",
+   "x1": 66,
+   "y1": 0,
+   "x2": 66,
+   "y2": 180,
+   "color": "#989ba3"
+  },
+  {
+   "type": "icon",
+   "name": "pen",
+   "x": 54,
+   "y": 26,
+   "size": 7,
+   "color": "#6b6f78"
+  },
+  {
+   "type": "icon",
+   "name": "search",
+   "x": 44,
+   "y": 26,
+   "size": 7,
+   "color": "#6b6f78"
+  },
+  {
+   "type": "text",
+   "x": 14,
+   "y": 38,
+   "text": "+ NEW CHAT",
+   "color": "#555a63",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 14,
+   "y": 47,
+   "text": "LIBRARY",
+   "color": "#6d727b",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 14,
+   "y": 56,
+   "text": "APPS",
+   "color": "#6d727b",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 14,
+   "y": 70,
+   "text": "TODAY",
+   "color": "#8a8e96",
+   "scale": 1
+  },
+  {
+   "type": "rrect",
+   "x": 12,
+   "y": 77,
+   "w": 52,
+   "h": 8,
+   "color": "#b6b9bf",
+   "r": 2
+  },
+  {
+   "type": "bars",
+   "x": 15,
+   "y": 80,
+   "w": 44,
+   "rows": 1,
+   "row_h": 7,
+   "bar_h": 2,
+   "color": "#6d727b",
+   "seed": 4,
+   "min": 0.8,
+   "indent": 0
+  },
+  {
+   "type": "bars",
+   "x": 15,
+   "y": 89,
+   "w": 44,
+   "rows": 4,
+   "row_h": 9,
+   "bar_h": 2,
+   "color": "#868a93",
+   "seed": 11,
+   "min": 0.5,
+   "indent": 0
+  },
+  {
+   "type": "text",
+   "x": 14,
+   "y": 128,
+   "text": "YESTERDAY",
+   "color": "#8a8e96",
+   "scale": 1
+  },
+  {
+   "type": "bars",
+   "x": 15,
+   "y": 137,
+   "w": 44,
+   "rows": 3,
+   "row_h": 9,
+   "bar_h": 2,
+   "color": "#868a93",
+   "seed": 23,
+   "min": 0.5,
+   "indent": 0
+  },
+  {
+   "type": "circle",
+   "cx": 18,
+   "cy": 163,
+   "r": 3,
+   "color": "#6fa594",
+   "fill": true
+  },
+  {
+   "type": "bars",
+   "x": 24,
+   "y": 162,
+   "w": 26,
+   "rows": 1,
+   "row_h": 7,
+   "bar_h": 2,
+   "color": "#6d727b",
+   "seed": 2,
+   "min": 0.9,
+   "indent": 0
+  },
+  {
+   "type": "text",
+   "x": 156,
+   "y": 9,
+   "text": "CHAT 5",
+   "color": "#555a63",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 182,
+   "y": 9,
+   "text": ">",
+   "color": "#8a8e96",
+   "scale": 1
+  },
+  {
+   "type": "icon",
+   "name": "upload",
+   "x": 228,
+   "y": 8,
+   "size": 7,
+   "color": "#7b7f88"
+  },
+  {
+   "type": "line",
+   "x1": 67,
+   "y1": 30,
+   "x2": 310,
+   "y2": 30,
+   "color": "#bcbec3"
+  },
+  {
+   "type": "circle",
+   "cx": 104,
+   "cy": 42,
+   "r": 3,
+   "color": "#6fa594",
+   "fill": true
+  },
+  {
+   "type": "bars",
+   "x": 112,
+   "y": 40,
+   "w": 150,
+   "rows": 2,
+   "row_h": 7,
+   "bar_h": 2,
+   "color": "#b6b9bf",
+   "seed": 8,
+   "min": 0.55,
+   "indent": 0
+  }
+ ],
+ "stage": {
+  "hide_folders": true,
+  "platforms": [
+   {
+    "id": "answer1",
+    "x": 86,
+    "y": 127,
+    "w": 52,
+    "h": 13,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 52,
+      "h": 13,
+      "color": "#7d8088",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 50,
+      "h": 11,
+      "color": "#e6e7ea",
+      "r": 1
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 48,
+      "h": 1,
+      "color": "#f4f4f6"
+     },
+     {
+      "type": "circle",
+      "cx": 6,
+      "cy": 6,
+      "r": 2,
+      "color": "#6fa594",
+      "fill": true
+     },
+     {
+      "type": "rect",
+      "x": 11,
+      "y": 4,
+      "w": 34,
+      "h": 2,
+      "color": "#8a8e96"
+     },
+     {
+      "type": "rect",
+      "x": 11,
+      "y": 8,
+      "w": 26,
+      "h": 2,
+      "color": "#b3b6bc"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "user1",
+    "x": 194,
+    "y": 127,
+    "w": 54,
+    "h": 11,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 54,
+      "h": 11,
+      "color": "#7d8088",
+      "r": 3
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 52,
+      "h": 9,
+      "color": "#d6d8dc",
+      "r": 2
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 50,
+      "h": 1,
+      "color": "#e4e5e8"
+     },
+     {
+      "type": "rect",
+      "x": 6,
+      "y": 5,
+      "w": 42,
+      "h": 2,
+      "color": "#8a8e96"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "stream",
+    "x": 138,
+    "y": 106,
+    "w": 50,
+    "h": 13,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 50,
+      "h": 13,
+      "color": "#7d8088",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 48,
+      "h": 11,
+      "color": "#e6e7ea",
+      "r": 1
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 46,
+      "h": 1,
+      "color": "#f4f4f6"
+     },
+     {
+      "type": "circle",
+      "cx": 6,
+      "cy": 6,
+      "r": 2,
+      "color": "#6fa594",
+      "fill": true
+     },
+     {
+      "type": "rect",
+      "x": 11,
+      "y": 4,
+      "w": 28,
+      "h": 2,
+      "color": "#8a8e96"
+     },
+     {
+      "type": "rect",
+      "x": 11,
+      "y": 8,
+      "w": 28,
+      "h": 2,
+      "color": "#b3b6bc"
+     },
+     {
+      "type": "rect",
+      "x": 44,
+      "y": 8,
+      "w": 2,
+      "h": 3,
+      "color": "#5c6068"
+     }
+    ],
+    "behavior": {
+     "type": "scroll",
+     "speed": 5,
+     "range": 30,
+     "dir": "up",
+     "offset": 0
+    }
+   },
+   {
+    "id": "answer2",
+    "x": 72,
+    "y": 98,
+    "w": 40,
+    "h": 13,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 13,
+      "color": "#7d8088",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 38,
+      "h": 11,
+      "color": "#e6e7ea",
+      "r": 1
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 36,
+      "h": 1,
+      "color": "#f4f4f6"
+     },
+     {
+      "type": "circle",
+      "cx": 6,
+      "cy": 6,
+      "r": 2,
+      "color": "#6fa594",
+      "fill": true
+     },
+     {
+      "type": "rect",
+      "x": 11,
+      "y": 4,
+      "w": 20,
+      "h": 2,
+      "color": "#8a8e96"
+     },
+     {
+      "type": "rect",
+      "x": 11,
+      "y": 8,
+      "w": 16,
+      "h": 2,
+      "color": "#b3b6bc"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "user2",
+    "x": 246,
+    "y": 98,
+    "w": 52,
+    "h": 11,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 52,
+      "h": 11,
+      "color": "#7d8088",
+      "r": 3
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 50,
+      "h": 9,
+      "color": "#d6d8dc",
+      "r": 2
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 48,
+      "h": 1,
+      "color": "#e4e5e8"
+     },
+     {
+      "type": "rect",
+      "x": 6,
+      "y": 5,
+      "w": 40,
+      "h": 2,
+      "color": "#8a8e96"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "input",
+    "x": 100,
+    "y": 152,
+    "w": 120,
+    "h": 14,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 120,
+      "h": 14,
+      "color": "#7d8088",
+      "r": 4
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 118,
+      "h": 12,
+      "color": "#eceded",
+      "r": 3
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 116,
+      "h": 1,
+      "color": "#f8f8f9"
+     },
+     {
+      "type": "icon",
+      "name": "plus",
+      "x": 5,
+      "y": 4,
+      "size": 5,
+      "color": "#7b7f88"
+     },
+     {
+      "type": "text",
+      "x": 14,
+      "y": 5,
+      "text": "ASK ANYTHING",
+      "color": "#9a9da4",
+      "scale": 1
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "stop",
+    "x": 226,
+    "y": 154,
+    "w": 23,
+    "h": 11,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 23,
+      "h": 11,
+      "color": "#2f3238",
+      "r": 3
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 21,
+      "h": 9,
+      "color": "#4f535b",
+      "r": 2
+     },
+     {
+      "type": "rect",
+      "x": 3,
+      "y": 1,
+      "w": 17,
+      "h": 1,
+      "color": "#f0f0f266"
+     },
+     {
+      "type": "text",
+      "x": 4,
+      "y": 3,
+      "text": "STOP",
+      "color": "#f0f0f2",
+      "scale": 1
+     }
+    ],
+    "behavior": {
+     "type": "button",
+     "effect": "clear_bullets",
+     "cooldown": 12
+    }
+   }
+  ]
+ }
+}

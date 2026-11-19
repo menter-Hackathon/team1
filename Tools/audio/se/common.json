@@ -1,415 +1,3141 @@
 {
-  "sounds": [
-    {"id": "se_gen_telegraph", "desc": "とても小さく短い「ピ」。赤い予告が出た合図", "peak": 0.5,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "notes": [["E6", 0.03]], "env": {"a": 0.003, "d": 0.03, "s": 0.0, "r": 0.015}, "vol": 0.6}
-      ],
-      "fx": {"lp": 5000}
-    },
-    {"id": "se_gen_shot_small", "desc": "敵の小さい弾。低めの「ピュ」", "peak": 0.85,
-      "layers": [
-        {"wave": "square", "at": 0.0, "freq": 620, "freq_end": 300, "dur": 0.07, "curve": "exp", "env": {"a": 0.002, "d": 0.07, "s": 0.0, "r": 0.01}, "vol": 0.7},
-        {"wave": "noise", "at": 0, "freq": 3000, "freq_end": 1500.0, "dur": 0.02, "curve": "exp", "env": {"a": 0.0, "d": 0.02, "s": 0.0, "r": 0.004}, "vol": 0.25}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_gen_shot_big", "desc": "敵の大きい弾。太い「ドシュ」", "peak": 0.85,
-      "layers": [
-        {"wave": "saw", "at": 0.0, "freq": 320, "freq_end": 90, "dur": 0.18, "curve": "exp", "env": {"a": 0.002, "d": 0.18, "s": 0.0, "r": 0.01}, "vol": 0.7},
-        {"wave": "noise", "at": 0.0, "freq": 2500, "freq_end": 500, "dur": 0.14, "curve": "exp", "env": {"a": 0.002, "d": 0.14, "s": 0.0, "r": 0.01}, "vol": 0.45},
-        {"wave": "triangle", "at": 0.0, "freq": 140, "freq_end": 60, "dur": 0.12, "curve": "exp", "env": {"a": 0.002, "d": 0.12, "s": 0.0, "r": 0.01}, "vol": 0.6}
-      ],
-      "fx": {"lp": 5000}
-    },
-    {"id": "se_gen_laser", "desc": "レーザー。高い所から下がる「ビーッ」", "peak": 0.85,
-      "layers": [
-        {"wave": "saw", "at": 0.0, "freq": 1900, "freq_end": 320, "dur": 0.3, "curve": "exp", "env": {"a": 0.003, "d": 0.1, "s": 0.6, "r": 0.05}, "vol": 0.6},
-        {"wave": "pulse", "at": 0.0, "freq": 950, "freq_end": 160, "dur": 0.3, "curve": "exp", "env": {"a": 0.003, "d": 0.1, "s": 0.6, "r": 0.05}, "vol": 0.4, "duty": 0.25},
-        {"wave": "noise", "at": 0.0, "freq": 5000, "freq_end": 1500, "dur": 0.1, "curve": "exp", "env": {"a": 0.002, "d": 0.1, "s": 0.0, "r": 0.01}, "vol": 0.25}
-      ],
-      "fx": {"lp": 7000}
-    },
-    {"id": "se_gen_explosion_small", "desc": "小さい爆発「ボン」", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 2200, "freq_end": 250, "dur": 0.22, "curve": "exp", "env": {"a": 0.002, "d": 0.22, "s": 0.0, "r": 0.01}, "vol": 0.7},
-        {"wave": "triangle", "at": 0.0, "freq": 160, "freq_end": 50, "dur": 0.16, "curve": "exp", "env": {"a": 0.002, "d": 0.16, "s": 0.0, "r": 0.01}, "vol": 0.7}
-      ],
-      "fx": {"lp": 5000}
-    },
-    {"id": "se_gen_explosion_big", "desc": "大きい爆発「ドゴーン」。低くて長め", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 3000, "freq_end": 120, "dur": 0.6, "curve": "exp", "env": {"a": 0.002, "d": 0.6, "s": 0.0, "r": 0.05}, "vol": 0.7},
-        {"wave": "triangle", "at": 0.0, "freq": 130, "freq_end": 35, "dur": 0.4, "curve": "exp", "env": {"a": 0.002, "d": 0.4, "s": 0.0, "r": 0.05}, "vol": 0.8},
-        {"wave": "square", "at": 0.0, "freq": 90, "freq_end": 40, "dur": 0.25, "curve": "exp", "env": {"a": 0.002, "d": 0.25, "s": 0.0, "r": 0.01}, "vol": 0.35}
-      ],
-      "fx": {"lp": 4500, "crush": 6}
-    },
-    {"id": "se_gen_whoosh", "desc": "風を切る「ヒュッ」。ワープ・すばやい動き", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 900, "freq_end": 4500, "dur": 0.16, "curve": "exp", "env": {"a": 0.05, "d": 0.11, "s": 0.0, "r": 0.03}, "vol": 0.7},
-        {"wave": "triangle", "at": 0.0, "freq": 300, "freq_end": 900, "dur": 0.14, "curve": "exp", "env": {"a": 0.03, "d": 0.11, "s": 0.0, "r": 0.02}, "vol": 0.3}
-      ],
-      "fx": {"lp": 7000, "hp": 200}
-    },
-    {"id": "se_gen_spawn_pop", "desc": "物が現れる「ポン」", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "freq": 320, "freq_end": 950, "dur": 0.06, "curve": "exp", "env": {"a": 0.002, "d": 0.06, "s": 0.2, "r": 0.03}, "vol": 0.7, "duty": 0.25},
-        {"wave": "noise", "at": 0, "freq": 2500, "freq_end": 1250.0, "dur": 0.015, "curve": "exp", "env": {"a": 0.0, "d": 0.015, "s": 0.0, "r": 0.004}, "vol": 0.2}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_gen_land_thud", "desc": "重い物が落ちた「ドスン」", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "freq": 125, "freq_end": 42, "dur": 0.16, "curve": "exp", "env": {"a": 0.002, "d": 0.16, "s": 0.0, "r": 0.01}, "vol": 0.9},
-        {"wave": "noise", "at": 0.0, "freq": 700, "freq_end": 150, "dur": 0.1, "curve": "exp", "env": {"a": 0.002, "d": 0.1, "s": 0.0, "r": 0.01}, "vol": 0.5}
-      ],
-      "fx": {"lp": 2500}
-    },
-    {"id": "se_gen_warn_beep", "desc": "注意の「ピピッ」。2回の短いビープ", "peak": 0.7,
-      "layers": [
-        {"wave": "square", "at": 0.0, "notes": [["A5", 0.055], ["r", 0.04], ["A5", 0.055]], "env": {"a": 0.002, "d": 0.03, "s": 0.6, "r": 0.015}, "vol": 0.6}
-      ],
-      "fx": {"lp": 5000}
-    },
-    {"id": "se_gen_glass_break", "desc": "ガラスが割れる「パリーン」", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 6500, "freq_end": 2500, "dur": 0.07, "curve": "exp", "env": {"a": 0.002, "d": 0.07, "s": 0.0, "r": 0.01}, "vol": 0.7},
-        {"wave": "noise_tonal", "at": 0.03, "notes": [["B6", 0.04], ["F#6", 0.04], ["D7", 0.05], ["A6", 0.08]], "env": {"a": 0.001, "d": 0.04, "s": 0.2, "r": 0.03}, "vol": 0.45},
-        {"wave": "noise", "at": 0.06, "freq": 5000, "freq_end": 1800, "dur": 0.25, "curve": "exp", "env": {"a": 0.002, "d": 0.25, "s": 0.0, "r": 0.01}, "vol": 0.3}
-      ],
-      "fx": {"lp": 8000, "hp": 500}
-    },
-    {"id": "se_gen_charge", "desc": "力をためる「ウィーン」。だんだん高くなる", "peak": 0.6,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "freq": 180, "freq_end": 1100, "dur": 0.5, "curve": "exp", "env": {"a": 0.08, "d": 0.1, "s": 0.8, "r": 0.04}, "vol": 0.6, "duty": 0.25, "duty_end": 0.5, "vib": [0.4, 18]},
-        {"wave": "triangle", "at": 0.0, "freq": 90, "freq_end": 550, "dur": 0.5, "curve": "exp", "env": {"a": 0.08, "d": 0.1, "s": 0.8, "r": 0.04}, "vol": 0.4}
-      ],
-      "fx": {"lp": 5000}
-    },
-    {"id": "se_ui_move", "desc": "カーソルの「ピッ」。軽くて短い", "peak": 0.7,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "notes": [["B5", 0.03]], "env": {"a": 0.002, "d": 0.03, "s": 0.0, "r": 0.015}, "vol": 0.6, "duty": 0.25}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_ui_decide", "desc": "決定の「ピコン」。2つの音が上がる", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "notes": [["E6", 0.05], ["B6", 0.1]], "env": {"a": 0.002, "d": 0.05, "s": 0.4, "r": 0.04}, "vol": 0.7, "duty": 0.25},
-        {"wave": "triangle", "at": 0.0, "notes": [["E5", 0.05], ["B5", 0.1]], "env": {"a": 0.002, "d": 0.05, "s": 0.5, "r": 0.03}, "vol": 0.4}
-      ],
-      "fx": {"lp": 8000}
-    },
-    {"id": "se_ui_cancel", "desc": "戻るの「ポコ」。2つの音が下がる", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "notes": [["B5", 0.045], ["E5", 0.09]], "env": {"a": 0.002, "d": 0.05, "s": 0.3, "r": 0.03}, "vol": 0.7, "duty": 0.5}
-      ],
-      "fx": {"lp": 5000}
-    },
-    {"id": "se_ui_start", "desc": "ゲームを始める。明るく駆け上がる音とエコー", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "notes": [["C5", 0.06], ["E5", 0.06], ["G5", 0.06], ["C6", 0.06], ["E6", 0.06], ["G6", 0.18]], "env": {"a": 0.002, "d": 0.06, "s": 0.5, "r": 0.06}, "vol": 0.7, "duty": 0.25},
-        {"wave": "triangle", "at": 0.0, "notes": [["C4", 0.18], ["G4", 0.18], ["C5", 0.18]], "env": {"a": 0.002, "d": 0.05, "s": 0.5, "r": 0.03}, "vol": 0.5},
-        {"wave": "noise", "at": 0.0, "freq": 2000, "freq_end": 6000, "dur": 0.3, "curve": "exp", "env": {"a": 0.2, "d": 0.1, "s": 0.0, "r": 0.02}, "vol": 0.15}
-      ],
-      "fx": {"lp": 8000, "echo": [0.11, 0.3, 0.25]}
-    },
-    {"id": "se_ui_card", "desc": "カードをめくる「シャッ・ポン」", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 2500, "freq_end": 5500, "dur": 0.05, "curve": "exp", "env": {"a": 0.01, "d": 0.04, "s": 0.0, "r": 0.01}, "vol": 0.45},
-        {"wave": "triangle", "at": 0.04, "notes": [["G5", 0.04], ["D6", 0.08]], "env": {"a": 0.002, "d": 0.05, "s": 0.3, "r": 0.04}, "vol": 0.7}
-      ],
-      "fx": {"lp": 7000, "hp": 150}
-    },
-    {"id": "se_player_jump", "desc": "ジャンプの「ピョン」。明るく上がる", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "freq": 330, "freq_end": 880, "dur": 0.11, "curve": "exp", "env": {"a": 0.002, "d": 0.11, "s": 0.3, "r": 0.03}, "vol": 0.7, "duty": 0.25}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_player_land", "desc": "着地の「トッ」", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "freq": 180, "freq_end": 80, "dur": 0.06, "curve": "exp", "env": {"a": 0.002, "d": 0.06, "s": 0.0, "r": 0.01}, "vol": 0.8},
-        {"wave": "noise", "at": 0.0, "freq": 1200, "freq_end": 300, "dur": 0.05, "curve": "exp", "env": {"a": 0.002, "d": 0.05, "s": 0.0, "r": 0.01}, "vol": 0.4}
-      ],
-      "fx": {"lp": 3000}
-    },
-    {"id": "se_player_dash", "desc": "ダッシュの「シュッ」。風＋上がる音", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 1800, "freq_end": 6000, "dur": 0.12, "curve": "exp", "env": {"a": 0.02, "d": 0.1, "s": 0.0, "r": 0.02}, "vol": 0.6},
-        {"wave": "pulse", "at": 0.0, "freq": 600, "freq_end": 1300, "dur": 0.09, "curve": "exp", "env": {"a": 0.002, "d": 0.09, "s": 0.0, "r": 0.02}, "vol": 0.45, "duty": 0.125}
-      ],
-      "fx": {"lp": 7500, "hp": 300}
-    },
-    {"id": "se_player_swing", "desc": "近接を振る「スパッ」", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 5500, "freq_end": 1500, "dur": 0.07, "curve": "exp", "env": {"a": 0.004, "d": 0.066, "s": 0.0, "r": 0.015}, "vol": 0.7},
-        {"wave": "pulse", "at": 0.0, "freq": 1000, "freq_end": 480, "dur": 0.06, "curve": "exp", "env": {"a": 0.002, "d": 0.06, "s": 0.0, "r": 0.01}, "vol": 0.4, "duty": 0.125}
-      ],
-      "fx": {"lp": 7500, "hp": 400}
-    },
-    {"id": "se_player_swing_blocked", "desc": "弾かれた「カキン」。金属っぽい", "peak": 0.85,
-      "layers": [
-        {"wave": "noise_tonal", "at": 0.0, "notes": [["E6", 0.03], ["B6", 0.09]], "env": {"a": 0.001, "d": 0.06, "s": 0.15, "r": 0.04}, "vol": 0.6},
-        {"wave": "square", "at": 0.0, "freq": 1500, "freq_end": 900, "dur": 0.06, "curve": "exp", "env": {"a": 0.002, "d": 0.06, "s": 0.0, "r": 0.01}, "vol": 0.5},
-        {"wave": "noise", "at": 0, "freq": 5000, "freq_end": 2500.0, "dur": 0.012, "curve": "exp", "env": {"a": 0.0, "d": 0.012, "s": 0.0, "r": 0.004}, "vol": 0.4}
-      ],
-      "fx": {"lp": 8000}
-    },
-    {"id": "se_player_hurt", "desc": "ダメージの「ビシャッ」。強く、はっきり聞こえる", "peak": 0.95,
-      "layers": [
-        {"wave": "square", "at": 0.0, "freq": 900, "freq_end": 220, "dur": 0.2, "curve": "exp", "env": {"a": 0.001, "d": 0.2, "s": 0.15, "r": 0.04}, "vol": 0.8},
-        {"wave": "pulse", "at": 0.0, "freq": 1350, "freq_end": 330, "dur": 0.2, "curve": "exp", "env": {"a": 0.001, "d": 0.2, "s": 0.15, "r": 0.04}, "vol": 0.4, "duty": 0.125},
-        {"wave": "noise", "at": 0.0, "freq": 4000, "freq_end": 800, "dur": 0.1, "curve": "exp", "env": {"a": 0.002, "d": 0.1, "s": 0.0, "r": 0.01}, "vol": 0.6}
-      ],
-      "fx": {"lp": 7000, "crush": 6}
-    },
-    {"id": "se_player_die", "desc": "倒れた。しょんぼり下がっていく音", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "notes": [["B4", 0.1], ["G4", 0.1], ["E4", 0.1], ["C4", 0.12], ["A3", 0.14], ["F3", 0.35]], "env": {"a": 0.003, "d": 0.08, "s": 0.6, "r": 0.08}, "vol": 0.7, "duty": 0.25, "vib": [0.3, 7]},
-        {"wave": "triangle", "at": 0.0, "notes": [["B3", 0.2], ["E3", 0.26], ["F2", 0.45]], "env": {"a": 0.002, "d": 0.05, "s": 0.5, "r": 0.03}, "vol": 0.5},
-        {"wave": "noise", "at": 0.0, "freq": 3000, "freq_end": 300, "dur": 0.25, "curve": "exp", "env": {"a": 0.002, "d": 0.25, "s": 0.0, "r": 0.01}, "vol": 0.3}
-      ],
-      "fx": {"lp": 5000, "echo": [0.12, 0.25, 0.2]}
-    },
-    {"id": "se_player_fall", "desc": "穴に落ちた「ヒュ〜〜」", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "freq": 950, "freq_end": 150, "dur": 0.42, "curve": "exp", "env": {"a": 0.005, "d": 0.2, "s": 0.6, "r": 0.05}, "vol": 0.8},
-        {"wave": "pulse", "at": 0.0, "freq": 950, "freq_end": 150, "dur": 0.42, "curve": "exp", "env": {"a": 0.005, "d": 0.2, "s": 0.5, "r": 0.05}, "vol": 0.25, "duty": 0.125}
-      ],
-      "fx": {"lp": 5000}
-    },
-    {"id": "se_player_heal", "desc": "回復の「キラリン」。やさしく上がる", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "notes": [["C6", 0.05], ["E6", 0.05], ["G6", 0.05], ["C7", 0.14]], "env": {"a": 0.003, "d": 0.06, "s": 0.5, "r": 0.08}, "vol": 0.7},
-        {"wave": "pulse", "at": 0.0, "notes": [["C5", 0.1], ["G5", 0.19]], "env": {"a": 0.002, "d": 0.05, "s": 0.5, "r": 0.03}, "vol": 0.25, "duty": 0.25}
-      ],
-      "fx": {"lp": 8000, "echo": [0.09, 0.3, 0.25]}
-    },
-    {"id": "se_player_shot", "desc": "プレイヤーの弾「ピッ」。高くて軽い", "peak": 0.75,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "freq": 1500, "freq_end": 800, "dur": 0.055, "curve": "exp", "env": {"a": 0.001, "d": 0.055, "s": 0.0, "r": 0.015}, "vol": 0.7, "duty": 0.125}
-      ],
-      "fx": {"lp": 7000}
-    },
-    {"id": "se_player_skill", "desc": "能力を出した「シャキン」。明るい", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "freq": 500, "freq_end": 1500, "dur": 0.09, "curve": "exp", "env": {"a": 0.002, "d": 0.09, "s": 0.3, "r": 0.03}, "vol": 0.6, "duty": 0.25},
-        {"wave": "triangle", "at": 0.07, "notes": [["E6", 0.04], ["B6", 0.1]], "env": {"a": 0.002, "d": 0.06, "s": 0.3, "r": 0.05}, "vol": 0.5},
-        {"wave": "noise", "at": 0.0, "freq": 3000, "freq_end": 6000, "dur": 0.08, "curve": "exp", "env": {"a": 0.01, "d": 0.07, "s": 0.0, "r": 0.01}, "vol": 0.25}
-      ],
-      "fx": {"lp": 8000}
-    },
-    {"id": "se_skill_pickup", "desc": "能力を拾った。うれしい上がる音", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "notes": [["E5", 0.055], ["A5", 0.055], ["C#6", 0.055], ["E6", 0.055], ["A6", 0.2]], "env": {"a": 0.002, "d": 0.06, "s": 0.5, "r": 0.08}, "vol": 0.7, "duty": 0.25},
-        {"wave": "triangle", "at": 0.0, "notes": [["A3", 0.11], ["E4", 0.11], ["A4", 0.2]], "env": {"a": 0.002, "d": 0.05, "s": 0.5, "r": 0.03}, "vol": 0.5}
-      ],
-      "fx": {"lp": 8000, "echo": [0.1, 0.3, 0.25]}
-    },
-    {"id": "se_skill_ready", "desc": "能力がまた使える「ポロン」。小さめ", "peak": 0.65,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "notes": [["A5", 0.05], ["E6", 0.1]], "env": {"a": 0.003, "d": 0.06, "s": 0.3, "r": 0.06}, "vol": 0.7}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_skill_denied", "desc": "使えない「ブブッ」。低い2回", "peak": 0.7,
-      "layers": [
-        {"wave": "square", "at": 0.0, "notes": [["E3", 0.05], ["r", 0.03], ["E3", 0.07]], "env": {"a": 0.002, "d": 0.03, "s": 0.7, "r": 0.015}, "vol": 0.7},
-        {"wave": "square", "at": 0.0, "notes": [["F3", 0.05], ["r", 0.03], ["F3", 0.07]], "env": {"a": 0.002, "d": 0.03, "s": 0.7, "r": 0.015}, "vol": 0.35}
-      ],
-      "fx": {"lp": 2500}
-    },
-    {"id": "se_enemy_hit", "desc": "雑魚に当たった「ペシ」。短くて歯切れがいい", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 4200, "freq_end": 1500, "dur": 0.035, "curve": "exp", "env": {"a": 0.002, "d": 0.035, "s": 0.0, "r": 0.01}, "vol": 0.7},
-        {"wave": "square", "at": 0.0, "freq": 520, "freq_end": 300, "dur": 0.04, "curve": "exp", "env": {"a": 0.002, "d": 0.04, "s": 0.0, "r": 0.01}, "vol": 0.5}
-      ],
-      "fx": {"lp": 6500, "hp": 200}
-    },
-    {"id": "se_enemy_die", "desc": "雑魚が倒れた「ポフッ」", "peak": 0.85,
-      "layers": [
-        {"wave": "square", "at": 0.0, "freq": 700, "freq_end": 140, "dur": 0.12, "curve": "exp", "env": {"a": 0.002, "d": 0.12, "s": 0.0, "r": 0.01}, "vol": 0.6},
-        {"wave": "noise", "at": 0.0, "freq": 3500, "freq_end": 600, "dur": 0.12, "curve": "exp", "env": {"a": 0.002, "d": 0.12, "s": 0.0, "r": 0.01}, "vol": 0.55},
-        {"wave": "triangle", "at": 0.1, "notes": [["E6", 0.03]], "env": {"a": 0.001, "d": 0.03, "s": 0.0, "r": 0.008}, "vol": 0.3}
-      ],
-      "fx": {"lp": 6500}
-    },
-    {"id": "se_boss_hit", "desc": "ボスに当たった「ドッ・チ」。重い当たり＋ゲージの小さい音", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "freq": 190, "freq_end": 85, "dur": 0.06, "curve": "exp", "env": {"a": 0.002, "d": 0.06, "s": 0.0, "r": 0.01}, "vol": 0.9},
-        {"wave": "noise", "at": 0.0, "freq": 2600, "freq_end": 800, "dur": 0.045, "curve": "exp", "env": {"a": 0.002, "d": 0.045, "s": 0.0, "r": 0.01}, "vol": 0.55},
-        {"wave": "pulse", "at": 0.02, "notes": [["A5", 0.025]], "env": {"a": 0.001, "d": 0.025, "s": 0.0, "r": 0.008}, "vol": 0.3, "duty": 0.125}
-      ],
-      "fx": {"lp": 5500}
-    },
-    {"id": "se_boss_appear", "desc": "ボスが現れる。低いうなりがせり上がる", "peak": 0.85,
-      "layers": [
-        {"wave": "saw", "at": 0.0, "freq": 50, "freq_end": 110, "dur": 1.0, "curve": "exp", "env": {"a": 0.25, "d": 0.3, "s": 0.8, "r": 0.15}, "vol": 0.7, "vib": [0.5, 6]},
-        {"wave": "square", "at": 0.0, "freq": 37, "freq_end": 55, "dur": 1.0, "curve": "exp", "env": {"a": 0.3, "d": 0.3, "s": 0.8, "r": 0.15}, "vol": 0.45},
-        {"wave": "noise", "at": 0.0, "freq": 200, "freq_end": 900, "dur": 1.0, "curve": "exp", "env": {"a": 0.5, "d": 0.4, "s": 0.3, "r": 0.15}, "vol": 0.35},
-        {"wave": "square", "at": 0.85, "notes": [["E2", 0.12], ["r", 0.1], ["E2", 0.12]], "env": {"a": 0.002, "d": 0.08, "s": 0.5, "r": 0.08}, "vol": 0.6}
-      ],
-      "fx": {"lp": 3000, "crush": 7}
-    },
-    {"id": "se_boss_phase2", "desc": "第2形態。バグった音がせり上がって「ドン」", "peak": 0.85,
-      "layers": [
-        {"wave": "saw", "at": 0.0, "freq": 80, "freq_end": 640, "dur": 0.65, "curve": "exp", "env": {"a": 0.05, "d": 0.2, "s": 0.8, "r": 0.03}, "vol": 0.6, "arp": [0, 6, 1, 7], "arp_rate": 0.04},
-        {"wave": "noise_tonal", "at": 0.0, "freq": 300, "freq_end": 2400, "dur": 0.65, "curve": "exp", "env": {"a": 0.2, "d": 0.3, "s": 0.6, "r": 0.03}, "vol": 0.35},
-        {"wave": "triangle", "at": 0.66, "freq": 120, "freq_end": 32, "dur": 0.4, "curve": "exp", "env": {"a": 0.002, "d": 0.4, "s": 0.0, "r": 0.05}, "vol": 0.9},
-        {"wave": "noise", "at": 0.66, "freq": 2500, "freq_end": 200, "dur": 0.4, "curve": "exp", "env": {"a": 0.002, "d": 0.4, "s": 0.0, "r": 0.05}, "vol": 0.6}
-      ],
-      "fx": {"lp": 5000, "crush": 6}
-    },
-    {"id": "se_boss_purged", "desc": "ウイルスを取り除いた。はじけて、きれいな音が上がる", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 5000, "freq_end": 600, "dur": 0.25, "curve": "exp", "env": {"a": 0.002, "d": 0.25, "s": 0.0, "r": 0.01}, "vol": 0.6},
-        {"wave": "triangle", "at": 0.0, "freq": 140, "freq_end": 50, "dur": 0.2, "curve": "exp", "env": {"a": 0.002, "d": 0.2, "s": 0.0, "r": 0.01}, "vol": 0.6},
-        {"wave": "pulse", "at": 0.12, "notes": [["C5", 0.07], ["E5", 0.07], ["G5", 0.07], ["C6", 0.07], ["E6", 0.07], ["G6", 0.07], ["C7", 0.3]], "env": {"a": 0.002, "d": 0.07, "s": 0.5, "r": 0.1}, "vol": 0.65, "duty": 0.25},
-        {"wave": "triangle", "at": 0.12, "notes": [["C4", 0.21], ["G4", 0.21], ["C5", 0.3]], "env": {"a": 0.002, "d": 0.05, "s": 0.5, "r": 0.03}, "vol": 0.45}
-      ],
-      "fx": {"lp": 8000, "echo": [0.12, 0.35, 0.3]}
-    },
-    {"id": "se_shield_block", "desc": "盾が弾を止めた「コン」", "peak": 0.85,
-      "layers": [
-        {"wave": "noise_tonal", "at": 0.0, "notes": [["A5", 0.04]], "env": {"a": 0.001, "d": 0.04, "s": 0.0, "r": 0.02}, "vol": 0.4},
-        {"wave": "triangle", "at": 0.0, "freq": 620, "freq_end": 420, "dur": 0.06, "curve": "exp", "env": {"a": 0.002, "d": 0.06, "s": 0.0, "r": 0.01}, "vol": 0.8}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_shield_restore", "desc": "盾が戻った「フォン」。下から上へ", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "freq": 380, "freq_end": 1150, "dur": 0.18, "curve": "exp", "env": {"a": 0.02, "d": 0.1, "s": 0.6, "r": 0.04}, "vol": 0.7},
-        {"wave": "pulse", "at": 0.17, "notes": [["E6", 0.06]], "env": {"a": 0.001, "d": 0.06, "s": 0.0, "r": 0.008}, "vol": 0.45, "duty": 0.25}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_tab_close", "desc": "タブを閉じた「プチッ」（元ネタ：ウィンドウの × ボタン）", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0, "freq": 5000, "freq_end": 2500.0, "dur": 0.01, "curve": "exp", "env": {"a": 0.0, "d": 0.01, "s": 0.0, "r": 0.004}, "vol": 0.5},
-        {"wave": "pulse", "at": 0.0, "freq": 1100, "freq_end": 380, "dur": 0.055, "curve": "exp", "env": {"a": 0.002, "d": 0.055, "s": 0.0, "r": 0.01}, "vol": 0.7, "duty": 0.25}
-      ],
-      "fx": {"lp": 6500}
-    },
-    {"id": "se_popup_open", "desc": "ウィンドウが現れた「ポポン」（元ネタ：ポップアップ）", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "notes": [["G5", 0.035], ["C6", 0.07]], "env": {"a": 0.002, "d": 0.04, "s": 0.3, "r": 0.03}, "vol": 0.7, "duty": 0.5}
-      ],
-      "fx": {"lp": 5500}
-    },
-    {"id": "se_prop_hit", "desc": "ステージの物をたたいた「コツ」", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "freq": 320, "freq_end": 150, "dur": 0.05, "curve": "exp", "env": {"a": 0.002, "d": 0.05, "s": 0.0, "r": 0.01}, "vol": 0.8},
-        {"wave": "noise", "at": 0, "freq": 2500, "freq_end": 1250.0, "dur": 0.015, "curve": "exp", "env": {"a": 0.0, "d": 0.015, "s": 0.0, "r": 0.004}, "vol": 0.35}
-      ],
-      "fx": {"lp": 4000}
-    },
-    {"id": "se_prop_break", "desc": "ステージの物が壊れた「バキャ」", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 3500, "freq_end": 400, "dur": 0.2, "curve": "exp", "env": {"a": 0.002, "d": 0.2, "s": 0.0, "r": 0.01}, "vol": 0.7},
-        {"wave": "square", "at": 0.0, "freq": 220, "freq_end": 70, "dur": 0.14, "curve": "exp", "env": {"a": 0.002, "d": 0.14, "s": 0.0, "r": 0.01}, "vol": 0.5},
-        {"wave": "noise_tonal", "at": 0.03, "notes": [["D6", 0.03], ["G5", 0.05]], "env": {"a": 0.001, "d": 0.04, "s": 0.0, "r": 0.02}, "vol": 0.3}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_block_vanish", "desc": "足場が消えた「ピュルッ」。下がって消える", "peak": 0.7,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "freq": 850, "freq_end": 280, "dur": 0.11, "curve": "exp", "env": {"a": 0.002, "d": 0.11, "s": 0.2, "r": 0.02}, "vol": 0.7, "duty": 0.5, "duty_end": 0.125}
-      ],
-      "fx": {"lp": 5000}
-    },
-    {"id": "se_zone_fire", "desc": "床の範囲攻撃が出た「ズバッ」", "peak": 0.85,
-      "layers": [
-        {"wave": "saw", "at": 0.0, "freq": 240, "freq_end": 100, "dur": 0.14, "curve": "exp", "env": {"a": 0.002, "d": 0.14, "s": 0.0, "r": 0.01}, "vol": 0.7},
-        {"wave": "noise", "at": 0.0, "freq": 3000, "freq_end": 700, "dur": 0.12, "curve": "exp", "env": {"a": 0.002, "d": 0.12, "s": 0.0, "r": 0.01}, "vol": 0.5}
-      ],
-      "fx": {"lp": 5000}
-    },
-    {"id": "se_wave_clear", "desc": "雑魚の波を倒しきった「タタタン」", "peak": 0.85,
-      "layers": [
-        {"wave": "pulse", "at": 0.0, "notes": [["G5", 0.06], ["B5", 0.06], ["D6", 0.14]], "env": {"a": 0.002, "d": 0.06, "s": 0.5, "r": 0.06}, "vol": 0.7, "duty": 0.25},
-        {"wave": "triangle", "at": 0.0, "notes": [["G4", 0.12], ["D5", 0.14]], "env": {"a": 0.002, "d": 0.05, "s": 0.5, "r": 0.03}, "vol": 0.4}
-      ],
-      "fx": {"lp": 7000, "echo": [0.09, 0.2, 0.2]}
-    },
-    {"id": "se_pace_phase", "desc": "ステージの出来事が始まる合図。2回上がるサイレン風", "peak": 0.85,
-      "layers": [
-        {"wave": "square", "at": 0.0, "freq": 440, "freq_end": 700, "dur": 0.14, "curve": "exp", "env": {"a": 0.01, "d": 0.05, "s": 0.7, "r": 0.02}, "vol": 0.6},
-        {"wave": "square", "at": 0.19, "freq": 440, "freq_end": 700, "dur": 0.14, "curve": "exp", "env": {"a": 0.01, "d": 0.05, "s": 0.7, "r": 0.02}, "vol": 0.6},
-        {"wave": "triangle", "at": 0.0, "freq": 220, "freq_end": 350, "dur": 0.33, "curve": "exp", "env": {"a": 0.01, "d": 0.1, "s": 0.7, "r": 0.03}, "vol": 0.4}
-      ],
-      "fx": {"lp": 4500}
-    },
-    {"id": "se_toast", "desc": "通知が出た「ポロ」。小さくやわらかい（元ネタ：画面の角の通知（音は自作））", "peak": 0.6,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "notes": [["D6", 0.05], ["A6", 0.09]], "env": {"a": 0.004, "d": 0.05, "s": 0.3, "r": 0.06}, "vol": 0.7}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_stage_clear", "desc": "ステージクリアのきらめき（ジングルに重なる）", "peak": 0.85,
-      "layers": [
-        {"wave": "noise_tonal", "at": 0.0, "freq": 1200, "freq_end": 5000, "dur": 0.3, "curve": "exp", "env": {"a": 0.05, "d": 0.25, "s": 0.0, "r": 0.03}, "vol": 0.3},
-        {"wave": "triangle", "at": 0.05, "notes": [["G6", 0.04], ["C7", 0.04], ["E7", 0.04], ["G7", 0.12]], "env": {"a": 0.002, "d": 0.05, "s": 0.4, "r": 0.08}, "vol": 0.6}
-      ],
-      "fx": {"lp": 8000, "echo": [0.08, 0.35, 0.3]}
-    },
-    {"id": "se_desktop_click", "desc": "マウスのクリック「カチッ」（元ネタ：マウスのボタン）", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0, "freq": 4500, "freq_end": 2250.0, "dur": 0.008, "curve": "exp", "env": {"a": 0.0, "d": 0.008, "s": 0.0, "r": 0.004}, "vol": 0.6},
-        {"wave": "square", "at": 0, "notes": [["B5", 0.01]], "env": {"a": 0.001, "d": 0.01, "s": 0.0, "r": 0.008}, "vol": 0.3},
-        {"wave": "noise", "at": 0.055, "freq": 3500, "freq_end": 1750.0, "dur": 0.006, "curve": "exp", "env": {"a": 0.0, "d": 0.006, "s": 0.0, "r": 0.004}, "vol": 0.35}
-      ],
-      "fx": {"lp": 7000, "hp": 300}
-    },
-    {"id": "se_desktop_open", "desc": "ウィンドウが広がる「フワッ」（元ネタ：ウィンドウが開く動き）", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "freq": 200, "freq_end": 800, "dur": 0.24, "curve": "exp", "env": {"a": 0.02, "d": 0.15, "s": 0.5, "r": 0.04}, "vol": 0.7},
-        {"wave": "noise", "at": 0.0, "freq": 800, "freq_end": 3500, "dur": 0.24, "curve": "exp", "env": {"a": 0.08, "d": 0.16, "s": 0.0, "r": 0.02}, "vol": 0.3}
-      ],
-      "fx": {"lp": 6000}
-    },
-    {"id": "se_desktop_cure", "desc": "ウイルスがはじけて元の色に戻る「パン・キラ」", "peak": 0.85,
-      "layers": [
-        {"wave": "noise", "at": 0.0, "freq": 4500, "freq_end": 800, "dur": 0.12, "curve": "exp", "env": {"a": 0.002, "d": 0.12, "s": 0.0, "r": 0.01}, "vol": 0.6},
-        {"wave": "square", "at": 0.0, "freq": 600, "freq_end": 150, "dur": 0.08, "curve": "exp", "env": {"a": 0.002, "d": 0.08, "s": 0.0, "r": 0.01}, "vol": 0.4},
-        {"wave": "triangle", "at": 0.1, "notes": [["E6", 0.05], ["A6", 0.05], ["C#7", 0.05], ["E7", 0.16]], "env": {"a": 0.002, "d": 0.05, "s": 0.4, "r": 0.08}, "vol": 0.6}
-      ],
-      "fx": {"lp": 8000, "echo": [0.09, 0.3, 0.25]}
-    },
-    {"id": "se_desktop_glitch", "desc": "画面が乱れる「ザザッ…ブツッ」。ラスボスの気配（元ネタ：こわれた画面）", "peak": 0.85,
-      "layers": [
-        {"wave": "noise_tonal", "at": 0.0, "freq": 2500, "freq_end": 300, "dur": 0.12, "curve": "exp", "env": {"a": 0.001, "d": 0.05, "s": 0.8, "r": 0.005}, "vol": 0.6},
-        {"wave": "noise_tonal", "at": 0.18, "freq": 900, "freq_end": 3200, "dur": 0.08, "curve": "exp", "env": {"a": 0.001, "d": 0.05, "s": 0.8, "r": 0.005}, "vol": 0.55},
-        {"wave": "noise", "at": 0.32, "freq": 5000, "freq_end": 400, "dur": 0.15, "curve": "exp", "env": {"a": 0.001, "d": 0.05, "s": 0.8, "r": 0.005}, "vol": 0.5},
-        {"wave": "noise_tonal", "at": 0.55, "freq": 400, "freq_end": 1800, "dur": 0.1, "curve": "exp", "env": {"a": 0.001, "d": 0.05, "s": 0.8, "r": 0.005}, "vol": 0.6},
-        {"wave": "saw", "at": 0.0, "freq": 110, "freq_end": 38, "dur": 0.9, "curve": "exp", "env": {"a": 0.02, "d": 0.3, "s": 0.7, "r": 0.1}, "vol": 0.6, "vib": [1.0, 11]},
-        {"wave": "square", "at": 0.72, "notes": [["E2", 0.2]], "env": {"a": 0.002, "d": 0.2, "s": 0.0, "r": 0.08}, "vol": 0.6}
-      ],
-      "fx": {"lp": 4500, "crush": 5}
-    },
-    {"id": "se_dex_unlock", "desc": "図鑑に色がついた「キラリーン」", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "notes": [["C6", 0.07], ["G6", 0.07], ["E7", 0.22]], "env": {"a": 0.003, "d": 0.07, "s": 0.5, "r": 0.1}, "vol": 0.7},
-        {"wave": "pulse", "at": 0.0, "notes": [["C5", 0.14], ["G5", 0.22]], "env": {"a": 0.002, "d": 0.05, "s": 0.5, "r": 0.03}, "vol": 0.3, "duty": 0.25}
-      ],
-      "fx": {"lp": 8000, "echo": [0.11, 0.35, 0.3]}
-    },
-    {"id": "se_result_rank", "desc": "ランクが出た「ドン！ジャーン」。スタンプ（元ネタ：ハンコ）", "peak": 0.85,
-      "layers": [
-        {"wave": "triangle", "at": 0.0, "freq": 150, "freq_end": 45, "dur": 0.16, "curve": "exp", "env": {"a": 0.002, "d": 0.16, "s": 0.0, "r": 0.01}, "vol": 0.9},
-        {"wave": "noise", "at": 0.0, "freq": 2500, "freq_end": 400, "dur": 0.1, "curve": "exp", "env": {"a": 0.002, "d": 0.1, "s": 0.0, "r": 0.01}, "vol": 0.5},
-        {"wave": "pulse", "at": 0.03, "notes": [["C5", 0.32]], "env": {"a": 0.002, "d": 0.2, "s": 0.3, "r": 0.12}, "vol": 0.4, "duty": 0.25},
-        {"wave": "pulse", "at": 0.03, "notes": [["E5", 0.32]], "env": {"a": 0.002, "d": 0.2, "s": 0.3, "r": 0.12}, "vol": 0.4, "duty": 0.25},
-        {"wave": "pulse", "at": 0.03, "notes": [["G5", 0.32]], "env": {"a": 0.002, "d": 0.2, "s": 0.3, "r": 0.12}, "vol": 0.4, "duty": 0.5},
-        {"wave": "triangle", "at": 0.03, "notes": [["C6", 0.32]], "env": {"a": 0.002, "d": 0.2, "s": 0.3, "r": 0.12}, "vol": 0.4}
-      ],
-      "fx": {"lp": 7000, "echo": [0.1, 0.25, 0.2]}
-    },
-    {"id": "se_gameover_tick", "desc": "感染率が増える「ジッ」。低くてにごった刻み", "peak": 0.6,
-      "layers": [
-        {"wave": "square", "at": 0.0, "notes": [["C4", 0.03]], "env": {"a": 0.001, "d": 0.03, "s": 0.0, "r": 0.01}, "vol": 0.7},
-        {"wave": "noise", "at": 0, "freq": 1800, "freq_end": 900.0, "dur": 0.015, "curve": "exp", "env": {"a": 0.0, "d": 0.015, "s": 0.0, "r": 0.004}, "vol": 0.4}
-      ],
-      "fx": {"lp": 3500, "crush": 6}
+ "sounds": [
+  {
+   "id": "se_gen_telegraph",
+   "desc": "とても小さく短い「ピ」。赤い予告が出た合図",
+   "peak": 0.5,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "E6",
+       0.03
+      ]
+     ],
+     "env": {
+      "a": 0.003,
+      "d": 0.03,
+      "s": 0.0,
+      "r": 0.015
+     },
+     "vol": 0.6
     }
-  ]
+   ],
+   "fx": {
+    "lp": 5000
+   }
+  },
+  {
+   "id": "se_gen_shot_small",
+   "desc": "敵の小さい弾。低めの「ピュ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 620,
+     "freq_end": 300,
+     "dur": 0.07,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.07,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "noise",
+     "at": 0,
+     "freq": 3000,
+     "freq_end": 1500.0,
+     "dur": 0.02,
+     "curve": "exp",
+     "env": {
+      "a": 0.0,
+      "d": 0.02,
+      "s": 0.0,
+      "r": 0.004
+     },
+     "vol": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_gen_shot_big",
+   "desc": "敵の大きい弾。太い「ドシュ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "saw",
+     "at": 0.0,
+     "freq": 320,
+     "freq_end": 90,
+     "dur": 0.18,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.18,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 2500,
+     "freq_end": 500,
+     "dur": 0.14,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.14,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.45
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 140,
+     "freq_end": 60,
+     "dur": 0.12,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.12,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.6
+    }
+   ],
+   "fx": {
+    "lp": 5000
+   }
+  },
+  {
+   "id": "se_gen_laser",
+   "desc": "レーザー。高い所から下がる「ビーッ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "saw",
+     "at": 0.0,
+     "freq": 1900,
+     "freq_end": 320,
+     "dur": 0.3,
+     "curve": "exp",
+     "env": {
+      "a": 0.003,
+      "d": 0.1,
+      "s": 0.6,
+      "r": 0.05
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 950,
+     "freq_end": 160,
+     "dur": 0.3,
+     "curve": "exp",
+     "env": {
+      "a": 0.003,
+      "d": 0.1,
+      "s": 0.6,
+      "r": 0.05
+     },
+     "vol": 0.4,
+     "duty": 0.25
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 5000,
+     "freq_end": 1500,
+     "dur": 0.1,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.1,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 7000
+   }
+  },
+  {
+   "id": "se_gen_explosion_small",
+   "desc": "小さい爆発「ボン」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 2200,
+     "freq_end": 250,
+     "dur": 0.22,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.22,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 160,
+     "freq_end": 50,
+     "dur": 0.16,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.16,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7
+    }
+   ],
+   "fx": {
+    "lp": 5000
+   }
+  },
+  {
+   "id": "se_gen_explosion_big",
+   "desc": "大きい爆発「ドゴーン」。低くて長め",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 3000,
+     "freq_end": 120,
+     "dur": 0.6,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.6,
+      "s": 0.0,
+      "r": 0.05
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 130,
+     "freq_end": 35,
+     "dur": 0.4,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.4,
+      "s": 0.0,
+      "r": 0.05
+     },
+     "vol": 0.8
+    },
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 90,
+     "freq_end": 40,
+     "dur": 0.25,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.25,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.35
+    }
+   ],
+   "fx": {
+    "lp": 4500,
+    "crush": 6
+   }
+  },
+  {
+   "id": "se_gen_whoosh",
+   "desc": "風を切る「ヒュッ」。ワープ・すばやい動き",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 900,
+     "freq_end": 4500,
+     "dur": 0.16,
+     "curve": "exp",
+     "env": {
+      "a": 0.05,
+      "d": 0.11,
+      "s": 0.0,
+      "r": 0.03
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 300,
+     "freq_end": 900,
+     "dur": 0.14,
+     "curve": "exp",
+     "env": {
+      "a": 0.03,
+      "d": 0.11,
+      "s": 0.0,
+      "r": 0.02
+     },
+     "vol": 0.3
+    }
+   ],
+   "fx": {
+    "lp": 7000,
+    "hp": 200
+   }
+  },
+  {
+   "id": "se_gen_spawn_pop",
+   "desc": "物が現れる「ポン」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 320,
+     "freq_end": 950,
+     "dur": 0.06,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.2,
+      "r": 0.03
+     },
+     "vol": 0.7,
+     "duty": 0.25
+    },
+    {
+     "wave": "noise",
+     "at": 0,
+     "freq": 2500,
+     "freq_end": 1250.0,
+     "dur": 0.015,
+     "curve": "exp",
+     "env": {
+      "a": 0.0,
+      "d": 0.015,
+      "s": 0.0,
+      "r": 0.004
+     },
+     "vol": 0.2
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_gen_land_thud",
+   "desc": "重い物が落ちた「ドスン」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 125,
+     "freq_end": 42,
+     "dur": 0.16,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.16,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.9
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 700,
+     "freq_end": 150,
+     "dur": 0.1,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.1,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.5
+    }
+   ],
+   "fx": {
+    "lp": 2500
+   }
+  },
+  {
+   "id": "se_gen_warn_beep",
+   "desc": "注意の「ピピッ」。2回の短いビープ",
+   "peak": 0.7,
+   "layers": [
+    {
+     "wave": "square",
+     "at": 0.0,
+     "notes": [
+      [
+       "A5",
+       0.055
+      ],
+      [
+       "r",
+       0.04
+      ],
+      [
+       "A5",
+       0.055
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.03,
+      "s": 0.6,
+      "r": 0.015
+     },
+     "vol": 0.6
+    }
+   ],
+   "fx": {
+    "lp": 5000
+   }
+  },
+  {
+   "id": "se_gen_glass_break",
+   "desc": "ガラスが割れる「パリーン」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 6500,
+     "freq_end": 2500,
+     "dur": 0.07,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.07,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "noise_tonal",
+     "at": 0.03,
+     "notes": [
+      [
+       "B6",
+       0.04
+      ],
+      [
+       "F#6",
+       0.04
+      ],
+      [
+       "D7",
+       0.05
+      ],
+      [
+       "A6",
+       0.08
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.04,
+      "s": 0.2,
+      "r": 0.03
+     },
+     "vol": 0.45
+    },
+    {
+     "wave": "noise",
+     "at": 0.06,
+     "freq": 5000,
+     "freq_end": 1800,
+     "dur": 0.25,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.25,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.3
+    }
+   ],
+   "fx": {
+    "lp": 8000,
+    "hp": 500
+   }
+  },
+  {
+   "id": "se_gen_charge",
+   "desc": "力をためる「ウィーン」。だんだん高くなる",
+   "peak": 0.6,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 180,
+     "freq_end": 1100,
+     "dur": 0.5,
+     "curve": "exp",
+     "env": {
+      "a": 0.08,
+      "d": 0.1,
+      "s": 0.8,
+      "r": 0.04
+     },
+     "vol": 0.6,
+     "duty": 0.25,
+     "duty_end": 0.5,
+     "vib": [
+      0.4,
+      18
+     ]
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 90,
+     "freq_end": 550,
+     "dur": 0.5,
+     "curve": "exp",
+     "env": {
+      "a": 0.08,
+      "d": 0.1,
+      "s": 0.8,
+      "r": 0.04
+     },
+     "vol": 0.4
+    }
+   ],
+   "fx": {
+    "lp": 5000
+   }
+  },
+  {
+   "id": "se_ui_move",
+   "desc": "カーソルの「ピッ」。軽くて短い",
+   "peak": 0.7,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "B5",
+       0.03
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.03,
+      "s": 0.0,
+      "r": 0.015
+     },
+     "vol": 0.6,
+     "duty": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_ui_decide",
+   "desc": "決定の「ピコン」。2つの音が上がる",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "E6",
+       0.05
+      ],
+      [
+       "B6",
+       0.1
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.4,
+      "r": 0.04
+     },
+     "vol": 0.7,
+     "duty": 0.25
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "E5",
+       0.05
+      ],
+      [
+       "B5",
+       0.1
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.5,
+      "r": 0.03
+     },
+     "vol": 0.4
+    }
+   ],
+   "fx": {
+    "lp": 8000
+   }
+  },
+  {
+   "id": "se_ui_cancel",
+   "desc": "戻るの「ポコ」。2つの音が下がる",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "B5",
+       0.045
+      ],
+      [
+       "E5",
+       0.09
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.3,
+      "r": 0.03
+     },
+     "vol": 0.7,
+     "duty": 0.5
+    }
+   ],
+   "fx": {
+    "lp": 5000
+   }
+  },
+  {
+   "id": "se_ui_start",
+   "desc": "ゲームを始める。明るく駆け上がる音とエコー",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "C5",
+       0.06
+      ],
+      [
+       "E5",
+       0.06
+      ],
+      [
+       "G5",
+       0.06
+      ],
+      [
+       "C6",
+       0.06
+      ],
+      [
+       "E6",
+       0.06
+      ],
+      [
+       "G6",
+       0.18
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.5,
+      "r": 0.06
+     },
+     "vol": 0.7,
+     "duty": 0.25
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "C4",
+       0.18
+      ],
+      [
+       "G4",
+       0.18
+      ],
+      [
+       "C5",
+       0.18
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.5,
+      "r": 0.03
+     },
+     "vol": 0.5
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 2000,
+     "freq_end": 6000,
+     "dur": 0.3,
+     "curve": "exp",
+     "env": {
+      "a": 0.2,
+      "d": 0.1,
+      "s": 0.0,
+      "r": 0.02
+     },
+     "vol": 0.15
+    }
+   ],
+   "fx": {
+    "lp": 8000,
+    "echo": [
+     0.11,
+     0.3,
+     0.25
+    ]
+   }
+  },
+  {
+   "id": "se_ui_card",
+   "desc": "カードをめくる「シャッ・ポン」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 2500,
+     "freq_end": 5500,
+     "dur": 0.05,
+     "curve": "exp",
+     "env": {
+      "a": 0.01,
+      "d": 0.04,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.45
+    },
+    {
+     "wave": "triangle",
+     "at": 0.04,
+     "notes": [
+      [
+       "G5",
+       0.04
+      ],
+      [
+       "D6",
+       0.08
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.3,
+      "r": 0.04
+     },
+     "vol": 0.7
+    }
+   ],
+   "fx": {
+    "lp": 7000,
+    "hp": 150
+   }
+  },
+  {
+   "id": "se_player_jump",
+   "desc": "ジャンプの「ピョン」。明るく上がる",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 330,
+     "freq_end": 880,
+     "dur": 0.11,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.11,
+      "s": 0.3,
+      "r": 0.03
+     },
+     "vol": 0.7,
+     "duty": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_player_land",
+   "desc": "着地の「トッ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 180,
+     "freq_end": 80,
+     "dur": 0.06,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.8
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 1200,
+     "freq_end": 300,
+     "dur": 0.05,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.4
+    }
+   ],
+   "fx": {
+    "lp": 3000
+   }
+  },
+  {
+   "id": "se_player_dash",
+   "desc": "ダッシュの「シュッ」。風＋上がる音",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 1800,
+     "freq_end": 6000,
+     "dur": 0.12,
+     "curve": "exp",
+     "env": {
+      "a": 0.02,
+      "d": 0.1,
+      "s": 0.0,
+      "r": 0.02
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 600,
+     "freq_end": 1300,
+     "dur": 0.09,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.09,
+      "s": 0.0,
+      "r": 0.02
+     },
+     "vol": 0.45,
+     "duty": 0.125
+    }
+   ],
+   "fx": {
+    "lp": 7500,
+    "hp": 300
+   }
+  },
+  {
+   "id": "se_player_swing",
+   "desc": "近接を振る「スパッ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 5500,
+     "freq_end": 1500,
+     "dur": 0.07,
+     "curve": "exp",
+     "env": {
+      "a": 0.004,
+      "d": 0.066,
+      "s": 0.0,
+      "r": 0.015
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 1000,
+     "freq_end": 480,
+     "dur": 0.06,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.4,
+     "duty": 0.125
+    }
+   ],
+   "fx": {
+    "lp": 7500,
+    "hp": 400
+   }
+  },
+  {
+   "id": "se_player_swing_blocked",
+   "desc": "弾かれた「カキン」。金属っぽい",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise_tonal",
+     "at": 0.0,
+     "notes": [
+      [
+       "E6",
+       0.03
+      ],
+      [
+       "B6",
+       0.09
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.06,
+      "s": 0.15,
+      "r": 0.04
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 1500,
+     "freq_end": 900,
+     "dur": 0.06,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.5
+    },
+    {
+     "wave": "noise",
+     "at": 0,
+     "freq": 5000,
+     "freq_end": 2500.0,
+     "dur": 0.012,
+     "curve": "exp",
+     "env": {
+      "a": 0.0,
+      "d": 0.012,
+      "s": 0.0,
+      "r": 0.004
+     },
+     "vol": 0.4
+    }
+   ],
+   "fx": {
+    "lp": 8000
+   }
+  },
+  {
+   "id": "se_player_hurt",
+   "desc": "ダメージの「ビシャッ」。強く、はっきり聞こえる",
+   "peak": 0.95,
+   "layers": [
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 900,
+     "freq_end": 220,
+     "dur": 0.2,
+     "curve": "exp",
+     "env": {
+      "a": 0.001,
+      "d": 0.2,
+      "s": 0.15,
+      "r": 0.04
+     },
+     "vol": 0.8
+    },
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 1350,
+     "freq_end": 330,
+     "dur": 0.2,
+     "curve": "exp",
+     "env": {
+      "a": 0.001,
+      "d": 0.2,
+      "s": 0.15,
+      "r": 0.04
+     },
+     "vol": 0.4,
+     "duty": 0.125
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 4000,
+     "freq_end": 800,
+     "dur": 0.1,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.1,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.6
+    }
+   ],
+   "fx": {
+    "lp": 7000,
+    "crush": 6
+   }
+  },
+  {
+   "id": "se_player_die",
+   "desc": "倒れた。しょんぼり下がっていく音",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "B4",
+       0.1
+      ],
+      [
+       "G4",
+       0.1
+      ],
+      [
+       "E4",
+       0.1
+      ],
+      [
+       "C4",
+       0.12
+      ],
+      [
+       "A3",
+       0.14
+      ],
+      [
+       "F3",
+       0.35
+      ]
+     ],
+     "env": {
+      "a": 0.003,
+      "d": 0.08,
+      "s": 0.6,
+      "r": 0.08
+     },
+     "vol": 0.7,
+     "duty": 0.25,
+     "vib": [
+      0.3,
+      7
+     ]
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "B3",
+       0.2
+      ],
+      [
+       "E3",
+       0.26
+      ],
+      [
+       "F2",
+       0.45
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.5,
+      "r": 0.03
+     },
+     "vol": 0.5
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 3000,
+     "freq_end": 300,
+     "dur": 0.25,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.25,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.3
+    }
+   ],
+   "fx": {
+    "lp": 5000,
+    "echo": [
+     0.12,
+     0.25,
+     0.2
+    ]
+   }
+  },
+  {
+   "id": "se_player_fall",
+   "desc": "穴に落ちた「ヒュ〜〜」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 950,
+     "freq_end": 150,
+     "dur": 0.42,
+     "curve": "exp",
+     "env": {
+      "a": 0.005,
+      "d": 0.2,
+      "s": 0.6,
+      "r": 0.05
+     },
+     "vol": 0.8
+    },
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 950,
+     "freq_end": 150,
+     "dur": 0.42,
+     "curve": "exp",
+     "env": {
+      "a": 0.005,
+      "d": 0.2,
+      "s": 0.5,
+      "r": 0.05
+     },
+     "vol": 0.25,
+     "duty": 0.125
+    }
+   ],
+   "fx": {
+    "lp": 5000
+   }
+  },
+  {
+   "id": "se_player_heal",
+   "desc": "回復の「キラリン」。やさしく上がる",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "C6",
+       0.05
+      ],
+      [
+       "E6",
+       0.05
+      ],
+      [
+       "G6",
+       0.05
+      ],
+      [
+       "C7",
+       0.14
+      ]
+     ],
+     "env": {
+      "a": 0.003,
+      "d": 0.06,
+      "s": 0.5,
+      "r": 0.08
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "C5",
+       0.1
+      ],
+      [
+       "G5",
+       0.19
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.5,
+      "r": 0.03
+     },
+     "vol": 0.25,
+     "duty": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 8000,
+    "echo": [
+     0.09,
+     0.3,
+     0.25
+    ]
+   }
+  },
+  {
+   "id": "se_player_shot",
+   "desc": "プレイヤーの弾「ピッ」。高くて軽い",
+   "peak": 0.75,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 1500,
+     "freq_end": 800,
+     "dur": 0.055,
+     "curve": "exp",
+     "env": {
+      "a": 0.001,
+      "d": 0.055,
+      "s": 0.0,
+      "r": 0.015
+     },
+     "vol": 0.7,
+     "duty": 0.125
+    }
+   ],
+   "fx": {
+    "lp": 7000
+   }
+  },
+  {
+   "id": "se_player_skill",
+   "desc": "能力を出した「シャキン」。明るい",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 500,
+     "freq_end": 1500,
+     "dur": 0.09,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.09,
+      "s": 0.3,
+      "r": 0.03
+     },
+     "vol": 0.6,
+     "duty": 0.25
+    },
+    {
+     "wave": "triangle",
+     "at": 0.07,
+     "notes": [
+      [
+       "E6",
+       0.04
+      ],
+      [
+       "B6",
+       0.1
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.3,
+      "r": 0.05
+     },
+     "vol": 0.5
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 3000,
+     "freq_end": 6000,
+     "dur": 0.08,
+     "curve": "exp",
+     "env": {
+      "a": 0.01,
+      "d": 0.07,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 8000
+   }
+  },
+  {
+   "id": "se_skill_pickup",
+   "desc": "能力を拾った。うれしい上がる音",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "E5",
+       0.055
+      ],
+      [
+       "A5",
+       0.055
+      ],
+      [
+       "C#6",
+       0.055
+      ],
+      [
+       "E6",
+       0.055
+      ],
+      [
+       "A6",
+       0.2
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.5,
+      "r": 0.08
+     },
+     "vol": 0.7,
+     "duty": 0.25
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "A3",
+       0.11
+      ],
+      [
+       "E4",
+       0.11
+      ],
+      [
+       "A4",
+       0.2
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.5,
+      "r": 0.03
+     },
+     "vol": 0.5
+    }
+   ],
+   "fx": {
+    "lp": 8000,
+    "echo": [
+     0.1,
+     0.3,
+     0.25
+    ]
+   }
+  },
+  {
+   "id": "se_skill_ready",
+   "desc": "能力がまた使える「ポロン」。小さめ",
+   "peak": 0.65,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "A5",
+       0.05
+      ],
+      [
+       "E6",
+       0.1
+      ]
+     ],
+     "env": {
+      "a": 0.003,
+      "d": 0.06,
+      "s": 0.3,
+      "r": 0.06
+     },
+     "vol": 0.7
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_skill_denied",
+   "desc": "使えない「ブブッ」。低い2回",
+   "peak": 0.7,
+   "layers": [
+    {
+     "wave": "square",
+     "at": 0.0,
+     "notes": [
+      [
+       "E3",
+       0.05
+      ],
+      [
+       "r",
+       0.03
+      ],
+      [
+       "E3",
+       0.07
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.03,
+      "s": 0.7,
+      "r": 0.015
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "square",
+     "at": 0.0,
+     "notes": [
+      [
+       "F3",
+       0.05
+      ],
+      [
+       "r",
+       0.03
+      ],
+      [
+       "F3",
+       0.07
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.03,
+      "s": 0.7,
+      "r": 0.015
+     },
+     "vol": 0.35
+    }
+   ],
+   "fx": {
+    "lp": 2500
+   }
+  },
+  {
+   "id": "se_enemy_hit",
+   "desc": "雑魚に当たった「ペシ」。短くて歯切れがいい",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 4200,
+     "freq_end": 1500,
+     "dur": 0.035,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.035,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 520,
+     "freq_end": 300,
+     "dur": 0.04,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.04,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.5
+    }
+   ],
+   "fx": {
+    "lp": 6500,
+    "hp": 200
+   }
+  },
+  {
+   "id": "se_enemy_die",
+   "desc": "雑魚が倒れた「ポフッ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 700,
+     "freq_end": 140,
+     "dur": 0.12,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.12,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 3500,
+     "freq_end": 600,
+     "dur": 0.12,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.12,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.55
+    },
+    {
+     "wave": "triangle",
+     "at": 0.1,
+     "notes": [
+      [
+       "E6",
+       0.03
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.03,
+      "s": 0.0,
+      "r": 0.008
+     },
+     "vol": 0.3
+    }
+   ],
+   "fx": {
+    "lp": 6500
+   }
+  },
+  {
+   "id": "se_boss_hit",
+   "desc": "ボスに当たった「ドッ・チ」。重い当たり＋ゲージの小さい音",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 190,
+     "freq_end": 85,
+     "dur": 0.06,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.9
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 2600,
+     "freq_end": 800,
+     "dur": 0.045,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.045,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.55
+    },
+    {
+     "wave": "pulse",
+     "at": 0.02,
+     "notes": [
+      [
+       "A5",
+       0.025
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.025,
+      "s": 0.0,
+      "r": 0.008
+     },
+     "vol": 0.3,
+     "duty": 0.125
+    }
+   ],
+   "fx": {
+    "lp": 5500
+   }
+  },
+  {
+   "id": "se_boss_appear",
+   "desc": "ボスが現れる。低いうなりがせり上がる",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "saw",
+     "at": 0.0,
+     "freq": 50,
+     "freq_end": 110,
+     "dur": 1.0,
+     "curve": "exp",
+     "env": {
+      "a": 0.25,
+      "d": 0.3,
+      "s": 0.8,
+      "r": 0.15
+     },
+     "vol": 0.7,
+     "vib": [
+      0.5,
+      6
+     ]
+    },
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 37,
+     "freq_end": 55,
+     "dur": 1.0,
+     "curve": "exp",
+     "env": {
+      "a": 0.3,
+      "d": 0.3,
+      "s": 0.8,
+      "r": 0.15
+     },
+     "vol": 0.45
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 200,
+     "freq_end": 900,
+     "dur": 1.0,
+     "curve": "exp",
+     "env": {
+      "a": 0.5,
+      "d": 0.4,
+      "s": 0.3,
+      "r": 0.15
+     },
+     "vol": 0.35
+    },
+    {
+     "wave": "square",
+     "at": 0.85,
+     "notes": [
+      [
+       "E2",
+       0.12
+      ],
+      [
+       "r",
+       0.1
+      ],
+      [
+       "E2",
+       0.12
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.08,
+      "s": 0.5,
+      "r": 0.08
+     },
+     "vol": 0.6
+    }
+   ],
+   "fx": {
+    "lp": 3000,
+    "crush": 7
+   }
+  },
+  {
+   "id": "se_boss_phase2",
+   "desc": "第2形態。バグった音がせり上がって「ドン」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "saw",
+     "at": 0.0,
+     "freq": 80,
+     "freq_end": 640,
+     "dur": 0.65,
+     "curve": "exp",
+     "env": {
+      "a": 0.05,
+      "d": 0.2,
+      "s": 0.8,
+      "r": 0.03
+     },
+     "vol": 0.6,
+     "arp": [
+      0,
+      6,
+      1,
+      7
+     ],
+     "arp_rate": 0.04
+    },
+    {
+     "wave": "noise_tonal",
+     "at": 0.0,
+     "freq": 300,
+     "freq_end": 2400,
+     "dur": 0.65,
+     "curve": "exp",
+     "env": {
+      "a": 0.2,
+      "d": 0.3,
+      "s": 0.6,
+      "r": 0.03
+     },
+     "vol": 0.35
+    },
+    {
+     "wave": "triangle",
+     "at": 0.66,
+     "freq": 120,
+     "freq_end": 32,
+     "dur": 0.4,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.4,
+      "s": 0.0,
+      "r": 0.05
+     },
+     "vol": 0.9
+    },
+    {
+     "wave": "noise",
+     "at": 0.66,
+     "freq": 2500,
+     "freq_end": 200,
+     "dur": 0.4,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.4,
+      "s": 0.0,
+      "r": 0.05
+     },
+     "vol": 0.6
+    }
+   ],
+   "fx": {
+    "lp": 5000,
+    "crush": 6
+   }
+  },
+  {
+   "id": "se_boss_purged",
+   "desc": "ウイルスを取り除いた。はじけて、きれいな音が上がる",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 5000,
+     "freq_end": 600,
+     "dur": 0.25,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.25,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 140,
+     "freq_end": 50,
+     "dur": 0.2,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.2,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "pulse",
+     "at": 0.12,
+     "notes": [
+      [
+       "C5",
+       0.07
+      ],
+      [
+       "E5",
+       0.07
+      ],
+      [
+       "G5",
+       0.07
+      ],
+      [
+       "C6",
+       0.07
+      ],
+      [
+       "E6",
+       0.07
+      ],
+      [
+       "G6",
+       0.07
+      ],
+      [
+       "C7",
+       0.3
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.07,
+      "s": 0.5,
+      "r": 0.1
+     },
+     "vol": 0.65,
+     "duty": 0.25
+    },
+    {
+     "wave": "triangle",
+     "at": 0.12,
+     "notes": [
+      [
+       "C4",
+       0.21
+      ],
+      [
+       "G4",
+       0.21
+      ],
+      [
+       "C5",
+       0.3
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.5,
+      "r": 0.03
+     },
+     "vol": 0.45
+    }
+   ],
+   "fx": {
+    "lp": 8000,
+    "echo": [
+     0.12,
+     0.35,
+     0.3
+    ]
+   }
+  },
+  {
+   "id": "se_shield_block",
+   "desc": "盾が弾を止めた「コン」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise_tonal",
+     "at": 0.0,
+     "notes": [
+      [
+       "A5",
+       0.04
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.04,
+      "s": 0.0,
+      "r": 0.02
+     },
+     "vol": 0.4
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 620,
+     "freq_end": 420,
+     "dur": 0.06,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.8
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_shield_restore",
+   "desc": "盾が戻った「フォン」。下から上へ",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 380,
+     "freq_end": 1150,
+     "dur": 0.18,
+     "curve": "exp",
+     "env": {
+      "a": 0.02,
+      "d": 0.1,
+      "s": 0.6,
+      "r": 0.04
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "pulse",
+     "at": 0.17,
+     "notes": [
+      [
+       "E6",
+       0.06
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.06,
+      "s": 0.0,
+      "r": 0.008
+     },
+     "vol": 0.45,
+     "duty": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_tab_close",
+   "desc": "タブを閉じた「プチッ」（元ネタ：ウィンドウの × ボタン）",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0,
+     "freq": 5000,
+     "freq_end": 2500.0,
+     "dur": 0.01,
+     "curve": "exp",
+     "env": {
+      "a": 0.0,
+      "d": 0.01,
+      "s": 0.0,
+      "r": 0.004
+     },
+     "vol": 0.5
+    },
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 1100,
+     "freq_end": 380,
+     "dur": 0.055,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.055,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7,
+     "duty": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 6500
+   }
+  },
+  {
+   "id": "se_popup_open",
+   "desc": "ウィンドウが現れた「ポポン」（元ネタ：ポップアップ）",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "G5",
+       0.035
+      ],
+      [
+       "C6",
+       0.07
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.04,
+      "s": 0.3,
+      "r": 0.03
+     },
+     "vol": 0.7,
+     "duty": 0.5
+    }
+   ],
+   "fx": {
+    "lp": 5500
+   }
+  },
+  {
+   "id": "se_prop_hit",
+   "desc": "ステージの物をたたいた「コツ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 320,
+     "freq_end": 150,
+     "dur": 0.05,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.8
+    },
+    {
+     "wave": "noise",
+     "at": 0,
+     "freq": 2500,
+     "freq_end": 1250.0,
+     "dur": 0.015,
+     "curve": "exp",
+     "env": {
+      "a": 0.0,
+      "d": 0.015,
+      "s": 0.0,
+      "r": 0.004
+     },
+     "vol": 0.35
+    }
+   ],
+   "fx": {
+    "lp": 4000
+   }
+  },
+  {
+   "id": "se_prop_break",
+   "desc": "ステージの物が壊れた「バキャ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 3500,
+     "freq_end": 400,
+     "dur": 0.2,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.2,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 220,
+     "freq_end": 70,
+     "dur": 0.14,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.14,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.5
+    },
+    {
+     "wave": "noise_tonal",
+     "at": 0.03,
+     "notes": [
+      [
+       "D6",
+       0.03
+      ],
+      [
+       "G5",
+       0.05
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.04,
+      "s": 0.0,
+      "r": 0.02
+     },
+     "vol": 0.3
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_block_vanish",
+   "desc": "足場が消えた「ピュルッ」。下がって消える",
+   "peak": 0.7,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "freq": 850,
+     "freq_end": 280,
+     "dur": 0.11,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.11,
+      "s": 0.2,
+      "r": 0.02
+     },
+     "vol": 0.7,
+     "duty": 0.5,
+     "duty_end": 0.125
+    }
+   ],
+   "fx": {
+    "lp": 5000
+   }
+  },
+  {
+   "id": "se_zone_fire",
+   "desc": "床の範囲攻撃が出た「ズバッ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "saw",
+     "at": 0.0,
+     "freq": 240,
+     "freq_end": 100,
+     "dur": 0.14,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.14,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 3000,
+     "freq_end": 700,
+     "dur": 0.12,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.12,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.5
+    }
+   ],
+   "fx": {
+    "lp": 5000
+   }
+  },
+  {
+   "id": "se_wave_clear",
+   "desc": "雑魚の波を倒しきった「タタタン」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "G5",
+       0.06
+      ],
+      [
+       "B5",
+       0.06
+      ],
+      [
+       "D6",
+       0.14
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.5,
+      "r": 0.06
+     },
+     "vol": 0.7,
+     "duty": 0.25
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "G4",
+       0.12
+      ],
+      [
+       "D5",
+       0.14
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.5,
+      "r": 0.03
+     },
+     "vol": 0.4
+    }
+   ],
+   "fx": {
+    "lp": 7000,
+    "echo": [
+     0.09,
+     0.2,
+     0.2
+    ]
+   }
+  },
+  {
+   "id": "se_pace_phase",
+   "desc": "ステージの出来事が始まる合図。2回上がるサイレン風",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 440,
+     "freq_end": 700,
+     "dur": 0.14,
+     "curve": "exp",
+     "env": {
+      "a": 0.01,
+      "d": 0.05,
+      "s": 0.7,
+      "r": 0.02
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "square",
+     "at": 0.19,
+     "freq": 440,
+     "freq_end": 700,
+     "dur": 0.14,
+     "curve": "exp",
+     "env": {
+      "a": 0.01,
+      "d": 0.05,
+      "s": 0.7,
+      "r": 0.02
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 220,
+     "freq_end": 350,
+     "dur": 0.33,
+     "curve": "exp",
+     "env": {
+      "a": 0.01,
+      "d": 0.1,
+      "s": 0.7,
+      "r": 0.03
+     },
+     "vol": 0.4
+    }
+   ],
+   "fx": {
+    "lp": 4500
+   }
+  },
+  {
+   "id": "se_toast",
+   "desc": "通知が出た「ポロ」。小さくやわらかい（元ネタ：画面の角の通知（音は自作））",
+   "peak": 0.6,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "D6",
+       0.05
+      ],
+      [
+       "A6",
+       0.09
+      ]
+     ],
+     "env": {
+      "a": 0.004,
+      "d": 0.05,
+      "s": 0.3,
+      "r": 0.06
+     },
+     "vol": 0.7
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_stage_clear",
+   "desc": "ステージクリアのきらめき（ジングルに重なる）",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise_tonal",
+     "at": 0.0,
+     "freq": 1200,
+     "freq_end": 5000,
+     "dur": 0.3,
+     "curve": "exp",
+     "env": {
+      "a": 0.05,
+      "d": 0.25,
+      "s": 0.0,
+      "r": 0.03
+     },
+     "vol": 0.3
+    },
+    {
+     "wave": "triangle",
+     "at": 0.05,
+     "notes": [
+      [
+       "G6",
+       0.04
+      ],
+      [
+       "C7",
+       0.04
+      ],
+      [
+       "E7",
+       0.04
+      ],
+      [
+       "G7",
+       0.12
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.4,
+      "r": 0.08
+     },
+     "vol": 0.6
+    }
+   ],
+   "fx": {
+    "lp": 8000,
+    "echo": [
+     0.08,
+     0.35,
+     0.3
+    ]
+   }
+  },
+  {
+   "id": "se_desktop_click",
+   "desc": "マウスのクリック「カチッ」（元ネタ：マウスのボタン）",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0,
+     "freq": 4500,
+     "freq_end": 2250.0,
+     "dur": 0.008,
+     "curve": "exp",
+     "env": {
+      "a": 0.0,
+      "d": 0.008,
+      "s": 0.0,
+      "r": 0.004
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "square",
+     "at": 0,
+     "notes": [
+      [
+       "B5",
+       0.01
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.01,
+      "s": 0.0,
+      "r": 0.008
+     },
+     "vol": 0.3
+    },
+    {
+     "wave": "noise",
+     "at": 0.055,
+     "freq": 3500,
+     "freq_end": 1750.0,
+     "dur": 0.006,
+     "curve": "exp",
+     "env": {
+      "a": 0.0,
+      "d": 0.006,
+      "s": 0.0,
+      "r": 0.004
+     },
+     "vol": 0.35
+    }
+   ],
+   "fx": {
+    "lp": 7000,
+    "hp": 300
+   }
+  },
+  {
+   "id": "se_desktop_open",
+   "desc": "ウィンドウが広がる「フワッ」（元ネタ：ウィンドウが開く動き）",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 200,
+     "freq_end": 800,
+     "dur": 0.24,
+     "curve": "exp",
+     "env": {
+      "a": 0.02,
+      "d": 0.15,
+      "s": 0.5,
+      "r": 0.04
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 800,
+     "freq_end": 3500,
+     "dur": 0.24,
+     "curve": "exp",
+     "env": {
+      "a": 0.08,
+      "d": 0.16,
+      "s": 0.0,
+      "r": 0.02
+     },
+     "vol": 0.3
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_desktop_cure",
+   "desc": "ウイルスがはじけて元の色に戻る「パン・キラ」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 4500,
+     "freq_end": 800,
+     "dur": 0.12,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.12,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "square",
+     "at": 0.0,
+     "freq": 600,
+     "freq_end": 150,
+     "dur": 0.08,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.08,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.4
+    },
+    {
+     "wave": "triangle",
+     "at": 0.1,
+     "notes": [
+      [
+       "E6",
+       0.05
+      ],
+      [
+       "A6",
+       0.05
+      ],
+      [
+       "C#7",
+       0.05
+      ],
+      [
+       "E7",
+       0.16
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.4,
+      "r": 0.08
+     },
+     "vol": 0.6
+    }
+   ],
+   "fx": {
+    "lp": 8000,
+    "echo": [
+     0.09,
+     0.3,
+     0.25
+    ]
+   }
+  },
+  {
+   "id": "se_desktop_glitch",
+   "desc": "画面が乱れる「ザザッ…ブツッ」。ラスボスの気配（元ネタ：こわれた画面）",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise_tonal",
+     "at": 0.0,
+     "freq": 2500,
+     "freq_end": 300,
+     "dur": 0.12,
+     "curve": "exp",
+     "env": {
+      "a": 0.001,
+      "d": 0.05,
+      "s": 0.8,
+      "r": 0.005
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "noise_tonal",
+     "at": 0.18,
+     "freq": 900,
+     "freq_end": 3200,
+     "dur": 0.08,
+     "curve": "exp",
+     "env": {
+      "a": 0.001,
+      "d": 0.05,
+      "s": 0.8,
+      "r": 0.005
+     },
+     "vol": 0.55
+    },
+    {
+     "wave": "noise",
+     "at": 0.32,
+     "freq": 5000,
+     "freq_end": 400,
+     "dur": 0.15,
+     "curve": "exp",
+     "env": {
+      "a": 0.001,
+      "d": 0.05,
+      "s": 0.8,
+      "r": 0.005
+     },
+     "vol": 0.5
+    },
+    {
+     "wave": "noise_tonal",
+     "at": 0.55,
+     "freq": 400,
+     "freq_end": 1800,
+     "dur": 0.1,
+     "curve": "exp",
+     "env": {
+      "a": 0.001,
+      "d": 0.05,
+      "s": 0.8,
+      "r": 0.005
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "saw",
+     "at": 0.0,
+     "freq": 110,
+     "freq_end": 38,
+     "dur": 0.9,
+     "curve": "exp",
+     "env": {
+      "a": 0.02,
+      "d": 0.3,
+      "s": 0.7,
+      "r": 0.1
+     },
+     "vol": 0.6,
+     "vib": [
+      1.0,
+      11
+     ]
+    },
+    {
+     "wave": "square",
+     "at": 0.72,
+     "notes": [
+      [
+       "E2",
+       0.2
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.2,
+      "s": 0.0,
+      "r": 0.08
+     },
+     "vol": 0.6
+    }
+   ],
+   "fx": {
+    "lp": 4500,
+    "crush": 5
+   }
+  },
+  {
+   "id": "se_dex_unlock",
+   "desc": "図鑑に色がついた「キラリーン」",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "notes": [
+      [
+       "C6",
+       0.07
+      ],
+      [
+       "G6",
+       0.07
+      ],
+      [
+       "E7",
+       0.22
+      ]
+     ],
+     "env": {
+      "a": 0.003,
+      "d": 0.07,
+      "s": 0.5,
+      "r": 0.1
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "pulse",
+     "at": 0.0,
+     "notes": [
+      [
+       "C5",
+       0.14
+      ],
+      [
+       "G5",
+       0.22
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.5,
+      "r": 0.03
+     },
+     "vol": 0.3,
+     "duty": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 8000,
+    "echo": [
+     0.11,
+     0.35,
+     0.3
+    ]
+   }
+  },
+  {
+   "id": "se_result_rank",
+   "desc": "ランクが出た「ドン！ジャーン」。スタンプ（元ネタ：ハンコ）",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "triangle",
+     "at": 0.0,
+     "freq": 150,
+     "freq_end": 45,
+     "dur": 0.16,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.16,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.9
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 2500,
+     "freq_end": 400,
+     "dur": 0.1,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.1,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.5
+    },
+    {
+     "wave": "pulse",
+     "at": 0.03,
+     "notes": [
+      [
+       "C5",
+       0.32
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.2,
+      "s": 0.3,
+      "r": 0.12
+     },
+     "vol": 0.4,
+     "duty": 0.25
+    },
+    {
+     "wave": "pulse",
+     "at": 0.03,
+     "notes": [
+      [
+       "E5",
+       0.32
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.2,
+      "s": 0.3,
+      "r": 0.12
+     },
+     "vol": 0.4,
+     "duty": 0.25
+    },
+    {
+     "wave": "pulse",
+     "at": 0.03,
+     "notes": [
+      [
+       "G5",
+       0.32
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.2,
+      "s": 0.3,
+      "r": 0.12
+     },
+     "vol": 0.4,
+     "duty": 0.5
+    },
+    {
+     "wave": "triangle",
+     "at": 0.03,
+     "notes": [
+      [
+       "C6",
+       0.32
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.2,
+      "s": 0.3,
+      "r": 0.12
+     },
+     "vol": 0.4
+    }
+   ],
+   "fx": {
+    "lp": 7000,
+    "echo": [
+     0.1,
+     0.25,
+     0.2
+    ]
+   }
+  },
+  {
+   "id": "se_gameover_tick",
+   "desc": "感染率が増える「ジッ」。低くてにごった刻み",
+   "peak": 0.6,
+   "layers": [
+    {
+     "wave": "square",
+     "at": 0.0,
+     "notes": [
+      [
+       "C4",
+       0.03
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.03,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.7
+    },
+    {
+     "wave": "noise",
+     "at": 0,
+     "freq": 1800,
+     "freq_end": 900.0,
+     "dur": 0.015,
+     "curve": "exp",
+     "env": {
+      "a": 0.0,
+      "d": 0.015,
+      "s": 0.0,
+      "r": 0.004
+     },
+     "vol": 0.4
+    }
+   ],
+   "fx": {
+    "lp": 3500,
+    "crush": 6
+   }
+  },
+  {
+   "id": "se_ui_plat_warn",
+   "desc": "UI の足場が消える前の点滅（ピピッと小さく2回）",
+   "peak": 0.7,
+   "layers": [
+    {
+     "wave": "pulse",
+     "duty": 0.25,
+     "notes": [
+      [
+       "E6",
+       0.04
+      ],
+      [
+       "r",
+       0.04
+      ],
+      [
+       "E6",
+       0.04
+      ]
+     ],
+     "env": {
+      "a": 0.001,
+      "d": 0.03,
+      "s": 0.3,
+      "r": 0.02
+     },
+     "vol": 0.7
+    }
+   ],
+   "fx": {
+    "lp": 7000
+   }
+  },
+  {
+   "id": "se_ui_plat_fall",
+   "desc": "UI の足場が落ちる・消える（ストンと下がる音）",
+   "peak": 0.8,
+   "layers": [
+    {
+     "wave": "square",
+     "freq": "A4",
+     "freq_end": "A2",
+     "dur": 0.22,
+     "curve": "exp",
+     "env": {
+      "a": 0.002,
+      "d": 0.2,
+      "s": 0.0,
+      "r": 0.03
+     },
+     "vol": 0.6
+    },
+    {
+     "wave": "noise",
+     "at": 0.0,
+     "freq": 3000,
+     "freq_end": 800,
+     "dur": 0.12,
+     "env": {
+      "a": 0.0,
+      "d": 0.12,
+      "s": 0.0,
+      "r": 0.01
+     },
+     "vol": 0.25
+    }
+   ],
+   "fx": {
+    "lp": 6000
+   }
+  },
+  {
+   "id": "se_ui_button",
+   "desc": "UI のボタンを押した（カチッ＋明るい2音）",
+   "peak": 0.85,
+   "layers": [
+    {
+     "wave": "noise",
+     "freq": 12000,
+     "dur": 0.015,
+     "env": {
+      "a": 0.0,
+      "d": 0.015,
+      "s": 0.0,
+      "r": 0.005
+     },
+     "vol": 0.5
+    },
+    {
+     "wave": "pulse",
+     "duty": 0.125,
+     "at": 0.02,
+     "notes": [
+      [
+       "G5",
+       0.05
+      ],
+      [
+       "D6",
+       0.1
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.06,
+      "s": 0.5,
+      "r": 0.05
+     },
+     "vol": 0.7
+    }
+   ],
+   "fx": {
+    "echo": [
+     0.07,
+     0.25,
+     0.2
+    ]
+   }
+  },
+  {
+   "id": "se_ui_button_ready",
+   "desc": "UI のボタンがまた押せるようになった（小さく上がる音）",
+   "peak": 0.6,
+   "layers": [
+    {
+     "wave": "triangle",
+     "notes": [
+      [
+       "C6",
+       0.05
+      ],
+      [
+       "G6",
+       0.08
+      ]
+     ],
+     "env": {
+      "a": 0.002,
+      "d": 0.05,
+      "s": 0.4,
+      "r": 0.04
+     },
+     "vol": 0.8
+    }
+   ]
+  }
+ ]
 }

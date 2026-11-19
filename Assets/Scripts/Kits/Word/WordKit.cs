@@ -16,6 +16,7 @@ public static class WordKit
     {
         AppKits.Register(Label, Names, Bundles);
         StageRules.Register(Label, () => new WordRule());
+        StageEvents.Register(Label, stage => new WordSpellWaveEvent(stage)); // 場面③の出来事（2026-11-19。docs/stage-gimmick-variety-b.md）
         KitDress.RegisterArt("word.comment", () => WordArt.Comment);
         KitDress.RegisterArt("word.image", () => WordArt.Image);
         KitDress.RegisterArt("word.textwave", () => WordArt.TextWave);

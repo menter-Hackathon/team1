@@ -108,7 +108,7 @@ public class FallingObject : MonoBehaviour
         f._visual.enabled = false;
         f._hitbox = owner.AddHitbox(go, data, hit);
 
-        owner.TryFindGround(hangPosition.x, hangPosition.y, out f._groundY);
+        owner.TryFindGround(hangPosition.x, hangPosition.y, out f._groundY, steadyOnly: true); // 動く・消えるアプリの足場の上には着地しない（2026-11-19）
 
         if (data.BecomesPlatform)
         {

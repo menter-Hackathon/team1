@@ -17,5 +17,6 @@ public static class ChatGPTKit
     {
         AppKits.Register(Label, AppNames, BundleIds);
         StageRules.Register(Label, () => new ChatGptRule());
+        StageEvents.Register(Label, stage => new ChatGptStreamEvent(stage)); // 場面③の出来事（2026-11-19。docs/stage-gimmick-variety-b.md）
     }
 }

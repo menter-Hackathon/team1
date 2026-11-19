@@ -3,8 +3,11 @@ using UnityEngine;
 
 /// <summary>
 /// 【仮】Slack のステージのギミック「未読がたまる」（2026-11-19。docs/app-kits-1-design.md 2章）。
-/// ・10秒おき（ボス戦は 15秒おき）に、通知の板が1枚、プレイヤーから 3〜6マス離れた床に落ちる（影の予告 0.8秒。落ちてくる間は当たる）
-/// ・落ちた板は「未読」として床に残る（KitProp。触っても痛くない）。近接か能力で叩くと「既読」（✓✓ が出て消える）
+/// ・10秒おき（ボス戦は 15秒おき）に、通知の板が1枚、プレイヤーから 3〜6マス離れた床に出る
+///   2026-11-19（docs/stage-gimmick-variety-a.md Slack）：上から落とすのをやめて、その場に出る（KitMotion.Pop。赤い点線の枠と「！」0.8秒・
+///   ボス戦 1.0秒 → 奥から大きくなって出る。出る 0.15秒だけ当たる）。雑魚の時間は 3回に 1回、右の壁から床の上をすべって来る
+///   （GimmickA.Slide。毎秒 5マス・ジャンプで越える。止まった所で未読になる）。ボス戦は出るだけ
+/// ・出た板は「未読」として床に残る（KitProp。触っても痛くない）。近接か能力で叩くと「既読」（✓✓ が出て消える）
 /// ・HUD のライフの下に Slack のアイコンと赤いメーター（未読の数 ÷ 3。3 で点滅）
 /// ・未読が 3 になると
 ///   雑魚の時間：@channel。床の全部に予告 2.5秒 → 低い波（Attack_Pace_RedWave_Reboot）。足場の上は安全。未読は全部消える
@@ -19,10 +22,14 @@ public class SlackRule : StageRule
     const float MinDistance = 3f, MaxDistance = 6f;
     static readonly Vector2 BoardSize = new Vector2(2f, 1.3f);
 
-    readonly List<FallingObject> _drops = new List<FallingObject>();
+    const float PopWarn = 0.8f, BossPopWarn = 1.0f, PopHit = 0.15f, PopKeep = 0.25f; // 【仮】
+    const float SlideSpeed = 5f;
+    const int SlideEvery = 3;
+
+    readonly List<KitMotionItem> _drops = new List<KitMotionItem>(); // 出てくる途中の板（Pop・すべる板）
     readonly List<KitProp> _unread = new List<KitProp>();
     float _timer;
-    AttackData _dropData;
+    int _dropCount;
     GameObject _bossBadge;
     bool _boosted;
 
@@ -31,9 +38,6 @@ public class SlackRule : StageRule
 
     public override void Begin(StageRuleContext ctx)
     {
-        _dropData = TalkKitUtil.RuntimeData("Attack_Slack_UnreadDrop",
-            "{\"_kind\":2,\"_damage\":1,\"_knockback\":{\"x\":6,\"y\":5},\"_hitStun\":0.25,\"_objectSize\":{\"x\":2,\"y\":1.3}," +
-            "\"_fallSpeed\":12,\"_landRemainTime\":0.6,\"_telegraphTime\":0.8,\"_spawnCount\":1}");
         _timer = ZakoInterval * 0.5f; // 最初の1枚は少し早く
     }
 
@@ -46,16 +50,15 @@ public class SlackRule : StageRule
 
     public override void Tick(float dt)
     {
-        _drops.RemoveAll(d => d == null);
+        _drops.RemoveAll(d => d == null || d.IsDone);
         _unread.RemoveAll(p => p == null || p.IsBroken);
 
-        // 落ちた板を、未読の置物に変える
+        // 出た板（Pop）を、未読の置物に変える（すべる板は、着いたとき Finished で変える）
         for (int i = _drops.Count - 1; i >= 0; i--)
         {
-            FallingObject f = _drops[i];
-            if (!f.HasLanded) continue;
-            Vector2 at = f.transform.position;
-            Object.Destroy(f.gameObject);
+            if (!(_drops[i] is KitMotionPop pop) || !pop.IsOut || pop.Age < pop.Warn + PopKeep) continue;
+            Vector2 at = pop.transform.position;
+            pop.Cancel();
             _drops.RemoveAt(i);
             PlaceUnread(at);
         }
@@ -79,8 +82,7 @@ public class SlackRule : StageRule
 
     bool Drop()
     {
-        AttackRunner runner = Ctx.Hazard;
-        if (runner == null || Ctx.Player == null || _dropData == null) return false;
+        if (Ctx.Player == null) return false;
         Rect area = Ctx.PlayArea;
         float px = Ctx.Player.position.x;
         float margin = BoardSize.x * 0.5f + 0.4f;
@@ -95,16 +97,26 @@ public class SlackRule : StageRule
             break;
         }
         if (Mathf.Abs(x - px) < MinDistance - 0.01f) return false;
-        float now = Time.time;
-        float fallAt = now + Mathf.Max(0.8f, _dropData.TelegraphTime);
-        Vector2 hang = new Vector2(x, area.yMax + BoardSize.y * 0.5f);
-        FallingObject f = FallingObject.Spawn(runner, _dropData, hang, fallAt, fallAt, true, false, 0);
-        if (f == null) return false;
-        KitDress.Swap(f.gameObject, SlackArt.Board);
-        // 影の上に赤い「！」（落ちてくる間は当たる）
-        Transform shadow = f.transform.Find("Shadow");
-        if (shadow != null) TalkArt.ShowNative(shadow, TalkArt.Bang, new Vector2(0f, 0.55f), 18, 1.5f, "Bang").gameObject.AddComponent<SlackBlink>();
-        _drops.Add(f);
+        float floorY = TalkKitUtil.FloorY(x, area.yMin + 2.4f);
+        Vector2 at = new Vector2(x, floorY + BoardSize.y * 0.5f);
+        _dropCount++;
+        KitOwner owner = Ctx;
+        if (!Ctx.InBossFight && _dropCount % SlideEvery == 0)
+        {
+            // 3回に 1回：右の壁から床の上をすべって来る（本物の通知が右から出るのに合わせる）。止まった所で未読
+            KitMotionMover m = GimmickA.Slide(owner, KitSide.Right, at.y, x, BoardSize, SlideSpeed, PopWarn, SlackArt.Board, null, 1);
+            if (m == null) return false;
+            m.Finished += it => { if (it != null) PlaceUnread(it.transform.position); };
+            _drops.Add(m);
+            return true;
+        }
+        float warn = Ctx.InBossFight ? BossPopWarn : PopWarn;
+        KitMotionPop pop = KitMotion.Pop(owner, at, warn, 1f, 0, SlackArt.Board, null, 1, 1.2f, 6f, false, PopHit, BoardSize);
+        if (pop == null) return false;
+        // 枠の上に赤い「！」（予告の間だけ）
+        Vector2 bang = TalkArt.Bang != null ? (Vector2)TalkArt.Bang.bounds.size * 1.5f : new Vector2(0.3f, 0.6f);
+        KitMotionMark.Create(pop.transform, TalkArt.Bang, at + Vector2.up * (BoardSize.y * 0.5f + 0.45f), bang, 0f, Color.white, KitMotionItem.OrderMark, pop.Warn, "Bang");
+        _drops.Add(pop);
         return true;
     }
 
@@ -127,6 +139,16 @@ public class SlackRule : StageRule
         TalkArt.ShowNative(a.transform, TalkArt.Check, new Vector2(-0.12f, 0.95f), 46, 2f, "CheckA").color = (Color)SlackArt.Green;
         TalkArt.ShowNative(a.transform, TalkArt.Check, new Vector2(0.22f, 0.95f), 46, 2f, "CheckB").color = (Color)SlackArt.Green;
         a.FadeFrom(0.3f).Refresh();
+    }
+
+    /// <summary>【仮】2026-11-19：未読の板を1枚、既読にする（出来事「スレッドが伸びる」の ✓ のごほうび）。未読が無い・Slack のステージでなければ false</summary>
+    public static bool ReadOne()
+    {
+        if (!(StageRules.Current is SlackRule rule)) return false;
+        rule._unread.RemoveAll(p => p == null || p.IsBroken);
+        if (rule._unread.Count == 0) return false;
+        rule._unread[0].Break(); // Broken → OnRead（✓✓ が出て消える）
+        return true;
     }
 
     // ───────── 未読が 3 ─────────

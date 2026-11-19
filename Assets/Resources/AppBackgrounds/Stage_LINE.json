@@ -1,0 +1,77 @@
+{
+ "label": "LINE",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "left1",
+   "x": -2.8667,
+   "y": 2.6,
+   "w": 4.1333,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/LINE__left1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "right1",
+   "x": 4.7333,
+   "y": 2.6,
+   "w": 4.6667,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/LINE__right1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "left2",
+   "x": -3.8,
+   "y": 4.4667,
+   "w": 3.6,
+   "h": 0.8667,
+   "top": 4.9,
+   "sprite": "AppBackgrounds/Parts/LINE__left2",
+   "behavior": "scroll",
+   "params": {
+    "type": "scroll",
+    "speed": 0.3333333333333333,
+    "range": 2.0,
+    "dir": "up",
+    "offset": 0
+   }
+  },
+  {
+   "id": "right2",
+   "x": 7.3333,
+   "y": 4.6,
+   "w": 4.2667,
+   "h": 0.8667,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/LINE__right2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "stamp",
+   "x": 0.1333,
+   "y": 4.1,
+   "w": 1.8667,
+   "h": 1.6,
+   "top": 4.9,
+   "sprite": "AppBackgrounds/Parts/LINE__stamp",
+   "behavior": "fall",
+   "params": {
+    "type": "fall",
+    "delay": 0.8,
+    "respawn": 5
+   }
+  }
+ ]
+}

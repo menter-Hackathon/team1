@@ -1,0 +1,94 @@
+{
+ "label": "Messages",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "gray1",
+   "x": -2.8667,
+   "y": 2.6,
+   "w": 4.4,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Messages__gray1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "blue1",
+   "x": 4.3333,
+   "y": 2.6,
+   "w": 4.6667,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Messages__blue1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "gray2",
+   "x": -3.6667,
+   "y": 4.5333,
+   "w": 3.8667,
+   "h": 0.8667,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Messages__gray2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "blue2",
+   "x": 7.2667,
+   "y": 4.4667,
+   "w": 4.4,
+   "h": 0.8667,
+   "top": 4.9,
+   "sprite": "AppBackgrounds/Parts/Messages__blue2",
+   "behavior": "scroll",
+   "params": {
+    "type": "scroll",
+    "speed": 0.3333333333333333,
+    "range": 2.0,
+    "dir": "up",
+    "offset": 0
+   }
+  },
+  {
+   "id": "typing",
+   "x": 0.2667,
+   "y": 4.4333,
+   "w": 1.8667,
+   "h": 0.8,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Messages__typing",
+   "behavior": "blink",
+   "params": {
+    "type": "blink",
+    "on": 4.5,
+    "off": 2.5,
+    "warn": 1.0,
+    "offset": 0
+   }
+  },
+  {
+   "id": "send",
+   "x": 9.0,
+   "y": 0.7667,
+   "w": 0.9333,
+   "h": 0.9333,
+   "top": 1.2333,
+   "sprite": "AppBackgrounds/Parts/Messages__send",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "refill",
+    "cooldown": 25
+   }
+  }
+ ]
+}

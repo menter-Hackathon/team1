@@ -62,6 +62,19 @@ public class NotesRule : StageRule
         _view = null;
     }
 
+    /// <summary>
+    /// 【仮】まだ ✓ でない行を 1つ ✓ にする（場面③の出来事「チェックリスト」のごほうび。2026-11-19）。
+    /// 近接 → 能力 → ハートの順。メモが終わっている・全部 ✓ なら false
+    /// </summary>
+    public bool CheckOneRow()
+    {
+        if (Rewarded) return false;
+        if (!MeleeOk) { MeleeDone = MeleeNeed; CheckSound(SkillOk, SafeOk); return true; }
+        if (!SkillOk) { SkillDone = SkillNeed; CheckSound(MeleeOk, SafeOk); return true; }
+        if (!SafeOk) { SafeTimer = SafeNeed; CheckSound(MeleeOk, SkillOk); return true; }
+        return false;
+    }
+
     void NewMemo(bool boss)
     {
         float k = boss ? BossScale : 1f;

@@ -53,8 +53,16 @@ public class StageDirector : MonoBehaviour
         }
 
         Plan = _session.Run.Current;
-        // ステージの色を、そのアプリのアイコンの色にする（壁紙・床・壁・足場）
-        if (TryGetComponent(out StageTheme theme)) theme.Apply(Plan.App.Theme);
+        // ステージの色を、そのアプリのアイコンの色にする（壁紙・床・壁・足場）。
+        // そのアプリの画面（UI）の背景の絵があれば、壁紙の代わりにそれを出す（2026-11-19。無ければ今までどおり）
+        Sprite appBackground = AppBackgrounds.ForStage(Plan);
+        if (TryGetComponent(out StageTheme theme))
+        {
+            try { theme.Apply(Plan.App.Theme, appBackground); }
+            catch (System.Exception e) { Debug.LogException(e, this); } // 塗り替えに失敗しても、ステージ（ボスを出す所）は続ける
+        }
+        // アプリの UI の部品を、乗れる足場・ギミックにする（2026-11-19。1画面のステージだけ。表が無ければ今までのフォルダ。中で失敗しても止めない）
+        AppStagePlatforms.Build(Plan, this);
         // 出てくる位置は、ボス部屋（BattleArena）の床の真ん中からのずれ（ボス部屋がステージの端にあるステージもあるため）
         var arena = FindObjectOfType<BattleArena>();
         Vector2 roomFloor = arena != null ? new Vector2(arena.Bounds.center.x, arena.Bounds.yMin) : Vector2.zero;

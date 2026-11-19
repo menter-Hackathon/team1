@@ -1,0 +1,48 @@
+{
+  "id": "Terminal",
+  "desc": "ラスボス。緑がかった端末。コマンドの行が足場（RM -RF の行は乗ると落ちる。出力の行は上へ流れる）。CTRL+C のボタンで弾を消す",
+  "base": "#3c4441",
+  "elements": [
+    {"type": "rect", "x": 0, "y": 0, "w": 320, "h": 30, "color": "#4c5350"},
+    {"type": "circle", "cx": 154, "cy": 5, "r": 1, "color": "#cf9a86", "fill": true},
+    {"type": "circle", "cx": 160, "cy": 5, "r": 1, "color": "#d3bd7a", "fill": true},
+    {"type": "circle", "cx": 166, "cy": 5, "r": 1, "color": "#93bb88", "fill": true},
+    {"type": "text", "x": 176, "y": 4, "text": "ROOT - BASH", "color": "#a3ada8", "scale": 1},
+    {"type": "rect", "x": 0, "y": 21, "w": 320, "h": 1, "color": "#39403d"},
+    {"type": "rrect", "x": 152, "y": 23, "w": 44, "h": 7, "color": "#3e4643", "r": 1},
+    {"type": "text", "x": 155, "y": 24, "text": "BASH", "color": "#8fc79a", "scale": 1},
+    {"type": "text", "x": 200, "y": 24, "text": "ZSH", "color": "#7d8882", "scale": 1},
+    {"type": "text", "x": 220, "y": 24, "text": "+", "color": "#7d8882", "scale": 1},
+    {"type": "rect", "x": 0, "y": 30, "w": 320, "h": 1, "color": "#343a38"},
+    {"type": "hlines", "x": 10, "y": 32, "w": 300, "h": 138, "step": 3, "color": "#444c49"},
+    {"type": "text", "x": 14, "y": 35, "text": "LAST LOGIN: THU NOV 19", "color": "#74807a", "scale": 1},
+    {"type": "text", "x": 14, "y": 43, "text": "ROOT> WHOAMI", "color": "#7aa884", "scale": 1},
+    {"type": "text", "x": 14, "y": 51, "text": "ROOT", "color": "#8c9891", "scale": 1},
+    {"type": "text", "x": 14, "y": 59, "text": "ROOT> PS AUX | GREP BUG", "color": "#7aa884", "scale": 1},
+    {"type": "text", "x": 14, "y": 147, "text": "WARNING: SYSTEM INTEGRITY 13%", "color": "#b3a374", "scale": 1},
+    {"type": "text", "x": 14, "y": 155, "text": "ROOT> CHMOD 000 EVERYTHING", "color": "#7aa884", "scale": 1},
+    {"type": "text", "x": 14, "y": 163, "text": "ROOT> _", "color": "#9fd6a8", "scale": 1},
+    {"type": "rect", "x": 38, "y": 163, "w": 4, "h": 5, "color": "#9fd6a8"},
+    {"type": "text", "x": 200, "y": 44, "text": "> ROOT", "color": "#4f5a55", "scale": 2},
+    {"type": "text", "x": 200, "y": 58, "text": "ACCESS", "color": "#4f5a55", "scale": 2},
+    {"type": "text", "x": 200, "y": 72, "text": "GRANTED", "color": "#4f5a55", "scale": 2},
+    {"type": "noise", "x": 10, "y": 31, "w": 300, "h": 139, "color": "#5a6b61", "density": 0.0015, "seed": 9},
+    {"type": "rect", "x": 10, "y": 100, "w": 300, "h": 1, "color": "#5f7a68", "alpha": 0.35},
+    {"type": "rect", "x": 120, "y": 101, "w": 190, "h": 1, "color": "#5f7a68", "alpha": 0.2},
+    {"type": "rect", "x": 10, "y": 141, "w": 180, "h": 1, "color": "#5f7a68", "alpha": 0.25},
+    {"type": "rect", "x": 304, "y": 31, "w": 6, "h": 139, "color": "#454d4a"},
+    {"type": "rrect", "x": 305, "y": 120, "w": 4, "h": 40, "color": "#5f6a65", "r": 2}
+  ],
+  "veil": [{"x": 10, "y": 31, "w": 294, "h": 139, "color": "#3c4441", "alpha": 0.3}, {"x": 10, "y": 22, "w": 300, "h": 148, "color": "#d8ffe4", "alpha": 0.09}],
+  "stage": {
+    "hide_folders": true,
+    "platforms": [
+      {"id": "ls", "x": 84, "y": 127, "w": 66, "h": 10, "skin": [{"type": "rect", "x": 0, "y": 0, "w": 66, "h": 10, "color": "#2f3835"}, {"type": "rect", "x": 1, "y": 1, "w": 64, "h": 8, "color": "#5f6c66"}, {"type": "rect", "x": 1, "y": 1, "w": 64, "h": 1, "color": "#86bf90"}, {"type": "text", "x": 4, "y": 3, "text": "> LS /VIRUS", "color": "#a9e0b2", "scale": 1}], "behavior": {"type": "static"}},
+      {"id": "cat", "x": 190, "y": 127, "w": 66, "h": 10, "skin": [{"type": "rect", "x": 0, "y": 0, "w": 66, "h": 10, "color": "#2f3835"}, {"type": "rect", "x": 1, "y": 1, "w": 64, "h": 8, "color": "#5f6c66"}, {"type": "rect", "x": 1, "y": 1, "w": 64, "h": 1, "color": "#86bf90"}, {"type": "text", "x": 4, "y": 3, "text": "> CAT BUG.LOG", "color": "#a9e0b2", "scale": 1}], "behavior": {"type": "static"}},
+      {"id": "rm1", "x": 134, "y": 97, "w": 58, "h": 10, "skin": [{"type": "rect", "x": 0, "y": 0, "w": 58, "h": 10, "color": "#2f3835"}, {"type": "rect", "x": 1, "y": 1, "w": 56, "h": 8, "color": "#5f6c66"}, {"type": "rect", "x": 1, "y": 1, "w": 56, "h": 1, "color": "#86bf90"}, {"type": "text", "x": 4, "y": 3, "text": "> RM -RF TMP", "color": "#d6c88a", "scale": 1}], "behavior": {"type": "fall", "delay": 0.7, "respawn": 5}},
+      {"id": "out", "x": 238, "y": 98, "w": 60, "h": 10, "skin": [{"type": "rect", "x": 0, "y": 0, "w": 60, "h": 10, "color": "#2f3835"}, {"type": "rect", "x": 1, "y": 1, "w": 58, "h": 8, "color": "#5f6c66"}, {"type": "rect", "x": 1, "y": 1, "w": 58, "h": 1, "color": "#86bf90"}, {"type": "text", "x": 4, "y": 3, "text": "[1] 4021 OK", "color": "#c0c8c4", "scale": 1}], "behavior": {"type": "scroll", "speed": 5, "range": 28, "dir": "up", "offset": 0}},
+      {"id": "rm2", "x": 30, "y": 97, "w": 62, "h": 10, "skin": [{"type": "rect", "x": 0, "y": 0, "w": 62, "h": 10, "color": "#2f3835"}, {"type": "rect", "x": 1, "y": 1, "w": 60, "h": 8, "color": "#5f6c66"}, {"type": "rect", "x": 1, "y": 1, "w": 60, "h": 1, "color": "#86bf90"}, {"type": "text", "x": 4, "y": 3, "text": "> RM -RF LOG", "color": "#d6c88a", "scale": 1}], "behavior": {"type": "fall", "delay": 0.7, "respawn": 5}},
+      {"id": "ctrlc", "x": 278, "y": 146, "w": 26, "h": 12, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 26, "h": 12, "color": "#f4f4f6", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 24, "h": 10, "color": "#6f9a7a", "r": 2}, {"type": "text", "x": 5, "y": 4, "text": "^C", "color": "#f4f4f6", "scale": 1}, {"type": "text", "x": 5, "y": 4, "text": "  C", "color": "#f4f4f6", "scale": 1}], "behavior": {"type": "button", "effect": "clear_bullets", "cooldown": 20}}
+    ]
+  }
+}
