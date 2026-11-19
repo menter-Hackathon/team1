@@ -705,6 +705,47 @@ public static class OfficeUnitySteamBuilder
         if (so.ApplyModifiedPropertiesWithoutUndo()) EditorUtility.SetDirty(catalog);
     }
 
+    /// <summary>
+    /// 能力えらびの表の「アプリ専用の能力」に入れる（2026-11-19：実際のゲームで、カードとボスの報酬を Office・Unity・Steam の能力にする）。
+    /// 同じ名前（Label）の行があれば、能力だけ入れ直す。アプリの見分け方は対応アプリ表と同じ
+    /// </summary>
+    static void RegisterAppSkills(Assets a)
+    {
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(AbilitiesBuilder.CatalogPath);
+        if (catalog == null)
+        {
+            Debug.LogWarning($"能力えらびの表が無いので登録しません: {AbilitiesBuilder.CatalogPath}");
+            return;
+        }
+        var rows = new (string label, SkillDefinition skill, string[] names, string[] bundles)[]
+        {
+            ("Office", a.SkillOffice, new[] { "Excel", "Word", "PowerPoint" }, new[] { "com.microsoft.Excel", "com.microsoft.Word", "com.microsoft.Powerpoint" }),
+            ("Unity", a.SkillUnity, new[] { "Unity", "Unity Hub" }, new[] { "com.unity3d." }),
+            ("Steam", a.SkillSteam, new[] { "Steam" }, new[] { "com.valvesoftware.steam" }),
+        };
+        var so = new SerializedObject(catalog);
+        var arr = so.FindProperty("_appSkills");
+        foreach (var row in rows)
+        {
+            if (row.skill == null) continue;
+            SerializedProperty e = null;
+            for (int i = 0; i < arr.arraySize; i++)
+            {
+                if (arr.GetArrayElementAtIndex(i).FindPropertyRelative("Label").stringValue == row.label) e = arr.GetArrayElementAtIndex(i);
+            }
+            if (e == null)
+            {
+                arr.arraySize++;
+                e = arr.GetArrayElementAtIndex(arr.arraySize - 1);
+                e.FindPropertyRelative("Label").stringValue = row.label;
+                SetStrings(e.FindPropertyRelative("AppNames"), row.names);
+                SetStrings(e.FindPropertyRelative("BundleIdPrefixes"), row.bundles);
+            }
+            e.FindPropertyRelative("Skill").objectReferenceValue = row.skill;
+        }
+        if (so.ApplyModifiedPropertiesWithoutUndo()) EditorUtility.SetDirty(catalog);
+    }
+
     // ───────── 確認用のシーン ─────────
 
     [MenuItem("Tools/Team1/Office・Unity・Steam テストシーンを作成")]
@@ -744,6 +785,7 @@ public static class OfficeUnitySteamBuilder
             ["Steam"] = (BuildBossPrefab("Steam", a.SteamProfile, square), a.SteamProfile),
         };
         RegisterToCatalog(prefabs);
+        RegisterAppSkills(a);
 
         // --- 部屋（BossTest と同じ形） ---
         var terrain = new GameObject("Terrain").transform;
