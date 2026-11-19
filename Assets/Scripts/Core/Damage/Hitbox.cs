@@ -38,6 +38,7 @@ public class Hitbox : MonoBehaviour
     readonly HashSet<IDamageable> _hitThisStep = new HashSet<IDamageable>();
     ContactFilter2D _filter;
     Health _ownerHealth; // 持ち主（敵の体当たりなど）。倒れたら攻撃しない
+    Transform _statSource; // バフ（StatModifiers）を読む持ち主。空ならこの物の親をたどる
 
     public bool IsActive { get; private set; }
     public Team Team => _team;
@@ -110,6 +111,9 @@ public class Hitbox : MonoBehaviour
         _hitOncePerActivation = hitOncePerActivation;
     }
 
+    /// <summary>バフ（攻撃力の倍率）を読む持ち主を決める（AttackRunner が出した弾・判定用）</summary>
+    public void SetStatSource(Transform source) => _statSource = source;
+
     /// <summary>攻撃範囲のコライダーを差し替える</summary>
     public void SetArea(Collider2D area) => _area = area;
 
@@ -164,6 +168,9 @@ public class Hitbox : MonoBehaviour
         float dir = to.x >= from.x ? 1f : -1f; // 攻撃から離れる向きに飛ばす
 
         Rigidbody2D rb = _area.attachedRigidbody;
+        // 持ち主のバフ（Steam の実績解除）：ダメージ量とゲージ増加量に掛ける
+        StatModifiers stats = (_statSource != null ? _statSource : transform).GetComponentInParent<StatModifiers>();
+        float mult = stats != null ? stats.AttackMultiplier : 1f;
         return new DamageInfo
         {
             // プレイヤーの攻撃は、強さの倍率を掛ける（2026-11-19：アプリのキット。GameBuffs）

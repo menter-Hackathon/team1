@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Unity
+  m_EditorClassIdentifier: 
+  _displayName: Unity
+  _icon: {fileID: -6858713245086566665, guid: a8746a0f78c854d49ba2e5c5e839f4ab, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: b6b60bb4b30844aa5b7e8a5256a7010c, type: 2}
+    WaitAfterAttack: 1.4
+    AttacksPerMove: 0
+    Sequential: 0
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 13d7988fcdfaf493dad20b4a09074d3e, type: 2}
+    WaitAfterAttack: 1
+    AttacksPerMove: 0
+    Sequential: 0
+  _movement: 0
+  _warpAttack: {fileID: 0}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 11400000, guid: fd9ed260d001f43b9b524b6a8e4287e9, type: 2}
+  _normalIcon: {fileID: -6858713245086566665, guid: a8746a0f78c854d49ba2e5c5e839f4ab, type: 3}
+  _passive: {fileID: 0}

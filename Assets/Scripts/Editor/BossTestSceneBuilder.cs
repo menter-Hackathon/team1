@@ -159,7 +159,7 @@ public static class BossTestSceneBuilder
     /// 逃げるだけで攻撃しない・触れてもダメージなし・時間切れなし。動きは歩く雑魚と同じで、少し速い（毎秒4.5マス）。
     /// HP1：近接でも能力でも、1回当てるとはじけて消える。原点＝足元。ボスの子に非表示で置き、BossController が追い出すときに表示する
     /// </summary>
-    static Health CreateEjectedVirus(Transform boss, Sprite square)
+    internal static Health CreateEjectedVirus(Transform boss, Sprite square)
     {
         int enemyLayer = LayerMask.NameToLayer("Enemy");
         int ground = LayerMask.NameToLayer("Ground");

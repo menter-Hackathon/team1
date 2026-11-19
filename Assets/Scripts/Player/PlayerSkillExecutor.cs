@@ -29,6 +29,8 @@ public class PlayerSkillExecutor : MonoBehaviour
     public event Action<int, SkillDefinition> SkillUsed;
     /// <summary>クールタイム中で使えなかったとき（枠の番号, スキル, 残り秒数）。UI の「まだ使えない」表示用</summary>
     public event Action<int, SkillDefinition, float> SkillOnCooldown;
+    /// <summary>順番に切り替わるスキルの、次の攻撃が変わったとき（スキル, 次の攻撃データ）。スロットのアイコン用</summary>
+    public event Action<SkillDefinition, AttackData> NextAttackChanged;
 
     void Awake()
     {
@@ -67,10 +69,11 @@ public class PlayerSkillExecutor : MonoBehaviour
     public bool TryUse(int index, SkillDefinition skill)
     {
         if (skill == null) return false;
-        AttackData attack = skill.Attack;
+        AttackData attack = GetNextAttack(skill);
         if (attack == null)
         {
-            Debug.LogWarning($"{skill.DisplayName}: 攻撃データが設定されていないので使えません", skill);
+            // 常に効く効果だけのスキル（Steam）は、押しても何もしない
+            if (skill.Passive == null) Debug.LogWarning($"{skill.DisplayName}: 攻撃データが設定されていないので使えません", skill);
             return false;
         }
 

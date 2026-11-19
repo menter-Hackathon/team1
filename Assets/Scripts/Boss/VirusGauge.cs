@@ -31,6 +31,8 @@ public class VirusGauge : MonoBehaviour, IDamageable
     public event Action Filled;
     /// <summary>どれかのゲージが最大値になったとき（とどめの隅の通知・Terminal の [Process completed]。2026-11-18：スキルの見た目 1-5）</summary>
     public static event Action<VirusGauge> AnyFilled;
+    /// <summary>どれかのボスのゲージが、攻撃で増えたとき（ゲージ, 攻撃の中身）。実績（Steam）の「ボスに初めてダメージ」用</summary>
+    public static event Action<VirusGauge, DamageInfo> AnyGained;
 
     public bool TryTakeDamage(in DamageInfo info)
     {

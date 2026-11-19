@@ -74,12 +74,11 @@ public class StageDirector : MonoBehaviour
         Boss.name = Plan.App.BossPrefab.name;
         Boss.gameObject.SetActive(false); // プレハブは非表示で保存してあるが、念のため
         Boss.SetProfile(Plan.Profile);
-        // 代用ボス（対応表に無いアプリ）：着ているウィンドウを、そのアプリのアイコンから作ったものにする
+        // 代用ボス・ラスボス・アイコンから見た目を作る行（Office・Unity・Steam。2026-11-19）：着ているウィンドウを、そのアプリのアイコンから作ったものにする
         if (Plan.Visual != null)
         {
-            Boss.name = $"StandIn_{Plan.App.DisplayName}";
-            var armor = Boss.GetComponentInChildren<BossArmorVisual>(true);
-            if (armor != null) armor.SetWindowStages(BossWindowArt.Create(Plan.Visual.Icon24, Plan.App.Theme, $"BossWindow_{Plan.App.DisplayName}"));
+            if (Plan.IsStandIn) Boss.name = $"StandIn_{Plan.App.DisplayName}";
+            AppBossLook.ApplyWindow(Boss, Plan.Visual, Plan.Theme, Plan.App.DisplayName);
         }
         if (_player != null && Boss.TryGetComponent(out AttackRunner runner)) runner.Target = _player.transform;
         // ボスの攻撃の見た目（スキン）：そのステージのアプリから決める。色とアイコンも（2026-11-18：スキルの見た目 1-1）

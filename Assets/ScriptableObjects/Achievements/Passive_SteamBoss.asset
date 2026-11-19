@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eda598ddd97e04827abf319cfbcb3239, type: 3}
+  m_Name: Passive_SteamBoss
+  m_EditorClassIdentifier: 
+  _achievements:
+  - {fileID: 11400000, guid: 16a5722d39921463e80aea75ba6ff4b3, type: 2}
+  - {fileID: 11400000, guid: d4f0b4afe95074af7831cafc09ddf32f, type: 2}
+  _buff:
+    AttackBonus: 0.3
+    SpeedBonus: 0.15
+    Duration: 8
+    StackMode: 0
+  _targets: 1
+  _buffId: steam_achievement
+  _toastBackground: {fileID: -505768026671520498, guid: 91b126dc6cfc5483eb7683f7ec863587, type: 3}
+  _trophyFrames:
+  - {fileID: -4894110924759594472, guid: b9b936c9b5bb34192b4b36fa18585dcf, type: 3}
+  - {fileID: -6829792676801561358, guid: b9b936c9b5bb34192b4b36fa18585dcf, type: 3}
+  - {fileID: 7720271832109308853, guid: b9b936c9b5bb34192b4b36fa18585dcf, type: 3}
+  - {fileID: 6162497224778854931, guid: b9b936c9b5bb34192b4b36fa18585dcf, type: 3}
+  - {fileID: 4074627173035600335, guid: b9b936c9b5bb34192b4b36fa18585dcf, type: 3}
+  - {fileID: 2215369164775964999, guid: b9b936c9b5bb34192b4b36fa18585dcf, type: 3}
+  _trophyFrameRate: 10
+  _toastTitle: "\u5B9F\u7E3E\u89E3\u9664"
+  _titleColor: {r: 0.9, g: 0.7, b: 1, a: 1}
+  _nameColor: {r: 1, g: 1, b: 1, a: 1}
+  _toastDuration: 3
+  _toastOnRight: 0
+  _burstFrames:
+  - {fileID: -5103236054138268761, guid: b54f5fe8cbb514ddc84326994a7d7cdc, type: 3}
+  - {fileID: -3348612517517680153, guid: b54f5fe8cbb514ddc84326994a7d7cdc, type: 3}
+  - {fileID: -5381738840440186131, guid: b54f5fe8cbb514ddc84326994a7d7cdc, type: 3}
+  - {fileID: 6729846374970777348, guid: b54f5fe8cbb514ddc84326994a7d7cdc, type: 3}
+  - {fileID: -6833650026195701736, guid: b54f5fe8cbb514ddc84326994a7d7cdc, type: 3}
+  - {fileID: -7455649690630525672, guid: b54f5fe8cbb514ddc84326994a7d7cdc, type: 3}
+  - {fileID: 4309849015760607342, guid: b54f5fe8cbb514ddc84326994a7d7cdc, type: 3}
+  - {fileID: -2275043985528347262, guid: b54f5fe8cbb514ddc84326994a7d7cdc, type: 3}
+  _burstFrameRate: 14
+  _auraFrames:
+  - {fileID: -2611087481908721442, guid: 1d9667207475e49e092996a83c7deed9, type: 3}
+  - {fileID: 3700647149771759282, guid: 1d9667207475e49e092996a83c7deed9, type: 3}
+  - {fileID: -8447086379352577779, guid: 1d9667207475e49e092996a83c7deed9, type: 3}
+  - {fileID: 5038681875735996363, guid: 1d9667207475e49e092996a83c7deed9, type: 3}
+  - {fileID: -749170512648693538, guid: 1d9667207475e49e092996a83c7deed9, type: 3}
+  - {fileID: 8199703719444413079, guid: 1d9667207475e49e092996a83c7deed9, type: 3}
+  _auraFrameRate: 10

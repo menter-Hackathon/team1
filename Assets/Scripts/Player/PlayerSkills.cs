@@ -58,6 +58,8 @@ public class PlayerSkills : MonoBehaviour
         _input = GetComponent<PlayerInputReader>();
         _controller = GetComponent<PlayerController>();
         if (_loadout == null) Bind(new SkillLoadout(SkillLoadout.DefaultCapacity) { AllowDuplicates = _allowDuplicates });
+        // 装備中ずっと効く効果（Steam など）を付け外しする部品。シーンに置き忘れても動くように、無ければ付ける
+        if (!TryGetComponent(out PlayerSkillPassives _)) gameObject.AddComponent<PlayerSkillPassives>();
     }
 
     void OnEnable()
