@@ -13,7 +13,7 @@ public class AppBackgroundImport : AssetPostprocessor
     const string Folder = "Assets/Resources/AppBackgrounds/";
 
     // 設定を変えたら数を上げる（上げると、このフォルダの絵を全部取り込み直す）
-    public override uint GetVersion() => 1;
+    public override uint GetVersion() => 2; // 2：背景（Bg_*）を読めるように（main の DesktopDecay の感染ノイズが、背景の絵を読むため）
 
     void OnPreprocessTexture()
     {
@@ -41,7 +41,8 @@ public class AppBackgroundImport : AssetPostprocessor
         importer.alphaIsTransparency = true;
         importer.alphaSource = TextureImporterAlphaSource.FromInput;
         importer.sRGBTexture = true;
-        importer.isReadable = false;
+        // 背景（Bg_*）は読めるようにする：main の DesktopDecay（感染ノイズ）が背景の絵の点を読んで、崩れた絵を作るため（2026-11-19）。足場の絵（Parts）は読まない
+        importer.isReadable = !assetPath.Contains("/Parts/");
         if (importer.maxTextureSize < 512) importer.maxTextureSize = 512;
 
         // Standalone の個別の設定は外す（ふつうの設定がそのまま使われる）
