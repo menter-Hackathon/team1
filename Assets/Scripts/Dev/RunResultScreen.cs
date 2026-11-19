@@ -69,6 +69,8 @@ public class RunResultScreen : MonoBehaviour
 
         float x = inner.x + 12f, y = inner.y + 8f;
         PixelGui.Text(new Rect(x, y + 14f, 300f, 28f), "システム復旧完了", 24, PixelGui.Ink);
+        // 2026-11-20：今回解除した実績（題名の右）
+        Team1.Achievements.AchievementResultPanel.Draw(new Rect(x + 214f, y + 4f, inner.xMax - 12f - (x + 214f), 42f));
         // 2026-11-19：文字を減らした（docs/ui-text-and-dex-design.md 1-7）。説明の文は消し、表を 16 上へ。「能力」の行を 16 高くして、能力ごとの小さい組を出す
 
         // 表
