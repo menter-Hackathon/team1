@@ -38,6 +38,16 @@ public class BossArmorVisual : MonoBehaviour
     /// <summary>着ているウィンドウの絵（当たったときに白くする所。HitFx・FlashOverlay が使う）</summary>
     public SpriteRenderer Window => _window;
 
+    // 読むだけの入口（2026-11-19：図鑑の詳しい画面が、プレハブを作らずに絵と位置を読む。docs/ui-text-and-dex-design.md 3-4）。書き換えない
+    /// <summary>ウイルスの体（コマ送りは同じ GameObject の SpriteFrameAnimation）</summary>
+    public SpriteRenderer Body => _body;
+    public SpriteRenderer Hands => _hands;
+    public SpriteRenderer Face => _face;
+    /// <summary>ウィンドウの絵：0 きれい、1 小さなひび、2 大きなひびと欠け</summary>
+    public System.Collections.Generic.IReadOnlyList<Sprite> WindowStages => _windowStages;
+    /// <summary>顔のコマ：0 ふつう、1 まばたき、2 怒り、3 怒り（まばたき）</summary>
+    public System.Collections.Generic.IReadOnlyList<Sprite> FaceFrames => _faceFrames;
+
     /// <summary>
     /// ウィンドウの乱れ（重い・とどめ。1-3）：ウィンドウの絵を横に3つに切って、まん中だけ 2ドット横へずらす（seconds 秒）。
     /// 元の絵はさわらず、まん中の帯を重ねる

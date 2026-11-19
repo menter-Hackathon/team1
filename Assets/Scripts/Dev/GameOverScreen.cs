@@ -5,7 +5,8 @@ using UnityEngine.InputSystem;
 /// 【仮】ゲームオーバーの画面（2026-11-18：デザイン担当の画面イメージから）。UI 担当の本番画面ができたら差し替える。
 /// ライフが0になると GameSession.ShowGameOver がゲームを止め、この画面を出す。
 /// ・濃い紫の画面に「:(」と「PCがウイルスに完全に感染しました」、最後に戦ったアプリ、感染率のゲージ（100% までたまる）
-/// ・「▶ このステージからリトライ」（GameSession.FailStage）と「タイトルへ」。← → で選び、Z か Enter で決定
+/// ・「▶ リトライ」（このステージから。GameSession.FailStage）と「タイトルへ」。← → で選び、Z か Enter で決定
+/// ・2026-11-19：文字を減らした（docs/ui-text-and-dex-design.md 1-8）。最後に戦ったアプリはアイコンと「Zoom.exe   STAGE 2」
 /// GameSession が自分に付ける（シーンに置かなくてよい）。
 /// </summary>
 public class GameOverScreen : MonoBehaviour
@@ -68,9 +69,14 @@ public class GameOverScreen : MonoBehaviour
 
         StagePlan last = Session.Run != null ? Session.Run.LastFailed : null;
         int stageNo = Session.Run != null ? Session.Run.CurrentIndex + 1 : 1;
-        PixelGui.Text(new Rect(x, y + 114f, W - x - 24f, 16f), "感染率が100%に達しました。", 12, PixelGui.Lavender);
+        // 2026-11-19：文を消した（docs/ui-text-and-dex-design.md 1-8）。「感染率が100%に達しました」はメーターで分かる。
+        // 最後に戦ったアプリは、アイコンと「Zoom.exe   STAGE 2」だけ
         if (last != null)
-            PixelGui.Text(new Rect(x, y + 132f, W - x - 24f, 16f), $"最後に戦ったウィンドウ：{last.App.DisplayName}.exe（STAGE {stageNo}）", 12, PixelGui.Lavender);
+        {
+            float ly = y + 124f;
+            if (last.Icon16 != null) PixelGui.DrawSprite(new Rect(x, ly, 16f, 16f), last.Icon16);
+            PixelGui.Text(new Rect(x + (last.Icon16 != null ? 22f : 0f), ly, W - x - 46f, 16f), $"{last.App.DisplayName}.exe   STAGE {stageNo}", 12, PixelGui.Lavender);
+        }
 
         // 感染率のゲージ（出てから1秒で 100% までたまる）
         float t = _shownAt < 0f ? 1f : Mathf.Clamp01((Time.unscaledTime - _shownAt) / 1f);
@@ -83,8 +89,8 @@ public class GameOverScreen : MonoBehaviour
 
         // ボタン
         float by = gy + 28f;
-        if (PixelGui.DarkButton(new Rect(x, by, 184f, 28f), "▶ このステージからリトライ", true, _focus == 0)) Choose(0);
-        if (PixelGui.DarkButton(new Rect(x + 196f, by, 96f, 28f), "タイトルへ", false, _focus == 1)) Choose(1);
+        if (PixelGui.DarkButton(new Rect(x, by, 110f, 28f), "▶ リトライ", true, _focus == 0)) Choose(0);
+        if (PixelGui.DarkButton(new Rect(x + 122f, by, 96f, 28f), "タイトルへ", false, _focus == 1)) Choose(1);
 
         // 右下：感染が進んでいくウイルス（灰 → 紫 → マゼンタ）
         Sprite[] zako = GameArt.Instance != null ? GameArt.Instance.ZakoWalk : null;

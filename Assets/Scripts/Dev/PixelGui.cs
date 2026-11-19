@@ -401,6 +401,93 @@ public static class PixelGui
         return w;
     }
 
+    // ───────── 能力の絵のタグ・届く所の図（2026-11-19：docs/ui-text-and-dex-design.md 2-2・2-3） ─────────
+
+    /// <summary>白い型の絵を、色を掛けて描く（Fill と同じく OnGUI の色に直す）</summary>
+    public static void DrawTint(Rect r, Texture tex, Color color)
+    {
+        if (Event.current.type != EventType.Repaint || tex == null) return;
+        Color saved = GUI.color;
+        GUI.color = ToGui(color);
+        GUI.DrawTexture(Snap(r), tex);
+        GUI.color = saved;
+    }
+
+    /// <summary>絵のタグの絵だけ（9×9 を scale 倍。左上をそろえる）</summary>
+    public static void DrawPicto(float x, float y, Picto p, float scale = 1f)
+    {
+        float s = SkillPictos.Size * scale;
+        DrawTint(new Rect(x, y, s, s), SkillPictos.Texture(p), SkillPictos.ColorOf(p));
+    }
+
+    /// <summary>絵のタグの札の幅（label＝false なら絵だけの札）</summary>
+    public static float PictoTagWidth(Picto p, bool label = true)
+        => label ? 3f + SkillPictos.Size + 3f + Mathf.Ceil(Measure(SkillPictos.Label(p), Style(false, 12))) + 4f : SkillPictos.Size + 6f;
+
+    /// <summary>絵のタグの札：白い札（縁 FrameDark 1、高さ 16）に、絵（左 3・上 3）とラベル（12）。label＝false なら絵だけ。幅を返す</summary>
+    public static float PictoTag(float x, float y, Picto p, bool label = true)
+    {
+        float w = PictoTagWidth(p, label);
+        var r = new Rect(x, y, w, 16f);
+        Fill(r, FrameDark);
+        Fill(Inset(r, 1f), White);
+        DrawPicto(x + 3f, y + 3f, p);
+        if (label) Text(new Rect(x + 3f + SkillPictos.Size + 3f, y - 1f, w, 16f), SkillPictos.Label(p), 12, BodyText);
+        return w;
+    }
+
+    /// <summary>絵のタグを横に並べる（間 gap）。幅 maxWidth に入らないときは、後ろの札から絵だけにする</summary>
+    public static void PictoTags(float x, float y, IReadOnlyList<Picto> pictos, float maxWidth, float gap = 4f)
+    {
+        if (pictos == null || pictos.Count == 0) return;
+        int n = Mathf.Min(3, pictos.Count);
+        var labels = new bool[n];
+        for (int i = 0; i < n; i++) labels[i] = true;
+        float Total()
+        {
+            float t = gap * (n - 1);
+            for (int i = 0; i < n; i++) t += PictoTagWidth(pictos[i], labels[i]);
+            return t;
+        }
+        for (int i = n - 1; i >= 0 && Total() > maxWidth; i--) labels[i] = false;
+        for (int i = 0; i < n; i++) x += PictoTag(x, y, pictos[i], labels[i]) + gap;
+    }
+
+    /// <summary>
+    /// 届く所の図（横7×縦2のマス。1マス 8、間 1。上＝空中、下＝床）。自分は左から2番目・下（Ink）、当たる所は Orange。
+    /// 大きさは 57×17（まわりにも 1 の地）。None なら描かない
+    /// </summary>
+    public static void ReachMap(float x, float y, SkillReach reach)
+    {
+        if (reach == SkillReach.None) return;
+        Fill(new Rect(x, y, 57f, 17f), Muted);
+        Rect Cell(int col, int row) => new Rect(x + 1f + (col - 1) * 8f, y + 1f + row * 8f, 7f, 7f); // col は 1〜7、row 0＝上
+        bool Hit(int col, int row) => reach switch
+        {
+            SkillReach.Front => row == 1 && (col == 3 || col == 4),
+            SkillReach.Far => row == 1 && col >= 3,
+            SkillReach.Pillar => col == 3 || col == 4,
+            SkillReach.Up => row == 0 && col >= 2 && col <= 4,
+            SkillReach.Around => col <= 3,
+            SkillReach.All => true,
+            _ => false,
+        };
+        for (int row = 0; row < 2; row++)
+            for (int col = 1; col <= 7; col++)
+                Fill(Cell(col, row), Hit(col, row) ? Orange : White);
+        Rect self = Cell(2, 1);
+        Fill(self, Ink);
+        if (reach == SkillReach.Self)
+        {
+            // 自分を Orange の縁で囲み、右の 3〜5（下）に「移動」の絵
+            Border(new Rect(self.x - 1f, self.y - 1f, 9f, 9f), Orange, 1f);
+            Rect a = Cell(3, 1), b = Cell(5, 1);
+            var lane = new Rect(a.x, a.y, b.xMax - a.x, 7f);
+            Fill(lane, White);
+            DrawPicto(Mathf.Round(lane.center.x - SkillPictos.Size * 0.5f), lane.y - 1f, Picto.Move);
+        }
+    }
+
     /// <summary>濃い紫の名札（ウィンドウの左上「■ YouTube」）</summary>
     public static void NameTag(Rect r, string text)
     {
