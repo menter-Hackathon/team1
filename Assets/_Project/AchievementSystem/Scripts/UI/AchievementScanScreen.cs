@@ -68,9 +68,8 @@ namespace Team1.Achievements
 
         void OnGUI()
         {
+            GUI.depth = -90; // タイトル・一覧より手前（GUI.depth は戻さない）
             if (!IsOpen) return;
-            int depth = GUI.depth;
-            GUI.depth = -90;
             PixelGui.Begin(false);
             float W = PixelGui.Width, H = PixelGui.Height;
             PixelGui.Fill(new Rect(0, 0, W, H), new Color(0.02f, 0.04f, 0.08f, 0.45f));
@@ -79,7 +78,7 @@ namespace Team1.Achievements
             float h = 48f + 22f + rows * RowH + (_almost != null ? 58f : 0f) + 36f;
             var win = new Rect(Mathf.Round((W - 440f) * 0.5f), Mathf.Round(Mathf.Max(4f, (H - h) * 0.5f)), 440f, h);
             Rect inner = MacDesktopGui.Window(win, "実績スキャン", out var action);
-            if (action == MacDesktopGui.WindowAction.Close || action == MacDesktopGui.WindowAction.Minimize) { Close(); End(depth); return; }
+            if (action == MacDesktopGui.WindowAction.Close || action == MacDesktopGui.WindowAction.Minimize) { Close(); PixelGui.End(); return; }
 
             float x = inner.x + 2f, y = inner.y, w = inner.width - 4f;
             PixelGui.Text(new Rect(x, y, w, 18f), $"前回の起動から {_items.Count}件 の実績を解除しました", 12, MacDesktopGui.Ink);
@@ -105,14 +104,8 @@ namespace Team1.Achievements
             }
             string label = _page < Pages - 1 ? "次へ ▶" : "OK";
             if (MacDesktopGui.Button(new Rect(win.xMax - 16f - 100f, by, 100f, 24f), label, true)) Next();
-            End(depth);
-            AchievementGui.EatInput();
-        }
-
-        static void End(int depth)
-        {
             PixelGui.End();
-            GUI.depth = depth;
+            AchievementGui.EatInput();
         }
 
         void DrawUnlock(Rect r, AchievementUnlock u)

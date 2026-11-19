@@ -46,9 +46,8 @@ namespace Team1.Achievements
 
         void OnGUI()
         {
+            GUI.depth = -100; // ほかの画面より手前（GUI.depth は戻さない。どのイベントでも同じ値にしておく）
             if (_current == null || Event.current.type != EventType.Repaint) return;
-            int depth = GUI.depth;
-            GUI.depth = -100;
             PixelGui.Begin(false);
 
             float t = Time.unscaledTime - _shownAt;
@@ -76,7 +75,6 @@ namespace Team1.Achievements
             PixelGui.Text(new Rect(r.x + 52f, r.y + 36f, r.width - 58f, 14f), AchievementLabels.Rank(spec.Rank), 12, AchievementGui.RankColor(spec.Rank));
 
             PixelGui.End();
-            GUI.depth = depth;
         }
     }
 }

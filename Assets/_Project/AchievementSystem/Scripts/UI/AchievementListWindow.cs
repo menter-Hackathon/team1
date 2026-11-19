@@ -72,10 +72,10 @@ namespace Team1.Achievements
 
         void OnGUI()
         {
+            // タイトル・図鑑のウィンドウより手前（GUI.depth は戻さない。ほかの画面と同じやり方）
+            GUI.depth = -60;
             if (!IsOpen || Service == null) return;
             if (GameSession.Instance != null && GameSession.Instance.IsTransitioning) return;
-            int depth = GUI.depth;
-            GUI.depth = -50;
             PixelGui.Begin(false);
             float W = PixelGui.Width, H = PixelGui.Height;
             Rect win = _window.Apply(MacDesktopGui.CenteredWindow(W, H, WinW, WinH, false), W, H);
@@ -84,7 +84,6 @@ namespace Team1.Achievements
             else if (action == MacDesktopGui.WindowAction.Maximize) _window.ToggleMaximize();
             if (IsOpen) Draw(inner);
             PixelGui.End();
-            GUI.depth = depth;
             if (IsOpen) AchievementGui.EatInput();
         }
 
