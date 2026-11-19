@@ -15,6 +15,27 @@ public static class AppKitsBuilder
 {
     const string BossFolder = "Assets/ScriptableObjects/Bosses";
     const string SkillFolder = "Assets/ScriptableObjects/Skills";
+
+    /// <summary>
+    /// キットの能力のアセットの道（ふつうは Skill_App_&lt;ラベル&gt;）。
+    /// 大文字・小文字だけ違う名前の別のアセットがあるとき（hiroto さんの Skill_App_Line と、キットの Skill_App_LINE など）は、
+    /// Mac では同じファイルになってしまうので、Skill_App_&lt;ラベル&gt;_Kit を使う（2026-11-20）
+    /// </summary>
+    static string KitSkillPath(string label)
+    {
+        string name = $"Skill_App_{label}.asset";
+        string kitPath = $"{SkillFolder}/Skill_App_{label}_Kit.asset";
+        if (System.IO.File.Exists(kitPath)) return kitPath;
+        if (System.IO.Directory.Exists(SkillFolder))
+        {
+            foreach (string f in System.IO.Directory.GetFiles(SkillFolder, "*.asset"))
+            {
+                string onDisk = System.IO.Path.GetFileName(f);
+                if (onDisk.Equals(name, StringComparison.OrdinalIgnoreCase) && !onDisk.Equals(name, StringComparison.Ordinal)) return kitPath;
+            }
+        }
+        return $"{SkillFolder}/{name}";
+    }
     const string CatalogPath = "Assets/ScriptableObjects/Run/AppCatalog.asset";
 
     [MenuItem("Tools/Team1/アプリのキットを用意")]
@@ -144,7 +165,7 @@ public static class AppKitsBuilder
         AttackData skillAttack = kit.PlayerSkill();
         if (skillAttack != null && abilities != null)
         {
-            string path = $"{SkillFolder}/Skill_App_{label}.asset";
+            string path = KitSkillPath(label);
             var skill = AssetDatabase.LoadAssetAtPath<SkillDefinition>(path);
             if (skill == null)
             {
