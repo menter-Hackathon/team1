@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Kit_LINE
+  m_EditorClassIdentifier: 
+  _displayName: LINE
+  _icon: {fileID: 21300000, guid: cff00d750c9014cf4961165058c7867a, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: cb1a8436e8ffb4c18a278c032eac8700, type: 2}
+    - {fileID: 11400000, guid: db06c27dfb49d458d9d76552235f6cae, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 1f6ad9e29e5e24c8bac317e39d38569c, type: 2}
+    - {fileID: 11400000, guid: 6d34d97ed9fa34be39ad72df762af5c1, type: 2}
+    - {fileID: 11400000, guid: 20b8cae30f3314ee9bd562b5c103c36e, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 2
+  _movement: 1
+  _warpAttack: {fileID: 0}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 0}
+  _extensions: []

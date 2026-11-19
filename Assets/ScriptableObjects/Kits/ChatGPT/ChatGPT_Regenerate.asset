@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 048d368286071418a8ea114bec112bae, type: 3}
+  m_Name: ChatGPT_Regenerate
+  m_EditorClassIdentifier: 
+  _pillar: {fileID: 11400000, guid: 861fd6bb5ade340a99f8da72fe551b96, type: 2}
+  _count: 3
+  _interval: 0.9
+  _lead: 0.4

@@ -73,8 +73,13 @@ public class AppSkillEntry
     public string[] AppNames;
     [Tooltip("バンドルID（前方一致）")]
     public string[] BundleIdPrefixes;
+    [Tooltip("【仮】アプリのキットの行か（2026-11-19。AppKitsBuilder が入れる）。AppKits.Enabled = false・キットの能力のスイッチが切れていれば使わない")]
+    public bool FromKit;
 
     public bool Matches(AppUsageRow row) => AppMatch.Matches(row, AppNames, BundleIdPrefixes);
+
+    /// <summary>今使ってよい行か（キットの行は、キットのスイッチを見る）</summary>
+    public bool IsActive => !FromKit || AppKits.IsOn(Label, KitPart.Skill);
 }
 
 /// <summary>アプリの見分け方（バンドルIDの前方一致か、名前を単語ごとに）</summary>
@@ -170,7 +175,23 @@ public class AbilityCatalog : ScriptableObject
     public AbilityCategoryEntry Find(AppUsageRow row) => Categories.FirstOrDefault(c => c != null && c.Skill != null && c.Matches(row));
 
     /// <summary>このアプリ専用の能力（能力が入っているものだけ）。無ければ null</summary>
-    public AppSkillEntry FindAppSkill(AppUsageRow row) => AppSkills.FirstOrDefault(a => a != null && a.Skill != null && a.Matches(row));
+    /// <remarks>
+    /// 2026-11-19：キットの行はスイッチを見る。ラスボス（Terminal）の能力の行は、ここでは返さない
+    /// （カードは AddFinalBossCard だけが、図鑑で倒していれば1枚だけ出す。2枚にならないように）
+    /// </remarks>
+    public AppSkillEntry FindAppSkill(AppUsageRow row)
+    {
+        SkillDefinition finalSkill = FinalBossSkill(out _);
+        return AppSkills.FirstOrDefault(a => a != null && a.Skill != null && a.IsActive && a.Skill != finalSkill && a.Matches(row));
+    }
+
+    /// <summary>ラスボス（Terminal）の手に入る能力（無ければ null）。final にラスボスの行</summary>
+    static SkillDefinition FinalBossSkill(out AppEntry final)
+    {
+        AppCatalog catalog = GameSession.Instance != null ? GameSession.Instance.Catalog : null;
+        final = catalog != null ? catalog.FinalBoss : null;
+        return final != null && final.Profile != null ? final.Profile.Reward : null;
+    }
 
     /// <summary>
     /// このアプリから出る能力：専用の能力 → カテゴリの能力の順。どちらも無ければ null（その場で作る能力は AppVisuals.Generate）
@@ -220,6 +241,51 @@ public class AbilityCatalog : ScriptableObject
             if (entry == null || entry.Skill == null || !used.Add(entry.Category)) continue;
             cards.Add(new AbilityCandidate { Skill = entry.Skill, Category = entry.Category });
         }
+        AddFinalBossCard(cards, appIcon);
         return cards;
+    }
+
+    /// <summary>
+    /// 【仮】ラスボス（Terminal）の能力のカード（2026-11-19。docs/app-feedback-v2-design.md 6-3 の (ア)）。
+    /// 図鑑で Terminal を倒していたら、いちばん使用時間の短いアプリの1枚を Terminal のカードに入れ替える（枚数は同じ）。
+    /// スクリーンタイムに Terminal があっても無くても1枚だけ（FindAppSkill はこの能力を返さない）。倒す前は出さない。
+    /// 能力は Boss_Terminal の「手に入る能力」（無ければ何もしない）。キットのスイッチ（AppKits の "Terminal" の能力）が切れていれば出さない
+    /// </summary>
+    void AddFinalBossCard(List<AbilityCandidate> cards, Func<AppUsageRow, Sprite> appIcon)
+    {
+        try
+        {
+            SkillDefinition skill = FinalBossSkill(out AppEntry final);
+            if (skill == null || cards.Exists(c => c.Skill == skill)) return;
+            string bundle = final.BundleIdPrefixes != null && final.BundleIdPrefixes.Length > 0 ? final.BundleIdPrefixes[0] : "";
+            string label = AppKits.FindLabel(final.DisplayName, bundle) ?? final.DisplayName;
+            if (!AppKits.IsOn(label, KitPart.Skill)) return;
+            if (!DefeatedInDex(final)) return;
+            var row = new AppUsageRow { Name = final.DisplayName, BundleId = bundle ?? "", Seconds = 1 };
+            var card = new AbilityCandidate { Skill = skill, Category = skill.Category, AppName = final.DisplayName, Seconds = 0, AppIcon = appIcon?.Invoke(row) };
+            if (cards.Count < _cardCount) { cards.Add(card); return; }
+            // いちばん使用時間の短いアプリのカード（アプリの無い埋め草のカードがあれば、それを先に）
+            int at = cards.FindLastIndex(c => string.IsNullOrEmpty(c.AppName));
+            if (at < 0)
+            {
+                at = cards.Count - 1;
+                for (int i = 0; i < cards.Count; i++) if (cards[i].Seconds < cards[at].Seconds) at = i;
+            }
+            cards[at] = card;
+        }
+        catch (Exception e) { Debug.LogException(e); }
+    }
+
+    /// <summary>図鑑で、そのアプリを倒したことがあるか（表示名・別名・バンドルIDのどれかで当たる記録）</summary>
+    static bool DefeatedInDex(AppEntry app)
+    {
+        var names = new List<string> { app.DisplayName };
+        if (app.ScreenTimeNames != null) names.AddRange(app.ScreenTimeNames);
+        foreach (AppDexEntry e in AppDex.Entries)
+        {
+            if (e == null || !e.IsDefeated) continue;
+            if (AppMatch.Matches(e.Row, names.ToArray(), app.BundleIdPrefixes)) return true;
+        }
+        return false;
     }
 }

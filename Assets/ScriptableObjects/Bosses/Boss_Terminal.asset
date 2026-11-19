@@ -16,24 +16,22 @@ MonoBehaviour:
   _icon: {fileID: 21300000, guid: 2e8cceb07611046c6bd5ef954c59b758, type: 3}
   _gaugeMax: 100
   _phase2Threshold: 0.5
-  _transitionTime: 1.5
+  _transitionTime: 3.5
   _startDelay: 1
   _phase1:
     Moves:
+    - {fileID: 11400000, guid: 4d4f94541daa34ab08ed06501072d936, type: 2}
+    - {fileID: 11400000, guid: fd41f4b2f6fba42f7afa14bc446e7c3c, type: 2}
     - {fileID: 11400000, guid: 3d191a480a6b94ca4815d293dd4aa1b1, type: 2}
-    - {fileID: 11400000, guid: c386ab0511541444fb9c1738a0ef58b6, type: 2}
-    - {fileID: 11400000, guid: 377ec9ff652f94c10939d1dcf8df5eb4, type: 2}
-    - {fileID: 11400000, guid: 2ade5aefb2b7d4ec2913074bc7732073, type: 2}
     WaitAfterAttack: 1.2
     AttacksPerMove: 2
   _phase2:
     Moves:
+    - {fileID: 11400000, guid: 9f367c227797d4a79be9bb994ee1a16d, type: 2}
+    - {fileID: 11400000, guid: 788a72e1dae754a01a0699e7b63877c3, type: 2}
+    - {fileID: 11400000, guid: f5aa57ec0b1fd423f943060a8316b84e, type: 2}
+    - {fileID: 11400000, guid: c4d43f112b3894f9288d2da5afff789a, type: 2}
     - {fileID: 11400000, guid: cf4228088a0004ad5a3a256c2782c45f, type: 2}
-    - {fileID: 11400000, guid: e0c311ade60274f6cb94bb3141a41d5c, type: 2}
-    - {fileID: 11400000, guid: c7c1042b0a3ae40d192c1e42c87d3d24, type: 2}
-    - {fileID: 11400000, guid: 0f3d63df25b1d478d9801242535efb89, type: 2}
-    - {fileID: 11400000, guid: 285a7ac79521041cab5b990cb3c0a0fc, type: 2}
-    - {fileID: 11400000, guid: c26b5ad065dc343c48d6bddee552e395, type: 2}
     WaitAfterAttack: 0.8
     AttacksPerMove: 2
   _movement: 2
@@ -43,4 +41,6 @@ MonoBehaviour:
   - -7
   - 0
   - 7
-  _reward: {fileID: 0}
+  _reward: {fileID: 11400000, guid: 68fa2123f5f8c402588ae6d91ed7f0f2, type: 2}
+  _extensions:
+  - {fileID: 11400000, guid: 1d6f2f342323647198073018e2a9c5e3, type: 2}

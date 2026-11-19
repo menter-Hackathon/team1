@@ -1,0 +1,119 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32015ae998734b8a83700e2a1c61f820, type: 3}
+  m_Name: Attack_Office_Pie
+  m_EditorClassIdentifier: 
+  _kind: 0
+  _windup: 0.41666666
+  _activeTime: 0.3
+  _cooldown: 3
+  _damage: 1
+  _gaugeGain: 3
+  _knockback: {x: 3, y: 3}
+  _hitStun: 0.15
+  _repeatCount: 1
+  _repeatInterval: 0
+  _sprite: {fileID: -6428047337822033832, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _frames:
+  - {fileID: -6428047337822033832, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: 6968193721055302622, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: -7194320136571327217, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: -8412815215475073468, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: 3574543307119051137, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: -3348388267673218285, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: 4593522670438101049, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: 4457331945178716366, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: 6111210148826792324, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: 8048346234979290066, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: -4379885100961881227, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: -5675544138819894027, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: -6468633588293152495, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: -2400625801707378082, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: 2505132309669156816, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  - {fileID: 9013233121497205696, guid: 79921751643ed42c0811c7c816f51025, type: 3}
+  _framesPerRow: 4
+  _frameRate: 16
+  _loopFrames: 1
+  _hitDelay: 0
+  _holdFrame: -1
+  _windupFrames:
+  - {fileID: -4354852529625104393, guid: 4e5045a63450f4a1db48835035446907, type: 3}
+  - {fileID: -6399827784785252106, guid: 4e5045a63450f4a1db48835035446907, type: 3}
+  - {fileID: -4876582236440808649, guid: 4e5045a63450f4a1db48835035446907, type: 3}
+  - {fileID: 5843655200782208357, guid: 4e5045a63450f4a1db48835035446907, type: 3}
+  - {fileID: -3019231641189486439, guid: 4e5045a63450f4a1db48835035446907, type: 3}
+  - {fileID: -4370022936673601740, guid: 4e5045a63450f4a1db48835035446907, type: 3}
+  - {fileID: -1669743442860402253, guid: 4e5045a63450f4a1db48835035446907, type: 3}
+  - {fileID: -6737526168097090935, guid: 4e5045a63450f4a1db48835035446907, type: 3}
+  _windupFrameRate: 12
+  _projectileCount: 4
+  _spreadAngle: 50
+  _speed: 9
+  _gravity: 0
+  _lifetime: 1.4
+  _hitSize: {x: 0.55, y: 0.55}
+  _aim: 1
+  _launchAngle: 0
+  _spawnOffset: {x: 1, y: 1.4}
+  _destroyOnTerrain: 1
+  _destroyOnHit: 1
+  _onTerrainHit: {fileID: 0}
+  _followUpOnHit: 0
+  _anchor: 0
+  _forwardDistance: 4
+  _snapToGround: 1
+  _alignToSurface: 1
+  _shape: 0
+  _areaSize: {x: 1.5, y: 12}
+  _areaCount: 1
+  _areaSpacing: 4
+  _areaStagger: 0
+  _areaForwardOrder: 0
+  _polylinePoints: []
+  _polylineRadius: 0.12
+  _telegraphTime: 1
+  _persistDuration: 0
+  _tickInterval: 0.5
+  _placement: 0
+  _spawnCount: 2
+  _minDistanceFromTarget: 3
+  _objectSize: {x: 3, y: 2}
+  _fallSpeed: 12
+  _landRemainTime: 0
+  _becomesPlatform: 0
+  _placeInterval: 0.3
+  _placeSpacing: 3
+  _dropHoldTime: 0.5
+  _dropInterval: 0.25
+  _appearTopRange: {x: 2.5, y: 6}
+  _reachHeight: 3
+  _primitives: []
+  _maxAlive: 3
+  _objectLifetime: 8
+  _damageFallSpeed: 4
+  _impactSpeed: 5
+  _dropHeight: 4
+  _spawnFrames: []
+  _spawnFrameRate: 14
+  _spawnReleaseFrame: 1
+  _impactFrames: []
+  _impactFrameRate: 14
+  _warningFrames: []
+  _warningFrameRate: 8
+  _warpDestination: 0
+  _warpDistance: 6
+  _vanishTime: 0
+  _appearDelay: 0
+  _appearTelegraph: 0
+  _appearTime: 0
+  _disableContactUntilAppeared: 1

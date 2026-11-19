@@ -1,0 +1,46 @@
+{
+  "id": "Word",
+  "desc": "青いリボン、ものさし、灰色の台の上に白い紙と文字の行",
+  "base": "#b3b8c0",
+  "elements": [
+    {"type": "rect", "x": 0, "y": 0, "w": 320, "h": 22, "color": "#4a6a9c"},
+    {"type": "rect", "x": 0, "y": 0, "w": 320, "h": 11, "color": "#405f90"},
+    {"type": "text", "x": 154, "y": 3, "text": "DOCUMENT1", "color": "#b3c3dc", "scale": 1},
+    {"type": "text", "x": 152, "y": 14, "text": "HOME", "color": "#e4eaf4", "scale": 1},
+    {"type": "line", "x1": 152, "y1": 20, "x2": 167, "y2": 20, "color": "#e4eaf4"},
+    {"type": "text", "x": 174, "y": 14, "text": "INSERT", "color": "#b3c3dc", "scale": 1},
+    {"type": "text", "x": 204, "y": 14, "text": "LAYOUT", "color": "#b3c3dc", "scale": 1},
+    {"type": "rect", "x": 10, "y": 22, "w": 300, "h": 9, "color": "#c3c7ce"},
+    {"type": "text", "x": 60, "y": 24, "text": "B", "color": "#5d6877", "scale": 1},
+    {"type": "text", "x": 68, "y": 24, "text": "I", "color": "#5d6877", "scale": 1},
+    {"type": "text", "x": 76, "y": 24, "text": "U", "color": "#5d6877", "scale": 1},
+    {"type": "line", "x1": 76, "y1": 30, "x2": 78, "y2": 30, "color": "#5d6877"},
+    {"type": "repeat", "count": 4, "dx": 9, "dy": 0, "items": [{"type": "bars", "x": 152, "y": 25, "w": 6, "rows": 2, "row_h": 3, "bar_h": 1, "color": "#8a93a0", "seed": 161, "min": 0.6, "indent": 0}]},
+    {"type": "rrect", "x": 194, "y": 24, "w": 20, "h": 5, "color": "#aab1bc", "r": 1},
+    {"type": "rrect", "x": 218, "y": 24, "w": 20, "h": 5, "color": "#aab1bc", "r": 1},
+    {"type": "rect", "x": 10, "y": 31, "w": 300, "h": 5, "color": "#bdc2c9"},
+    {"type": "vlines", "x": 64, "y": 33, "w": 200, "h": 3, "step": 8, "color": "#9aa2ae"},
+    {"type": "vlines", "x": 64, "y": 32, "w": 200, "h": 4, "step": 40, "color": "#8a93a0"},
+    {"type": "rect", "x": 66, "y": 42, "w": 200, "h": 128, "color": "#a5abb4"},
+    {"type": "rect", "x": 64, "y": 40, "w": 200, "h": 130, "color": "#d0d3d8"},
+    {"type": "text", "x": 82, "y": 52, "text": "MEETING NOTES", "color": "#959ca8", "scale": 2},
+    {"type": "rect", "x": 10, "y": 163, "w": 300, "h": 7, "color": "#4a6a9c"},
+    {"type": "text", "x": 14, "y": 164, "text": "PAGE 1 OF 3", "color": "#b3c3dc", "scale": 1},
+    {"type": "text", "x": 70, "y": 164, "text": "248 WORDS", "color": "#b3c3dc", "scale": 1},
+    {"type": "text", "x": 270, "y": 164, "text": "100%", "color": "#b3c3dc", "scale": 1},
+    {"type": "line", "x1": 82, "y1": 66, "x2": 246, "y2": 66, "color": "#bcc1c9"},
+    {"type": "bars", "x": 82, "y": 72, "w": 164, "rows": 2, "row_h": 7, "bar_h": 2, "color": "#c3c7ce", "seed": 171, "min": 0.65, "indent": 0},
+    {"type": "bars", "x": 82, "y": 144, "w": 164, "rows": 3, "row_h": 7, "bar_h": 2, "color": "#c3c7ce", "seed": 181, "min": 0.65, "indent": 0}
+  ],
+  "stage": {
+    "hide_folders": true,
+    "platforms": [
+      {"id": "line1", "x": 82, "y": 127, "w": 56, "h": 9, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 56, "h": 9, "color": "#6f86ad", "r": 1}, {"type": "rrect", "x": 1, "y": 1, "w": 54, "h": 7, "color": "#e8ebf0", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 52, "h": 1, "color": "#f5f7fa"}, {"type": "rect", "x": 4, "y": 4, "w": 42, "h": 2, "color": "#7d8694"}, {"type": "rect", "x": 51, "y": 4, "w": 4, "h": 2, "color": "#a8b0bc"}], "behavior": {"type": "static"}},
+      {"id": "line2", "x": 190, "y": 127, "w": 56, "h": 9, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 56, "h": 9, "color": "#6f86ad", "r": 1}, {"type": "rrect", "x": 1, "y": 1, "w": 54, "h": 7, "color": "#e8ebf0", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 52, "h": 1, "color": "#f5f7fa"}, {"type": "rect", "x": 4, "y": 4, "w": 36, "h": 2, "color": "#7d8694"}, {"type": "rect", "x": 45, "y": 4, "w": 4, "h": 2, "color": "#a8b0bc"}], "behavior": {"type": "static"}},
+      {"id": "heading", "x": 134, "y": 98, "w": 54, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 54, "h": 11, "color": "#4a6a9c", "r": 1}, {"type": "rrect", "x": 1, "y": 1, "w": 52, "h": 9, "color": "#dfe6f2", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 50, "h": 1, "color": "#eef2f9"}, {"type": "text", "x": 5, "y": 3, "text": "AGENDA", "color": "#4a6a9c", "scale": 1}], "behavior": {"type": "static"}},
+      {"id": "deleted", "x": 70, "y": 100, "w": 42, "h": 9, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 42, "h": 9, "color": "#9a8a90", "r": 1}, {"type": "rrect", "x": 1, "y": 1, "w": 40, "h": 7, "color": "#e6e3e3", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 38, "h": 1, "color": "#f2f0f0"}, {"type": "rect", "x": 5, "y": 3, "w": 30, "h": 2, "color": "#a8a0a4"}, {"type": "rect", "x": 3, "y": 5, "w": 36, "h": 1, "color": "#8a6f7a"}], "behavior": {"type": "fall", "delay": 0.6, "respawn": 4}},
+      {"id": "comment", "x": 268, "y": 98, "w": 38, "h": 20, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 38, "h": 20, "color": "#8f8a6c", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 36, "h": 18, "color": "#e9e6da", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 34, "h": 1, "color": "#f5f3ea"}, {"type": "circle", "cx": 6, "cy": 6, "r": 2, "color": "#7f95b8", "fill": true}, {"type": "rect", "x": 11, "y": 5, "w": 20, "h": 2, "color": "#8f8a7c"}, {"type": "rect", "x": 5, "y": 11, "w": 28, "h": 1, "color": "#b0ab9c"}, {"type": "rect", "x": 5, "y": 15, "w": 20, "h": 1, "color": "#b0ab9c"}], "behavior": {"type": "blink", "on": 6, "off": 3, "warn": 1.5, "offset": 0}},
+      {"id": "spell", "x": 146, "y": 150, "w": 27, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 27, "h": 11, "color": "#2c4470", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 25, "h": 9, "color": "#4a6a9c", "r": 2}, {"type": "rect", "x": 3, "y": 1, "w": 21, "h": 1, "color": "#eef3fb66"}, {"type": "icon", "name": "check", "x": 3, "y": 3, "size": 5, "color": "#eef3fb"}, {"type": "text", "x": 11, "y": 3, "text": "ABC", "color": "#eef3fb", "scale": 1}], "behavior": {"type": "button", "effect": "clear_bullets", "cooldown": 12}}
+    ]
+  }
+}

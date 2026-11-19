@@ -1,0 +1,94 @@
+{
+ "label": "Teams",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "chat1",
+   "x": -2.8667,
+   "y": 2.6,
+   "w": 3.8667,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Teams__chat1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "chat2",
+   "x": 3.0667,
+   "y": 2.6,
+   "w": 4.0,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Teams__chat2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "meet",
+   "x": -3.2,
+   "y": 4.5,
+   "w": 4.2667,
+   "h": 1.2,
+   "top": 5.1,
+   "sprite": "AppBackgrounds/Parts/Teams__meet",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "callbar",
+   "x": 3.5333,
+   "y": 4.6333,
+   "w": 4.4,
+   "h": 0.8,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/Teams__callbar",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": 3.6,
+    "dy": 0.0,
+    "period": 8,
+    "offset": 0
+   }
+  },
+  {
+   "id": "mine",
+   "x": 7.4667,
+   "y": 2.6,
+   "w": 3.7333,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Teams__mine",
+   "behavior": "blink",
+   "params": {
+    "type": "blink",
+    "on": 6,
+    "off": 3,
+    "warn": 1.0,
+    "offset": 2
+   }
+  },
+  {
+   "id": "join",
+   "x": 8.4667,
+   "y": 1.1,
+   "w": 2.0,
+   "h": 0.8,
+   "top": 1.5,
+   "sprite": "AppBackgrounds/Parts/Teams__join",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "stun_boss",
+    "cooldown": 25
+   }
+  }
+ ]
+}

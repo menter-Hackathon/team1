@@ -1,0 +1,94 @@
+{
+ "label": "Terminal",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "ls",
+   "x": -2.8667,
+   "y": 2.7,
+   "w": 4.4,
+   "h": 0.6667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Terminal__ls",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "cat",
+   "x": 4.2,
+   "y": 2.7,
+   "w": 4.4,
+   "h": 0.6667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Terminal__cat",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "rm1",
+   "x": 0.2,
+   "y": 4.7,
+   "w": 3.8667,
+   "h": 0.6667,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/Terminal__rm1",
+   "behavior": "fall",
+   "params": {
+    "type": "fall",
+    "delay": 0.7,
+    "respawn": 5
+   }
+  },
+  {
+   "id": "out",
+   "x": 7.2,
+   "y": 4.6333,
+   "w": 4.0,
+   "h": 0.6667,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Terminal__out",
+   "behavior": "scroll",
+   "params": {
+    "type": "scroll",
+    "speed": 0.3333333333333333,
+    "range": 1.8666666666666667,
+    "dir": "up",
+    "offset": 0
+   }
+  },
+  {
+   "id": "rm2",
+   "x": -6.6,
+   "y": 4.7,
+   "w": 4.1333,
+   "h": 0.6667,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/Terminal__rm2",
+   "behavior": "fall",
+   "params": {
+    "type": "fall",
+    "delay": 0.7,
+    "respawn": 5
+   }
+  },
+  {
+   "id": "ctrlc",
+   "x": 8.7333,
+   "y": 1.3667,
+   "w": 1.7333,
+   "h": 0.8,
+   "top": 1.7667,
+   "sprite": "AppBackgrounds/Parts/Terminal__ctrlc",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "clear_bullets",
+    "cooldown": 20
+   }
+  }
+ ]
+}

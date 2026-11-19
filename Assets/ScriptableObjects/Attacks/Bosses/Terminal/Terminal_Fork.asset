@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 577bc4def885242da845ab976f222b03, type: 3}
+  m_Name: Terminal_Fork
+  m_EditorClassIdentifier: 
+  _command: fork() &
+  _ghostXs:
+  - -8
+  - -4
+  - 4
+  - 8
+  _fallbackXs:
+  - -6
+  - 6
+  - -2
+  - 2
+  - 0
+  - -9
+  - 9
+  _heights: {x: 5.5, y: 7}
+  _avoidRadius: 2.5
+  _telegraphTime: 0.8
+  _techniqueTime: 1.5
+  _firstShotDelay: 1
+  _shotInterval: 0.35
+  _rounds: 2
+  _flashTime: 0.5
+  _vanishDelay: 0.5
+  _gaugeOnKill: 2

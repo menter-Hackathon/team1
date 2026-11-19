@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Kit_Word
+  m_EditorClassIdentifier: 
+  _displayName: Word
+  _icon: {fileID: 21300000, guid: 2e8cceb07611046c6bd5ef954c59b758, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: 68b1c1b317d934892a92407fa406955f, type: 2}
+    - {fileID: 11400000, guid: c71fd267bf49246e98eb4eef411a7bd5, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 3dcad14b0abd44370987bf6f39054f72, type: 2}
+    - {fileID: 11400000, guid: 3a04209eecc9649d1be3d771ba141d88, type: 2}
+    - {fileID: 11400000, guid: fc2d7c4e1af27495bb684e7aef3963d6, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 2
+  _movement: 2
+  _warpAttack: {fileID: 11400000, guid: 602ed07e5f4924eb981368a23e76a0c1, type: 2}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 0}
+  _extensions: []

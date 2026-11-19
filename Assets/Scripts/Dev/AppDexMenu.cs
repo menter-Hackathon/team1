@@ -11,6 +11,7 @@ public class AppDexMenu : MonoBehaviour
 
     List<AppDexEntry> _entries = new List<AppDexEntry>();
     int _selected = -1;
+    int _detail = -1;       // 詳しい画面で開いているアプリの番号（-1＝一覧）
     Vector2 _scroll;
     int _cols = 6;
     readonly MacDesktopGui.WindowState _window = new MacDesktopGui.WindowState(false);
@@ -28,6 +29,8 @@ public class AppDexMenu : MonoBehaviour
 
     public bool IsOpen => _window.IsVisible;
     public bool ShowButton { get => _showButton; set => _showButton = value; }
+    /// <summary>詳しい画面を開いているか</summary>
+    public bool IsDetailOpen => IsOpen && _detail >= 0;
 
     public void Open()
     {
@@ -72,8 +75,8 @@ public class AppDexMenu : MonoBehaviour
         if(kb.escapeKey.wasPressedThisFrame||(!_searchFocused&&(kb.xKey.wasPressedThisFrame||kb.backspaceKey.wasPressedThisFrame))) { Close(); return; }
         if(_searchFocused||_visible.Count==0) return;
         int step = 0;
-        if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) step = -1;
-        if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) step = 1;
+        if (left) step = -1;
+        if (right) step = 1;
         if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) step = -_cols;
         if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) step = _cols;
         if(step!=0) { _selected=Mathf.Clamp(_selected+step,0,_visible.Count-1); _revealSelection=true; }

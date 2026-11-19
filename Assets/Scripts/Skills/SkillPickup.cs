@@ -62,6 +62,7 @@ public class SkillPickup : MonoBehaviour
         if (result == SkillAcquireResult.Added || result == SkillAcquireResult.PendingReplace)
         {
             PickedUp?.Invoke(found, result);
+            GameAudio.Event("skill_pickup");
             gameObject.SetActive(false);
         }
     }

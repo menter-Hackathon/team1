@@ -1,0 +1,816 @@
+{
+ "moves": [
+  {
+   "move": "Attack_Slack_AtChannel_P1",
+   "start": "se_slack_typing",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Slack_AtChannel_P2",
+   "start": "se_slack_typing",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 0.94
+  },
+  {
+   "move": "Attack_Slack_Mention_Breakpoint_P1",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Slack_Mention_Breakpoint_P2",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Slack_ReactionRain_P1",
+   "start": "",
+   "release": "se_slack_reaction_rain",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Slack_ReactionRain_P2",
+   "start": "",
+   "release": "se_slack_reaction_rain",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Slack_Huddle_P2",
+   "start": "se_slack_huddle_join",
+   "release": "se_slack_huddle_ring",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_Slack_Reaction",
+   "start": "",
+   "release": "se_slack_thumb",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Discord_Voice_P1",
+   "start": "se_discord_voice_on",
+   "release": "se_discord_voice_wave",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Discord_Voice_P2",
+   "start": "se_discord_voice_on",
+   "release": "se_discord_voice_wave",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Discord_ServerList_P1",
+   "start": "se_discord_server_list",
+   "release": "se_discord_server_shot",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Discord_ServerList_P2",
+   "start": "se_discord_server_list",
+   "release": "se_discord_server_shot",
+   "vol": 0.55,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Discord_StampRain_P2",
+   "start": "",
+   "release": "se_discord_stamp",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_Discord_Mute",
+   "start": "",
+   "release": "se_discord_mute",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_LINE_StampBarrage_P1",
+   "start": "",
+   "release": "se_line_stamp_boing",
+   "vol": 0.5,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_LINE_StampBarrage_P2",
+   "start": "",
+   "release": "se_line_stamp_boing",
+   "vol": 0.5,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_LINE_Talk_PopupAppear_P1",
+   "start": "",
+   "release": "se_line_bubble",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_LINE_Talk_PopupAppear_P2",
+   "start": "",
+   "release": "se_line_bubble",
+   "vol": 0.55,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_LINE_Angry_P2",
+   "start": "",
+   "release": "se_line_angry",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_LINE_Stamp",
+   "start": "",
+   "release": "se_line_stamp_press",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_ChatGPT_LongAnswer_Breakpoint_P1",
+   "start": "",
+   "release": "se_chatgpt_stream",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_ChatGPT_Hallucination_P1",
+   "start": "se_chatgpt_glitch_write",
+   "release": "se_chatgpt_word_shot",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_ChatGPT_Hallucination_P2",
+   "start": "se_chatgpt_glitch_write",
+   "release": "se_chatgpt_word_shot",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_ChatGPT_Regenerate_P2",
+   "start": "se_chatgpt_regen",
+   "release": "se_chatgpt_stream",
+   "vol": 0.6,
+   "pitch": 0.9
+  },
+  {
+   "move": "Attack_App_ChatGPT_Prompt",
+   "start": "se_chatgpt_think",
+   "release": "se_chatgpt_prompt",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_ChatGPT_Prompt_Breakpoint",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Claude_Spark_P1",
+   "start": "se_claude_charge",
+   "release": "se_claude_spark",
+   "vol": 0.65,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Claude_Spark_P2",
+   "start": "se_claude_charge",
+   "release": "se_claude_spark",
+   "vol": 0.65,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Claude_PopupAppear_P1",
+   "start": "",
+   "release": "se_claude_panel",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Claude_Thinking_P2",
+   "start": "se_claude_think",
+   "release": "se_claude_think_done",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_Claude_Artifact",
+   "start": "",
+   "release": "se_claude_artifact",
+   "vol": 0.75,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Gemini_Drafts_P1",
+   "start": "se_gemini_shuffle",
+   "release": "se_gemini_decide",
+   "vol": 0.65,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Gemini_Drafts_P2",
+   "start": "se_gemini_shuffle",
+   "release": "se_gemini_decide",
+   "vol": 0.65,
+   "pitch": 0.94
+  },
+  {
+   "move": "Attack_Gemini_Twin_P1",
+   "start": "se_gemini_twin",
+   "release": "se_gemini_star_shot",
+   "vol": 0.45,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Gemini_Twin_P2",
+   "start": "se_gemini_twin",
+   "release": "se_gemini_star_shot",
+   "vol": 0.45,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Gemini_Image_P2",
+   "start": "",
+   "release": "se_gemini_image",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_Gemini_TwinStar",
+   "start": "se_gemini_twinstar",
+   "release": "",
+   "vol": 0.75,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_Gemini_TwinStar_Inner",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notion_BlockStack_P1",
+   "start": "",
+   "release": "se_notion_block",
+   "vol": 0.5,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notion_BlockStack_P2",
+   "start": "",
+   "release": "se_notion_block",
+   "vol": 0.5,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Notion_Toggle_P1",
+   "start": "se_notion_toggle",
+   "release": "",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notion_Toggle_P2",
+   "start": "se_notion_toggle",
+   "release": "",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Notion_Toggle_Area_P1",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notion_Toggle_Area_P2",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notion_ViewSwitch_P2",
+   "start": "se_notion_view",
+   "release": "se_notion_cards",
+   "vol": 0.65,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notion_Skill_Block",
+   "start": "",
+   "release": "se_notion_block_place",
+   "vol": 0.75,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Calendar_Blocks_P1",
+   "start": "",
+   "release": "se_calendar_flip",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Calendar_Blocks_P2",
+   "start": "",
+   "release": "se_calendar_flip",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Calendar_Deadline",
+   "start": "",
+   "release": "se_calendar_deadline",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Calendar_Weekly_P2",
+   "start": "",
+   "release": "se_calendar_repeat",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_Calendar_Event",
+   "start": "",
+   "release": "se_calendar_event_set",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Excel_Autofill_P1",
+   "start": "se_excel_fill",
+   "release": "se_excel_ref_error",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Excel_Autofill_P2",
+   "start": "se_excel_fill",
+   "release": "se_excel_ref_error",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Excel_BarGraph_P1",
+   "start": "",
+   "release": "se_excel_bars",
+   "vol": 0.65,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Excel_BarGraph_P2",
+   "start": "",
+   "release": "se_excel_bars",
+   "vol": 0.65,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Excel_Pie_P2",
+   "start": "se_excel_pie_cut",
+   "release": "",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Excel_Pie_TabShuriken_Slice",
+   "start": "",
+   "release": "se_excel_pie_shot",
+   "vol": 0.65,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Excel_AutofillSkill",
+   "start": "",
+   "release": "se_excel_autofill_skill",
+   "vol": 0.75,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_PowerPoint_Bullets_P1",
+   "start": "se_ppt_bullet_dots",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_PowerPoint_Bullets_P2",
+   "start": "se_ppt_bullet_dots",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_PowerPoint_BulletLine",
+   "start": "",
+   "release": "se_ppt_line_shot",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_PowerPoint_SlideDrop_P1",
+   "start": "",
+   "release": "se_ppt_slide",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_PowerPoint_SlideDrop_P2",
+   "start": "",
+   "release": "se_ppt_slide",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_PowerPoint_FlyIn_P2",
+   "start": "se_gen_warn_beep",
+   "release": "",
+   "vol": 0.5,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_PowerPoint_FlyInArrow",
+   "start": "",
+   "release": "se_ppt_flyin",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_PowerPoint_FlyInSkill",
+   "start": "",
+   "release": "se_ppt_flyin_skill",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Word_Strikethrough_P1",
+   "start": "se_word_type",
+   "release": "se_word_strike",
+   "vol": 0.65,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Word_Strikethrough_P2",
+   "start": "se_word_type",
+   "release": "se_word_strike",
+   "vol": 0.65,
+   "pitch": 0.94
+  },
+  {
+   "move": "Attack_Word_Comment_P1",
+   "start": "se_word_comment",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Word_Comment_P2",
+   "start": "se_word_comment",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Word_Comment_Inner_P1",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Word_Comment_Inner_P2",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Word_Layout_P2",
+   "start": "",
+   "release": "se_word_layout",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Word_BoldSkill",
+   "start": "",
+   "release": "se_word_bold",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Keynote_MagicMove_P1",
+   "start": "se_keynote_pop",
+   "release": "se_keynote_glide",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Keynote_MagicMove_P2",
+   "start": "se_keynote_pop",
+   "release": "se_keynote_glide",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Keynote_BigNumbers_P1",
+   "start": "",
+   "release": "se_keynote_number",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Keynote_BigNumbers_P2",
+   "start": "",
+   "release": "se_keynote_number",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Keynote_OneMoreThing_P2",
+   "start": "se_keynote_hush",
+   "release": "",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Keynote_Star",
+   "start": "",
+   "release": "se_keynote_stars",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Keynote_DashSkill",
+   "start": "",
+   "release": "se_keynote_dash",
+   "vol": 0.75,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notes_Paper_P1",
+   "start": "se_notes_scribble",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notes_Paper_P2",
+   "start": "se_notes_scribble",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 0.94
+  },
+  {
+   "move": "Attack_Notes_Paper_Fall_P1",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notes_Paper_Fall_P2",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notes_QuickMemo",
+   "start": "",
+   "release": "se_notes_memo",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notes_Lock_P2",
+   "start": "",
+   "release": "se_notes_lock",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Notes_Skill_Pin",
+   "start": "",
+   "release": "se_notes_pin",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Mail_Send_P1",
+   "start": "se_mail_fold",
+   "release": "se_mail_plane",
+   "vol": 0.5,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Mail_Send_P2",
+   "start": "se_mail_fold",
+   "release": "se_mail_plane",
+   "vol": 0.5,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Mail_Spam_P1",
+   "start": "",
+   "release": "se_mail_spam_drop",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Mail_Spam_P2",
+   "start": "",
+   "release": "se_mail_spam_drop",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Mail_ReplyAll_P2",
+   "start": "",
+   "release": "se_mail_reply_all",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_Mail_Send",
+   "start": "",
+   "release": "se_mail_send_skill",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Messages_Slam_P1",
+   "start": "",
+   "release": "se_messages_slam",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Messages_Slam_P2",
+   "start": "",
+   "release": "se_messages_slam",
+   "vol": 0.8,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Messages_Fireworks_P1",
+   "start": "",
+   "release": "se_messages_firework",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Messages_Fireworks_P2",
+   "start": "",
+   "release": "se_messages_firework",
+   "vol": 0.55,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Messages_Laser_P2",
+   "start": "se_messages_laser_charge",
+   "release": "se_messages_laser",
+   "vol": 0.9,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_Messages_Firework",
+   "start": "",
+   "release": "se_messages_firework_skill",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Teams_Share_P1",
+   "start": "",
+   "release": "se_teams_share",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Teams_Share_P2",
+   "start": "",
+   "release": "se_teams_share",
+   "vol": 0.7,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Teams_RaiseHand_P1",
+   "start": "se_teams_hand",
+   "release": "",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Teams_RaiseHand_P2",
+   "start": "se_teams_hand",
+   "release": "",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Teams_HandColumn_P1",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Teams_HandColumn_P2",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Teams_Joined_TabMultiply_P2",
+   "start": "",
+   "release": "se_teams_joined",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_Teams_RaiseHand",
+   "start": "se_teams_hand_skill",
+   "release": "",
+   "vol": 0.75,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_Teams_HandColumn",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Zoom_Gallery_P1",
+   "start": "",
+   "release": "se_zoom_gallery",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Zoom_Gallery_P2",
+   "start": "",
+   "release": "se_zoom_gallery",
+   "vol": 0.7,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Zoom_Leave_P1",
+   "start": "",
+   "release": "se_zoom_leave",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Zoom_Leave_P2",
+   "start": "",
+   "release": "se_zoom_leave",
+   "vol": 0.6,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Zoom_ClapStorm_P2",
+   "start": "",
+   "release": "se_zoom_clap",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_Zoom",
+   "start": "",
+   "release": "se_zoom_lockon",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_LINE_ReadIgnored",
+   "start": "",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  }
+ ]
+}

@@ -15,6 +15,7 @@ public class RunTitleMenu : MonoBehaviour
     bool _scanning;
     List<AppUsage> _detectedApps;
     List<(string Name, int Seconds)> _topApps;
+    List<AppUsageRow> _targets; // ボスの候補（上位10アプリ。アイコンを並べる）
     string _error;
     readonly List<MacDesktopGui.DockItem> _dockApps = new List<MacDesktopGui.DockItem>();
     readonly MacDesktopGui.WindowState _window = new MacDesktopGui.WindowState();
@@ -61,8 +62,13 @@ public class RunTitleMenu : MonoBehaviour
         int count = _page == Page.Menu ? 3 : ModeCount;
         if (up) _focus = (_focus + count - 1) % count;
         if (down) _focus = (_focus + 1) % count;
+        if (up || down) GameAudio.Event("ui_move");
         if (ok) Choose(_focus);
-        if (back && _page == Page.Mode) OpenPage(Page.Menu);
+        if (back && _page == Page.Mode)
+        {
+            GameAudio.Event("ui_cancel");
+            OpenPage(Page.Menu);
+        }
     }
 
     int ModeCount => MacScreenTime.CanScan ? 3 : 2;
@@ -77,6 +83,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void Choose(int index)
     {
+        GameAudio.Event(_page == Page.Mode && index == ModeCount - 1 ? "ui_cancel" : "ui_decide"); // はじめるときは ui_start（Begin）が勝つ
         if (_page == Page.Menu)
         {
             if (index == 0) OpenPage(Page.Mode);
@@ -97,6 +104,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void ScanPrimary()
     {
+        GameAudio.Event("ui_decide");
         if (_detectedApps?.Count > 0) Begin(new ManualUsageProvider(_detectedApps));
         else Scan(Session.Catalog);
     }
@@ -187,10 +195,10 @@ public class RunTitleMenu : MonoBehaviour
         PixelGui.Text(new Rect(x, y + 14f, w, 20f), "はじめかたを選ぶ", 16, PixelGui.Ink);
         bool canScan = MacScreenTime.CanScan;
         var items = new List<(string label, string note)>();
-        if (canScan) items.Add(("端末をスキャン", "先週のスクリーンタイムから、ボスになるアプリを見つける。共有したウィンドウを読み取り、画像は保存しない。"));
-        items.Add(("訓練モード", "サンプルの使用データで、すぐに遊べる。"));
+        if (canScan) items.Add(("スキャン", "先週のスクリーンタイム・画像は保存しない"));
+        items.Add(("訓練モード", "サンプルのデータ"));
         items.Add(("◀ もどる", ""));
-        float iy = y + 42f;
+        float iy = y + 16f;
         GUIStyle noteStyle = PixelGui.Style(false, 12, TextAnchor.UpperLeft, true);
         for (int i = 0; i < items.Count; i++)
         {
@@ -214,9 +222,10 @@ public class RunTitleMenu : MonoBehaviour
         PixelGui.TextEn(new Rect(x, y, 200f, 10f), "Screen Time", 8, MacDesktopGui.Blue);
         if (_topApps == null)
         {
-            PixelGui.Text(new Rect(x, y + 14f, w, 20f), _scanning ? "スクリーンタイムを確認中" : "端末をスキャン", 16, PixelGui.Ink);
-            PixelGui.Text(new Rect(x, y + 44f, w, 30f), "1. システム設定のスクリーンタイムで、このMacと「先週」を選びます。", 12, PixelGui.BodyText, TextAnchor.UpperLeft, true);
-            PixelGui.Text(new Rect(x, y + 76f, w, 30f), "2. 案内パネルの「痕跡を読み取る」を押し、共有画面で「システム設定」を選びます。", 12, PixelGui.BodyText, TextAnchor.UpperLeft, true);
+            // 2026-11-19：手順は短い1行ずつ（docs/ui-text-and-dex-design.md 1-3）
+            PixelGui.Text(new Rect(x, y + 14f, w, 20f), _scanning ? "確認中" : "スキャン", 16, PixelGui.Ink);
+            PixelGui.Text(new Rect(x, y + 44f, w, 16f), "1. スクリーンタイムで「このMac」「先週」", 12, PixelGui.BodyText);
+            PixelGui.Text(new Rect(x, y + 66f, w, 16f), "2. 「痕跡を読み取る」→「システム設定」を共有", 12, PixelGui.BodyText);
             if (_scanning)
             {
                 // 読み取り中：メーターを流す
@@ -226,9 +235,9 @@ public class RunTitleMenu : MonoBehaviour
         }
         else
         {
+            // 2026-11-19：文字を減らした（docs/ui-text-and-dex-design.md 1-4）。時間は「12.5h」、ボスの候補はアイコンだけ
             PixelGui.Text(new Rect(x, y + 14f, w, 20f), "スキャン結果", 16, PixelGui.Ink);
-            PixelGui.Text(new Rect(x, y + 36f, w, 16f), "使用時間の上位3アプリ", 12, PixelGui.SubText);
-            float ry = y + 56f;
+            float ry = y + 40f;
             for (int i = 0; i < _topApps.Count; i++)
             {
                 var app = _topApps[i];
@@ -242,13 +251,16 @@ public class RunTitleMenu : MonoBehaviour
                 PixelGui.Fill(new Rect(row.x + 32f, row.yMax - 6f, (row.width - 44f) * app.Seconds / Mathf.Max(1, _topApps[0].Seconds), 2f), MacDesktopGui.Blue);
                 ry += 30f;
             }
-            // 2026-11-17（まさぴ〜）：上位10アプリが、ボスの候補（この中からランダムに3つ）
-            string targets = _detectedApps.Count > 0
-                ? $"ボスの候補　{string.Join("、", _detectedApps.Where(app => !IsExcluded(session, app)).OrderByDescending(app => app.UsageSeconds).Take(10).Select(app => app.DisplayName))}"
-                : "駆除対象のアプリは見つかりませんでした。";
-            PixelGui.Text(new Rect(x, ry + 2f, w, 44f), targets, 12, PixelGui.BodyText, TextAnchor.UpperLeft, true);
-            if (_detectedApps.Count > 0)
-                PixelGui.Text(new Rect(x, ry + 46f, w, 16f), "利用時間は、ボスの強さに反映されます。", 12, PixelGui.SubText);
+            // 2026-11-17（まさぴ〜）：上位10アプリが、ボスの候補（この中からランダムに3つ）。名前は出さず、アイコンを横に並べる
+            if (_targets != null && _targets.Count > 0)
+            {
+                for (int i = 0; i < _targets.Count; i++)
+                {
+                    AppVisual v = AppVisuals.Get(_targets[i]);
+                    PixelGui.DrawSprite(new Rect(x + i * 20f, ry + 4f, 16f, 16f), v != null ? v.Icon16 : null);
+                }
+            }
+            else PixelGui.Text(new Rect(x, ry + 2f, w, 16f), "アプリが見つかりません", 12, PixelGui.BodyText);
         }
         if (!string.IsNullOrEmpty(_error)) PixelGui.Text(new Rect(x, inner.yMax - 62f, w, 30f), _error, 12, PixelGui.DarkRed, TextAnchor.UpperLeft, true);
 
@@ -259,8 +271,17 @@ public class RunTitleMenu : MonoBehaviour
         if (MacDesktopGui.Button(new Rect(inner.xMax - 14f - 140f, by, 140f, 24f), primary, true)) ScanPrimary();
     }
 
+    // 使用時間：1時間からは「12.5h」、それより短ければ「40m」（2026-11-19）
+    static string Hours(int seconds)
+    {
+        if (seconds >= 3600) return $"{seconds / 3600.0:0.#}h";
+        int minutes = seconds / 60;
+        return minutes > 0 ? $"{minutes}m" : $"{seconds}s";
+    }
+
     void ReturnToMenu()
     {
+        GameAudio.Event("ui_cancel");
         _scan = false;
         _error = null;
         _detectedApps = null;
@@ -277,6 +298,7 @@ public class RunTitleMenu : MonoBehaviour
         _error = null;
         _detectedApps = null;
         _topApps = null;
+        _targets = null;
         try
         {
             var result = await MacScreenTime.ScanAsync();
@@ -284,7 +306,7 @@ public class RunTitleMenu : MonoBehaviour
             if (result.ExitCode != 0)
             {
                 Debug.LogWarning($"スクリーンタイムを読み取れませんでした。\n{result.Error}");
-                _error = "読み取りに失敗しました。共有するウィンドウに「システム設定」を選び、もう一度試してください。";
+                _error = "読み取れません。「システム設定」を共有して、もう一度";
                 return;
             }
 
@@ -293,14 +315,17 @@ public class RunTitleMenu : MonoBehaviour
             {
                 _detectedApps = usages;
                 _topApps = topApps;
+                _targets = usages.Where(app => !IsExcluded(Session, app)).OrderByDescending(app => app.UsageSeconds).Take(10)
+                    .Select(app => new AppUsageRow { Name = app.DisplayName, BundleId = app.Id, Seconds = app.UsageSeconds }).ToList();
+                AppVisuals.Prepare(_targets); // アイコンをまとめて読む（描くときに読みに行かない）
             }
-            else _error = "アプリ一覧を読み取れませんでした。スクリーンタイムでアプリ一覧を表示してから、もう一度試してください。";
+            else _error = "アプリ一覧が見えません。一覧を出して、もう一度";
         }
         catch (System.Exception error)
         {
             if (this == null) return;
             Debug.LogWarning($"端末をスキャンできませんでした。\n{error.Message}");
-            _error = "端末をスキャンできませんでした。「戻る」から訓練モードを選べます。";
+            _error = "スキャンできません。もどる → 訓練モード";
         }
         finally
         {
@@ -311,5 +336,6 @@ public class RunTitleMenu : MonoBehaviour
     void Begin(IAppUsageProvider provider)
     {
         if (!Session.StartRun(provider, out string error)) _error = error;
+        else GameAudio.Event("ui_start");
     }
 }

@@ -22,6 +22,7 @@ MonoBehaviour:
     Category: 1
     BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
     Profile: {fileID: 11400000, guid: 451941f9f7b9c40f0be4c59c27738911, type: 2}
+    OwnProfile: {fileID: 11400000, guid: 8027aadc0b776444e853fc20132990b7, type: 2}
     SpawnPosition: {x: 0, y: 4}
     StageScene: Stage_Scroll
     Theme: {fileID: 11400000, guid: 43f55ffefecd84a6285d0683844392f5, type: 2}
@@ -43,6 +44,7 @@ MonoBehaviour:
     Category: 3
     BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
     Profile: {fileID: 11400000, guid: 55c53859d0c654d339917667508f8ca2, type: 2}
+    OwnProfile: {fileID: 11400000, guid: d7e257f82c65c4e5391153000d77b81e, type: 2}
     SpawnPosition: {x: 7, y: 1.5}
     StageScene: Stage_Windows
     Theme: {fileID: 11400000, guid: 658b324a784274529b268639fab29fda, type: 2}
@@ -56,6 +58,144 @@ MonoBehaviour:
     AbilityValue:
       Min: 10
       Max: 16
+  - DisplayName: Excel
+    BundleIdPrefixes:
+    - com.microsoft.Excel
+    ScreenTimeNames:
+    - Microsoft Excel
+    Category: 5
+    BossPrefab: {fileID: 2773965012370859677, guid: 9a7606770eb4e47679f2a7231e27a0a3, type: 3}
+    Profile: {fileID: 11400000, guid: 3b00ffef8e1dc4f04b369b1dd0786b89, type: 2}
+    ExcludeFromStandIn: 1
+    IconLook: 1
+    SpawnPosition: {x: 6, y: 1.5}
+    StageScene: Stage_Desktop
+    Theme: {fileID: 11400000, guid: e70c4254fd4454c47adb18ffbbfde684, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 140
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    AbilityStat: 0
+    AbilityValue:
+      Min: 10
+      Max: 16
+  - DisplayName: Word
+    BundleIdPrefixes:
+    - com.microsoft.Word
+    ScreenTimeNames:
+    - Microsoft Word
+    Category: 5
+    BossPrefab: {fileID: 2773965012370859677, guid: 9a7606770eb4e47679f2a7231e27a0a3, type: 3}
+    Profile: {fileID: 11400000, guid: 3b00ffef8e1dc4f04b369b1dd0786b89, type: 2}
+    ExcludeFromStandIn: 1
+    IconLook: 1
+    SpawnPosition: {x: 6, y: 1.5}
+    StageScene: Stage_Desktop
+    Theme: {fileID: 11400000, guid: e70c4254fd4454c47adb18ffbbfde684, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 140
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    AbilityStat: 0
+    AbilityValue:
+      Min: 10
+      Max: 16
+  - DisplayName: PowerPoint
+    BundleIdPrefixes:
+    - com.microsoft.Powerpoint
+    ScreenTimeNames:
+    - Microsoft PowerPoint
+    Category: 5
+    BossPrefab: {fileID: 2773965012370859677, guid: 9a7606770eb4e47679f2a7231e27a0a3, type: 3}
+    Profile: {fileID: 11400000, guid: 3b00ffef8e1dc4f04b369b1dd0786b89, type: 2}
+    ExcludeFromStandIn: 1
+    IconLook: 1
+    SpawnPosition: {x: 6, y: 1.5}
+    StageScene: Stage_Desktop
+    Theme: {fileID: 11400000, guid: e70c4254fd4454c47adb18ffbbfde684, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 140
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    AbilityStat: 0
+    AbilityValue:
+      Min: 10
+      Max: 16
+  - DisplayName: Unity
+    BundleIdPrefixes:
+    - com.unity3d.UnityEditor
+    ScreenTimeNames:
+    - Unity Editor
+    Category: 3
+    BossPrefab: {fileID: 7585367786747043523, guid: d6b3136282e2a4c4f99235248f8c08eb, type: 3}
+    Profile: {fileID: 11400000, guid: 0f08fe65b92a144d98aae51ef4a60ab8, type: 2}
+    ExcludeFromStandIn: 1
+    IconLook: 1
+    SpawnPosition: {x: 6, y: 1.5}
+    StageScene: Stage_Desktop
+    Theme: {fileID: 11400000, guid: e70c4254fd4454c47adb18ffbbfde684, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 140
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    AbilityStat: 0
+    AbilityValue:
+      Min: 10
+      Max: 16
+  - DisplayName: Unity Hub
+    BundleIdPrefixes:
+    - com.unity3d.unityhub
+    ScreenTimeNames:
+    - Unity Hub
+    Category: 3
+    BossPrefab: {fileID: 7585367786747043523, guid: d6b3136282e2a4c4f99235248f8c08eb, type: 3}
+    Profile: {fileID: 11400000, guid: 0f08fe65b92a144d98aae51ef4a60ab8, type: 2}
+    ExcludeFromStandIn: 1
+    IconLook: 1
+    SpawnPosition: {x: 6, y: 1.5}
+    StageScene: Stage_Desktop
+    Theme: {fileID: 11400000, guid: e70c4254fd4454c47adb18ffbbfde684, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 140
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    AbilityStat: 0
+    AbilityValue:
+      Min: 10
+      Max: 16
+  - DisplayName: Steam
+    BundleIdPrefixes:
+    - com.valvesoftware.steam
+    ScreenTimeNames:
+    - Steam
+    Category: 6
+    BossPrefab: {fileID: 6739425832438724517, guid: ef3f9523206f5403fb2161a2baad66f9, type: 3}
+    Profile: {fileID: 11400000, guid: 9b16e52c067514bf2b249160550aa505, type: 2}
+    ExcludeFromStandIn: 1
+    IconLook: 1
+    SpawnPosition: {x: 6, y: 1.5}
+    StageScene: Stage_Desktop
+    Theme: {fileID: 11400000, guid: 1b7abaed8e78647988d589f58352f359, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 140
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    AbilityStat: 0
+    AbilityValue:
+      Min: 10
+      Max: 16
   _standInStageScene: Stage_Desktop
   _finalBoss:
     DisplayName: Terminal
@@ -66,6 +206,7 @@ MonoBehaviour:
     Category: 3
     BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
     Profile: {fileID: 11400000, guid: 928fafaebb4a7404d95b95baf6af6e4d, type: 2}
+    OwnProfile: {fileID: 0}
     SpawnPosition: {x: 7, y: 1.5}
     StageScene: Stage_Desktop
     Theme: {fileID: 11400000, guid: e11a08db5fa3d4e939fbb2778d9bcec6, type: 2}
@@ -79,3 +220,540 @@ MonoBehaviour:
     AbilityValue:
       Min: 0
       Max: 0
+  _appBosses:
+  - Label: Finder
+    AppNames:
+    - Finder
+    BundleIdPrefixes:
+    - com.apple.finder
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 03ffb32c15fc840e7afa3726c8cbb551, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 0
+  - Label: Premiere Pro
+    AppNames:
+    - Premiere Pro
+    - Adobe Premiere Pro
+    BundleIdPrefixes:
+    - com.adobe.PremierePro
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 7440c2700851f4898b24a96573128b5b, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 0
+  - Label: Arc
+    AppNames:
+    - Arc
+    BundleIdPrefixes:
+    - company.thebrowser.Browser
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 32e3d5ef11e894ce7a5ba2883b9ac2a0, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Blender
+    AppNames:
+    - Blender
+    BundleIdPrefixes:
+    - org.blenderfoundation.
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 565caaa9ba21b47db9b7f907cf266b20, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Calendar
+    AppNames:
+    - Calendar
+    - "\u30AB\u30EC\u30F3\u30C0\u30FC"
+    BundleIdPrefixes:
+    - com.apple.iCal
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: c868bdd81cf464af48b2d6a57d545921, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: ChatGPT
+    AppNames:
+    - ChatGPT
+    BundleIdPrefixes:
+    - com.openai.chat
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: f684cd63f152d455eb95ca81fa592d1c, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Claude
+    AppNames:
+    - Claude
+    BundleIdPrefixes:
+    - com.anthropic.claudefordesktop
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 2cdeccd30e4324b39850a441cf40e7c9, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Cursor
+    AppNames:
+    - Cursor
+    BundleIdPrefixes:
+    - com.todesktop.230313mzl4w4u92
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: a89984be4ef024b94974a33efaef89e1, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Discord
+    AppNames:
+    - Discord
+    BundleIdPrefixes:
+    - com.hnc.Discord
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: 49fc148bc2e524e9191a88d61232d17f, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Excel
+    AppNames:
+    - Excel
+    - Microsoft Excel
+    - Numbers
+    BundleIdPrefixes:
+    - com.microsoft.Excel
+    - com.apple.iWork.Numbers
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: b4c8a044dbd0049af9eff00148f41a9f, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Figma
+    AppNames:
+    - Figma
+    BundleIdPrefixes:
+    - com.figma.Desktop
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 026ce54f36df54522a04772913015da2, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Firefox
+    AppNames:
+    - Firefox
+    - Firefox Developer Edition
+    - Firefox Nightly
+    BundleIdPrefixes:
+    - org.mozilla.firefox
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: b2e26e6fcb304467cb0e85dd60fecf8e, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Gemini
+    AppNames:
+    - Gemini
+    - Perplexity
+    - Copilot
+    - Microsoft Copilot
+    BundleIdPrefixes:
+    - ai.perplexity.mac
+    - com.microsoft.copilot
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: 0eacec83004fc468aaca3acd265b90aa, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: GitHubDesktop
+    AppNames:
+    - GitHub Desktop
+    BundleIdPrefixes:
+    - com.github.GitHubClient
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: 2e470dbb017a74b698bfd5f07aa238ec, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Illustrator
+    AppNames:
+    - Illustrator
+    - Adobe Illustrator
+    BundleIdPrefixes:
+    - com.adobe.illustrator
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: b189a4d82a5334c9ca91ef618dc38151, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Keynote
+    AppNames:
+    - Keynote
+    BundleIdPrefixes:
+    - com.apple.iWork.Keynote
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: cdabb1d3e941b4e8ca464e94bc8f5280, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: LINE
+    AppNames:
+    - LINE
+    BundleIdPrefixes:
+    - jp.naver.line.mac
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 088e50cb92a1749d19449a57c2d2a3b8, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Mail
+    AppNames:
+    - Mail
+    - "\u30E1\u30FC\u30EB"
+    - Outlook
+    - Microsoft Outlook
+    BundleIdPrefixes:
+    - com.apple.mail
+    - com.microsoft.Outlook
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 882c3196d884f4bb9af3c4f0ff7ddee0, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Messages
+    AppNames:
+    - Messages
+    - "\u30E1\u30C3\u30BB\u30FC\u30B8"
+    - Telegram
+    - WhatsApp
+    - Messenger
+    BundleIdPrefixes:
+    - com.apple.MobileSMS
+    - ru.keepcoder.Telegram
+    - net.whatsapp.WhatsApp
+    - desktop.WhatsApp
+    - com.facebook.archon
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: fafdf55ce28c14930922ca5dad42911b, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Minecraft
+    AppNames:
+    - Minecraft
+    - Minecraft Launcher
+    BundleIdPrefixes:
+    - com.mojang.
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: d4f22566dabb04e029ac76657f5f5848, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Music
+    AppNames:
+    - Music
+    - "\u30DF\u30E5\u30FC\u30B8\u30C3\u30AF"
+    - Apple Music
+    BundleIdPrefixes:
+    - com.apple.Music
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: aa71e775688a940d785976b0aee51025, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Notes
+    AppNames:
+    - Notes
+    - "\u30E1\u30E2"
+    - Reminders
+    - "\u30EA\u30DE\u30A4\u30F3\u30C0\u30FC"
+    BundleIdPrefixes:
+    - com.apple.Notes
+    - com.apple.reminders
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: d57e44f53be4b465db7185b49873803e, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Notion
+    AppNames:
+    - Notion
+    - Obsidian
+    - Linear
+    BundleIdPrefixes:
+    - notion.id
+    - md.obsidian
+    - com.linear
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: 8e7eef454410b4299b159bad0d9c33fd, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Photoshop
+    AppNames:
+    - Photoshop
+    - Adobe Photoshop
+    BundleIdPrefixes:
+    - com.adobe.Photoshop
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: a29ad70e6810d4616a954aed17cf98b9, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: PowerPoint
+    AppNames:
+    - PowerPoint
+    - Microsoft PowerPoint
+    BundleIdPrefixes:
+    - com.microsoft.Powerpoint
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 990047c20744d4b5780a4e0dc58c910c, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: QuickTime
+    AppNames:
+    - QuickTime Player
+    - QuickTime
+    BundleIdPrefixes:
+    - com.apple.QuickTimePlayerX
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 329a546f6e3c34cf2a2a6f3a206905f9, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Safari
+    AppNames:
+    - Safari
+    BundleIdPrefixes:
+    - com.apple.Safari
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 5005e4fe511ee42cb977d903271136af, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Slack
+    AppNames:
+    - Slack
+    BundleIdPrefixes:
+    - com.tinyspeck.slackmacgap
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: db9b26191f38e4ac2bada4cacb0ca2ad, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Spotify
+    AppNames:
+    - Spotify
+    BundleIdPrefixes:
+    - com.spotify.client
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: e1bd8453ed9714901a7bc3485c8214e5, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Steam
+    AppNames:
+    - Steam
+    BundleIdPrefixes:
+    - com.valvesoftware.steam
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: e17e17461c5af47c5b624eac5cd11510, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Teams
+    AppNames:
+    - Microsoft Teams
+    - Teams
+    - Google Meet
+    - Meet
+    BundleIdPrefixes:
+    - com.microsoft.teams
+    BossPrefab: {fileID: 5460392823819180209, guid: ad453fd2e55aa477d803df27ea345ca4, type: 3}
+    Profile: {fileID: 11400000, guid: 6c6e38047a9c141adaff29e308cfdb1f, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Unity
+    AppNames:
+    - Unity
+    - Unity Hub
+    BundleIdPrefixes:
+    - com.unity3d.
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: a68385e9f394e4ef6b91111af8531bcc, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Word
+    AppNames:
+    - Word
+    - Microsoft Word
+    - Pages
+    BundleIdPrefixes:
+    - com.microsoft.Word
+    - com.apple.iWork.Pages
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: 176b3f7932dfc44088cf46f4af019734, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Xcode
+    AppNames:
+    - Xcode
+    BundleIdPrefixes:
+    - com.apple.dt.Xcode
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: 9a3ce8b2fc0e74411bdb06ea605aae3a, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1
+  - Label: Zoom
+    AppNames:
+    - Zoom
+    - zoom.us
+    BundleIdPrefixes:
+    - us.zoom.xos
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: c976d27f9e562419c8d6aed172669ffc, type: 2}
+    GaugeMax:
+      Min: 80
+      Max: 120
+    Phase2Wait:
+      Min: 0.8
+      Max: 0.6
+    FromKit: 1

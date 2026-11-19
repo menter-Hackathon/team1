@@ -1,0 +1,105 @@
+{
+ "label": "Arc",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "card1",
+   "x": -3.2,
+   "y": 2.6,
+   "w": 3.2,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Arc__card1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "card2",
+   "x": 3.8667,
+   "y": 2.6,
+   "w": 3.2,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Arc__card2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "peek",
+   "x": 0.0667,
+   "y": 4.5,
+   "w": 3.0667,
+   "h": 0.9333,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Arc__peek",
+   "behavior": "blink",
+   "params": {
+    "type": "blink",
+    "on": 5,
+    "off": 3,
+    "warn": 1.2,
+    "offset": 0
+   }
+  },
+  {
+   "id": "card3",
+   "x": 7.5333,
+   "y": 4.4667,
+   "w": 3.3333,
+   "h": 0.8667,
+   "top": 4.9,
+   "sprite": "AppBackgrounds/Parts/Arc__card3",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "sidetab1",
+   "x": -7.8667,
+   "y": 3.1667,
+   "w": 3.8667,
+   "h": 0.6667,
+   "top": 3.5,
+   "sprite": "AppBackgrounds/Parts/Arc__sidetab1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "sidetab2",
+   "x": -7.8667,
+   "y": 5.0333,
+   "w": 3.8667,
+   "h": 0.6667,
+   "top": 5.3667,
+   "sprite": "AppBackgrounds/Parts/Arc__sidetab2",
+   "behavior": "fall",
+   "params": {
+    "type": "fall",
+    "delay": 0.6,
+    "respawn": 4
+   }
+  },
+  {
+   "id": "boost",
+   "x": -0.0333,
+   "y": 1.1333,
+   "w": 1.8,
+   "h": 0.7333,
+   "top": 1.5,
+   "sprite": "AppBackgrounds/Parts/Arc__boost",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "refill",
+    "cooldown": 20
+   }
+  }
+ ]
+}

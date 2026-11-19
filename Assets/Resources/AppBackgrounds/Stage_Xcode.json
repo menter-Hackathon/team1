@@ -1,0 +1,90 @@
+{
+ "label": "Xcode",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "line",
+   "x": -3.4667,
+   "y": 2.7333,
+   "w": 3.2,
+   "h": 0.6,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Xcode__line",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "warn",
+   "x": 3.3333,
+   "y": 2.7333,
+   "w": 2.9333,
+   "h": 0.6,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Xcode__warn",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "popup",
+   "x": -0.0667,
+   "y": 4.5667,
+   "w": 3.0667,
+   "h": 1.0667,
+   "top": 5.1,
+   "sprite": "AppBackgrounds/Parts/Xcode__popup",
+   "behavior": "blink",
+   "params": {
+    "type": "blink",
+    "on": 5,
+    "off": 2.5,
+    "warn": 1,
+    "offset": 0
+   }
+  },
+  {
+   "id": "navrow",
+   "x": -8.2,
+   "y": 4.5333,
+   "w": 3.0667,
+   "h": 0.6,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Xcode__navrow",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "simrow",
+   "x": 7.4667,
+   "y": 4.5667,
+   "w": 2.8,
+   "h": 0.8,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Xcode__simrow",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "reset",
+   "x": 7.4667,
+   "y": 1.5333,
+   "w": 2.8,
+   "h": 0.7333,
+   "top": 1.9,
+   "sprite": "AppBackgrounds/Parts/Xcode__reset",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "stun_boss",
+    "cooldown": 22
+   }
+  }
+ ]
+}

@@ -84,6 +84,13 @@ public class BossController : MonoBehaviour, IWarpable
     public event Action Ejected;
     /// <summary>追い出されたウイルス本体（逃げている間だけ表示）</summary>
     public Health EjectedVirus => _ejectedVirus;
+    /// <summary>正常化したあとのきれいなアイコン（リザルトなどで使う）。設定が無ければ null</summary>
+    public Sprite NormalizedIcon => _profile != null ? _profile.NormalIcon : null;
+    /// <summary>正常化して手に入った能力（まだなら null）</summary>
+    public SkillDefinition AcquiredReward { get; private set; }
+
+    IDisposable _passive; // ボスの常に効く効果（Steam ボスの実績解除）
+    int _sequenceIndex;   // 技を順に出すときの、次の番号
 
     void Awake()
     {
@@ -111,6 +118,7 @@ public class BossController : MonoBehaviour, IWarpable
         if (_ejectedVirus != null) _ejectedVirus.Died -= OnEjectedVirusDied;
         StopAll();
         _runner.ClearSpawned();
+        DetachPassive();
     }
 
     void Start()
@@ -151,6 +159,7 @@ public class BossController : MonoBehaviour, IWarpable
     {
         _profile = profile;
         if (_gauge != null && profile != null) _gauge.SetMax(profile.GaugeMax);
+        AttachExtensions();
         if (_started && isActiveAndEnabled) ResetBoss();
     }
 
@@ -168,19 +177,78 @@ public class BossController : MonoBehaviour, IWarpable
         _hoverIndex = NearestHoverIndex();
         _lastMove = null;
         _attackCount = 0;
+        _sequenceIndex = 0;
+        AcquiredReward = null;
+        AttachPassive();
         SetVisibility(1f);
         SetContactEnabled(true);
         HideEjectedVirus();
         if (_profile != null && isActiveAndEnabled) _brain = StartCoroutine(Brain(_profile.StartDelay));
     }
 
+    void AttachPassive()
+    {
+        DetachPassive();
+        if (_profile != null && _profile.Passive != null && isActiveAndEnabled) _passive = _profile.Passive.Attach(gameObject);
+    }
+
+    void DetachPassive()
+    {
+        _passive?.Dispose();
+        _passive = null;
+    }
+
     void StopAll()
     {
         // 行動の中の段階（移動など）も入れ子のコルーチンなので、まとめて止める
         StopAllCoroutines();
+        MoveSpeedMultiplier = 1f;
+        WaitMultiplier = 1f;
+        _stunUntil = 0f;
         _brain = _transition = null;
         IsMoving = false;
         if (_runner != null) _runner.Cancel();
+    }
+
+    /// <summary>
+    /// 【仮】ボスの速さの倍率（2026-11-18：Premiere Pro のスピードデュレーション）。飛んで移動する速さに掛ける。
+    /// 予告・弾の速さ・判定は変えない（docs/app-boss-skills-design.md 3-4）。変えた技が、終わるときに 1 に戻す
+    /// </summary>
+    public float MoveSpeedMultiplier { get; set; } = 1f;
+    /// <summary>【仮】攻撃のあとの待ち時間の倍率（2026-11-18：スピードデュレーション）。変えた技が、終わるときに 1 に戻す</summary>
+    public float WaitMultiplier { get; set; } = 1f;
+
+    // ───────── 2026-11-19：ひるむ（アプリのキット E5。KitBoss.Stun） ─────────
+    float _stunUntil;
+
+    /// <summary>
+    /// 【仮】seconds 秒、次の技を始めない・移動しない（技の途中は止めない）。
+    /// 続けてかけても伸びない（残りの時間が seconds に戻るだけ）。戦っている間だけ効く
+    /// </summary>
+    public void Stun(float seconds)
+    {
+        if (State != BossState.Fighting || seconds <= 0f) return;
+        _stunUntil = Time.time + seconds;
+    }
+
+    /// <summary>ひるんでいるか</summary>
+    public bool IsStunned => State == BossState.Fighting && Time.time < _stunUntil;
+    /// <summary>ひるみの残り秒数</summary>
+    public float StunRemaining => IsStunned ? _stunUntil - Time.time : 0f;
+    /// <summary>技の途中か（予告も含む）</summary>
+    public bool InMove => _runner != null && _runner.IsRunning;
+
+    readonly System.Collections.Generic.HashSet<BossExtension> _attached = new System.Collections.Generic.HashSet<BossExtension>();
+
+    /// <summary>プロフィールの「ボスに足す仕組み」を、まだ足していなければ足す</summary>
+    void AttachExtensions()
+    {
+        if (_profile == null || _profile.Extensions == null) return;
+        foreach (var ext in _profile.Extensions)
+        {
+            if (ext == null || !_attached.Add(ext)) continue;
+            ext.Attach(this);
+        }
     }
 
     // ───────── 行動 ─────────
@@ -190,8 +258,9 @@ public class BossController : MonoBehaviour, IWarpable
         if (initialDelay > 0f) yield return new WaitForSeconds(initialDelay);
         while (true)
         {
+            while (IsStunned) yield return null; // ひるんでいる間は、次の技を始めない（2026-11-19）
             BossPhaseSettings phase = _profile.GetPhase(Phase);
-            AttackData move = PickMove(phase.Moves);
+            AttackData move = phase.Sequential ? PickSequential(phase.Moves) : PickMove(phase.Moves);
             if (move != null)
             {
                 _lastMove = move;
@@ -203,25 +272,38 @@ public class BossController : MonoBehaviour, IWarpable
                 _attackCount++;
             }
 
-            if (phase.AttacksPerMove > 0 && _attackCount > 0 && _attackCount % phase.AttacksPerMove == 0)
+            if (move != null && phase.AttacksPerMove > 0 && _attackCount > 0 && _attackCount % phase.AttacksPerMove == 0)
             {
+                while (IsStunned) yield return null; // ひるんでいる間は、移動しない（2026-11-19）
                 yield return Reposition();
             }
-            yield return new WaitForSeconds(phase.WaitAfterAttack);
+            yield return new WaitForSeconds(phase.WaitAfterAttack * Mathf.Max(0.05f, WaitMultiplier * GameBuffs.BossWait));
         }
     }
 
-    /// <summary>同じ技が2回続かないように選ぶ。最初は一覧の先頭</summary>
+    /// <summary>
+    /// 同じ技が2回続かないように選ぶ。最初は一覧の先頭。
+    /// 今は出せない技（場に残る技の効果が出ている間の、場に残る技。床が文字化けしている間の、床に逃げ場が要る技）は飛ばす。
+    /// 出せる技が無ければ null（待ち時間をもう1回おく）（2026-11-18：docs/app-boss-skills-design.md 1-3）
+    /// </summary>
     AttackData PickMove(AttackData[] moves)
     {
         if (moves == null || moves.Length == 0) return null;
-        if (_lastMove == null || Array.IndexOf(moves, _lastMove) < 0) return moves[0];
+        bool lingering = CustomEffect.AnyLingering;
+        bool floorCorrupted = CustomEffect.AnyFloorCorrupted;
+        bool Usable(AttackData m) => m != null && !(lingering && m.Lingering) && !(floorCorrupted && m.AvoidWhileFloorCorrupted);
+
+        if (_lastMove == null || Array.IndexOf(moves, _lastMove) < 0)
+        {
+            foreach (var m in moves) if (Usable(m)) return m;
+            return null;
+        }
         var candidates = new List<AttackData>();
         foreach (var m in moves)
         {
-            if (m != null && m != _lastMove) candidates.Add(m);
+            if (Usable(m) && m != _lastMove) candidates.Add(m);
         }
-        if (candidates.Count == 0) return _lastMove;
+        if (candidates.Count == 0) return Usable(_lastMove) ? _lastMove : null;
         return candidates[UnityEngine.Random.Range(0, candidates.Count)];
     }
 
@@ -252,8 +334,9 @@ public class BossController : MonoBehaviour, IWarpable
                 MovementStarted?.Invoke();
                 while (!Mathf.Approximately(transform.position.x, targetX))
                 {
+                    if (IsStunned) { yield return null; continue; } // 移動の途中でひるんだら、その場で止まる（2026-11-19）
                     Vector3 p = transform.position;
-                    p.x = Mathf.MoveTowards(p.x, targetX, _profile.HoverSpeed * Time.deltaTime);
+                    p.x = Mathf.MoveTowards(p.x, targetX, _profile.HoverSpeed * Mathf.Max(0.05f, MoveSpeedMultiplier * GameBuffs.BossSpeed) * Time.deltaTime);
                     transform.position = p;
                     yield return null;
                 }
@@ -298,11 +381,13 @@ public class BossController : MonoBehaviour, IWarpable
         StopAll();
         _runner.ClearProjectiles(); // 画面上のボスの弾だけを消す（落下物・ダメージ床は残る）
         _runner.ClearSpawnedWith<WarpTelegraph>(); // 止めた瞬間移動の予告も消す（現れないので）
+        _runner.ClearSpawnedWith<CustomEffect>(); // 専用の技が場に残した物も消し、地形・プレイヤーの状態を戻す（2026-11-18）
         SetVisibility(1f);          // 瞬間移動の途中で止まっても、元の姿に戻す
         SetContactEnabled(true);
         State = BossState.Transition;
         _gauge.Invincible = true;
         TransitionStarted?.Invoke();
+        GameAudio.Event("boss_phase2");
         _transition = StartCoroutine(TransitionRoutine());
     }
 
@@ -322,6 +407,7 @@ public class BossController : MonoBehaviour, IWarpable
         _attackCount = 0;
         _transition = null;
         PhaseChanged?.Invoke(Phase);
+        GameAudio.BossPhase(Phase);
         _brain = StartCoroutine(Brain(_profile.Phase2.WaitAfterAttack));
     }
 
@@ -334,6 +420,7 @@ public class BossController : MonoBehaviour, IWarpable
         SetContactEnabled(false); // 体当たりも被弾もなし（State を変える前に呼ぶと、体当たりが切れる）
         State = BossState.Ejected;
         TransitionProgress = 0f;
+        DetachPassive(); // 追い出したら、ボスの実績も止める
 
         // ボスの真ん中から、プレイヤーと反対の向きへ走り出す
         Transform v = _ejectedVirus.transform;
@@ -376,6 +463,7 @@ public class BossController : MonoBehaviour, IWarpable
         SetContactEnabled(false); // 体当たりも被弾もなし
         State = BossState.Normalized;
         TransitionProgress = 0f;
+        DetachPassive();
 
         SkillDefinition reward = _profile.Reward;
         if (reward != null)
@@ -384,6 +472,7 @@ public class BossController : MonoBehaviour, IWarpable
             if (skills == null) skills = FindObjectOfType<PlayerSkills>();
             if (skills != null) skills.TryAcquire(reward);
         }
+        GameAudio.BossNormalized();
         Normalized?.Invoke(reward);
     }
 

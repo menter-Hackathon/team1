@@ -19,6 +19,9 @@ public class AreaStrike : MonoBehaviour
     Hitbox _hitbox;
     SpriteRenderer _visual;
     SpriteRenderer _telegraph;
+    int _index;       // 何個目か（スキンの絵の番号。2026-11-18）
+    Vector2 _size;    // 判定の大きさ（円は x が直径）
+    Sprite[] _frames;
 
     public AttackData Data => _data;
     /// <summary>判定を出している間 true</summary>
@@ -28,9 +31,10 @@ public class AreaStrike : MonoBehaviour
 
     /// <summary>
     /// 判定を1つ出す。point は狙った位置（床の上に出すときは、その真下の床に置く）。
-    /// normal は面の向き（弾が当たった位置に出すとき）。delay 秒たってから予告を始める
+    /// normal は面の向き（弾が当たった位置に出すとき）。delay 秒たってから予告を始める。
+    /// index：同時に出す物の何個目か（スキンの絵の番号。2026-11-18）
     /// </summary>
-    public static AreaStrike Spawn(AttackRunner owner, AttackData data, Vector2 point, Vector2 normal, float delay)
+    public static AreaStrike Spawn(AttackRunner owner, AttackData data, Vector2 point, Vector2 normal, float delay, int index = 0)
     {
         Vector2 size = data.AreaSize;
         Vector2 up = Vector2.up;
@@ -65,7 +69,20 @@ public class AreaStrike : MonoBehaviour
         rb.useFullKinematicContacts = true;
 
         Collider2D col;
-        if (data.Shape == AreaShape.Circle)
+        int facing = owner.Facing;
+        if (data.Shape == AreaShape.Polyline)
+        {
+            // 折れ線：点は右向きの値。左向きでは左右を反転する
+            var e = go.AddComponent<EdgeCollider2D>();
+            Vector2[] src = data.PolylinePoints;
+            if (src == null || src.Length < 2) src = new[] { new Vector2(-size.x * 0.5f, 0f), new Vector2(size.x * 0.5f, 0f) };
+            var pts = new Vector2[src.Length];
+            for (int i = 0; i < src.Length; i++) pts[i] = new Vector2(src[i].x * facing, src[i].y);
+            e.points = pts;
+            e.edgeRadius = data.PolylineRadius;
+            col = e;
+        }
+        else if (data.Shape == AreaShape.Circle)
         {
             var c = go.AddComponent<CircleCollider2D>();
             c.radius = size.x * 0.5f;
@@ -82,6 +99,8 @@ public class AreaStrike : MonoBehaviour
         var strike = go.AddComponent<AreaStrike>();
         strike._owner = owner;
         strike._data = data;
+        strike._index = index;
+        strike._size = size;
         Sprite sprite = data.Sprite != null ? data.Sprite : (data.Shape == AreaShape.Circle ? PlaceholderSprites.Circle : PlaceholderSprites.Square);
         Vector2 visualSize = data.Shape == AreaShape.Circle ? new Vector2(size.x, size.x) : size;
         Color color = data.Color;
@@ -90,24 +109,39 @@ public class AreaStrike : MonoBehaviour
         strike._visual.enabled = false;
         strike._hitbox = owner.AddHitbox(go, data, col);
 
-        if (data.TelegraphTime > 0f)
-        {
-            // 予告：床の上に平たい赤丸（面の上に出す）
-            var tg = new GameObject("Telegraph");
-            tg.layer = go.layer;
-            tg.transform.SetParent(go.transform, false);
-            tg.transform.position = surface + up * 0.15f;
-            tg.transform.rotation = go.transform.rotation;
-            // 絵があれば（GameArt）その色のまま、無ければ仮の赤丸
-            Sprite mark = GameArt.Instance != null ? GameArt.Instance.BreakpointMark : null;
-            strike._telegraph = mark != null
-                ? AttackRunner.AddVisual(tg.transform, mark, new Color(1f, 1f, 1f, 0.9f), new Vector2(size.x, 0.5f), 17, "Circle")
-                : AttackRunner.AddVisual(tg.transform, PlaceholderSprites.Circle, TelegraphColor, new Vector2(size.x, 0.5f), 17, "Circle");
-            strike._telegraph.enabled = false;
-        }
-
+        strike.CreateTelegraph(surface, up, size);
         strike.StartCoroutine(strike.Run(delay));
         return strike;
+    }
+
+    /// <summary>予告：床の上に平たい赤丸（面の上に出す）。予告時間が 0 なら出さない</summary>
+    void CreateTelegraph(Vector2 surface, Vector2 up, Vector2 size)
+    {
+        if (_data.TelegraphTime <= 0f) return;
+        var tg = new GameObject("Telegraph");
+        tg.layer = gameObject.layer;
+        tg.transform.SetParent(transform, false);
+        tg.transform.position = surface + up * 0.15f;
+        tg.transform.rotation = transform.rotation;
+        // 絵があれば（GameArt）その色のまま、無ければ仮の赤丸
+        Sprite mark = GameArt.Instance != null ? GameArt.Instance.BreakpointMark : null;
+        _telegraph = mark != null
+            ? AttackRunner.AddVisual(tg.transform, mark, new Color(1f, 1f, 1f, 0.9f), new Vector2(size.x, 0.5f), 17, "Circle")
+            : AttackRunner.AddVisual(tg.transform, PlaceholderSprites.Circle, TelegraphColor, new Vector2(size.x, 0.5f), 17, "Circle");
+        _telegraph.enabled = false;
+    }
+
+    /// <summary>予告を点滅させる（予告が無ければすぐ終わる）</summary>
+    IEnumerator BlinkTelegraph()
+    {
+        if (_telegraph == null) yield break;
+        float end = Time.time + _data.TelegraphTime;
+        while (Time.time < end)
+        {
+            _telegraph.enabled = Mathf.FloorToInt(Time.time / 0.1f) % 2 == 0 || end - Time.time > 0.4f;
+            yield return null;
+        }
+        _telegraph.enabled = false;
     }
 
     IEnumerator Run(float delay)
@@ -117,6 +151,7 @@ public class AreaStrike : MonoBehaviour
         // 予告（点滅させる）
         if (_telegraph != null)
         {
+            NotifySkin(DressPhase.Telegraph, _telegraph, _data.TelegraphTime);
             float end = Time.time + _data.TelegraphTime;
             while (Time.time < end)
             {
@@ -130,6 +165,7 @@ public class AreaStrike : MonoBehaviour
         IsHitActive = true;
         _visual.enabled = true;
         _hitbox.Activate();
+        NotifySkin(DressPhase.Active, _visual, _data.HitWindow);
         float hitEnd = Time.time + _data.HitWindow;
         if (_data.PersistDuration > 0f)
         {
@@ -152,6 +188,14 @@ public class AreaStrike : MonoBehaviour
 
         IsHitActive = false;
         _hitbox.Deactivate();
+        NotifySkin(DressPhase.Vanish, null, 0f);
         Destroy(gameObject);
+    }
+
+    /// <summary>スキンに場面を知らせる（2026-11-18：スキルの見た目 1-1）。付けたら今の絵をかくす</summary>
+    void NotifySkin(DressPhase phase, SpriteRenderer current, float duration)
+    {
+        if (_data == null) return;
+        SkinDresser.Dress(_owner, _data, gameObject, phase, current, _size, _index, transform.up, Mathf.Max(1, _data.AreaCount), duration);
     }
 }

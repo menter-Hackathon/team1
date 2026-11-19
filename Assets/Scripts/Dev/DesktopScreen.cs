@@ -11,6 +11,8 @@ using UnityEngine.InputSystem;
 /// ・ラスボス（Terminal。2026-11-18）は、それまでのアプリを全部元に戻すまで Dock にいない。
 ///   最後のアプリが元に戻ってデスクトップがきれいになった直後に、乱れとともに Dock の端へ現れ、そのウィンドウが開いてラスボスのステージへ
 /// ・最後のステージの後は、全部のアプリが元に戻ったデスクトップを見せてからリザルトへ
+/// ・2026-11-19：Mac の部品に揃えた（docs/mac-look-design.md 2-4 の 39〜42）。矢印は黒に白いふち、開くウィンドウは Mac のウィンドウ、
+///   Dock は角の丸い板と区切りとゴミ箱、メニューバーは Finder のメニューと日付。Mac の部品は担当1 の MacUi.Gui で描く
 /// 文字の説明は出さない（使用時間などの数字も出さない）。自動で進み、Z・Enter・Space・クリックで早送りできる。
 /// 時間はすべて unscaledTime（前のステージは止めてある）。GameSession が自分に付ける。
 /// </summary>
@@ -30,25 +32,6 @@ public class DesktopScreen : MonoBehaviour
     static readonly Color InfectTint = new Color(1f, 0.55f, 1f, 1f);
     static readonly string[] Folders = { "書類", "スクショ", "ダウンロード" };
 
-    // マウスの矢印（X＝黒い縁、W＝白）
-    static readonly string[] Cursor =
-    {
-        "X.........",
-        "XX........",
-        "XWX.......",
-        "XWWX......",
-        "XWWWX.....",
-        "XWWWWX....",
-        "XWWWWWX...",
-        "XWWWWWWX..",
-        "XWWWWWWWX.",
-        "XWWWWXXXXX",
-        "XWWXWWX...",
-        "XWX.XWWX..",
-        "XX..XWWX..",
-        ".....XWWX.",
-        ".....XXX..",
-    };
 
     RunState _run;
     int _restored = -1; // 今回元に戻るステージ（-1＝なし）
@@ -56,6 +39,7 @@ public class DesktopScreen : MonoBehaviour
     float _shownAt;
     float _openAt = -1f; // ウィンドウが開き始めた時刻（-1＝まだ）
     bool _visible;
+    Sprite _targetBg;    // 次に入るアプリの画面の背景の絵（AppBackgrounds。無ければ null）。描くたびに探さないよう、出すときに1回だけ
 
     public bool IsVisible => _visible;
     /// <summary>見せ終わった（GameSession が次のシーンを読み込む）</summary>
@@ -67,6 +51,7 @@ public class DesktopScreen : MonoBehaviour
         _run = run;
         _restored = restored;
         _target = run != null && run.Current != null ? run.CurrentIndex : -1;
+        _targetBg = _target >= 0 ? AppBackgrounds.Find(run.Current) : null;
         _shownAt = Time.unscaledTime;
         _openAt = -1f;
         IsDone = false;
@@ -111,6 +96,7 @@ public class DesktopScreen : MonoBehaviour
         }
 
         if (T >= InputGuard && Pressed()) Skip();
+        PlaySounds();
     }
 
     static bool Pressed()
@@ -197,6 +183,7 @@ public class DesktopScreen : MonoBehaviour
             PixelGui.Fill(new Rect(bodyRect.x, y, 13f, 6f), tab);
             PixelGui.Fill(bodyRect, tab);
             PixelGui.Fill(new Rect(bodyRect.x, bodyRect.y + 3f, bodyRect.width, bodyRect.height - 3f), body);
+            if (!bad) PixelGui.Fill(new Rect(bodyRect.x, bodyRect.y + 3f, bodyRect.width, 1f), FolderShine);
             if (bad) PixelGui.Fill(new Rect(bodyRect.x + 4f, bodyRect.y + 8f + (step + i) % 3 * 3f, 20f, 2f), PixelGui.Magenta);
             PixelGui.ShadowText(new Rect(cx - 40f, y + 29f, 80f, 16f), Folders[i], PixelGui.Style(false, 12, TextAnchor.MiddleCenter), PixelGui.White, PixelGui.Ink, 1f);
         }
@@ -217,7 +204,9 @@ public class DesktopScreen : MonoBehaviour
             if (IsShown(a.Stage, t)) apps.Add(a);
         }
         int n = Mathf.Max(1, apps.Count);
-        float dockW = n * icon + (n - 1) * gap + pad * 2f, dockH = icon + pad * 2f;
+        // Mac の Dock（1-5）：角を 4ドット欠いた板。右の端に、縦の区切りの線とゴミ箱
+        float appsW = n * icon + (n - 1) * gap;
+        float dockW = pad + appsW + gap + 1f + gap + icon + pad, dockH = icon + pad * 2f;
         var dock = new Rect(Mathf.Round((W - dockW) * 0.5f), Mathf.Round(H - dockH - 6f), dockW, dockH);
         MacDesktopGui.DockPlate(dock);
 
@@ -246,10 +235,18 @@ public class DesktopScreen : MonoBehaviour
             if (infected) DrawVirusOn(r, i);
             if (IsFinalStage(app.Stage) && app.Stage == _target) DrawArrival(r, t - FinalAppearAt);
             if (app.Stage >= 0 && app.Stage == _restored) DrawRestore(r, t - RestoreAt);
-            // 次に入るアプリの下に、起動中の点
-            if (isTarget && t >= clickAt) PixelGui.Fill(new Rect(home.center.x - 1f, dock.yMax - 4f, 2f, 2f), PixelGui.White);
+            // 次に入るアプリの下に、起動中の点（1-5：2ドット、#1C1C1E）
+            if (isTarget && t >= clickAt) MacUi.Gui.DockDot(home.center.x, dock.yMax - 4f);
         }
         return target;
+    }
+
+    // Dock の右の端のゴミ箱（Finder のスキンのゴミ箱の絵を、アイコンと同じ大きさに。ふたは体の上）
+    static void DrawTrash(Rect r)
+    {
+        float s = r.width / 16f;
+        PixelGui.DrawSprite(new Rect(r.x, r.y + 2f * s, 16f * s, 14f * s), FinderSkinArt.TrashBody);
+        PixelGui.DrawSprite(new Rect(r.x, r.y + 1f * s, 16f * s, 3f * s), FinderSkinArt.TrashLid);
     }
 
     static void DrawAppIcon(Rect r, Sprite icon, bool infected, int index)
@@ -333,20 +330,12 @@ public class DesktopScreen : MonoBehaviour
         Vector2 pos = Vector2.Lerp(from, to, p);
         float sinceClick = t - (TargetStart + CursorTime);
         if (sinceClick >= 0f && sinceClick < 0.12f) pos.y += 1f;
-        float x0 = Mathf.Round(pos.x), y0 = Mathf.Round(pos.y);
-        for (int row = 0; row < Cursor.Length; row++)
-        {
-            string line = Cursor[row];
-            for (int col = 0; col < line.Length; col++)
-            {
-                char c = line[col];
-                if (c == '.') continue;
-                PixelGui.Fill(new Rect(x0 + col, y0 + row, 1f, 1f), c == 'X' ? PixelGui.Ink : PixelGui.White);
-            }
-        }
+        // Mac の矢印（黒い矢印に白いふち。1-5）
+        MacUi.Gui.Arrow(new Vector2(Mathf.Round(pos.x), Mathf.Round(pos.y)));
     }
 
-    // 次のアプリのウィンドウが、アイコンから画面いっぱいへ広がる（タイトルバーはアプリの色、中身はステージの空の色）
+    // 次のアプリのウィンドウが、アイコンから画面いっぱいへ広がる（Mac のウィンドウ。1-2・2-4 の 40。MacUi.Gui.Window）。
+    // 明るいタイトルバー（7）・左上に丸い信号機・まん中にアプリ名・角 4。タイトルバーの下にアプリの色の帯（ツールバー）、中身はステージの空の色
     void DrawOpening(Rect from, float W, float H)
     {
         StagePlan stage = _target >= 0 && _target < _run.Stages.Count ? _run.Stages[_target] : null;
@@ -370,10 +359,30 @@ public class DesktopScreen : MonoBehaviour
             if(inner.width>230f&&stage!=null)
                 PixelGui.TextFit(new Rect(inner.x+65,inner.y+3,inner.width-130,18),stage.App.DisplayName,12,MacDesktopGui.Ink,TextAnchor.MiddleCenter);
         }
-        if (stage != null && stage.Icon16 != null && inner.height > 60f)
+    }
+
+    // 背景の絵を、縦横の比を保って rect いっぱいに描く（はみ出した所は切る。上のバーが見えるように、上をそろえる）
+    static void DrawAppBackground(Rect rect, Sprite sprite)
+    {
+        Texture2D tex = sprite.texture;
+        Rect tr = sprite.textureRect;
+        if (tex == null || tr.width <= 0f || tr.height <= 0f) return;
+        float s = Mathf.Max(rect.width / tr.width, rect.height / tr.height);
+        float uw = rect.width / s, uh = rect.height / s; // 見せる所（絵のドット）
+        var uv = new Rect((tr.x + (tr.width - uw) * 0.5f) / tex.width, (tr.y + tr.height - uh) / tex.height, uw / tex.width, uh / tex.height);
+        GUI.DrawTextureWithTexCoords(rect, tex, uv);
+    }
+
+    // 題名に出すアプリ名（英数字だけの名前で 20字まで。日本語などの名前は出さない。
+    // 2026-11-19：Google Chrome・Visual Studio Code・Microsoft Excel も出るように、12字から広げた）
+    static string TitleOf(StagePlan stage)
+    {
+        string n = stage != null ? stage.DisplayName : null;
+        if (string.IsNullOrEmpty(n) || n.Length > 20) return null;
+        foreach (char c in n)
         {
-            float s = Mathf.Clamp(Mathf.Floor(inner.height / 64f), 1f, 3f) * 16f;
-            PixelGui.DrawSprite(new Rect(Mathf.Round(inner.center.x - s * 0.5f), Mathf.Round(inner.center.y - s * 0.5f + barH * 0.5f), s, s), stage.Icon16);
+            if (c >= 128 || !(char.IsLetterOrDigit(c) || c == ' ' || c == '.' || c == '-' || c == '+')) return null;
         }
+        return n;
     }
 }

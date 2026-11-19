@@ -1,0 +1,88 @@
+{
+ "label": "Minecraft",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "grass_l",
+   "x": -3.6,
+   "y": 2.6333,
+   "w": 2.4,
+   "h": 0.8,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Minecraft__grass_l",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "grass_r",
+   "x": 3.6,
+   "y": 2.6333,
+   "w": 2.4,
+   "h": 0.8,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Minecraft__grass_r",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "planks",
+   "x": 0.0,
+   "y": 4.7,
+   "w": 2.4,
+   "h": 0.8,
+   "top": 5.1,
+   "sprite": "AppBackgrounds/Parts/Minecraft__planks",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "sand",
+   "x": 6.9333,
+   "y": 4.4333,
+   "w": 1.6,
+   "h": 0.8,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Minecraft__sand",
+   "behavior": "fall",
+   "params": {
+    "type": "fall",
+    "delay": 0.6,
+    "respawn": 4
+   }
+  },
+  {
+   "id": "leaves",
+   "x": -8.7333,
+   "y": 4.7,
+   "w": 2.0,
+   "h": 0.8,
+   "top": 5.1,
+   "sprite": "AppBackgrounds/Parts/Minecraft__leaves",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "chest",
+   "x": 7.4667,
+   "y": 1.2,
+   "w": 1.0667,
+   "h": 0.8667,
+   "top": 1.6333,
+   "sprite": "AppBackgrounds/Parts/Minecraft__chest",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "refill",
+    "cooldown": 25
+   }
+  }
+ ]
+}

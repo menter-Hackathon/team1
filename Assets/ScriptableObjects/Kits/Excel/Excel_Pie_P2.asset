@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef6d5b6aec4024f96bd41859de2d8be6, type: 3}
+  m_Name: Excel_Pie_P2
+  m_EditorClassIdentifier: 
+  _slice: {fileID: 11400000, guid: 181a0110646b5467ba53346274d5bc2f, type: 2}
+  _count: 6
+  _volleys: 2
+  _rotate: 30
+  _telegraph: 0.8
+  _height: 1.8
+  _diameter: 2.2

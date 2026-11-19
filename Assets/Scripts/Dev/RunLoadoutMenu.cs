@@ -42,6 +42,7 @@ public class RunLoadoutMenu : MonoBehaviour
     public void Select(int index)
     {
         if (Session == null || Session.IsTransitioning || index < 0 || index >= Cards.Count) return;
+        if (index != _selected) GameAudio.Event("ui_card");
         _selected = index;
     }
 
@@ -49,12 +50,15 @@ public class RunLoadoutMenu : MonoBehaviour
     public void Confirm()
     {
         if (!CanConfirm) return;
+        GameAudio.Event("ui_decide");
         Session.ConfirmLoadout(new List<SkillDefinition> { Cards[_selected].Skill });
     }
 
     void Back()
     {
-        if (Session != null && !Session.IsTransitioning) Session.ReturnToTitle();
+        if (Session == null || Session.IsTransitioning) return;
+        GameAudio.Event("ui_cancel");
+        Session.ReturnToTitle();
     }
 
     void Update()
@@ -138,6 +142,7 @@ public class RunLoadoutMenu : MonoBehaviour
         PixelGui.End();
     }
 
+    // カードの中の並び（docs/ui-text-and-dex-design.md 1-5 の図。r.y からのずれ）
     void DrawCard(Rect r, int index, AbilityCandidate c, bool selected, double maxSeconds)
     {
         MacDesktopGui.Card(r, selected);
@@ -147,18 +152,18 @@ public class RunLoadoutMenu : MonoBehaviour
         PixelGui.TextEn(new Rect(x, y + 2f, 60f, 10f), index < Ranks.Length ? Ranks[index] : $"{index + 1}TH", 8, accent);
         if(selected) PixelGui.Text(new Rect(r.xMax-65,y,55,16),"選択中",12,MacDesktopGui.Blue,TextAnchor.MiddleRight);
 
-        // アプリ（アイコン 16 ドットを2倍）・名前・使用時間
-        y += 20f;
+        // アプリ（アイコン 16 ドットを2倍）・名前・使用時間（0.5 時間単位）
+        float ay = r.y + 28f;
         if (!c.IsFiller)
         {
-            if (c.AppIcon != null) PixelGui.DrawSprite(new Rect(x, y, 32f, 32f), c.AppIcon);
-            PixelGui.TextFit(new Rect(x + 38f, y, w - 38f, 18f), c.AppName, 16, PixelGui.Ink);
-            PixelGui.Text(new Rect(x + 38f, y + 19f, w - 38f, 14f), $"1週間で {c.Seconds / 3600.0:0.#} 時間", 12, PixelGui.SubText);
-            PixelGui.Meter(new Rect(x, y + 38f, w, 5f), 10, (float)(c.Seconds / maxSeconds), accent, PixelGui.Muted);
+            if (c.AppIcon != null) PixelGui.DrawSprite(new Rect(x, ay, 32f, 32f), c.AppIcon);
+            PixelGui.TextFit(new Rect(x + 38f, ay, w - 38f, 18f), c.AppName, 16, PixelGui.Ink);
+            PixelGui.Text(new Rect(x + 38f, ay + 19f, w - 38f, 14f), $"{System.Math.Round(c.Seconds / 1800.0) / 2.0:0.#}h", 12, PixelGui.SubText);
+            PixelGui.Meter(new Rect(x, r.y + 66f, w, 5f), 10, (float)(c.Seconds / maxSeconds), accent, PixelGui.Muted);
         }
         else
         {
-            PixelGui.Text(new Rect(x, y + 6f, w, 18f), "おまけの能力", 16, PixelGui.SubText);
+            PixelGui.Text(new Rect(x, ay + 6f, w, 18f), "おまけ", 16, PixelGui.SubText);
         }
 
         // 固有能力

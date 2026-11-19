@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Kit_GitHubDesktop
+  m_EditorClassIdentifier: 
+  _displayName: GitHubDesktop
+  _icon: {fileID: 21300000, guid: 2e8cceb07611046c6bd5ef954c59b758, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: ea5515d93986340999d44672f4d0962d, type: 2}
+    - {fileID: 11400000, guid: 281616f63d7d64ba1a78525df1d0cb5e, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: ddd859dbbacce41ae97ca7ff4614a430, type: 2}
+    - {fileID: 11400000, guid: 40bb5af6fea184a4ab70abb575ce2571, type: 2}
+    - {fileID: 11400000, guid: b7de242b933964c438eba8600bc33dad, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 2
+  _movement: 2
+  _warpAttack: {fileID: 11400000, guid: 602ed07e5f4924eb981368a23e76a0c1, type: 2}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 0}
+  _extensions: []

@@ -1,0 +1,94 @@
+{
+ "label": "Slack",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "msg1",
+   "x": -2.8667,
+   "y": 2.6,
+   "w": 4.1333,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Slack__msg1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "msg2",
+   "x": 4.2,
+   "y": 2.6,
+   "w": 4.1333,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Slack__msg2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "new1",
+   "x": 0.3333,
+   "y": 4.4667,
+   "w": 3.6,
+   "h": 0.8667,
+   "top": 4.9,
+   "sprite": "AppBackgrounds/Parts/Slack__new1",
+   "behavior": "scroll",
+   "params": {
+    "type": "scroll",
+    "speed": 0.3333333333333333,
+    "range": 2.0,
+    "dir": "up",
+    "offset": 0
+   }
+  },
+  {
+   "id": "msg3",
+   "x": 7.4667,
+   "y": 4.6,
+   "w": 3.7333,
+   "h": 0.8667,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/Slack__msg3",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "new2",
+   "x": -4.0,
+   "y": 4.4667,
+   "w": 3.2,
+   "h": 0.8667,
+   "top": 4.9,
+   "sprite": "AppBackgrounds/Parts/Slack__new2",
+   "behavior": "scroll",
+   "params": {
+    "type": "scroll",
+    "speed": 0.3333333333333333,
+    "range": 2.0,
+    "dir": "up",
+    "offset": 4
+   }
+  },
+  {
+   "id": "mute",
+   "x": 9.0,
+   "y": 6.1333,
+   "w": 1.2,
+   "h": 0.8667,
+   "top": 6.5667,
+   "sprite": "AppBackgrounds/Parts/Slack__mute",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "clear_bullets",
+    "cooldown": 20
+   }
+  }
+ ]
+}

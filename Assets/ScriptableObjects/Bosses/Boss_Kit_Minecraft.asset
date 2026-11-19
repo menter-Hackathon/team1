@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Kit_Minecraft
+  m_EditorClassIdentifier: 
+  _displayName: Minecraft
+  _icon: {fileID: 21300000, guid: 2e8cceb07611046c6bd5ef954c59b758, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: 2613150c19d1b463e8bda2b86c7ba178, type: 2}
+    - {fileID: 11400000, guid: 8ccfa296142234f9d9e2c8e78aefb469, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 97d700276a3904454a4f00ea18daf495, type: 2}
+    - {fileID: 11400000, guid: b1797104815b94cec923be4bbca37ecc, type: 2}
+    - {fileID: 11400000, guid: 803f9757b8790473a8055c52a440fcc8, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 2
+  _movement: 2
+  _warpAttack: {fileID: 11400000, guid: 602ed07e5f4924eb981368a23e76a0c1, type: 2}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 0}
+  _extensions: []

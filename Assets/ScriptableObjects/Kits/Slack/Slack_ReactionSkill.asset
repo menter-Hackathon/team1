@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0f4e86eb207043a29da23bccf55f53d, type: 3}
+  m_Name: Slack_ReactionSkill
+  m_EditorClassIdentifier: 
+  _shot: {fileID: 11400000, guid: 5c67562b067c64cc4af05c4c8f34375c, type: 2}
+  _buffSeconds: 5
+  _buffMultiplier: 1.5

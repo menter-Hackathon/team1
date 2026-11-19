@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd214b333d10b4677abec1c23c61fc60, type: 3}
+  m_Name: Custom_Premiere_IconRain_P2
+  m_EditorClassIdentifier: 
+  _count: 6
+  _spacing: 3
+  _placeInterval: 0.3
+  _holdTime: 0.5
+  _dropInterval: 0.25
+  _topInset: 1.9
+  _landingFire: {fileID: 11400000, guid: d989c91d43a6c4b2193ad56aed8572c5, type: 2}

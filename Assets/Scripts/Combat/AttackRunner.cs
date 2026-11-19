@@ -5,7 +5,7 @@ using UnityEngine;
 
 /// <summary>
 /// AttackData を実行する部分。プレイヤー・ボス・雑魚で共通に使う（攻撃する人に1つ付ける）。
-/// ・Run(データ) で、予備動作 → 攻撃（弾を撃つ・判定を出す・落とす・瞬間移動）の順に進める
+/// ・Run(データ) で、予備動作 → 攻撃（弾を撃つ・判定を出す・落とす・瞬間移動・ロックオン）の順に進める
 /// ・出した弾・判定・落下物は覚えておき、ClearSpawned でまとめて消せる（形態変化・正常化のとき）
 /// ・同時に実行できる攻撃は1つ。実行中に Run しても false を返して何もしない（「同時に実行できる」をオンにしたときを除く）
 ///
@@ -58,6 +58,14 @@ public class AttackRunner : MonoBehaviour
         set => _facing = value >= 0 ? 1 : -1;
     }
     public bool IsRunning => _routines.Count > 0;
+
+    // ───────── スキン（2026-11-18：スキルの見た目。docs/app-skill-visuals-design.md 1-1） ─────────
+    /// <summary>この人が出す攻撃のスキン（どのアプリの見た目か）。ボスはステージのアプリ、プレイヤーは使った能力のアプリ</summary>
+    public SkinId Skin { get; set; } = SkinId.None;
+    /// <summary>スキンの絵に使うアプリの色（無ければ null）</summary>
+    public AppTheme SkinTheme { get; set; }
+    /// <summary>スキンの絵に使うアプリのアイコン（無ければ null）</summary>
+    public Sprite SkinIcon { get; set; }
     /// <summary>実行中の攻撃。無ければ null</summary>
     public AttackData Current { get; private set; }
 
@@ -65,6 +73,10 @@ public class AttackRunner : MonoBehaviour
     public event Action<AttackData> Started;
     /// <summary>攻撃が出た瞬間（弾を撃つ・予告を出す・落とす・消え始める）。繰り返す攻撃では、そのたびに呼ばれる</summary>
     public event Action<AttackData> Released;
+    /// <summary>どれかの AttackRunner で Started・Released が出たとき（技の音。2026-11-19）。出す所は Started・Released と同じ</summary>
+    public static event Action<AttackRunner, AttackData> AnyStarted, AnyReleased;
+    /// <summary>どれかの AttackRunner が追撃（弾が当たった所の攻撃。ボムの爆発など）を出したとき（音だけに使う。2026-11-19）</summary>
+    public static event Action<AttackRunner, AttackData> AnyFollowUp;
     /// <summary>攻撃が終わって、次の行動に移れるようになったとき。Cancel したときは呼ばれない</summary>
     public event Action<AttackData> Finished;
     /// <summary>弾・判定・落下物を出したとき（テスト・エフェクト用）</summary>
@@ -89,6 +101,10 @@ public class AttackRunner : MonoBehaviour
             Debug.LogWarning($"{name}: 近接（{data.name}）は AttackRunner では実行しません。PlayerMeleeAttack に設定してください", this);
             return false;
         }
+        // 【仮】ロックオンは、画面に相手がいなければ使えない（false を返すので、能力のクールタイムも始まらない）
+        if (data.Kind == AttackKind.LockOn && LockOnStrike.FindTargets(this).Count == 0) return false;
+        // 専用の技は、使えるかどうかを技の中身に聞く（使えなければ false。能力ならクールタイムも始まらない）
+        if (data.Kind == AttackKind.Custom && (data.Custom == null || !data.Custom.CanRun(this, data))) return false;
         Current = data;
         var holder = new Coroutine[1];
         holder[0] = StartCoroutine(RunRoutine(data, holder));
@@ -107,6 +123,8 @@ public class AttackRunner : MonoBehaviour
         StopAllCoroutines();
         _routines.Clear();
         Current = null;
+        EndWindupDress(); // 予備動作の絵（スキン）も消す
+        EndWarpDress();
     }
 
     /// <summary>この人が出した弾・判定・落下物・予告をすべて消す（正常化のとき）</summary>
@@ -122,11 +140,12 @@ public class AttackRunner : MonoBehaviour
     /// <summary>この人が出した弾だけを消す（形態変化のとき）。落下物・判定・ダメージ床は残る</summary>
     public void ClearProjectiles()
     {
+        // スキンが足した飾り（Target の子でない物。SkinDresser.Adopt）も、形態変化で消す（2026-11-18：スキルの見た目 14-5）
         foreach (var go in _spawned)
         {
-            if (go != null && go.TryGetComponent(out Projectile _)) Destroy(go);
+            if (go != null && (go.TryGetComponent(out Projectile _) || go.TryGetComponent(out SkinFxMarker _))) Destroy(go);
         }
-        _spawned.RemoveAll(g => g == null || g.TryGetComponent(out Projectile _));
+        _spawned.RemoveAll(g => g == null || g.TryGetComponent(out Projectile _) || g.TryGetComponent(out SkinFxMarker _));
     }
 
     /// <summary>この人が出した物のうち、指定した部品が付いている物だけを消す（瞬間移動の予告など）</summary>
@@ -178,8 +197,29 @@ public class AttackRunner : MonoBehaviour
     IEnumerator RunRoutine(AttackData data, Coroutine[] self)
     {
         Started?.Invoke(data);
-        if (data.Windup > 0f) yield return new WaitForSeconds(data.Windup);
+        AnyStarted?.Invoke(this, data);
+        if (data.Windup > 0f)
+        {
+            BeginWindupDress(data);
+            yield return new WaitForSeconds(data.Windup);
+            EndWindupDress();
+        }
 
+        yield return Execute(data);
+
+        if (self[0] != null) _routines.Remove(self[0]);
+        else _finishedImmediately = true; // StartCoroutine から戻る前に終わった
+        if (_routines.Count == 0) Current = null;
+        Finished?.Invoke(data);
+    }
+
+    /// <summary>
+    /// 攻撃の本体だけを進める（予備動作・開始と終わりのイベントなし）。専用の技が、中で別の攻撃データを出すときに使う
+    /// （例：エフェクトアイコン投げが、選んだアイコンの投てきを出す）。呼んだコルーチンの中で yield return する
+    /// </summary>
+    public IEnumerator Execute(AttackData data)
+    {
+        if (data == null) yield break;
         switch (data.Kind)
         {
             case AttackKind.Projectile:
@@ -194,15 +234,28 @@ public class AttackRunner : MonoBehaviour
             case AttackKind.Warp:
                 yield return WarpRoutine(data);
                 break;
+            case AttackKind.LockOn:
+                yield return LockOnRoutine(data);
+            case AttackKind.PhysicsObject:
+                yield return PhysicsObjectRoutine(data);
+                break;
+            case AttackKind.Custom:
+                if (data.Custom != null) yield return data.Custom.Run(this, data);
+                break;
             default:
                 Debug.LogWarning($"{name}: 攻撃の種類 {data.Kind} はまだ実行できません（{data.name}）", this);
                 break;
         }
+    }
 
-        if (self[0] != null) _routines.Remove(self[0]);
-        else _finishedImmediately = true; // StartCoroutine から戻る前に終わった
-        if (_routines.Count == 0) Current = null;
-        Finished?.Invoke(data);
+    /// <summary>攻撃が出た瞬間を知らせる（専用の技が、弾を撃つ・予告を出すなどの瞬間に呼ぶ）</summary>
+    public void NotifyReleased(AttackData data) => RaiseReleased(data);
+
+    // 攻撃が出た瞬間の知らせ（この人の Released と、どれでも聞ける AnyReleased）
+    void RaiseReleased(AttackData data)
+    {
+        Released?.Invoke(data);
+        AnyReleased?.Invoke(this, data);
     }
 
     // ───────── 弾（A） ─────────
@@ -212,12 +265,12 @@ public class AttackRunner : MonoBehaviour
         for (int r = 0; r < data.RepeatCount; r++)
         {
             if (r > 0 && data.RepeatInterval > 0f) yield return new WaitForSeconds(data.RepeatInterval);
-            FireVolley(data);
+            FireVolley(data, r);
         }
     }
 
-    /// <summary>1回分（扇状にまとめて）撃つ。連射のたびに狙い直す</summary>
-    void FireVolley(AttackData data)
+    /// <summary>1回分（扇状にまとめて）撃つ。連射のたびに狙い直す。repeat：何回目の連射か（スキンの絵の番号に使う）</summary>
+    void FireVolley(AttackData data, int repeat = 0)
     {
         Vector2 origin = OriginPoint + new Vector2(Facing * data.SpawnOffset.x, data.SpawnOffset.y);
         Vector2 baseDir = new Vector2(Facing, 0f);
@@ -234,23 +287,30 @@ public class AttackRunner : MonoBehaviour
         }
 
         int n = data.ProjectileCount;
+        bool fullCircle = data.SpreadAngle >= 359.9f; // 全方位：端どうしが重ならないように、数で等分する
         for (int i = 0; i < n; i++)
         {
-            float angle = n > 1 ? -data.SpreadAngle * 0.5f + data.SpreadAngle * i / (n - 1) : 0f;
+            float angle = n <= 1 ? 0f
+                : fullCircle ? 360f * i / n
+                : -data.SpreadAngle * 0.5f + data.SpreadAngle * i / (n - 1);
             Vector2 dir = Quaternion.Euler(0f, 0f, angle) * baseDir;
-            Projectile.Spawn(this, data, origin, dir);
+            Projectile.Spawn(this, data, origin, dir, repeat * n + i);
         }
-        Released?.Invoke(data);
+        RaiseReleased(data);
     }
 
     // ───────── 指定位置の判定（E）・残り続けるダメージ床（H） ─────────
 
     IEnumerator AreaRoutine(AttackData data)
     {
+        // 出す位置のずれ（弾を出す位置のずれと同じ欄。x は向きに合わせて反転）。今までの攻撃データは 0 なので変わらない
+        Vector2 offset = new Vector2(Facing * data.SpawnOffset.x, data.SpawnOffset.y);
         Vector2 anchor = data.Anchor switch
         {
             AreaAnchor.TargetPosition => TargetPoint ?? OriginPoint,
-            AreaAnchor.Forward => OriginPoint + new Vector2(Facing * data.ForwardDistance, 0f),
+            AreaAnchor.Forward => OriginPoint + new Vector2(Facing * data.ForwardDistance, 0f) + offset,
+            AreaAnchor.ForwardAtTargetHeight => new Vector2(OriginPoint.x + Facing * data.ForwardDistance + offset.x,
+                (TargetPoint ?? OriginPoint).y + data.SpawnOffset.y),
             _ => OriginPoint,
         };
 
@@ -263,11 +323,11 @@ public class AttackRunner : MonoBehaviour
             Vector2 point = data.AreaForwardOrder
                 ? anchor + new Vector2(Facing * i * data.AreaSpacing, 0f) // 前へ順に並べる
                 : anchor + new Vector2(sign * step * data.AreaSpacing, 0f);
-            AreaStrike.Spawn(this, data, point, Vector2.up, i * data.AreaStagger);
+            AreaStrike.Spawn(this, data, point, Vector2.up, i * data.AreaStagger, i);
         }
-        Released?.Invoke(data);
+        RaiseReleased(data);
 
-        float total = (data.AreaCount - 1) * data.AreaStagger + data.TelegraphTime + data.HitWindow;
+        float total = (data.AreaCount - 1) * data.AreaStagger + data.TelegraphTime + data.HitDelay + data.HitWindow;
         yield return new WaitForSeconds(total);
     }
 
@@ -279,11 +339,23 @@ public class AttackRunner : MonoBehaviour
         {
             case AttackKind.Area:
                 AreaStrike.Spawn(this, data, point, normal, 0f);
+                AnyFollowUp?.Invoke(this, data);
                 break;
             default:
                 Debug.LogWarning($"{name}: 追撃に使えるのは Area だけです（{data.name}）", this);
                 break;
         }
+    }
+
+    // ───────── ロックオン（2026-11-18：ギャラリービュー） ─────────
+
+    IEnumerator LockOnRoutine(AttackData data)
+    {
+        // 予備動作の間に相手がいなくなっていたら、何もしない
+        LockOnStrike strike = LockOnStrike.Spawn(this, data, LockOnStrike.FindTargets(this));
+        if (strike == null) yield break;
+        RaiseReleased(data);
+        yield return new WaitForSeconds(strike.Duration);
     }
 
     // ───────── 落下物（F）・設置物（G） ─────────
@@ -301,11 +373,12 @@ public class AttackRunner : MonoBehaviour
         {
             // 落とさない：出る場所に薄い枠（予告）を出し、予告時間のあとにその場へパッと出す
             float appearAt = now + data.TelegraphTime;
+            int index = 0;
             foreach (Vector2 c in PickAppearPositions(data))
             {
-                objects.Add(FallingObject.SpawnInPlace(this, data, c, appearAt));
+                objects.Add(FallingObject.SpawnInPlace(this, data, c, appearAt, index++));
             }
-            Released?.Invoke(data);
+            RaiseReleased(data);
         }
         else if (data.Placement == SpawnPlacement.AroundTarget)
         {
@@ -313,12 +386,12 @@ public class AttackRunner : MonoBehaviour
             float targetX = Mathf.Clamp((TargetPoint ?? OriginPoint).x, minX, maxX);
             var xs = new List<float> { targetX };
             for (int i = 1; i < data.SpawnCount; i++) xs.Add(PickRandomX(targetX, xs, data, minX, maxX));
-            foreach (float x in xs)
+            for (int i = 0; i < xs.Count; i++)
             {
                 float fallAt = now + data.TelegraphTime;
-                objects.Add(FallingObject.Spawn(this, data, new Vector2(x, hangY), fallAt, fallAt, true));
+                objects.Add(FallingObject.Spawn(this, data, new Vector2(xs[i], hangY), fallAt, fallAt, true, false, i));
             }
-            Released?.Invoke(data);
+            RaiseReleased(data);
         }
         else
         {
@@ -333,9 +406,9 @@ public class AttackRunner : MonoBehaviour
             {
                 float appearAt = now + i * data.PlaceInterval;
                 float fallAt = lastPlace + data.DropHoldTime + i * data.DropInterval;
-                objects.Add(FallingObject.Spawn(this, data, new Vector2(startX + i * data.PlaceSpacing, hangInside), appearAt, fallAt, false, dismissable: true));
+                objects.Add(FallingObject.Spawn(this, data, new Vector2(startX + i * data.PlaceSpacing, hangInside), appearAt, fallAt, false, dismissable: true, index: i));
             }
-            Released?.Invoke(data);
+            RaiseReleased(data);
         }
 
         // 全部が着地する（または消える）まで待つ
@@ -366,6 +439,107 @@ public class AttackRunner : MonoBehaviour
             best = left >= minX ? left : Mathf.Min(right, maxX);
         }
         return best;
+    }
+
+    // ───────── 物理オブジェクト（Unity の Cube・Sphere・Capsule） ─────────
+
+    readonly Dictionary<AttackData, int> _primitiveTurn = new Dictionary<AttackData, int>();
+    readonly Dictionary<AttackData, BoundedSpawnList<PhysicsPrimitive>> _alivePrimitives = new Dictionary<AttackData, BoundedSpawnList<PhysicsPrimitive>>();
+
+    /// <summary>次に出す物理オブジェクトの番号（Cube → Sphere → Capsule の順）。進めない</summary>
+    public int PeekPrimitiveIndex(AttackData data)
+    {
+        int n = data.Primitives != null ? data.Primitives.Length : 0;
+        if (n == 0) return 0;
+        _primitiveTurn.TryGetValue(data, out int turn);
+        return turn % n;
+    }
+
+    /// <summary>この攻撃データで出して、まだ残っている物理オブジェクトの数（テスト用）</summary>
+    public int AlivePrimitiveCount(AttackData data)
+    {
+        if (!_alivePrimitives.TryGetValue(data, out var list)) return 0;
+        list.Prune(p => p == null || p.IsGone);
+        return list.Count;
+    }
+
+    IEnumerator PhysicsObjectRoutine(AttackData data)
+    {
+        if (data.Primitives == null || data.Primitives.Length == 0)
+        {
+            Debug.LogWarning($"{name}: 物理オブジェクトの「出す物」が空です（{data.name}）", this);
+            yield break;
+        }
+        if (!_alivePrimitives.TryGetValue(data, out var alive))
+        {
+            alive = new BoundedSpawnList<PhysicsPrimitive>(data.MaxAlive);
+            _alivePrimitives[data] = alive;
+        }
+        alive.Capacity = data.MaxAlive;
+
+        foreach (Vector2 pos in PickPrimitivePositions(data))
+        {
+            _primitiveTurn.TryGetValue(data, out int turn);
+            _primitiveTurn[data] = turn + 1;
+            var obj = PhysicsPrimitive.Spawn(this, data, pos, turn % data.Primitives.Length);
+            alive.Prune(p => p == null || p.IsGone);
+            foreach (var old in alive.Add(obj)) if (old != null) old.Despawn(); // 上限を超えたら古い物から消す
+        }
+        Released?.Invoke(data);
+
+        // 本体が出るまで待つ（ボスはそのあと次の行動へ）
+        float wait = (data.HasSpawnWarning ? data.TelegraphTime : 0f) + data.SpawnReleaseDelay;
+        if (wait > 0f) yield return new WaitForSeconds(wait);
+    }
+
+    /// <summary>
+    /// 物理オブジェクトを出す位置（中心）。
+    /// ・ForwardAbove：前方やや上（弾を出す位置のずれ）
+    /// ・AroundTarget：1つ目は狙う相手の頭上、残りは部屋の中のランダムな位置（相手から一定以上離す）
+    /// </summary>
+    List<Vector2> PickPrimitivePositions(AttackData data)
+    {
+        var result = new List<Vector2>();
+        if (data.Placement == SpawnPlacement.AroundTarget)
+        {
+            Rect arena = BattleArena.GetBounds();
+            float margin = 0.8f;
+            float topY = arena.yMax - margin;
+            Vector2 target = TargetPoint ?? OriginPoint;
+            result.Add(new Vector2(Mathf.Clamp(target.x, arena.xMin + margin, arena.xMax - margin), Mathf.Min(target.y + data.DropHeight, topY)));
+            for (int i = 1; i < data.SpawnCount; i++)
+            {
+                Vector2 best = result[0];
+                for (int attempt = 0; attempt < 40; attempt++)
+                {
+                    var c = new Vector2(UnityEngine.Random.Range(arena.xMin + margin, arena.xMax - margin),
+                        UnityEngine.Random.Range(Mathf.Min(arena.yMin + 3f, topY), topY));
+                    if (Mathf.Abs(c.x - target.x) < data.MinDistanceFromTarget) continue;
+                    bool near = false;
+                    foreach (Vector2 t in result) if (Vector2.Distance(t, c) < 1.6f) { near = true; break; }
+                    best = c;
+                    if (!near) break;
+                }
+                result.Add(best);
+            }
+            return result;
+        }
+
+        Vector2 basePos = OriginPoint + new Vector2(Facing * data.SpawnOffset.x, data.SpawnOffset.y);
+        for (int i = 0; i < data.SpawnCount; i++) result.Add(basePos + new Vector2(Facing * i * 1.2f, 0f));
+        return result;
+    }
+
+    // ───────── 予備動作の絵 ─────────
+
+    /// <summary>予備動作の間に出す絵（円グラフ）。弾を出す位置に出し、最後まで再生して消える。出した物として登録する</summary>
+    void PlayWindupEffect(AttackData data)
+    {
+        Sprite[] frames = data.WindupFrames;
+        if (frames == null || frames.Length == 0 || frames[0] == null) return;
+        Vector2 pos = OriginPoint + new Vector2(Facing * data.SpawnOffset.x, data.SpawnOffset.y);
+        SpriteRenderer sr = Vfx.Play(frames, pos, data.WindupFrameRate, 19, null, Facing < 0);
+        if (sr != null) Register(sr.gameObject);
     }
 
     // ───────── 出現型の置き方（ポップアップ出現） ─────────
@@ -501,22 +675,86 @@ public class AttackRunner : MonoBehaviour
 
     // ───────── Warp ─────────
 
+    // ───────── 瞬間移動の絵（スキンのワープの枠。2026-11-18：スキルの見た目 1-1） ─────────
+    // 消え始めた瞬間＝予告（物は元の場所。Direction は行き先への向き）→ 移った瞬間＝本体（物を行き先へ動かす）→ 現れきった＝消える。
+    // 付けたスキンがあれば WarpDressed が true（プレイヤーの新しいタブは、今の小さいウィンドウを出さない）。
+    // 現れる場所の予告（WarpTelegraph）を出す瞬間移動（ボス）は、予告の物がスキンに知らせるので、ここでは知らせない（二重にしない）
+
+    GameObject _warpDress;
+    AttackData _warpData;
+    Vector2 _warpCenterOffset; // 体の中心の、足元からのずれ（被弾範囲を切る前に取る）
+    Vector2 _warpSize;
+
+    /// <summary>今の瞬間移動に、スキンが絵を付けたか（PlayerVfx が見る）</summary>
+    public bool WarpDressed { get; private set; }
+
+    Vector2 WarpBodyCenter(IWarpable warpable) =>
+        warpable != null ? (Vector2)warpable.BodyBounds.center : (Vector2)transform.position + Vector2.up * 0.5f;
+
+    void BeginWarpDress(AttackData data, IWarpable warpable, Vector2 from, Vector2 to)
+    {
+        EndWarpDress();
+        WarpDressed = false;
+        if (SkinTables.FrameOf(data) != AttackFrame.Warp) return;
+        if (data.AppearTelegraph > 0f && warpable != null) return; // WarpTelegraph に任せる
+        var go = new GameObject($"Warp_{data.name}");
+        go.layer = gameObject.layer;
+        Vector2 center = WarpBodyCenter(warpable);
+        go.transform.position = center;
+        go.AddComponent<SkinFxMarker>(); // 形態変化でも消える
+        Vector2 size = warpable != null ? (Vector2)warpable.BodyBounds.size : new Vector2(0.7f, 1f);
+        if (size.sqrMagnitude < 0.01f) size = new Vector2(0.7f, 1f);
+        _warpCenterOffset = center - (Vector2)transform.position;
+        _warpSize = size;
+        Vector2 dir = (to - from).sqrMagnitude > 0.0001f ? (to - from).normalized : new Vector2(Facing, 0f);
+        if (!SkinDresser.Dress(this, data, go, DressPhase.Telegraph, null, size, 0, dir, 1, data.VanishTime + data.AppearDelay))
+        {
+            Destroy(go);
+            return;
+        }
+        Register(go);
+        _warpDress = go;
+        _warpData = data;
+        WarpDressed = true;
+    }
+
+    void ActiveWarpDress(IWarpable warpable, Vector2 from, Vector2 to)
+    {
+        if (_warpDress == null) return;
+        _warpDress.transform.position = (Vector2)transform.position + _warpCenterOffset; // 被弾範囲は切れているので、取っておいたずれを使う
+        Vector2 size = _warpSize;
+        Vector2 dir = (to - from).sqrMagnitude > 0.0001f ? (to - from).normalized : new Vector2(Facing, 0f);
+        SkinDresser.Dress(this, _warpData, _warpDress, DressPhase.Active, null, size, 0, dir, 1, _warpData.AppearTime);
+    }
+
+    void EndWarpDress()
+    {
+        if (_warpDress == null) return;
+        GameObject go = _warpDress;
+        _warpDress = null;
+        SkinDresser.Dress(this, _warpData, go, DressPhase.Vanish, null, Vector2.zero, 0, new Vector2(Facing, 0f));
+        Destroy(go);
+    }
+
     IEnumerator WarpRoutine(AttackData data)
     {
         var warpable = GetComponent<IWarpable>();
         var body = GetComponent<KinematicBody2D>();
         Vector2 from = transform.position;
         Vector2 to = ComputeWarpDestination(data, from, body);
-        Released?.Invoke(data);
+        BeginWarpDress(data, warpable, from, to);
+        RaiseReleased(data);
 
         bool hideContact = data.DisableContactUntilAppeared && warpable != null;
+        // 体の範囲は、被弾範囲を切る前に取る（切ったあとは範囲が空になることがある。2026-11-19）
+        Bounds bodyBounds = warpable != null ? warpable.BodyBounds : new Bounds(transform.position, Vector3.one);
         if (hideContact) warpable.SetContactEnabled(false);
 
         // 現れる場所の予告（現れ始める appearTelegraph 秒前から、現れきるまで）
         float appearStart = data.VanishTime + data.AppearDelay;
         if (data.AppearTelegraph > 0f && warpable != null)
         {
-            WarpTelegraph.Spawn(this, warpable.BodyBounds, to - from,
+            WarpTelegraph.Spawn(this, bodyBounds, to - from,
                 Mathf.Max(0f, appearStart - data.AppearTelegraph), appearStart + data.AppearTime);
         }
 
@@ -526,10 +764,12 @@ public class AttackRunner : MonoBehaviour
         if (warpable != null) warpable.Teleport(to);
         else if (body != null) body.Warp(to);
         else transform.position = to;
+        ActiveWarpDress(warpable, from, (Vector2)transform.position);
         Warped?.Invoke(data, from, (Vector2)transform.position);
 
         yield return Fade(warpable, 0f, 1f, data.AppearTime);
         if (hideContact) warpable.SetContactEnabled(true);
+        EndWarpDress();
     }
 
     IEnumerator Fade(IWarpable warpable, float from, float to, float duration)
@@ -583,7 +823,8 @@ public class AttackRunner : MonoBehaviour
     // ───────── 共通の道具 ─────────
 
     /// <summary>x の位置で、fromY から真下にある床の上面を探す</summary>
-    public bool TryFindGround(float x, float fromY, out float groundY)
+    /// <param name="steadyOnly">2026-11-19：true なら、動く・消えるアプリの足場（AppStagePlatforms）は床にしない（置いた物・着地した物が宙に残らないように）</param>
+    public bool TryFindGround(float x, float fromY, out float groundY, bool steadyOnly = false)
     {
         var filter = new ContactFilter2D { useTriggers = false, useLayerMask = true };
         filter.SetLayerMask(_groundMask);
@@ -592,6 +833,7 @@ public class AttackRunner : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             if (hits[i].distance <= 0f) continue; // 始点が地形の中
+            if (steadyOnly && AppStagePlatforms.IsUnsteady(hits[i].collider)) continue;
             groundY = hits[i].point.y;
             return true;
         }
@@ -609,15 +851,58 @@ public class AttackRunner : MonoBehaviour
         return go;
     }
 
-    /// <summary>当たり判定（Hitbox）を付ける。コライダーは呼んだ側で先に付けておく</summary>
+    /// <summary>
+    /// 当たり判定（Hitbox）を付ける。コライダーは呼んだ側で先に付けておく。
+    /// 当たったときの見た目用に、攻撃のスキン・エラーの絵の種類・攻撃データも入れる（2026-11-18。種類を変えたいときは、返した Hitbox の SetSkin で上書きする）
+    /// </summary>
     public Hitbox AddHitbox(GameObject go, AttackData data, Collider2D area, bool hitOncePerActivation = true)
     {
         var hitbox = go.AddComponent<Hitbox>();
         hitbox.SetArea(area);
         hitbox.SetOwner(_team, _targetLayers, hitOncePerActivation);
+        hitbox.SetStatSource(transform); // 持ち主のバフ（Steam の実績解除）を、出した弾・判定にも効かせる
         hitbox.Setup(data);
+        SkinDresser.Look look = SkinDresser.LookOf(this, data);
+        hitbox.SetSkin(look.Skin, SkinTables.ErrorKindOf(data), data, look.Theme, look.Icon);
         hitbox.Deactivate();
         return hitbox;
+    }
+
+    // ───────── 予備動作の絵（スキン。2026-11-18：スキルの見た目 1-1） ─────────
+    // 弾の技の予備動作の間だけ、攻撃する人の子に空の物を出して、スキンに「予告」の絵を付けてもらう（タブが扇に並ぶ・エラーの数のバッジなど）。
+    // どのスキンも付けなければ、すぐ消す（今の見た目のまま）
+
+    GameObject _windupDress;
+    AttackData _windupData;
+
+    void BeginWindupDress(AttackData data)
+    {
+        EndWindupDress();
+        if (data.Kind != AttackKind.Projectile || SkinTables.FrameOf(data) == AttackFrame.None) return;
+        var go = new GameObject($"Windup_{data.name}");
+        go.layer = gameObject.layer;
+        go.transform.SetParent(transform, false);
+        go.transform.position = OriginPoint;
+        go.AddComponent<SkinWindupMarker>();
+        go.AddComponent<SkinFxMarker>(); // 形態変化でも消える
+        int count = Mathf.Max(1, data.ProjectileCount) * Mathf.Max(1, data.RepeatCount);
+        if (!SkinDresser.Dress(this, data, go, DressPhase.Telegraph, null, data.HitSize, 0, new Vector2(Facing, 0f), count, data.Windup))
+        {
+            Destroy(go);
+            return;
+        }
+        Register(go);
+        _windupDress = go;
+        _windupData = data;
+    }
+
+    void EndWindupDress()
+    {
+        if (_windupDress == null) return;
+        GameObject go = _windupDress;
+        _windupDress = null;
+        SkinDresser.Dress(this, _windupData, go, DressPhase.Vanish, null, _windupData != null ? _windupData.HitSize : Vector2.zero, 0, new Vector2(Facing, 0f));
+        Destroy(go);
     }
 
     /// <summary>

@@ -8,7 +8,10 @@ using UnityEngine.InputSystem;
 ///   正常化したアプリはアイコンで並べ、このランで初めて図鑑に色が付いたアプリは、きらきら光らせて「NEW」を付ける
 /// ・右：防衛ランク（【仮】RunState.Rank）と相棒
 /// ・ボタン：「ずかん」（アプリ図鑑）・「もう一度あそぶ」（同じ使用データで新しいラン）・「タイトルへ ▶」
-/// 操作：← → で選び、Z か Enter で決定（最初は「タイトルへ」）
+/// 操作：← → で選び、Z か Enter で決定（最初は「タイトルへ」）。左上の赤い丸でもタイトルへ
+/// 2026-11-19：ウィンドウを Mac の形にした（docs/mac-look-design.md 6章の 2）。並び・中身は前のまま
+/// 2026-11-19：文字を減らした（docs/ui-text-and-dex-design.md 1-7）。表の見出しは短く（タイム・ウイルス・アプリ・ダメージ・能力）、
+///   「能力」の行は 能力ごとに アイコン＋絵のタグ＋名前 の組。ボタンは「ずかん」「もう一度」「タイトルへ ▶」
 /// </summary>
 public class RunResultScreen : MonoBehaviour
 {
@@ -22,13 +25,17 @@ public class RunResultScreen : MonoBehaviour
         _dex.ShowButton = false; // ボタンはこの画面に出す
     }
 
+    void Start() => GameAudio.ResultShown(GameSession.Instance != null ? GameSession.Instance.Run : null);
+
     void Update()
     {
         if (_dex != null && _dex.IsOpen) return;
         var kb = Keyboard.current;
         if (kb == null || GameSession.Instance == null) return;
+        int before = _focus;
         if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) _focus = Mathf.Max(0, _focus - 1);
         if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) _focus = Mathf.Min(2, _focus + 1);
+        if (_focus != before) GameAudio.Event("ui_move");
         if (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) Choose(_focus);
     }
 
@@ -36,6 +43,7 @@ public class RunResultScreen : MonoBehaviour
     {
         GameSession session = GameSession.Instance;
         if (session == null || session.IsTransitioning) return;
+        GameAudio.Event(index == 1 ? "ui_start" : "ui_decide");
         if (index == 0 && _dex != null) _dex.Open();
         else if (index == 1 && session.CanPlayAgain) session.PlayAgain(out _);
         else if (index == 2) session.ReturnToTitle();
@@ -51,27 +59,30 @@ public class RunResultScreen : MonoBehaviour
         float ox = Mathf.Round((W - 640f) * 0.5f), oy = Mathf.Round(Mathf.Max(0f, (H - 360f) * 0.5f));
         float barY = PixelGui.BottomBar(34f);
 
-        // 後ろのウィンドウ（飾り）と、手前のウィンドウ
-        PixelGui.Window(new Rect(ox + 60f, oy + 38f, 200f, 210f));
+        // 後ろのウィンドウ（飾り。信号機は灰）と、手前のウィンドウ
+        // 2026-11-19：Mac の形。題名はタイトルバーのまん中（前は SCAN_REPORT.TXT を中の左上に）。閉じるのは左上の赤い丸＝前の右上の ×
+        bool dexOpen = _dex != null && _dex.IsOpen;
+        PixelGui.Window(new Rect(ox + 60f, oy + 38f, 200f, 210f), null, PixelGui.Ink, false);
         var win = new Rect(ox + 80f, oy + 18f, 478f, Mathf.Min(286f, barY - oy - 26f));
-        Rect inner = PixelGui.Window(win);
-        if (PixelGui.CloseButton(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f))) Choose(2);
+        Rect inner = PixelGui.Window(win, "Scan Report.txt", PixelGui.LabelGreen, !dexOpen);
+        if (PixelGui.WindowClose(win)) Choose(2);
 
         float x = inner.x + 12f, y = inner.y + 8f;
-        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "SCAN_REPORT.TXT", 8, PixelGui.LabelGreen);
         PixelGui.Text(new Rect(x, y + 14f, 300f, 28f), "システム復旧完了", 24, PixelGui.Ink);
-        PixelGui.Text(new Rect(x, y + 44f, inner.width - 24f, 16f), "すべてのウイルスを駆除し、デスクトップを取り戻した。", 12, PixelGui.SubText);
+        // 2026-11-19：文字を減らした（docs/ui-text-and-dex-design.md 1-7）。説明の文は消し、表を 16 上へ。「能力」の行を 16 高くして、能力ごとの小さい組を出す
 
         // 表
-        var table = new Rect(x, y + 66f, 284f, 150f);
+        float rowH = 29f, abilityH = rowH + 16f;
+        var table = new Rect(x, y + 50f, 284f, 4f + rowH * 4f + abilityH + 1f);
         PixelGui.WhiteBox(table);
-        float rowH = 29f, lx = table.x + 12f, rx = table.xMax - 12f;
-        string[] labels = { "クリアタイム", "駆除したウイルス", "正常化したアプリ", "受けたダメージ", "獲得した能力" };
+        float lx = table.x + 12f, rx = table.xMax - 12f;
+        string[] labels = { "タイム", "ウイルス", "アプリ", "ダメージ", "能力" };
         for (int i = 0; i < labels.Length; i++)
         {
             float ry = table.y + 4f + i * rowH;
-            PixelGui.Text(new Rect(lx, ry + 6f, 140f, 16f), labels[i], 12, PixelGui.BodyText);
-            if (i < labels.Length - 1) PixelGui.DottedLine(lx, ry + rowH - 1f, table.width - 24f, PixelGui.Muted);
+            bool ability = i == labels.Length - 1;
+            PixelGui.Text(new Rect(lx, ability ? ry + (abilityH - 16f) * 0.5f : ry + 6f, ability ? 40f : 140f, 16f), labels[i], 12, PixelGui.BodyText);
+            if (!ability) PixelGui.DottedLine(lx, ry + rowH - 1f, table.width - 24f, PixelGui.Muted);
         }
         if (run != null)
         {
@@ -80,17 +91,7 @@ public class RunResultScreen : MonoBehaviour
             Value(rx, table.y + 4f + rowH * 2f, run.Cleared.Count.ToString());
             DrawClearedApps(run, rx - 20f, table.y + 4f + rowH * 2f);
             Value(rx, table.y + 4f + rowH * 3f, run.DamageTaken.ToString());
-            // 獲得した能力：ボスから手に入れた能力のアイコン（右から）
-            float ix = rx - 20f;
-            for (int i = run.Cleared.Count - 1; i >= 0; i--)
-            {
-                SkillDefinition reward = run.Cleared[i].Reward;
-                if (reward == null) continue;
-                var box = new Rect(ix, table.y + 4f + rowH * 4f + 4f, 20f, 20f);
-                PixelGui.Fill(box, PixelGui.SlotBg);
-                PixelGui.DrawSprite(PixelGui.Inset(box, 2f), reward.Icon != null ? reward.Icon : run.Cleared[i].Stage.Icon16); // アイコンが空の能力は、アプリのアイコンで
-                ix -= 24f;
-            }
+            DrawAbilities(run, rx, table.y + 4f + rowH * 4f);
         }
 
         // 防衛ランク
@@ -110,13 +111,12 @@ public class RunResultScreen : MonoBehaviour
         PixelGui.TextFit(new Rect(partner.x + 44f, partner.y + 22f, partner.width - 50f, 16f), partnerName, 12, PixelGui.Ink);
 
         // ボタン（ウィンドウの下の縁に重ねる）
-        bool dexOpen = _dex != null && _dex.IsOpen;
         bool was = GUI.enabled;
         GUI.enabled = !dexOpen;
         float by = win.yMax - 16f;
         if (PixelGui.SecondaryButton(new Rect(win.x + 20f, by, 80f, 28f), "ずかん", _focus == 0 && !dexOpen)) Choose(0);
         GUI.enabled = !dexOpen && session.CanPlayAgain;
-        if (PixelGui.SecondaryButton(new Rect(win.xMax - 252f, by, 112f, 28f), "もう一度あそぶ", _focus == 1 && !dexOpen)) Choose(1);
+        if (PixelGui.SecondaryButton(new Rect(win.xMax - 252f, by, 112f, 28f), "もう一度", _focus == 1 && !dexOpen)) Choose(1);
         GUI.enabled = !dexOpen;
         if (PixelGui.PrimaryButton(new Rect(win.xMax - 128f, by, 112f, 28f), "タイトルへ ▶", _focus == 2 && !dexOpen)) Choose(2);
         GUI.enabled = was;
@@ -125,6 +125,31 @@ public class RunResultScreen : MonoBehaviour
 
     static void Value(float right, float rowY, string text) =>
         PixelGui.TextEn(new Rect(right - 120f, rowY + 8f, 120f, 10f), text, 8, PixelGui.Ink, TextAnchor.MiddleRight);
+
+    /// <summary>
+    /// 「能力」の行：ボスから手に入れた能力1つにつき、幅 72 の組を右から（最大3つ。ラスボスは能力なし）。
+    /// 組＝能力のアイコン（枠 20）＋絵のタグの絵だけ（9×9、間 2）、下に能力の名前（12）。1行の説明は出さない（図鑑で見られる）
+    /// </summary>
+    static void DrawAbilities(RunState run, float right, float rowY)
+    {
+        const float groupW = 72f;
+        float gx = right - groupW;
+        int shown = 0;
+        for (int i = run.Cleared.Count - 1; i >= 0 && shown < 3; i--)
+        {
+            SkillDefinition reward = run.Cleared[i].Reward;
+            if (reward == null) continue;
+            var box = new Rect(gx, rowY + 4f, 20f, 20f);
+            PixelGui.Fill(box, PixelGui.SlotBg);
+            PixelGui.DrawSprite(PixelGui.Inset(box, 2f), reward.Icon != null ? reward.Icon : run.Cleared[i].Stage.Icon16); // アイコンが空の能力は、アプリのアイコンで
+            var pictos = SkillBriefs.Pictos(reward);
+            for (int k = 0; k < pictos.Count && k < 3; k++)
+                PixelGui.DrawPicto(box.xMax + 4f + k * (SkillPictos.Size + 2f), box.y + Mathf.Floor((box.height - SkillPictos.Size) * 0.5f), pictos[k]);
+            PixelGui.TextFit(new Rect(gx, box.yMax + 2f, groupW, 14f), reward.DisplayName, 12, PixelGui.Ink);
+            gx -= groupW;
+            shown++;
+        }
+    }
 
     // 正常化したアプリのアイコン（数の左に並べる）。初めて図鑑に色が付いたアプリは光らせて「NEW」
     static void DrawClearedApps(RunState run, float right, float rowY)

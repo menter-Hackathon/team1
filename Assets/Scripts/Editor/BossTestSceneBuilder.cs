@@ -69,7 +69,7 @@ public static class BossTestSceneBuilder
         // --- プレイヤー ---
         // 【仮】G キーでカテゴリの能力5つを順番にもらえる（ボスを倒さずに能力を試せる）
         var player = PlayerTestSceneBuilder.CreatePlayer(square, new Vector3(-6f, 0.05f, 0f), attacks.PlayerMelee,
-            AbilitiesBuilder.GetOrCreate().All);
+            AbilitiesBuilder.GetOrCreate().ForDebugKey);
 
         // --- ボス（B キーで切り替え。最初は Chrome） ---
         // Chrome：空中に浮く（下の端が床から2.5マス）。VS Code：床に立つ
@@ -159,7 +159,7 @@ public static class BossTestSceneBuilder
     /// 逃げるだけで攻撃しない・触れてもダメージなし・時間切れなし。動きは歩く雑魚と同じで、少し速い（毎秒4.5マス）。
     /// HP1：近接でも能力でも、1回当てるとはじけて消える。原点＝足元。ボスの子に非表示で置き、BossController が追い出すときに表示する
     /// </summary>
-    static Health CreateEjectedVirus(Transform boss, Sprite square)
+    internal static Health CreateEjectedVirus(Transform boss, Sprite square)
     {
         int enemyLayer = LayerMask.NameToLayer("Enemy");
         int ground = LayerMask.NameToLayer("Ground");

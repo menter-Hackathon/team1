@@ -1,0 +1,42 @@
+{
+  "id": "Arc",
+  "desc": "色のグラデーションのサイドバーに縦のタブ、右に角の丸いページ",
+  "base": "#a79cc2",
+  "elements": [
+    {"type": "gradient", "x": 0, "y": 0, "w": 320, "h": 180, "c1": "#c49bb4", "c2": "#8d9fd0", "dir": "v", "steps": 8},
+    {"type": "icon", "name": "prev", "x": 44, "y": 26, "size": 5, "color": "#f0e6f0"},
+    {"type": "icon", "name": "next", "x": 54, "y": 26, "size": 5, "color": "#f0e6f0"},
+    {"type": "rrect", "x": 13, "y": 34, "w": 58, "h": 9, "color": "#d6c0d6", "r": 3, "alpha": 0.7},
+    {"type": "text", "x": 17, "y": 36, "text": "MY.SITE", "color": "#7a6690", "scale": 1},
+    {"type": "repeat", "count": 3, "dx": 20, "dy": 0, "items": [{"type": "rrect", "x": 13, "y": 47, "w": 18, "h": 12, "color": "#d6c0d6", "r": 3, "alpha": 0.55}]},
+    {"type": "repeat", "count": 3, "dx": 20, "dy": 0, "items": [{"type": "rrect", "x": 13, "y": 62, "w": 18, "h": 12, "color": "#cdbdd8", "r": 3, "alpha": 0.55}]},
+    {"type": "icon", "name": "star", "x": 19, "y": 50, "size": 5, "color": "#8f76a8"},
+    {"type": "icon", "name": "chat", "x": 39, "y": 50, "size": 5, "color": "#8f76a8"},
+    {"type": "icon", "name": "music", "x": 59, "y": 50, "size": 5, "color": "#8f76a8"},
+    {"type": "icon", "name": "home", "x": 19, "y": 65, "size": 5, "color": "#857aae"},
+    {"type": "icon", "name": "cart", "x": 39, "y": 65, "size": 5, "color": "#857aae"},
+    {"type": "icon", "name": "play", "x": 59, "y": 65, "size": 5, "color": "#857aae"},
+    {"type": "line", "x1": 14, "y1": 79, "x2": 70, "y2": 79, "color": "#d9cbe2"},
+    {"type": "text", "x": 15, "y": 161, "text": "+ NEW TAB", "color": "#e6e0f2", "scale": 1},
+    {"type": "rrect", "x": 76, "y": 6, "w": 232, "h": 162, "color": "#cfcfd6", "r": 4},
+    {"type": "text", "x": 156, "y": 10, "text": "HELLO", "color": "#a9a9b6", "scale": 1},
+    {"type": "text", "x": 96, "y": 40, "text": "BROWSE", "color": "#a2a2b0", "scale": 2},
+    {"type": "text", "x": 96, "y": 54, "text": "CALMLY.", "color": "#b48fb0", "scale": 2},
+    {"type": "bars", "x": 96, "y": 72, "w": 150, "rows": 2, "row_h": 7, "bar_h": 2, "color": "#c1c1cc", "seed": 291, "min": 0.55, "indent": 0},
+    {"type": "repeat", "count": 2, "dx": 0, "dy": 11, "items": [{"type": "circle", "cx": 18, "cy": 138, "r": 2, "color": "#f0e6f0", "fill": true}, {"type": "bars", "x": 24, "y": 137, "w": 40, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#eee6f4", "seed": 281, "min": 0.5, "indent": 0}]},
+    {"type": "circle", "cx": 18, "cy": 109, "r": 2, "color": "#f0e6f0", "fill": true},
+    {"type": "bars", "x": 24, "y": 108, "w": 30, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#eee6f4", "seed": 283, "min": 0.9, "indent": 0}
+  ],
+  "stage": {
+    "hide_folders": true,
+    "platforms": [
+      {"id": "card1", "x": 88, "y": 127, "w": 48, "h": 13, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 48, "h": 13, "color": "#6f6498", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 46, "h": 11, "color": "#e8e8ee", "r": 1}, {"type": "gradient", "x": 1, "y": 1, "w": 46, "h": 4, "c1": "#c9a8c0", "c2": "#aab0d8", "dir": "h", "steps": 4}, {"type": "rect", "x": 5, "y": 8, "w": 32, "h": 2, "color": "#8c8ca0"}], "behavior": {"type": "static"}},
+      {"id": "card2", "x": 194, "y": 127, "w": 48, "h": 13, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 48, "h": 13, "color": "#6f6498", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 46, "h": 11, "color": "#e8e8ee", "r": 1}, {"type": "gradient", "x": 1, "y": 1, "w": 46, "h": 4, "c1": "#aab0d8", "c2": "#a8ccc4", "dir": "h", "steps": 4}, {"type": "rect", "x": 5, "y": 8, "w": 32, "h": 2, "color": "#8c8ca0"}], "behavior": {"type": "static"}},
+      {"id": "peek", "x": 138, "y": 98, "w": 46, "h": 14, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 46, "h": 14, "color": "#8f7fc0", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 44, "h": 12, "color": "#e2dcf0", "r": 2}, {"type": "rect", "x": 2, "y": 1, "w": 42, "h": 1, "color": "#f1edf8"}, {"type": "text", "x": 5, "y": 5, "text": "PEEK", "color": "#8f7fc0", "scale": 1}, {"type": "rect", "x": 24, "y": 6, "w": 16, "h": 2, "color": "#b0a6d0"}], "behavior": {"type": "blink", "on": 5, "off": 3, "warn": 1.2, "offset": 0}},
+      {"id": "card3", "x": 248, "y": 99, "w": 50, "h": 13, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 50, "h": 13, "color": "#6f6498", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 48, "h": 11, "color": "#e8e8ee", "r": 1}, {"type": "gradient", "x": 1, "y": 1, "w": 48, "h": 4, "c1": "#d0c0a8", "c2": "#c9a8c0", "dir": "h", "steps": 4}, {"type": "rect", "x": 5, "y": 8, "w": 34, "h": 2, "color": "#8c8ca0"}], "behavior": {"type": "static"}},
+      {"id": "sidetab1", "x": 13, "y": 120, "w": 58, "h": 10, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 58, "h": 10, "color": "#7a6690", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 56, "h": 8, "color": "#efe8f5", "r": 2}, {"type": "rect", "x": 2, "y": 1, "w": 54, "h": 1, "color": "#faf6fc"}, {"type": "circle", "cx": 6, "cy": 5, "r": 2, "color": "#8f76a8", "fill": true}, {"type": "rect", "x": 11, "y": 4, "w": 34, "h": 2, "color": "#7a6690"}], "behavior": {"type": "static"}},
+      {"id": "sidetab2", "x": 13, "y": 92, "w": 58, "h": 10, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 58, "h": 10, "color": "#7a6690", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 56, "h": 8, "color": "#efe8f5", "r": 2}, {"type": "rect", "x": 2, "y": 1, "w": 54, "h": 1, "color": "#faf6fc"}, {"type": "circle", "cx": 6, "cy": 5, "r": 2, "color": "#857aae", "fill": true}, {"type": "rect", "x": 11, "y": 4, "w": 26, "h": 2, "color": "#7a6690"}], "behavior": {"type": "fall", "delay": 0.6, "respawn": 4}},
+      {"id": "boost", "x": 146, "y": 150, "w": 27, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 27, "h": 11, "color": "#574a8a", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 25, "h": 9, "color": "#8f7fc0", "r": 2}, {"type": "rect", "x": 3, "y": 1, "w": 21, "h": 1, "color": "#f6f2ff66"}, {"type": "text", "x": 4, "y": 3, "text": "BOOST", "color": "#f6f2ff", "scale": 1}], "behavior": {"type": "button", "effect": "refill", "cooldown": 20}}
+    ]
+  }
+}

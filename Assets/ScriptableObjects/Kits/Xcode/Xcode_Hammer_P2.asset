@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a38a1658d114d42408e6a8bd6ed7e7e8, type: 3}
+  m_Name: Xcode_Hammer_P2
+  m_EditorClassIdentifier: 
+  _shock: {fileID: 11400000, guid: d87963f09374940b5bd17bbe8afc01e9, type: 2}
+  _count: 3
+  _interval: 1.5
+  _telegraph: 0.9
+  _width: 3
