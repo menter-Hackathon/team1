@@ -56,12 +56,62 @@ public class PlayerSkillExecutor : MonoBehaviour
     {
         _skills.SkillUseRequested += OnSkillUseRequested;
         _runner.Finished += OnAttackFinished;
+        SkillUsed += ShowSkillIcon;
     }
 
     void OnDisable()
     {
         _skills.SkillUseRequested -= OnSkillUseRequested;
         _runner.Finished -= OnAttackFinished;
+        SkillUsed -= ShowSkillIcon;
+        if (_usedIcon != null) _usedIcon.enabled = false;
+    }
+
+    SpriteRenderer _usedIcon;
+    float _usedIconAge;
+    float _usedIconScale;
+
+    void ShowSkillIcon(int slot, SkillDefinition skill)
+    {
+        Sprite icon = null;
+        var session = GameSession.Instance;
+        if (session != null && session.Run != null) icon = session.Run.SourceIcon(skill);
+        if (icon == null) icon = skill.Icon;
+        if (icon == null) return;
+        if (_usedIcon == null)
+        {
+            var go = new GameObject("UsedAppIcon");
+            go.transform.SetParent(transform, false);
+            _usedIcon = go.AddComponent<SpriteRenderer>();
+            _usedIcon.sortingOrder = RewardKit.OrderBadge + 3;
+        }
+        _usedIcon.sprite = icon;
+        _usedIconScale = RewardKit.IconScale(icon, 18f);
+        _usedIconAge = 0f;
+        _usedIcon.enabled = true;
+        UpdateSkillIcon();
+    }
+
+    void LateUpdate()
+    {
+        if (_usedIcon == null || !_usedIcon.enabled) return;
+        _usedIconAge += Time.deltaTime;
+        if (_usedIconAge >= 0.65f) { _usedIcon.enabled = false; return; }
+        UpdateSkillIcon();
+    }
+
+    void UpdateSkillIcon()
+    {
+        float t = Mathf.Clamp01(_usedIconAge / 0.65f);
+        Vector2 head = FxKit.HeadOf(gameObject, (Vector2)transform.position + Vector2.up);
+        _usedIcon.transform.position = FxKit.ClampToView(head + Vector2.up * (0.65f + t * 0.22f), 0.7f);
+        float pop = 1f + Mathf.Sin(Mathf.Clamp01(t / 0.3f) * Mathf.PI) * 0.18f;
+        // 親の左右反転や拡大縮小をアイコンに伝えない。
+        Vector3 parentScale = transform.lossyScale;
+        _usedIcon.transform.localScale = new Vector3(
+            _usedIconScale * pop / (Mathf.Abs(parentScale.x) > 0.001f ? parentScale.x : 1f),
+            _usedIconScale * pop / (Mathf.Abs(parentScale.y) > 0.001f ? parentScale.y : 1f), 1f);
+        _usedIcon.color = new Color(1f, 1f, 1f, 1f - Mathf.InverseLerp(0.65f, 1f, t));
     }
 
     void OnAttackFinished(AttackData attack)

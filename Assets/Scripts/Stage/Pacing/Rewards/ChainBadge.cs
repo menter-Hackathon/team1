@@ -1,202 +1,143 @@
 using UnityEngine;
 
-/// <summary>
-/// 【仮】連続キルのバッジ（2026-11-19。docs/stage-pacing-design.md 4-1。担当3）。プレイヤーの頭の上に出す。
-/// ・白いふち・黄色の小さい札。左にそのアプリのアイコン、右に飾りの数字（x3。【要相談⑤】は「出す」のまま）
-/// ・札の形はアプリらしく（RewardKit.BadgeShapeOf：Chat は吹き出し、Browser はタブ、Dev・Terminal は角ばった窓、Game は角を落とした札）
-/// ・下の細い線（アプリの色）が、切れるまでの残りの時間（説明の文字は出さない）
-/// ・つながるたびにポンとはねる。段階が上がると1段大きくなる（3〜4：1.15倍、5〜：1.3倍＋きらめき）。切れると、しぼんで消える
-/// 2体目から出す（1体目は出さない）。KillChain が毎フレーム Follow を呼ぶ
-/// </summary>
+/// <summary>連鎖数を頭の斜め後ろへ表示。頭上中央はスキルのアプリアイコン用に空ける。</summary>
 public class ChainBadge : MonoBehaviour
 {
     const float Px = 1f / 18f;
-    const float TextHeight = 0.4f;
-    const int BodyPx = 13;
-    const int Pad = 3;
-    const int IconPx = 9;
-    const float HeadGap = 0.6f;
-    const float PopTime = 0.15f;
-    const float ShrinkTime = 0.2f;
-
-    AppTheme _theme;
-    Sprite _icon;
-    BadgeShape _shape;
+    const float PopTime = 0.22f;
+    readonly TextMesh[] _outline = new TextMesh[4];
     Transform _root;
     TextMesh _text;
     SpriteRenderer _timer;
-    float _timerLeft;
-    float _timerWidth;
-    int _builtLen = -1;
-    int _tier;
-    bool _visible;
-    float _popAge = 1f;
-    float _shrinkAge = -1f;
-    float _nextTwinkle;
+    Color _color;
+    int _level;
+    float _nextSpark;
+    float _remaining = 1f, _popAge = 1f, _fadeAge = -1f;
+    bool _visible, _burstPending;
 
-    /// <summary>バッジを作る（最初は出さない）</summary>
     public static ChainBadge Create(Transform parent, SkinId skin, AppTheme theme, Sprite icon)
     {
-        var go = new GameObject("ChainBadge");
+        var go = new GameObject("ChainCounter");
         go.transform.SetParent(parent, false);
         var b = go.AddComponent<ChainBadge>();
-        b._theme = theme;
-        b._icon = icon;
-        b._shape = RewardKit.BadgeShapeOf(skin);
-        b._root = new GameObject("Root").transform;
+        b._color = Color.Lerp(FxKit.MainOf(theme, Color.cyan), Color.white, 0.5f);
+        b._color.a = 1f;
+        b._root = new GameObject("Counter").transform;
         b._root.SetParent(go.transform, false);
+        for (int i = 0; i < b._outline.Length; i++)
+        {
+            var shadow = WorldText.Create(b._root, "", 0.36f, Color.black, RewardKit.OrderBadge, false);
+            shadow.transform.localPosition = new Vector2(i < 2 ? (i == 0 ? -Px : Px) : 0f,
+                i >= 2 ? (i == 2 ? -Px : Px) : 0f);
+            b._outline[i] = shadow;
+        }
+        b._text = WorldText.Create(b._root, "", 0.36f, b._color, RewardKit.OrderBadge + 1, false);
+        b._text.fontStyle = FontStyle.Bold;
+        foreach (var shadow in b._outline) shadow.fontStyle = FontStyle.Bold;
+        b._timer = RuntimeSprites.Show(b._root, FxArt.Square(1), new Vector2(0f, -0.25f),
+            RewardKit.OrderBadge + 1, 1f, "ChainTime");
         b._root.gameObject.SetActive(false);
         return b;
     }
 
-    /// <summary>つながった（2体目から出す）</summary>
     public void Bump(int count, int tier)
     {
         if (count < 2) return;
-        string label = "x" + Mathf.Min(count, 999);
-        if (label.Length != _builtLen) Build(label);
-        else if (_text != null) SetLabel(label);
-        bool up = tier > _tier;
-        _tier = tier;
-        _visible = true;
-        _shrinkAge = -1f;
+        string label = "×" + Mathf.Min(count, 999);
+        _text.text = label;
+        foreach (var shadow in _outline) shadow.text = label;
+        _level = Mathf.Clamp(count - 2, 0, 3);
+        _nextSpark = Time.time + 0.35f;
+        _remaining = 1f;
         _popAge = 0f;
+        _fadeAge = -1f;
+        _visible = true;
+        _burstPending = true;
         _root.gameObject.SetActive(true);
-        if (up && tier >= 1) TwinkleBurst(tier == 2 ? 5 : 3);
     }
 
-    /// <summary>切れた（しぼんで消える）</summary>
     public void Break()
     {
-        _tier = 0;
         if (!_visible) return;
         _visible = false;
-        _shrinkAge = 0f;
+        _burstPending = false;
+        _fadeAge = 0f;
     }
 
-    /// <summary>プレイヤーの頭の上に合わせる（毎フレーム）。timeLeft01：切れるまでの残り（1 → 0）</summary>
     public void Follow(Transform player, int count, float timeLeft01)
     {
-        if (player == null)
+        if (player == null) { _root.gameObject.SetActive(false); return; }
+        var controller = player.GetComponent<PlayerController>();
+        int facing = controller != null ? controller.FacingDirection : 1;
+        Vector2 head = FxKit.HeadOf(player.gameObject, (Vector2)player.position + Vector2.up);
+        // 顔の後ろ側へ寄せ、頭上中央のスキルアイコンと離す。文字自体は左右反転しない。
+        Vector2 pos = FxKit.ClampToView(head + new Vector2(-facing * 1.05f, 0.12f), 1f);
+        transform.position = new Vector3(Mathf.Round(pos.x / Px) * Px, Mathf.Round(pos.y / Px) * Px, 0f);
+        if (_visible) _remaining = timeLeft01;
+        if (_burstPending)
         {
-            _root.gameObject.SetActive(false);
-            return;
-        }
-        Vector2 head = FxKit.HeadOf(player.gameObject, (Vector2)player.position + Vector2.up) + Vector2.up * HeadGap;
-        head = FxKit.ClampToView(head, 1.4f);
-        transform.position = new Vector3(Mathf.Round(head.x / Px) * Px, Mathf.Round(head.y / Px) * Px, 0f);
-        if (_visible) _timerLeft = timeLeft01;
-        if (_timer != null)
-        {
-            float w = Mathf.Max(0f, _timerWidth * _timerLeft);
-            _timer.transform.localScale = new Vector3(Mathf.Max(0.001f, w / Px), 2f, 1f);
-            Vector3 p = _timer.transform.localPosition;
-            _timer.transform.localPosition = new Vector3(-_timerWidth * 0.5f + w * 0.5f, p.y, p.z);
-            _timer.enabled = w > 0.001f;
+            _burstPending = false;
+            int n = 2 + _level * 3;
+            for (int i = 0; i < n; i++)
+            {
+                float angle = (i * 360f / n + 25f) * Mathf.Deg2Rad;
+                Vector2 off = new Vector2(Mathf.Cos(angle) * (0.36f + _level * 0.07f), Mathf.Sin(angle) * 0.25f);
+                Sprite sprite = _level >= 2 && i % 2 == 0 ? FxArt.Twinkle : FxArt.Square(2);
+                FxAnim.Sprite(sprite, pos + off, RewardKit.OrderBadge + 2, 0.25f + _level * 0.06f,
+                    i % 3 == 0 ? Color.white : ChainColor(), 0.5f + _level * 0.08f, "ChainSpark")
+                    .Pop().Rise(0.15f + _level * 0.12f).FadeFrom(0.35f);
+            }
+            if (_level >= 2) FxKit.Ring(pos, _level == 3 ? 1.45f : 0.95f, 0.25f, ChainColor());
+            if (_level == 3) FxKit.Ring(pos, 1.1f, 0.3f, Color.white, 0.08f);
         }
     }
 
     void Update()
     {
         if (_root == null || !_root.gameObject.activeSelf) return;
-        float dt = Time.deltaTime;
-        float tierScale = _tier >= 2 ? 1.3f : _tier == 1 ? 1.15f : 1f;
-        float s = tierScale;
-        if (_shrinkAge >= 0f)
+        _popAge += Time.deltaTime;
+        float fade = 1f;
+        if (_fadeAge >= 0f)
         {
-            _shrinkAge += dt;
-            float k = Mathf.Clamp01(_shrinkAge / ShrinkTime);
-            s = Mathf.Lerp(1f, 0f, k * k);
-            if (k >= 1f)
-            {
-                _shrinkAge = -1f;
-                _root.gameObject.SetActive(false);
-                return;
-            }
+            _fadeAge += Time.deltaTime;
+            fade = 1f - Mathf.Clamp01(_fadeAge / 0.25f);
+            if (fade <= 0f) { _root.gameObject.SetActive(false); return; }
         }
-        else if (_popAge < PopTime)
+        float p = Mathf.Clamp01(_popAge / PopTime);
+        float bounce = Mathf.Sin(p * Mathf.PI);
+        float size = (1f + _level * 0.025f) * (1f + bounce * (0.16f + _level * 0.07f));
+        _root.localScale = Vector3.one * size;
+        _root.localPosition = Vector3.up * (bounce * 0.15f + (1f - fade) * 0.25f);
+        // ×5以降はゆっくり傾いて光る。画面全体の点滅は使わない。
+        float tilt = _level == 3 ? Mathf.Sin(_popAge * 6f) * 4f : bounce * (_level % 2 == 0 ? -3f : 3f);
+        _root.localRotation = Quaternion.Euler(0f, 0f, tilt);
+        if (_visible && _level == 3 && Time.time >= _nextSpark)
         {
-            _popAge += dt;
-            float p = Mathf.Clamp01(_popAge / PopTime);
-            // ポンとはねる：1 → 1.35 → 1
-            s *= p < 0.4f ? Mathf.Lerp(1f, 1.35f, p / 0.4f) : Mathf.Lerp(1.35f, 1f, (p - 0.4f) / 0.6f);
+            _nextSpark = Time.time + 0.4f;
+            Vector2 off = new Vector2(Random.Range(-0.45f, 0.45f), Random.Range(-0.15f, 0.2f));
+            FxAnim.Sprite(FxArt.Twinkle, (Vector2)transform.position + off, RewardKit.OrderBadge + 2,
+                0.3f, ChainColor(), 0.45f, "ChainEmber").Pop().Rise(0.25f).FadeFrom(0.3f);
         }
-        _root.localScale = new Vector3(s, s, 1f);
-
-        // 5〜：まわりにアプリの色のきらめき
-        if (_visible && _tier >= 2 && Time.time >= _nextTwinkle)
-        {
-            _nextTwinkle = Time.time + 0.35f;
-            TwinkleBurst(1);
-        }
+        Color color = ChainColor();
+        color = Color.Lerp(color, Color.white, bounce * 0.75f);
+        color.a = fade;
+        WorldText.SetColor(_text, color);
+        foreach (var shadow in _outline) WorldText.SetColor(shadow, new Color(0.04f, 0.04f, 0.08f, fade));
+        _timer.color = color;
+        float width = 0.6f * _remaining;
+        _timer.transform.localScale = new Vector3(Mathf.Max(0.001f, width / Px), 1f, 1f);
+        _timer.transform.localPosition = new Vector3(-0.3f + width * 0.5f, -0.25f, 0f);
     }
 
-    // ───────── 作る ─────────
-
-    void Build(string label)
+    Color ChainColor()
     {
-        for (int i = _root.childCount - 1; i >= 0; i--) Destroy(_root.GetChild(i).gameObject);
-        _builtLen = label.Length;
-
-        int textPx = Mathf.CeilToInt(label.Length * TextHeight * 18f);
-        bool hasIcon = true;
-        int w = Pad + (hasIcon ? IconPx + 2 : 0) + textPx + Pad + 1;
-        int h = _shape == BadgeShape.Bubble ? BodyPx + 3 : BodyPx;
-        float bodyOffset = _shape == BadgeShape.Bubble ? 1.5f * Px : 0f; // しっぽの分、札のまん中は上
-        float hw = w * Px * 0.5f;
-
-        // 板（下にずらして、札のまん中が原点に来るように）
-        SpriteRenderer body = RuntimeSprites.Show(_root, RewardKit.BadgeSprite(_shape, w, h), new Vector2(0f, -bodyOffset), RewardKit.OrderBadge, 1f, "Body");
-        body.color = Color.white;
-
-        // アイコン（無ければアプリの色の四角）
-        float iconX = -hw + (Pad + IconPx * 0.5f) * Px;
-        if (_icon != null)
+        switch (_level)
         {
-            SpriteRenderer sr = RuntimeSprites.Show(_root, _icon, new Vector2(iconX, 0f), RewardKit.OrderBadge + 1, 1f, "Icon");
-            float sc = RewardKit.IconScale(_icon, IconPx);
-            sr.transform.localScale = new Vector3(sc, sc, 1f);
-        }
-        else
-        {
-            Color main = FxKit.MainOf(_theme, RuntimeSprites.Hex("8AB4F8"));
-            main.a = 1f;
-            SpriteRenderer sq = RuntimeSprites.Show(_root, FxArt.Square(IconPx - 2), new Vector2(iconX, 0f), RewardKit.OrderBadge + 1, 1f, "Icon");
-            sq.color = main;
-        }
-
-        // 飾りの数字（濃い灰色。黄色の上で読める）
-        float textX = -hw + (Pad + IconPx + 2) * Px;
-        _text = WorldText.Create(_root, label, TextHeight, RewardKit.BadgeText, RewardKit.OrderBadge + 2, true, TextAnchor.MiddleLeft, "Label");
-        _text.transform.localPosition = new Vector3(textX, Px * 0.5f, -0.001f);
-
-        // 残りの時間の線（札の下。うすい地＋アプリの色）
-        _timerWidth = (w - 6) * Px;
-        float lineY = -(BodyPx * 0.5f + 2f) * Px - (_shape == BadgeShape.Bubble ? 3f * Px : 0f);
-        SpriteRenderer bg = RuntimeSprites.Show(_root, FxArt.Square(1), new Vector2(0f, lineY), RewardKit.OrderBadge, 1f, "TimerBg");
-        bg.transform.localScale = new Vector3(_timerWidth / Px, 2f, 1f);
-        bg.color = new Color(0f, 0f, 0f, 0.45f);
-        Color line = FxKit.MainOf(_theme, Color.white);
-        line.a = 1f;
-        _timer = RuntimeSprites.Show(_root, FxArt.Square(1), new Vector2(0f, lineY), RewardKit.OrderBadge + 1, 1f, "Timer");
-        _timer.transform.localScale = new Vector3(_timerWidth / Px, 2f, 1f);
-        _timer.color = Color.Lerp(line, Color.white, 0.15f);
-    }
-
-    void SetLabel(string label)
-    {
-        if (_text != null) _text.text = label;
-    }
-
-    void TwinkleBurst(int n)
-    {
-        Color[] acc = FxKit.AccentsOf(_theme, RewardKit.BadgeYellow);
-        float hw = Mathf.Max(0.6f, _builtLen * TextHeight * 0.5f + 0.4f);
-        for (int i = 0; i < n; i++)
-        {
-            Vector2 off = new Vector2(Random.Range(-hw, hw), Random.Range(-0.35f, 0.45f));
-            FxAnim.Sprite(FxArt.Twinkle, (Vector2)transform.position + off, RewardKit.OrderBadge + 3, 0.3f, i % 2 == 0 ? Color.white : acc[i % acc.Length], 1f, "BadgeTwinkle")
-                .Pop().Rise(0.25f).Delay(0.03f * i).FadeFrom(0.4f);
+            case 1: return new Color(1f, 0.87f, 0.2f); // ×3：黄
+            case 2: return new Color(1f, 0.48f, 0.12f); // ×4：オレンジ
+            case 3: return new Color(1f, 0.25f, 0.55f); // ×5〜：ピンク、二重リングと残光
+            default: return new Color(0.35f, 0.9f, 1f); // ×2：水色
         }
     }
+
 }
