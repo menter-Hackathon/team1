@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32015ae998734b8a83700e2a1c61f820, type: 3}
   m_Name: Attack_Ability_AiAssistant
   m_EditorClassIdentifier: 
-  _kind: 5
+  _kind: 8
   _windup: 0
   _activeTime: 0.3
   _cooldown: 8

@@ -29,6 +29,7 @@ public class DesktopScreen : MonoBehaviour
 
     static readonly Color FolderBody = new Color32(0x7c, 0xb7, 0xe8, 0xff);
     static readonly Color FolderTab = new Color32(0x5a, 0x95, 0xcc, 0xff);
+    static Color FolderShine => MacUi.FolderShine;
     static readonly Color InfectTint = new Color(1f, 0.55f, 1f, 1f);
     static readonly string[] Folders = { "書類", "スクショ", "ダウンロード" };
 
@@ -57,6 +58,27 @@ public class DesktopScreen : MonoBehaviour
         IsDone = false;
         _visible = true;
         MacDesktopWallpaper.Ensure(this,()=>_visible&&_run!=null);
+        _sounded = 0;
+        GameAudio.PlayBgm("bgm_desktop");
+    }
+
+    int _sounded; // 鳴らした音（ビット）。早送りで時刻が飛んでも、1回ずつ鳴らす
+
+    // 音（2026-11-19）：元に戻る・ラスボスが現れて乱れる・クリック・ウィンドウが開く の瞬間に1回ずつ
+    void PlaySounds()
+    {
+        float t = T;
+        if (_restored >= 0 && t >= RestoreAt) SoundOnce(1, "desktop_cure");
+        if (TargetIsFinal && t >= FinalAppearAt) SoundOnce(2, "desktop_glitch");
+        if (_target >= 0 && _openAt < 0f && t >= TargetStart + CursorTime) SoundOnce(4, "desktop_click");
+        if (_openAt >= 0f) SoundOnce(8, "desktop_open");
+    }
+
+    void SoundOnce(int bit, string key)
+    {
+        if ((_sounded & bit) != 0) return;
+        _sounded |= bit;
+        GameAudio.Event(key);
     }
 
     public void Hide()

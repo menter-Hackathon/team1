@@ -22,6 +22,10 @@ public class SkillDefinition : ScriptableObject
     [SerializeField] AppTheme _theme;
     [Tooltip("【仮】見た目のスキン（どのアプリの絵か。2026-11-18：スキルの見た目）。None ならカテゴリ・アプリ専用の能力から決める（SkinTables.ForSkill）")]
     [SerializeField] SkinId _skin = SkinId.None;
+    [Tooltip("使うたびに順番に切り替わる攻撃（Office のグラフ）。空なら毎回「攻撃データ」を使う。クールタイムは使った攻撃データの「間隔」")]
+    [SerializeField] AttackData[] _attackCycle;
+    [Tooltip("装備している間ずっと効く効果（Steam の実績解除）。空なら無し")]
+    [SerializeField] SkillPassive _passive;
 
     public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
     public Sprite Icon => _icon;
@@ -30,6 +34,19 @@ public class SkillDefinition : ScriptableObject
     public AppTheme Theme => _theme;
     /// <summary>この能力に持たせたスキン（その場で作る能力は、作ったアプリの名前から）。無ければ None</summary>
     public SkinId Skin => _skin;
+    /// <summary>使うたびに順番に切り替わる攻撃。無ければ空</summary>
+    public AttackData[] AttackCycle => _attackCycle ?? System.Array.Empty<AttackData>();
+    public bool HasAttackCycle => _attackCycle != null && _attackCycle.Length > 0;
+    /// <summary>装備している間ずっと効く効果。無ければ null</summary>
+    public SkillPassive Passive => _passive;
+
+    /// <summary>turn 回目（0始まり）に使ったときの攻撃データ</summary>
+    public AttackData GetAttack(int turn)
+    {
+        if (!HasAttackCycle) return _attack;
+        int n = _attackCycle.Length;
+        return _attackCycle[((turn % n) + n) % n];
+    }
 
     /// <summary>ゲームの中で能力を作る（対応表に無いアプリの能力。2026-11-17）。アセットにはしない。skin：見た目のスキン（2026-11-18）</summary>
     public static SkillDefinition CreateRuntime(string displayName, Sprite icon, SkillCategory category, AttackData attack, AppTheme theme, SkinId skin = SkinId.None)

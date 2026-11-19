@@ -73,6 +73,11 @@ public class AppEntry
     public BossProfile Profile;
     [Tooltip("【仮】本物のこのアプリのときだけ使うボスの設定（2026-11-19：Chrome・VS Code の専用の技）。空なら Profile。代用ボスは Profile を借りるので、こちらは使わない")]
     public BossProfile OwnProfile;
+    [Tooltip("オン：対応表に無いアプリの代用ボスの、ひな形にしない（Office・Unity・Steam のボスは、そのアプリ専用の技なので。2026-11-18）")]
+    public bool ExcludeFromStandIn;
+    [Tooltip("オン：着ているウィンドウとゲージの横のアイコンを、Mac の本物のアプリのアイコンから作る（代用ボス・Terminal と同じ作り方。2026-11-19）。" +
+             "ステージの色が空なら、アイコンの色を使う")]
+    public bool IconLook;
     [Tooltip("ボスが出てくる位置（部屋の床の真ん中が (0, 0)）")]
     public Vector2 SpawnPosition;
     [Tooltip("このアプリのステージのシーン名（Build Settings に登録しておく）")]

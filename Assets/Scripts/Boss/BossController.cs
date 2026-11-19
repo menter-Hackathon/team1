@@ -88,7 +88,7 @@ public class BossController : MonoBehaviour, IWarpable
     /// <summary>追い出されたウイルス本体（逃げている間だけ表示）</summary>
     public Health EjectedVirus => _ejectedVirus;
     /// <summary>エラーで止まっている間 true（2026-11-19）</summary>
-    public bool IsStunned { get; private set; }
+    bool _inError;
     /// <summary>第2形態の大技を出している途中なら true</summary>
     public bool IsUsingSpecial => _inSpecial;
     /// <summary>エラーで止まったとき（止まる秒数）。「error」の表示用</summary>
@@ -224,7 +224,7 @@ public class BossController : MonoBehaviour, IWarpable
         _stunUntil = 0f;
         _brain = _transition = null;
         IsMoving = false;
-        IsStunned = false;
+        _inError = false;
         _inSpecial = false;
         if (_runner != null) _runner.Cancel();
     }
@@ -250,10 +250,10 @@ public class BossController : MonoBehaviour, IWarpable
         _stunUntil = Time.time + seconds;
     }
 
-    /// <summary>ひるんでいるか</summary>
-    public bool IsStunned => State == BossState.Fighting && Time.time < _stunUntil;
-    /// <summary>ひるみの残り秒数</summary>
-    public float StunRemaining => IsStunned ? _stunUntil - Time.time : 0f;
+    /// <summary>ひるんでいるか（キットの Stun でひるんでいる間、またはエラーで止まっている間）</summary>
+    public bool IsStunned => _inError || (State == BossState.Fighting && Time.time < _stunUntil);
+    /// <summary>ひるみ（キットの Stun）の残り秒数</summary>
+    public float StunRemaining => State == BossState.Fighting && Time.time < _stunUntil ? _stunUntil - Time.time : 0f;
     /// <summary>技の途中か（予告も含む）</summary>
     public bool InMove => _runner != null && _runner.IsRunning;
 
@@ -281,9 +281,9 @@ public class BossController : MonoBehaviour, IWarpable
             BossPhaseSettings phase = _profile.GetPhase(Phase);
             // 第2形態になって最初の1回は、大技（設定されていれば。1回の戦いで1回だけ）
             bool special = Phase >= 2 && !_openingDone && _profile.Phase2OpeningMove != null;
-            AttackData move = special ? _profile.Phase2OpeningMove : PickMove(phase.Moves);
+            AttackData move = special ? _profile.Phase2OpeningMove
+                : phase.Sequential ? PickSequential(phase.Moves) : PickMove(phase.Moves);
             if (special) _openingDone = true;
-            AttackData move = phase.Sequential ? PickSequential(phase.Moves) : PickMove(phase.Moves);
             if (move != null)
             {
                 if (!special) _lastMove = move;
@@ -334,6 +334,15 @@ public class BossController : MonoBehaviour, IWarpable
         return candidates[UnityEngine.Random.Range(0, candidates.Count)];
     }
 
+    /// <summary>技を一覧の順に出す（BossPhaseSettings.Sequential のとき）</summary>
+    AttackData PickSequential(AttackData[] moves)
+    {
+        if (moves == null || moves.Length == 0) return null;
+        AttackData move = moves[_sequenceIndex % moves.Length];
+        _sequenceIndex = (_sequenceIndex + 1) % moves.Length;
+        return move;
+    }
+
     IEnumerator Reposition()
     {
         switch (_profile.Movement)
@@ -366,12 +375,10 @@ public class BossController : MonoBehaviour, IWarpable
                 MovementStarted?.Invoke();
                 while (((Vector2)transform.position - target).sqrMagnitude > 0.0001f)
                 {
-                    Vector2 p = Vector2.MoveTowards(transform.position, target, _profile.HoverSpeed * Time.deltaTime);
-                    transform.position = new Vector3(p.x, p.y, transform.position.z);
                     if (IsStunned) { yield return null; continue; } // 移動の途中でひるんだら、その場で止まる（2026-11-19）
-                    Vector3 p = transform.position;
-                    p.x = Mathf.MoveTowards(p.x, targetX, _profile.HoverSpeed * Mathf.Max(0.05f, MoveSpeedMultiplier * GameBuffs.BossSpeed) * Time.deltaTime);
-                    transform.position = p;
+                    float speed = _profile.HoverSpeed * Mathf.Max(0.05f, MoveSpeedMultiplier * GameBuffs.BossSpeed);
+                    Vector2 p = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
+                    transform.position = new Vector3(p.x, p.y, transform.position.z);
                     yield return null;
                 }
                 IsMoving = false;
@@ -418,10 +425,10 @@ public class BossController : MonoBehaviour, IWarpable
 
     IEnumerator ErrorRoutine(float duration)
     {
-        IsStunned = true;
+        _inError = true;
         ErrorRaised?.Invoke(duration);
         if (duration > 0f) yield return new WaitForSeconds(duration);
-        IsStunned = false;
+        _inError = false;
         _nextErrorAt = Time.time + _profile.ErrorCooldown;
         yield return Brain(_profile.GetPhase(Phase).WaitAfterAttack * 0.5f);
     }
