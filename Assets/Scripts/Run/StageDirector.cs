@@ -80,6 +80,8 @@ public class StageDirector : MonoBehaviour
             if (Plan.IsStandIn) Boss.name = $"StandIn_{Plan.App.DisplayName}";
             AppBossLook.ApplyWindow(Boss, Plan.Visual, Plan.Theme, Plan.App.DisplayName);
         }
+        // アプリの見た目を受け取る部品（AI チャットのボス：アイコンの体・アプリの色の煙と技。2026-11-19）
+        foreach (var look in Boss.GetComponentsInChildren<IBossAppLook>(true)) look.ApplyAppLook(Plan.App.DisplayName, Plan.Visual, Plan.App.Theme);
         if (_player != null && Boss.TryGetComponent(out AttackRunner runner)) runner.Target = _player.transform;
         // ボスの攻撃の見た目（スキン）：そのステージのアプリから決める。色とアイコンも（2026-11-18：スキルの見た目 1-1）
         if (Boss.TryGetComponent(out AttackRunner bossRunner))

@@ -1359,6 +1359,813 @@ def make_category_abilities():
     save(orb, "Attacks/Bullet_Orb.png")
 
 
+# ───────── AI の能力「AIアシスタント」（2026-11-18） ─────────
+
+AI_CYAN = C("5ff0ff")     # 目・レーザーの芯のまわり
+AI_CYAN_D = C("3cc8e6")   # 羽の影・レーザーの外側
+AI_WING = C("bff8ff")     # 羽
+AI_NAVY = C("10162a")     # 画面
+
+
+def line_points(x0, y0, x1, y1):
+    """(x0, y0) から (x1, y1) までの点（ブレゼンハム）"""
+    pts = []
+    dx, dy = abs(x1 - x0), -abs(y1 - y0)
+    sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
+    err = dx + dy
+    while True:
+        pts.append((x0, y0))
+        if x0 == x1 and y0 == y1:
+            break
+        e2 = 2 * err
+        if e2 >= dy:
+            err += dy
+            x0 += sx
+        if e2 <= dx:
+            err += dx
+            y0 += sy
+    return pts
+
+
+def ai_wing(im, root_x, root_y, tip_x, tip_y):
+    """羽：根元から先へ細くなる2枚重ね（上が明るい羽、下が影の羽）"""
+    main = line_points(root_x, root_y, tip_x, tip_y)
+    for i, (x, y) in enumerate(main):
+        put(im, x, y, WHITE if i < len(main) - 1 else AI_WING)
+        if i < len(main) - 1:
+            put(im, x, y + 1, AI_WING)
+        if i < len(main) - 2:
+            put(im, x, y + 2, AI_CYAN_D)
+    # 下の短い羽（羽根の重なり）
+    mid_x = root_x + (tip_x - root_x) * 2 // 3
+    mid_y = root_y + (tip_y - root_y) * 2 // 3 + 3
+    for (x, y) in line_points(root_x, root_y + 2, mid_x, mid_y):
+        put(im, x, y, AI_CYAN_D)
+
+
+def ai_drone_frame(flap, light):
+    """
+    AI ロボット1コマ（線を付ける前は 24×11。右向き）。
+    横長の長方形の体に画面（目）、左右に羽、頭にアンテナ、下に浮かぶための光。flap：羽の先の上下（-4〜2）
+    """
+    im = new(24, 11)
+    # 羽（体の後ろ）
+    ai_wing(im, 5, 5, 1, 5 + flap)
+    ai_wing(im, 18, 5, 22, 5 + flap)
+    # 体（横長の長方形）
+    rect(im, 6, 3, 17, 9, WHITE)
+    vline(im, 17, 4, 9, WA2)        # 右の影
+    hline(im, 6, 17, 9, WA2)        # 下の影
+    # 画面と目（右向きなので、目は少し右寄り）
+    rect(im, 7, 4, 15, 8, AI_NAVY)
+    for ex in (11, 14):
+        put(im, ex, 5, AI_CYAN)
+        put(im, ex, 6, AI_CYAN)
+    # アンテナ（先が点滅する）
+    vline(im, 11, 1, 2, W8B)
+    put(im, 11, 0, AI_CYAN if light else ORANGE)
+    # 浮かぶための光
+    put(im, 11, 10, C("5ff0ff", 200))
+    put(im, 12, 10, C("5ff0ff", 200))
+    return outline_alpha(im)
+
+
+def make_ai_assistant():
+    # 羽ばたき4コマ（線込みで 26×13。上→水平→下→水平）
+    flaps = (-4, -1, 2, -1)
+    frames = [ai_drone_frame(f, i % 2 == 0) for i, f in enumerate(flaps)]
+    save(sheet(frames), "Attacks/Summon_AiDrone.png")
+
+    # レーザー（4×6。横のどの列も同じなので、横に伸ばしてもドットが崩れない。太さ6ドット＝1/3マス）
+    beam = new(4, 6)
+    for y, c in enumerate((C("3cc8e6", 120), C("5ff0ff", 230), WHITE, WHITE, C("5ff0ff", 230), C("3cc8e6", 120))):
+        hline(beam, 0, 3, y, c)
+    save(beam, "Attacks/Fx_Laser.png")
+
+    # アイコン（16×16）：羽の生えたロボットが、下のウイルスへレーザーを撃っている
+    im = new(16, 16, WHITE)
+    outline_rect(im, 0, 0, 15, 15, K)
+    for (x, y) in ((1, 3), (2, 4), (3, 5)):    # 左の羽
+        put(im, x, y, AI_CYAN_D); put(im, x, y - 1, AI_WING)
+    for (x, y) in ((14, 3), (13, 4), (12, 5)):  # 右の羽
+        put(im, x, y, AI_CYAN_D); put(im, x, y - 1, AI_WING)
+    rect(im, 4, 3, 11, 8, K)                    # 体（横長）
+    rect(im, 5, 4, 10, 7, AI_NAVY)
+    put(im, 7, 5, AI_CYAN); put(im, 9, 5, AI_CYAN)
+    put(im, 7, 2, K); put(im, 7, 1, ORANGE)     # アンテナ
+    for y in range(9, 12):                       # レーザー（真下へ）
+        put(im, 7, y, WHITE); put(im, 6, y, AI_CYAN); put(im, 8, y, AI_CYAN)
+    rect(im, 5, 12, 10, 14, S0)                  # ウイルス
+    put(im, 6, 13, RED); put(im, 9, 13, RED)
+    put(im, 4, 13, S1); put(im, 11, 13, S1)
+    save(im, "UI/Icon_AiAssistant.png")
+
+
+# ───────── AI チャットのボス（2026-11-19） ─────────
+# 技の絵（レーザー・電流・ミニロボット）は、ゲームの中でアプリの色に塗り替える（ThemeRecolor.Effect：明るさを4段に分けて置き換える）。
+# なので、色ではなく明るさの差で描く（暗い線・中間・明るい・ほぼ白）
+
+PIX3 = {  # 3×5 の小さな文字（ERROR 用）
+    "E": ["###", "#..", "##.", "#..", "###"],
+    "R": ["##.", "#.#", "##.", "#.#", "#.#"],
+    "O": [".#.", "#.#", "#.#", "#.#", ".#."],
+}
+
+
+def text3(im, x, y, s, c):
+    for ch in s:
+        rows = PIX3.get(ch)
+        if rows:
+            for yy, r in enumerate(rows):
+                for xx, v in enumerate(r):
+                    if v == "#":
+                        put(im, x + xx, y + yy, c)
+        x += 4
+
+
+def ai_mini_bot(frame):
+    """ミニロボット（12×10、線込みで 14×12）。四角い体に1つ目、小さな羽"""
+    im = new(12, 10)
+    up = frame % 2 == 0
+    # 羽
+    for x, y in ((0, 2 if up else 4), (1, 3 if up else 4)):
+        put(im, x, y, C("cfcfcf"))
+    for x, y in ((11, 2 if up else 4), (10, 3 if up else 4)):
+        put(im, x, y, C("cfcfcf"))
+    rect(im, 2, 2, 9, 8, C("9a9a9a"))
+    hline(im, 3, 8, 2, WHITE)
+    rect(im, 3, 4, 8, 6, C("3a3a3a"))
+    rect(im, 5, 4, 6, 5, WHITE)      # 目
+    put(im, 5, 9, C("cfcfcf")); put(im, 6, 9, C("cfcfcf"))  # 浮かぶ光
+    put(im, 6, 0, WHITE); put(im, 6, 1, C("6a6a6a"))         # アンテナ
+    return outline_alpha(im, C("1a1a1a"))
+
+
+def make_ai_boss():
+    # ミニロボット（2コマ）
+    save(sheet([ai_mini_bot(i) for i in range(2)]), "Attacks/Summon_AiMini.png")
+
+    # レーザー（4×16。横のどの列も同じ。外側ほど暗く、芯は白。太さは実行中に伸び縮みさせる）
+    beam = new(4, 16)
+    prof = [(0x50, 90), (0x70, 150), (0x90, 200), (0xa8, 230), (0xc8, 255), (0xe0, 255), (0xf4, 255), (0xff, 255)]
+    for y in range(16):
+        v, a = prof[min(y, 15 - y)]
+        hline(beam, 0, 3, y, (v, v, v, a))
+    save(beam, "Attacks/Fx_AiLaser.png")
+
+    # 電流（3コマ、18×10。左右の端は真ん中の高さなので、横に並べるとつながる）
+    rng = random.Random(1119)
+    frames = []
+    for f in range(3):
+        im = new(18, 10)
+        ys = [5] + [rng.randint(2, 7) for _ in range(5)] + [5]
+        xs = [0, 3, 6, 9, 12, 15, 17]
+        for i in range(len(xs) - 1):
+            for (x, y) in line_points(xs[i], ys[i], xs[i + 1], ys[i + 1]):
+                put(im, x, y, WHITE)
+                if im.getpixel((x, max(0, y - 1)))[3] == 0:
+                    put(im, x, y - 1, (0x9a, 0x9a, 0x9a, 150))
+                if im.getpixel((x, min(9, y + 1)))[3] == 0:
+                    put(im, x, y + 1, (0x9a, 0x9a, 0x9a, 150))
+        # 枝分かれの小さな火花
+        for _ in range(2):
+            bx = rng.randint(2, 15)
+            by = rng.choice([1, 8])
+            put(im, bx, by, (0xcf, 0xcf, 0xcf, 220))
+        frames.append(im)
+    save(sheet(frames), "Attacks/Fx_AiSpark.png")
+
+    # ERROR のウィンドウ（34×16）：赤いタイトルバー・閉じるボタン・白い中に「!」と赤い「ERROR」
+    im = new(34, 16, WHITE)
+    outline_rect(im, 0, 0, 33, 15, K)
+    rect(im, 1, 1, 32, 4, C("d32f2f"))
+    rect(im, 28, 1, 32, 4, ORANGE)
+    put(im, 29, 2, WHITE); put(im, 31, 2, WHITE); put(im, 30, 3, WHITE)
+    rect(im, 1, 5, 32, 14, C("fff3f3"))
+    # 「!」のマーク（黄色の丸に黒い !）
+    ellipse(im, 6.0, 10.0, 3.2, 3.2, C("ffd23f"))
+    vline(im, 5, 8, 10, K); vline(im, 6, 8, 10, K)
+    put(im, 5, 12, K); put(im, 6, 12, K)
+    text3(im, 12, 8, "ERROR", C("c00000"))
+    save(im, "Attacks/Fx_AiError.png")
+
+    # アイコンが無いときの体（40×40）：角の丸い紺の四角に、白い吹き出しと考え中の点
+    im = new(40, 40)
+    for y in range(40):
+        for x in range(40):
+            dx = max(0, abs(x - 19.5) - 14.5)
+            dy = max(0, abs(y - 19.5) - 14.5)
+            if dx * dx + dy * dy <= 25:
+                put(im, x, y, AI_NAVY)
+    ellipse(im, 20, 18, 12.5, 9.5, WHITE)
+    for (x, y) in line_points(12, 24, 9, 31):
+        put(im, x, y, WHITE); put(im, x + 1, y, WHITE); put(im, x + 2, y - 1, WHITE)
+    for cx in (14, 20, 26):
+        rect(im, cx - 1, 17, cx + 1, 19, AI_CYAN_D)
+    save(outline_alpha(im), "Bosses/Boss_AiDefaultIcon.png")
+
+
+# ───────── チャットアプリの能力（2026-11-19：Slack・Discord・LINE） ─────────
+# メッセージは1行分の厚み（中くらいの長さ）。中身の文字は描かない。
+# 1つ目（Head）と、続けて送った2つ目以降（Body）の2枚。Slack・Discord は重ねて並べると1つにつながる（Body は上の線が無い）
+
+LINE_G = C("7ddb4e")
+LINE_GL = C("aaee86")
+LINE_GD = C("2f7a1f")
+SLACK_P = C("4a154b")
+SLACK_PL = C("7c3085")
+SLACK_COLORS = (C("e01e5a"), C("ecb22e"), C("2eb67d"), C("36c5f0"))
+DISC_BG = C("1e2448")
+DISC_LINE = C("0c0f26")
+DISC_B = C("5865f2")
+DISC_BL = C("a5adff")
+
+
+def round_box(im, x0, y0, x1, y1, fill, line, r=2):
+    """角の丸い四角（線あり）"""
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            dx = max(x0 + r - x, 0, x - (x1 - r))
+            dy = max(y0 + r - y, 0, y - (y1 - r))
+            if dx * dx + dy * dy > r * r:
+                continue
+            edge = (x in (x0, x1) or y in (y0, y1) or
+                    (dx > 0 and dy > 0 and (dx + 1) ** 2 + (dy + 1) ** 2 > r * r + 1))
+            put(im, x, y, line if edge else fill)
+
+
+def make_chat_apps():
+    # 大きさ（2026-11-19：3つ積むと、3つとも高さ 26 ドット・幅 38 ドット。高さは最初の Slack・Discord の大きさにそろえた）
+    W = 38
+    LINE_H = 8              # LINE：吹き出し 8 ドット × 3 ＋ すき間 1 ドット × 2 ＝ 26
+    HEAD_H, BODY_H = 10, 9  # Slack・Discord：10 ＋ 9 × 2 − 重ね 2 ＝ 26
+
+    # ── LINE：自分が送った緑の吹き出し。1つ目だけ、プレイヤーの方（右向きのとき左上）にしっぽ ──
+    #    （右上にしっぽを付けて描いてから、左右を反転する。左を向いたときは、ゲームの中でもう一度反転する）
+    for tail in (True, False):
+        im = new(W, LINE_H)
+        round_box(im, 0, 0, W - 5, LINE_H - 1, LINE_G, LINE_GD, 2)
+        hline(im, 3, W - 8, 1, LINE_GL)              # つや
+        if tail:
+            # 右上のしっぽ：吹き出しの右の端から、右上へとがった三角形
+            for y in range(0, 4):
+                x_end = W - 1 - y
+                for x in range(W - 6, x_end + 1):
+                    edge = y == 0 or x == x_end
+                    put(im, x, y, LINE_GD if edge else LINE_G)
+            for y in range(1, 4):
+                put(im, W - 5, y, LINE_G)  # 吹き出しとつなげる（右の線を消す）
+        save(im.transpose(Image.FLIP_LEFT_RIGHT), f"Attacks/Chat_Line_{'Head' if tail else 'Body'}.png")
+
+    # ── Slack：白いメッセージに、ワンポイントの紫（アバター）。続けて送ると1つの枠につながる ──
+    def slack_row(head):
+        h = HEAD_H if head else BODY_H
+        im = new(W, h, WHITE)
+        vline(im, 0, 0, h - 1, C("3b3b3b")); vline(im, W - 1, 0, h - 1, C("3b3b3b"))
+        hline(im, 0, W - 1, h - 1, C("3b3b3b"))
+        if head:
+            hline(im, 0, W - 1, 0, C("3b3b3b"))
+            rect(im, 2, 2, 6, 6, SLACK_P)              # アバター（紫）
+            put(im, 3, 3, SLACK_PL)
+            rect(im, 9, 2, 18, 2, C("1d1c1d"))         # 名前（太字）
+            rect(im, 20, 2, 22, 2, C("9a9a9a"))        # 時刻
+            rect(im, 9, 5, W - 5, 5, C("c4c4c4"))      # 本文
+        else:
+            rect(im, 9, 4, W - 8, 4, C("c4c4c4"))      # 本文（行の真ん中）
+        return im
+    save(slack_row(True), "Attacks/Chat_Slack_Head.png")
+    save(slack_row(False), "Attacks/Chat_Slack_Body.png")
+
+    # ── Discord：深い青に、ワンポイントの Discord の青（アバター）。続けて送ると1つの枠につながる ──
+    def disc_row(head):
+        h = HEAD_H if head else BODY_H
+        im = new(W, h, DISC_BG)
+        vline(im, 0, 0, h - 1, DISC_LINE); vline(im, W - 1, 0, h - 1, DISC_LINE)
+        hline(im, 0, W - 1, h - 1, DISC_LINE)
+        if head:
+            hline(im, 0, W - 1, 0, DISC_LINE)
+            rect(im, 2, 2, 6, 6, DISC_B)               # アバター（丸。角を削る）
+            for cx, cy in ((2, 2), (6, 2), (2, 6), (6, 6)):
+                put(im, cx, cy, DISC_BG)
+            put(im, 3, 4, WHITE); put(im, 5, 4, WHITE)
+            rect(im, 9, 2, 18, 2, C("e6e8ff"))         # 名前
+            rect(im, 20, 2, 22, 2, C("6b72a8"))        # 時刻
+            rect(im, 9, 5, W - 5, 5, C("8e95c9"))      # 本文
+        else:
+            rect(im, 9, 4, W - 8, 4, C("8e95c9"))      # 本文（行の真ん中）
+        vline(im, 1, 1 if head else 0, h - 2, DISC_B)  # 左の端に細い青の線
+        return im
+    save(disc_row(True), "Attacks/Chat_Discord_Head.png")
+    save(disc_row(False), "Attacks/Chat_Discord_Body.png")
+
+    # ── 当たったときのエフェクト（4コマ、16×16） ──
+    def frames_of(draw):
+        out = []
+        for i in range(4):
+            im = new(16, 16)
+            draw(im, i)
+            out.append(im)
+        return sheet(out)
+
+    def line_fx(im, i):  # 緑の輪が広がり、小さな吹き出しが飛ぶ
+        r = 2.5 + i * 1.8
+        for a in range(0, 360, 10):
+            x = 7.5 + r * math.cos(math.radians(a)); y = 7.5 + r * math.sin(math.radians(a))
+            put(im, int(round(x)), int(round(y)), LINE_G if i < 3 else LINE_GL)
+        if i < 3:
+            for k, (dx, dy) in enumerate(((1, -1), (-1, -1), (1, 1))):
+                d = 3 + i * 2
+                bx, by = 7 + dx * d, 7 + dy * d
+                rect(im, bx - 1, by - 1, bx + 1, by, WHITE)
+                put(im, bx + 1, by + 1, WHITE)
+        if i == 0:
+            rect(im, 6, 6, 9, 9, WHITE)
+
+    def slack_fx(im, i):  # 4色の点が十字に飛び散る
+        d = 1 + i * 2
+        for k, (dx, dy) in enumerate(((0, -1), (1, 0), (0, 1), (-1, 0))):
+            c = SLACK_COLORS[k]
+            x, y = 7 + dx * d, 7 + dy * d
+            size = 2 if i < 3 else 1
+            rect(im, x, y, x + size - 1, y + size - 1, c)
+            if i in (1, 2):  # 斜めの小さな点
+                put(im, 7 + (dx - dy) * (d - 1), 7 + (dy + dx) * (d - 1), c)
+        if i == 0:
+            rect(im, 6, 6, 9, 9, SLACK_P)
+
+    def disc_fx(im, i):  # 青い星がはじけ、きらめきが散る
+        d = 2 + i * 2
+        for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0)):
+            for t in range(1, d + 1):
+                c = WHITE if t < d - 1 else (DISC_BL if i < 2 else DISC_B)
+                put(im, 7 + dx * t, 7 + dy * t, c)
+        for dx, dy in ((1, 1), (-1, 1), (1, -1), (-1, -1)):
+            put(im, 7 + dx * (d - 1), 7 + dy * (d - 1), DISC_BL)
+        if i < 2:
+            rect(im, 6, 6, 8, 8, DISC_B if i else WHITE)
+
+    save(frames_of(line_fx), "Attacks/Fx_ChatHit_Line.png")
+    save(frames_of(slack_fx), "Attacks/Fx_ChatHit_Slack.png")
+    save(frames_of(disc_fx), "Attacks/Fx_ChatHit_Discord.png")
+
+    # ── 能力のアイコン（16×16）：吹き出しが3つ重なって飛んでいく ──
+    def icon(bg, bubble, line, accent):
+        im = new(16, 16, bg)
+        outline_rect(im, 0, 0, 15, 15, K)
+        for k, y in enumerate((3, 7, 11)):
+            x0 = 3 + k
+            round_box(im, x0, y - 1, x0 + 8, y + 1, bubble, line, 1)
+            put(im, x0 + 9 + (1 if k else 0), y, accent)
+        return im
+    save(icon(WHITE, LINE_G, LINE_GD, LINE_GD), "UI/Icon_ChatLine.png")
+    save(icon(WHITE, WHITE, C("3b3b3b"), SLACK_P), "UI/Icon_ChatSlack.png")
+    save(icon(C("2b3160"), DISC_BG, DISC_LINE, DISC_B), "UI/Icon_ChatDiscord.png")
+
+
+# ───────── チャットのボス（2026-11-19） ─────────
+# ボスのメッセージは、プレイヤーの物より大きく（約1.5倍）、色を濁らせて、ウイルスに汚れたようなノイズを入れる
+
+DIGIT3 = {
+    "1": [".#.", "##.", ".#.", ".#.", "###"],
+    "2": ["##.", "..#", ".#.", "#..", "###"],
+    "3": ["##.", "..#", ".#.", "..#", "##."],
+}
+
+
+def corrupt(im, seed, colors, count):
+    """ウイルスに汚れたようなノイズ：不透明な所に、暗い点と短い横線を散らす"""
+    rng = random.Random(seed)
+    w, h = im.size
+    for _ in range(count):
+        x, y = rng.randrange(2, w - 2), rng.randrange(1, h - 1)
+        if im.getpixel((x, y))[3] == 0:
+            continue
+        c = rng.choice(colors)
+        put(im, x, y, c)
+        if rng.random() < 0.4 and im.getpixel((min(w - 1, x + 1), y))[3] > 0:
+            put(im, x + 1, y, c)
+
+
+def make_chat_boss():
+    W = 56
+    LINE_H = 13             # 13 × 3 ＋ すき間 1 × 2 ＝ 41
+    HEAD_H, BODY_H = 16, 14  # 16 ＋ 14 × 2 − 重ね 2 ＝ 42
+    GRIME = (C("1a1020"), C("2a1a30"), C("5a1020"))
+
+    # ── LINE（濁った緑の吹き出し。1つ目だけ、ボスの方にしっぽ） ──
+    lg, lgl, lgd = C("587a3e"), C("7d9a5e"), C("1f2c16")
+    for tail in (True, False):
+        im = new(W, LINE_H)
+        round_box(im, 0, 0, W - 6, LINE_H - 1, lg, lgd, 3)
+        hline(im, 4, W - 10, 1, lgl)
+        if tail:
+            for y in range(0, 5):
+                x_end = W - 1 - y
+                for x in range(W - 7, x_end + 1):
+                    put(im, x, y, lgd if (y == 0 or x == x_end) else lg)
+            for y in range(1, 5):
+                put(im, W - 6, y, lg)
+        corrupt(im, 11 if tail else 12, GRIME, 14)
+        save(im.transpose(Image.FLIP_LEFT_RIGHT), f"Attacks/ChatBoss_Line_{'Head' if tail else 'Body'}.png")
+
+    # ── Slack（くすんだ白に、濁った紫） ──
+    def slack_row(head):
+        h = HEAD_H if head else BODY_H
+        im = new(W, h, C("b8b0a8"))
+        out = C("1c1a1c")
+        vline(im, 0, 0, h - 1, out); vline(im, W - 1, 0, h - 1, out)
+        hline(im, 0, W - 1, h - 1, out)
+        if head:
+            hline(im, 0, W - 1, 0, out)
+            rect(im, 3, 3, 11, 11, C("2e0d33"))
+            put(im, 4, 4, C("5a2a62")); put(im, 5, 4, C("5a2a62"))
+            rect(im, 14, 4, 28, 5, C("2a2628"))
+            rect(im, 31, 5, 35, 5, C("7a726c"))
+            rect(im, 14, 9, W - 7, 10, C("8a827c"))
+        else:
+            rect(im, 14, 6, W - 11, 7, C("8a827c"))
+        corrupt(im, 21 if head else 22, GRIME, 16)
+        return im
+    save(slack_row(True), "Attacks/ChatBoss_Slack_Head.png")
+    save(slack_row(False), "Attacks/ChatBoss_Slack_Body.png")
+
+    # ── Discord（よどんだ深い青に、くすんだ Discord の青） ──
+    def disc_row(head):
+        h = HEAD_H if head else BODY_H
+        im = new(W, h, C("12152c"))
+        out = C("05060f")
+        vline(im, 0, 0, h - 1, out); vline(im, W - 1, 0, h - 1, out)
+        hline(im, 0, W - 1, h - 1, out)
+        if head:
+            hline(im, 0, W - 1, 0, out)
+            ellipse(im, 7.5, 7.5, 4.6, 4.6, C("383f9a"))
+            put(im, 6, 7, C("c0c4e8")); put(im, 9, 7, C("c0c4e8"))
+            rect(im, 14, 4, 28, 5, C("aab0d8"))
+            rect(im, 31, 5, 35, 5, C("4a5080"))
+            rect(im, 14, 9, W - 7, 10, C("5e6496"))
+        else:
+            rect(im, 14, 6, W - 11, 7, C("5e6496"))
+        vline(im, 1, 1 if head else 0, h - 2, C("383f9a"))
+        corrupt(im, 31 if head else 32, (C("000000"), C("2a0a18"), C("5a1020")), 16)
+        return im
+    save(disc_row(True), "Attacks/ChatBoss_Discord_Head.png")
+    save(disc_row(False), "Attacks/ChatBoss_Discord_Body.png")
+
+    # ── そのほかのアプリ用（灰色。ゲームの中でアプリの色に塗り替える。吹き出しの形） ──
+    for head in (True, False):
+        im = new(W, LINE_H)
+        round_box(im, 0, 0, W - 1, LINE_H - 1, C("9a9a9a"), C("2a2a2a"), 3)
+        hline(im, 4, W - 5, 1, C("cfcfcf"))
+        rect(im, 6, 5, W - 12 if head else W - 18, 6, C("6a6a6a"))
+        corrupt(im, 41 if head else 42, (C("3a3a3a"), C("4a4a4a")), 14)
+        save(im, f"Attacks/ChatBoss_Generic_{'Head' if head else 'Body'}.png")
+
+    # ── チャットbot（歩く2コマ、16×18。原点は足元。灰色：ゲームの中でアプリの色に塗り替える） ──
+    frames = []
+    for f in range(2):
+        im = new(16, 18)
+        # 頭（吹き出しの形の画面）
+        round_box(im, 1, 1, 14, 10, C("cfcfcf"), C("2a2a2a"), 2)
+        rect(im, 3, 3, 12, 8, C("3a3a3a"))
+        put(im, 5, 5, WHITE); put(im, 6, 5, WHITE); put(im, 9, 5, WHITE); put(im, 10, 5, WHITE)
+        hline(im, 6, 9, 7, C("9a9a9a"))
+        put(im, 3, 11, C("2a2a2a")); put(im, 4, 11, C("cfcfcf")); put(im, 4, 12, C("2a2a2a"))  # 吹き出しのしっぽ
+        put(im, 8, 0, WHITE)  # アンテナ
+        # 体と足（2コマで足を入れ替える）
+        rect(im, 5, 11, 10, 14, C("9a9a9a"))
+        outline_rect(im, 5, 11, 10, 14, C("2a2a2a"))
+        if f == 0:
+            vline(im, 6, 15, 17, C("2a2a2a")); vline(im, 9, 15, 16, C("2a2a2a")); put(im, 10, 16, C("2a2a2a"))
+        else:
+            vline(im, 9, 15, 17, C("2a2a2a")); vline(im, 6, 15, 16, C("2a2a2a")); put(im, 5, 16, C("2a2a2a"))
+        frames.append(im)
+    save(sheet(frames), "Enemies/Zako_Chatbot.png")
+
+    # ── 通知のベル（4コマ、22×22。回収する物）：0 止まっている、1〜3 揺れる ──
+    gold, gold_l, gold_d = C("ffd23f"), C("fff1a8"), C("b07d12")
+
+    def bell(shift):
+        im = new(22, 22)
+        cx = 11 + shift
+        rect(im, cx - 1, 1, cx, 2, gold_d)                   # 上のつまみ
+        for y in range(3, 15):                                # 本体（下へ広がる）
+            half = 3 + (y - 3) * 5 // 11
+            hline(im, cx - half, cx + half - 1, y, gold)
+            put(im, cx - half, y, gold_d); put(im, cx + half - 1, y, gold_d)
+        hline(im, cx - 9, cx + 8, 15, gold_d)                 # ふち
+        hline(im, cx - 8, cx + 7, 16, gold_d)
+        vline(im, cx - 3, 5, 12, gold_l)                       # つや
+        ellipse(im, cx, 18.5, 2.2, 2.2, gold_d)               # 舌
+        return outline_alpha(im)
+    save(sheet([bell(0), bell(-2), bell(2), bell(-1)]), "Attacks/Fx_Bell.png")
+
+    # ── 残りの数のバッジ（3コマ、11×11）：赤い丸に白い数字（Mac の通知のように） ──
+    badges = []
+    for d in "123":
+        im = new(11, 11)
+        ellipse(im, 5.5, 5.5, 5.3, 5.3, C("ff3b30"))
+        for yy, r in enumerate(DIGIT3[d]):
+            for xx, v in enumerate(r):
+                if v == "#":
+                    put(im, 4 + xx, 3 + yy, WHITE)
+        badges.append(im)
+    save(sheet(badges), "Attacks/Fx_NotifBadge.png")
+
+
+# ───────── Photoshop の能力（2026-11-19：筆とインク） ─────────
+
+PS_NAVY = C("001e36")
+PS_BLUE = C("31a8ff")
+PS_BLUE_L = C("8fd3ff")
+PS_BLUE_D = C("1473c2")
+
+
+def make_photoshop():
+    # 筆（56×8、線込みで 58×10＝約3.2マス。近接の約3倍の長さ。右向き。原点は持ち手の端＝左の真ん中）：
+    # 紺の持ち手に青い帯、銀の口金、先に青いインクの付いた毛
+    im = new(56, 8)
+    rect(im, 0, 3, 28, 4, PS_NAVY)                 # 持ち手
+    hline(im, 1, 27, 3, C("0d3556"))
+    rect(im, 20, 3, 22, 4, PS_BLUE)                # 青い帯
+    rect(im, 29, 2, 34, 5, C("c8ccd4"))            # 口金
+    hline(im, 29, 34, 2, WHITE); hline(im, 29, 34, 5, C("8a8f99"))
+    for x in range(35, 56):                        # 毛（先へ細くなる）
+        t = (x - 35) / 20
+        half = 3 - int(t * 2.6)
+        for y in range(4 - half, 4 + half):
+            c = C("e8d9b5") if t < 0.45 else (PS_BLUE if t < 0.85 else PS_BLUE_L)
+            put(im, x, y, c)
+    put(im, 55, 3, PS_BLUE_D); put(im, 54, 4, PS_BLUE_D)
+    save(outline_alpha(im, C("0a0f1a")), "Attacks/Brush_Photoshop.png")
+
+    # インク（20×20）：スプラトゥーンのインクのような、ふちが波打つしぶきと、まわりの小さな粒
+    ink = new(20, 20)
+    for y in range(20):
+        for x in range(20):
+            dx, dy = x + 0.5 - 10, y + 0.5 - 10.5
+            ang = math.atan2(dy, dx)
+            r = 6.6 + 0.7 * math.sin(ang * 5 + 0.6) + 0.5 * math.sin(ang * 3 - 1.1) + 0.3 * math.sin(ang * 8)
+            d = math.hypot(dx, dy)
+            if d <= r:
+                c = PS_BLUE_D if d > r - 1.2 else PS_BLUE
+                if dy < -2 and d < r - 2.2 and dx < 1:
+                    c = PS_BLUE_L
+                put(ink, x, y, c)
+    for (x, y, rr) in ((2.5, 5.5, 1.5), (17.5, 4.5, 1.2), (16.5, 18.0, 1.3)):  # 粒
+        ellipse(ink, x, y, rr, rr, PS_BLUE)
+    put(ink, 7, 6, WHITE); put(ink, 8, 6, WHITE); put(ink, 7, 7, WHITE)  # つや
+    save(outline_alpha(ink, C("0a2a4a")), "Attacks/Fx_PhotoshopInk.png")
+
+    # アイコン（16×16）：紺の四角に、青い筆の跡としぶき
+    ic = new(16, 16, PS_NAVY)
+    outline_rect(ic, 0, 0, 15, 15, K)
+    for i, (x, y) in enumerate(line_points(3, 12, 11, 4)):
+        put(ic, x, y, C("e8d9b5") if i < 3 else PS_BLUE)
+        put(ic, x + 1, y, PS_BLUE_D)
+    ellipse(ic, 11.5, 11.5, 2.4, 2.4, PS_BLUE)
+    put(ic, 13, 8, PS_BLUE_L); put(ic, 8, 13, PS_BLUE_L); put(ic, 11, 10, WHITE)
+    save(ic, "UI/Icon_Photoshop.png")
+
+
+# ───────── Photoshop のボス（2026-11-19） ─────────
+
+def rough_splat(im, cx, cy, base, rng, colors, rough=0.9):
+    """ふちが荒れたしぶき（colors：外側から内側の順）"""
+    w, h = im.size
+    for y in range(h):
+        for x in range(w):
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            ang = math.atan2(dy, dx)
+            r = base + 1.1 * math.sin(ang * 5 + 0.4) + 0.7 * math.sin(ang * 9 - 1.3) + rng.uniform(-rough, rough)
+            d = math.hypot(dx, dy)
+            if d <= r:
+                k = d / max(0.1, r)
+                c = colors[0] if k > 0.82 else colors[1] if k > 0.45 else colors[2]
+                put(im, x, y, c)
+
+
+def make_photoshop_boss():
+    rng = random.Random(2611)
+    # ボスのインク（26×26。荒れていて、汚れの点が入る。灰色：ゲームの中でアプリの色に塗り替える）
+    im = new(26, 26)
+    rough_splat(im, 13, 13.5, 8.2, rng, (C("3a3a3a"), C("7a7a7a"), C("a8a8a8")))
+    for (x, y, rr) in ((3.0, 5.0, 1.6), (22.5, 4.0, 1.3), (21.5, 22.0, 1.8), (4.5, 21.5, 1.2), (13.0, 1.8, 1.0)):
+        ellipse(im, x, y, rr, rr, C("7a7a7a"))
+    corrupt(im, 77, (C("1a1a1a"), C("2a2a2a"), C("cfcfcf")), 26)
+    put(im, 9, 8, WHITE); put(im, 10, 8, WHITE); put(im, 9, 9, WHITE)
+    save(outline_alpha(im, C("101010")), "Attacks/Fx_BossInk.png")
+
+    # 攻撃の範囲（30×30、白。ゲームの中で赤く塗って点滅させる）：プレイヤーのインクと同じしぶきの形で、ふちが荒れている
+    im = new(30, 30)
+    rough_splat(im, 15, 15, 11.0, rng, (WHITE, WHITE, WHITE), rough=1.4)
+    for _ in range(18):  # 欠け
+        x, y = rng.randrange(4, 26), rng.randrange(4, 26)
+        if math.hypot(x - 15, y - 15) > 7:
+            put(im, x, y, CLEAR)
+    for (x, y, rr) in ((2.5, 6.0, 1.4), (27.0, 8.0, 1.2), (25.5, 26.0, 1.6), (4.0, 25.0, 1.1)):
+        ellipse(im, x, y, rr, rr, WHITE)
+    save(im, "Attacks/Fx_InkDanger.png")
+
+    # インクの生命体（歩く2コマ、28×30。原点は足元）：カラフルなインクでドロドロの人形
+    mag, cya, yel, pur = C("ff3ea5"), C("29d3ff"), C("ffd23f"), C("8a4dff")
+    frames = []
+    for f in range(2):
+        im = new(28, 30)
+        ellipse(im, 14, 8.5, 7.5, 7.0, mag)                  # 頭
+        ellipse(im, 11, 6.5, 3.5, 3.0, pur)
+        rect(im, 8, 13, 19, 23, cya)                          # 体
+        ellipse(im, 13.5, 18, 6.5, 6.0, cya)
+        ellipse(im, 16, 20, 3.0, 3.0, yel)
+        # 腕（だらんと垂れる。コマで少し揺れる）
+        sway = 1 if f == 0 else -1
+        for (x0, y0, x1, y1, c) in ((7, 14, 4, 21 + sway, mag), (20, 14, 23, 21 - sway, yel)):
+            for (x, y) in line_points(x0, y0, x1, y1):
+                put(im, x, y, c); put(im, x + 1, y, c)
+        # 足（2コマで入れ替える）
+        if f == 0:
+            rect(im, 9, 24, 11, 29, pur); rect(im, 16, 24, 18, 27, mag)
+        else:
+            rect(im, 9, 24, 11, 27, pur); rect(im, 16, 24, 18, 29, mag)
+        # 垂れるインク
+        for (x, y0, ln, c) in ((6, 10, 3, mag), (21, 11, 4, mag), (12, 22, 3, cya), (19, 22, 2, yel), (4, 21, 3, mag)):
+            vline(im, x, y0, y0 + ln + f, c)
+            put(im, x, y0 + ln + f + 1, c)
+        # 目
+        rect(im, 10, 7, 12, 9, WHITE); rect(im, 15, 7, 17, 9, WHITE)
+        put(im, 11, 8, K); put(im, 16, 8, K)
+        hline(im, 11, 16, 11, C("5a1040"))
+        frames.append(outline_alpha(im, C("2a1030")))
+    save(sheet(frames), "Enemies/Zako_InkBlob.png")
+
+    # マウスカーソル（12×18。原点は矢印の先＝左上）
+    rows = [
+        "K...........",
+        "KK..........",
+        "KWK.........",
+        "KWWK........",
+        "KWWWK.......",
+        "KWWWWK......",
+        "KWWWWWK.....",
+        "KWWWWWWK....",
+        "KWWWWWWWK...",
+        "KWWWWWWWWK..",
+        "KWWWWWWKKKK.",
+        "KWWWKWWK....",
+        "KWWKKWWK....",
+        "KWK..KWWK...",
+        "KK...KWWK...",
+        "K.....KWWK..",
+        "......KWWK..",
+        ".......KK...",
+    ]
+    save(ascii_art(rows, {"K": K, "W": WHITE}), "Attacks/Fx_MouseCursor.png")
+
+    # 選択範囲の点線（2コマ、8×2。横に並べる。コマを替えると点線が流れる）
+    frames = []
+    for f in range(2):
+        im = new(8, 2)
+        for x in range(8):
+            c = K if ((x + f * 4) // 4) % 2 == 0 else WHITE
+            vline(im, x, 0, 1, c)
+        frames.append(im)
+    save(sheet(frames), "Attacks/Fx_Marquee.png")
+
+    # 状態異常の印（14×14）：速い（黄色の稲妻）・遅い（青い下向きの矢印）・クールタイムが長い（紫の時計に＋）・ジャンプが高い（緑の上向きの矢印）
+    def status(draw):
+        im = new(14, 14, C("1e1e2a"))
+        draw(im)
+        return im
+    def fast(im):
+        for (x, y) in line_points(8, 1, 4, 7) + line_points(4, 7, 9, 7) + line_points(9, 7, 5, 12):
+            put(im, x, y, GOLD); put(im, x + 1, y, GOLD)
+    def slow(im):
+        for k in (0, 5):
+            for i in range(4):
+                hline(im, 3 + i, 10 - i, 3 + k + i, C("6ab0ff"))
+    def cooldown(im):
+        ellipse(im, 6.5, 7.5, 5.2, 5.2, C("b34dff"))
+        ellipse(im, 6.5, 7.5, 4.0, 4.0, C("1e1e2a"))
+        vline(im, 6, 4, 7, WHITE); hline(im, 6, 8, 7, WHITE)
+        hline(im, 10, 13, 2, GOLD); vline(im, 11, 0, 4, GOLD); put(im, 12, 1, GOLD); put(im, 12, 3, GOLD)
+    def jump(im):
+        for i in range(5):
+            hline(im, 6 - i, 7 + i, 2 + i, C("39cf16"))
+        rect(im, 5, 7, 8, 12, C("39cf16"))
+    for name, fn in (("Fast", fast), ("Slow", slow), ("Cooldown", cooldown), ("Jump", jump)):
+        save(status(fn), f"UI/Status_{name}.png")
+
+
+# ───────── ブラウザの能力「パケット」（2026-11-19） ─────────
+
+def make_packet():
+    blue, blue_l, blue_d = C("4285f4"), C("8ab4ff"), C("1a4fb0")
+    green, green_l, green_d = C("34a853"), C("8ee6a4"), C("16692f")
+
+    def bar(main, light, dark, plus):
+        # 16×4（右向き）：先が明るく、データの白い点が並ぶ棒
+        im = new(16, 4)
+        rect(im, 0, 0, 15, 3, main)
+        hline(im, 0, 15, 0, light)
+        hline(im, 0, 15, 3, dark)
+        for x in range(1, 12, 3):
+            put(im, x, 1, WHITE); put(im, x + 1, 2, WHITE if plus else light)
+        rect(im, 13, 0, 15, 3, WHITE)                  # 先（明るい）
+        put(im, 0, 0, CLEAR); put(im, 0, 3, CLEAR)
+        if plus:                                      # 応答：先に「＋」
+            put(im, 14, 1, green_d); put(im, 14, 2, green_d); put(im, 13, 1, green_d); put(im, 15, 2, green_d)
+        return im
+    save(bar(blue, blue_l, blue_d, False), "Attacks/Fx_Packet.png")
+    save(bar(green, green_l, green_d, True), "Attacks/Fx_PacketResponse.png")
+
+    # アイコン（16×16）：地球（ブラウザ）から、パケットが3本飛んでいく
+    im = new(16, 16, WHITE)
+    outline_rect(im, 0, 0, 15, 15, K)
+    ellipse(im, 5.5, 10.5, 4.2, 4.2, blue)
+    vline(im, 5, 7, 14, blue_l); hline(im, 2, 9, 10, blue_l)
+    ellipse(im, 5.5, 10.5, 2.0, 4.2, None)
+    for (x, y) in ((8, 3), (10, 5), (9, 7)):          # パケット（枠の内側に収める）
+        hline(im, x, x + 3, y, blue_d); put(im, x + 3, y, blue_l)
+    put(im, 12, 9, green); put(im, 13, 9, green)        # 応答
+    save(im, "UI/Icon_Packet.png")
+
+
+# ───────── ブラウザのボス（2026-11-19） ─────────
+
+def browser_window(content_bg, favicon):
+    """ブラウザのウィンドウ（48×34）：枠・タブ1つ（左に小さなアイコン）・アドレスバー（鍵）・中身の色"""
+    W, H = 48, 34
+    im = new(W, H, content_bg)
+    rect(im, 0, 0, W - 1, 8, C("dee1e6"))            # タブの並び
+    rect(im, 3, 2, 20, 8, WHITE)                      # タブ
+    rect(im, 5, 4, 6, 5, favicon)
+    hline(im, 8, 17, 4, C("9aa0a6"))
+    for (x, c) in ((W - 10, C("fbbc05")), (W - 7, C("34a853")), (W - 4, C("ea4335"))):  # ウィンドウのボタン
+        rect(im, x, 3, x + 1, 4, c)
+    rect(im, 0, 9, W - 1, 13, WHITE)                  # アドレスバーの帯
+    rect(im, 3, 10, W - 4, 12, C("f1f3f4"))
+    rect(im, 5, 10, 6, 12, C("5f6368"))               # 鍵
+    hline(im, 9, 26, 11, C("9aa0a6"))
+    outline_rect(im, 0, 0, W - 1, H - 1, C("3c4043"))
+    return im
+
+
+def make_browser_boss():
+    # 爆弾のマークのサイト（下の3行は、ゲームの中で読み込みバーを描くので空けておく）
+    im = browser_window(WHITE, C("ea4335"))
+    ellipse(im, 24.0, 21.5, 6.2, 6.2, C("202124"))    # 爆弾
+    ellipse(im, 24.0, 21.5, 5.0, 5.0, C("3c4043"))
+    put(im, 21, 18, WHITE); put(im, 22, 18, WHITE); put(im, 21, 19, WHITE)
+    rect(im, 27, 14, 29, 15, C("5f6368"))             # 口金
+    put(im, 30, 13, C("b07d12")); put(im, 31, 12, ORANGE); put(im, 32, 11, GOLD); put(im, 31, 11, GOLD); put(im, 32, 12, RED)  # 導火線と火花
+    hline(im, 9, 15, 17, C("dadce0")); hline(im, 33, 39, 17, C("dadce0"))  # 本文の線（飾り）
+    hline(im, 9, 14, 24, C("dadce0")); hline(im, 34, 39, 24, C("dadce0"))
+    save(im, "Attacks/Window_BombSite.png")
+
+    # 雑魚を出し続けるウィンドウ：暗い赤の中に、ウイルスの顔と「!」
+    im = browser_window(C("2a0a12"), C("ff3b30"))
+    blob = smoke_blob(20, 16, 10, 9, 7, 6, seed=1119, wisps=5)
+    paste(im, blob, 14, 15)
+    for (x, y) in ((20, 20), (26, 20)):
+        rect(im, x, y, x + 1, y + 1, RED)
+    for x0 in (6, 38):                                 # 「!」
+        rect(im, x0, 17, x0 + 1, 24, GOLD)
+        rect(im, x0, 27, x0 + 1, 28, GOLD)
+    save(im, "Enemies/Window_Spawner.png")
+
+
+SECTIONS = {
+    "background": lambda: make_background(),
+    "terrain": lambda: make_terrain(),
+    "windows": lambda: make_windows(),
+    "app_windows": lambda: make_app_windows(),
+    "boss_contents": lambda: make_boss_contents(),
+    "viruses": lambda: make_viruses(),
+    "attacks": lambda: make_attacks(),
+    "player_fx": lambda: make_player_fx(),
+    "hud": lambda: make_hud(),
+    "skill_icons": lambda: make_skill_icons(),
+    "boss_b": lambda: make_boss_b(),
+    "stage_gimmicks": lambda: make_stage_gimmicks(),
+    "category_abilities": lambda: make_category_abilities(),
+    "ai_assistant": lambda: make_ai_assistant(),
+    "ai_boss": lambda: make_ai_boss(),
+    "chat_apps": lambda: make_chat_apps(),
+    "chat_boss": lambda: make_chat_boss(),
+    "photoshop": lambda: make_photoshop(),
+    "photoshop_boss": lambda: make_photoshop_boss(),
+    "packet": lambda: make_packet(),
+    "browser_boss": lambda: make_browser_boss(),
+}
+
+
+def main():
+    """引数なしなら全部。名前を渡すと、その部分だけ作る（例：python3 Tools/art/gen_sprites.py ai_assistant）"""
+    import sys
+    names = sys.argv[1:] or list(SECTIONS)
+    for n in names:
+        if n not in SECTIONS:
+            raise SystemExit(f"unknown section: {n}（{', '.join(SECTIONS)}）")
+        SECTIONS[n]()
 def make_app_skill_icons():
     # ギャラリービュー（Zoom の能力。2026-11-18）のアイコン（16×16）【仮】
     # 黒いすき間で区切った 2×2 のタイルに人が1人ずつ。左上のタイルに「話している人」の緑の枠

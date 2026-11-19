@@ -45,7 +45,8 @@ public static class ArtAssets
     {
         // デザイン担当の絵（3倍に拡大して描かれているので 18×3＝54）
         R("Provided/Player_Walk.png", 54f, 39, Feet),
-        R("Provided/Fx_VirusSmoke.png", 54f, 147),
+        // 煙は、AI チャットのボスの後ろでアプリの色味に塗り替えるので、読み書きできる設定にする（2026-11-19）
+        R("Provided/Fx_VirusSmoke.png", 54f, 147, readable: true),
         R("Provided/Bg_Wallpaper.png", 15f),
         R("Provided/Mockup_Desktop.png", 15f),
         // 背景（デザイン担当の壁紙から、下の道路を消したもの。画面いっぱい：320×180 ÷ 15 ＝ 21.33×12 マス）
@@ -81,6 +82,52 @@ public static class ArtAssets
         R("Generated/Attacks/Fx_Paint.png", border: new Vector4(2, 2, 2, 4), readable: true),
         R("Generated/Attacks/Fx_Bar.png", border: new Vector4(2, 0, 2, 0), readable: true),
         R("Generated/Attacks/Bullet_Orb.png", readable: true),
+        // AI の能力「AIアシスタント」（2026-11-18）：ロボット（羽ばたき4コマ）とレーザー（横に伸ばす）
+        R("Generated/Attacks/Summon_AiDrone.png", frame: 26),
+        R("Generated/Attacks/Fx_Laser.png"),
+        // AI チャットのボス（2026-11-19）：技の絵は、ゲームの中でアプリの色に塗り替えるので、読み書きできる設定にする
+        R("Generated/Attacks/Fx_AiLaser.png", readable: true),
+        R("Generated/Attacks/Fx_AiSpark.png", frame: 18, readable: true),
+        R("Generated/Attacks/Summon_AiMini.png", frame: 14, readable: true),
+        R("Generated/Attacks/Fx_AiError.png"),
+        // チャットアプリの能力（2026-11-19：Slack・Discord・LINE）：メッセージの絵（1つ目・2つ目以降）と、当たったときのエフェクト
+        R("Generated/Attacks/Chat_Line_Head.png"),
+        R("Generated/Attacks/Chat_Line_Body.png"),
+        R("Generated/Attacks/Chat_Slack_Head.png"),
+        R("Generated/Attacks/Chat_Slack_Body.png"),
+        R("Generated/Attacks/Chat_Discord_Head.png"),
+        R("Generated/Attacks/Chat_Discord_Body.png"),
+        R("Generated/Attacks/Fx_ChatHit_Line.png", frame: 16),
+        R("Generated/Attacks/Fx_ChatHit_Slack.png", frame: 16),
+        R("Generated/Attacks/Fx_ChatHit_Discord.png", frame: 16),
+        // チャットのボス（2026-11-19）：大きく濁ったメッセージ（そのほかのアプリ用の灰色は、ゲームの中でアプリの色に塗り替える）・チャットbot・通知の大技
+        R("Generated/Attacks/ChatBoss_Line_Head.png"),
+        R("Generated/Attacks/ChatBoss_Line_Body.png"),
+        R("Generated/Attacks/ChatBoss_Slack_Head.png"),
+        R("Generated/Attacks/ChatBoss_Slack_Body.png"),
+        R("Generated/Attacks/ChatBoss_Discord_Head.png"),
+        R("Generated/Attacks/ChatBoss_Discord_Body.png"),
+        R("Generated/Attacks/ChatBoss_Generic_Head.png", readable: true),
+        R("Generated/Attacks/ChatBoss_Generic_Body.png", readable: true),
+        R("Generated/Enemies/Zako_Chatbot.png", frame: 16, pivot: Feet, readable: true),
+        R("Generated/Attacks/Fx_Bell.png", frame: 24),
+        R("Generated/Attacks/Fx_NotifBadge.png", frame: 11),
+        // Photoshop の能力（2026-11-19）：筆（原点は持ち手の端）とインク
+        R("Generated/Attacks/Brush_Photoshop.png", pivot: new Vector2(0f, 0.5f), readable: true), // ボスの大きな筆で、アプリの色に塗り替える
+        // Photoshop のボス（2026-11-19）
+        R("Generated/Attacks/Fx_BossInk.png", readable: true),
+        R("Generated/Attacks/Fx_InkDanger.png"),
+        R("Generated/Enemies/Zako_InkBlob.png", frame: 30, pivot: Feet),
+        R("Generated/Attacks/Fx_MouseCursor.png", pivot: new Vector2(0f, 1f)),
+        R("Generated/Attacks/Fx_Marquee.png", frame: 8),
+        // ブラウザの能力「パケット」（2026-11-19）
+        R("Generated/Attacks/Fx_Packet.png", readable: true), // ブラウザのボスのパケットで、アプリの色に塗り替える
+        R("Generated/Attacks/Fx_PacketResponse.png"),
+        // ブラウザのボス（2026-11-19）：爆弾のサイトのウィンドウと、雑魚を出し続けるウィンドウ
+        R("Generated/Attacks/Window_BombSite.png"),
+        R("Generated/Enemies/Window_Spawner.png"),
+        R("Generated/Attacks/Fx_PhotoshopInk.png"),
+        R("Generated/Bosses/Boss_AiDefaultIcon.png"),
         R("Generated/Attacks/Fx_Shadow.png"),
         R("Generated/Attacks/Fx_Alert.png"),
         R("Generated/Attacks/Popup_Ad.png"),
@@ -106,7 +153,7 @@ public static class ArtAssets
         R("Generated/Enemies/Zako_Walker.png", frame: 16, pivot: Feet),
         R("Generated/Enemies/Zako_Shooter.png", frame: 16, pivot: Feet),
         // エフェクト
-        R("Generated/Effects/Fx_VirusSmokeSmall.png", frame: 25),
+        R("Generated/Effects/Fx_VirusSmokeSmall.png", frame: 25, readable: true), // 通知の大技の赤いもやに塗り替える（2026-11-19）
         R("Generated/Effects/Fx_Shards.png", frame: 20),
         R("Generated/Effects/Fx_Sparkle.png", frame: 9),
         R("Generated/Player/Fx_Slash.png", frame: 16),
@@ -129,6 +176,16 @@ public static class ArtAssets
         R("Generated/UI/Icon_BarGraph.png"),
         R("Generated/UI/Icon_Paint.png"),
         R("Generated/UI/Icon_Bomb.png"),
+        R("Generated/UI/Icon_AiAssistant.png"),
+        R("Generated/UI/Icon_ChatLine.png"),
+        R("Generated/UI/Icon_ChatSlack.png"),
+        R("Generated/UI/Icon_ChatDiscord.png"),
+        R("Generated/UI/Icon_Photoshop.png"),
+        R("Generated/UI/Status_Fast.png"),
+        R("Generated/UI/Status_Slow.png"),
+        R("Generated/UI/Status_Cooldown.png"),
+        R("Generated/UI/Status_Jump.png"),
+        R("Generated/UI/Icon_Packet.png"),
         R("Generated/UI/Icon_GalleryView.png"),
     };
 
@@ -335,6 +392,15 @@ public static class ArtAssets
             Set(so, "_buttonHover", LoadSprite("Generated/UI/Ui_ButtonHover.png"));
             SetArray(so, "_playerWalk", LoadFrames("Provided/Player_Walk.png"));
             SetArray(so, "_zakoWalk", LoadFrames("Generated/Enemies/Zako_Walker.png"));
+            // Photoshop のボス（2026-11-19）：インクの攻撃範囲・選択ツールのカーソルと点線・状態異常の印
+            Set(so, "_inkDanger", LoadSprite("Generated/Attacks/Fx_InkDanger.png"));
+            Set(so, "_mouseCursor", LoadSprite("Generated/Attacks/Fx_MouseCursor.png"));
+            SetArray(so, "_marqueeDash", LoadFrames("Generated/Attacks/Fx_Marquee.png"));
+            SetArray(so, "_statusIcons", new[]
+            {
+                LoadSprite("Generated/UI/Status_Fast.png"), LoadSprite("Generated/UI/Status_Slow.png"),
+                LoadSprite("Generated/UI/Status_Cooldown.png"), LoadSprite("Generated/UI/Status_Jump.png"),
+            });
             Set(so, "_fontJa", AssetDatabase.LoadAssetAtPath<Font>(FontJaPath));
             Set(so, "_fontEn", AssetDatabase.LoadAssetAtPath<Font>(FontEnPath));
         });
@@ -378,6 +444,15 @@ public static class ArtAssets
         ("Player/Attack_Ability_PaintBucket", "Generated/Attacks/Fx_Paint.png"),
         ("Player/Attack_Ability_Bomb", "Generated/Attacks/Bullet_Bomb.png"),
         ("Player/Attack_Ability_Bomb_Blast", "Generated/Attacks/Fx_Blast.png"),
+        ("Player/Attack_Ability_AiAssistant", "Generated/Attacks/Fx_Laser.png"), // レーザー。ロボットの絵は ApplyToData で入れる
+        // AI チャットのボス（2026-11-19）：灰色の絵。ゲームの中でアプリの色に塗り替える
+        ("AIChat/Attack_AIChat_Laser_P1", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_LaserDouble_P1", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_LaserFan_P2", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_LaserBurst_P2", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_CodeStream", "Generated/Attacks/Fx_AiLaser.png"),
+        ("AIChat/Attack_AIChat_MiniBots_P1", "Generated/Attacks/Summon_AiMini.png"),
+        ("AIChat/Attack_AIChat_MiniBots_P2", "Generated/Attacks/Summon_AiMini.png"),
         // その場で作る能力のひな形（ゲームの中で、アプリの色に塗り替える）
         ("Player/Gen/Attack_Gen_Spread", "Generated/Attacks/Bullet_Orb.png"),
         ("Player/Gen/Attack_Gen_Trap", "Generated/Attacks/Bullet_Orb.png"),
@@ -416,10 +491,162 @@ public static class ArtAssets
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_BarGraph.asset", "Generated/UI/Icon_BarGraph.png");
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_PaintBucket.asset", "Generated/UI/Icon_Paint.png");
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Bomb.asset", "Generated/UI/Icon_Bomb.png");
+        // AI の能力「AIアシスタント」（2026-11-18）：ロボットの絵・色・アイコン
+        SetSummonFrames($"{AttackFolder}/Player/Attack_Ability_AiAssistant.asset", "Generated/Attacks/Summon_AiDrone.png");
+        // AI チャットのボス（2026-11-19）：ミニロボットのコマと、レーザーの予告（電流）のコマ
+        foreach (string a in new[] { "AIChat/Attack_AIChat_MiniBots_P1", "AIChat/Attack_AIChat_MiniBots_P2" })
+            SetFrames($"{AttackFolder}/{a}.asset", "_summonFrames", "Generated/Attacks/Summon_AiMini.png");
+        foreach (string a in new[] { "AIChat/Attack_AIChat_Laser_P1", "AIChat/Attack_AIChat_LaserDouble_P1", "AIChat/Attack_AIChat_LaserFan_P2", "AIChat/Attack_AIChat_LaserBurst_P2" })
+            SetFrames($"{AttackFolder}/{a}.asset", "_telegraphFrames", "Generated/Attacks/Fx_AiSpark.png");
+        SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_AIChat.asset", "Generated/Bosses/Boss_AiDefaultIcon.png");
+        ApplyChatApps();
+        // Photoshop の能力（2026-11-19）：筆とインクの絵（絵の色のまま）・アプリの色・アイコン
+        SetSpriteWhite($"{AttackFolder}/Player/App/Attack_App_Photoshop.asset", "Generated/Attacks/Brush_Photoshop.png");
+        SetSpriteWhite($"{AttackFolder}/Player/App/Attack_App_Photoshop_Ink.asset", "Generated/Attacks/Fx_PhotoshopInk.png");
+        SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_App_Photoshop.asset", "_theme", GetOrCreateTheme("Theme_Photoshop", PhotoshopTheme));
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_App_Photoshop.asset", "Generated/UI/Icon_Photoshop.png");
+        // ブラウザの能力「パケット」（2026-11-19）：パケット・応答のパケットの絵、色はブラウザ（Chrome）と同じ、アイコン
+        SetSpriteWhite($"{AttackFolder}/Player/Attack_Ability_Packet.asset", "Generated/Attacks/Fx_Packet.png");
+        SetSpriteProp($"{AttackFolder}/Player/Attack_Ability_Packet.asset", "_packetResponseSprite", "Generated/Attacks/Fx_PacketResponse.png");
+        SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Packet.asset", "_theme", chrome);
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Packet.asset", "Generated/UI/Icon_Packet.png");
+        SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "_theme", GetOrCreateTheme("Theme_AI", AiTheme));
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "Generated/UI/Icon_AiAssistant.png");
         // アプリ専用の能力（2026-11-18）：Zoom のギャラリービュー
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_App_Zoom.asset", "Generated/UI/Icon_GalleryView.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_Chrome.asset", "Generated/Bosses/Icon_Browser.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_VSCode.asset", "Generated/Bosses/Icon_Editor.png");
+    }
+
+    /// <summary>チャットアプリの能力（2026-11-19：Slack・Discord・LINE）：メッセージの絵・エフェクト・アプリの色・アイコン</summary>
+    static readonly (string key, string file, Action<SerializedObject> theme)[] ChatApps =
+    {
+        ("Line", "Line", LineTheme),
+        ("Slack", "Slack", SlackTheme),
+        ("Discord", "Discord", DiscordTheme),
+    };
+
+    static void ApplyChatApps()
+    {
+        foreach (var (key, file, theme) in ChatApps)
+        {
+            string attack = $"{AttackFolder}/Player/App/Attack_App_{key}.asset";
+            string skill = $"Assets/ScriptableObjects/Skills/Skill_App_{key}.asset";
+            var data = AssetDatabase.LoadAssetAtPath<AttackData>(attack);
+            if (data != null)
+            {
+                Sprite head = LoadSprite($"Generated/Attacks/Chat_{file}_Head.png");
+                Sprite body = LoadSprite($"Generated/Attacks/Chat_{file}_Body.png");
+                var so0 = new SerializedObject(data);
+                if (so0.FindProperty("_sprite").objectReferenceValue != head || so0.FindProperty("_chatBodySprite").objectReferenceValue != body || data.Color != Color.white)
+                {
+                    PlayerTestSceneBuilder.SetProps(data, so =>
+                    {
+                        so.FindProperty("_sprite").objectReferenceValue = head;
+                        so.FindProperty("_chatBodySprite").objectReferenceValue = body;
+                        so.FindProperty("_color").colorValue = Color.white; // 絵の色のまま
+                    });
+                    EditorUtility.SetDirty(data);
+                }
+                SetFrames(attack, "_chatHitFrames", $"Generated/Attacks/Fx_ChatHit_{file}.png");
+            }
+            SetRef<SkillDefinition>(skill, "_theme", GetOrCreateTheme($"Theme_{key}", theme));
+            SetIcon<SkillDefinition>(skill, $"Generated/UI/Icon_Chat{file}.png");
+        }
+    }
+
+    // LINE：アプリの緑。自分のメッセージの明るい緑を差し色に（2026-11-19。【仮】）
+    static void LineTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "dff7d3"); Col(so, "_cloud", "ffffff");
+        Colors(so, "_hills", "0b3d1c", "0f5c27", "06a447", "06c755", "8ee06b");
+        Col(so, "_floor", "8a8f99"); Col(so, "_floorTop", "06c755");
+        Col(so, "_wall", "4a5a50"); Col(so, "_wallHighlight", "6b7d72");
+        Col(so, "_folder", "7ddb4e"); Col(so, "_folderShade", "2f7a1f"); Col(so, "_folderTab", "06c755");
+        Col(so, "_main", "06c755");
+        Colors(so, "_accents", "06c755", "7ddb4e");
+    }
+
+    // Slack：紫（オーベルジーヌ）に、ロゴの4色を差し色に（2026-11-19。【仮】）
+    static void SlackTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "3f0e40"); Col(so, "_cloud", "611f69");
+        Colors(so, "_hills", "1a061b", "350d36", "4a154b", "7c3085", "c08cc6");
+        Col(so, "_floor", "3a3a44"); Col(so, "_floorTop", "ecb22e");
+        Col(so, "_wall", "2a1a2b"); Col(so, "_wallHighlight", "4a2f4c");
+        Col(so, "_folder", "36c5f0"); Col(so, "_folderShade", "1d8db0"); Col(so, "_folderTab", "e01e5a");
+        Col(so, "_main", "4a154b");
+        Colors(so, "_accents", "e01e5a", "ecb22e", "2eb67d", "36c5f0");
+    }
+
+    // Discord：深い青に、Discord の青を差し色に（2026-11-19。【仮】）
+    static void DiscordTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "1e2448"); Col(so, "_cloud", "2b3160");
+        Colors(so, "_hills", "0c0f26", "1e2448", "3a43a8", "5865f2", "a5adff");
+        Col(so, "_floor", "35394a"); Col(so, "_floorTop", "5865f2");
+        Col(so, "_wall", "1a1d2e"); Col(so, "_wallHighlight", "2e3350");
+        Col(so, "_folder", "5865f2"); Col(so, "_folderShade", "3a43a8"); Col(so, "_folderTab", "a5adff");
+        Col(so, "_main", "5865f2");
+        Colors(so, "_accents", "5865f2", "a5adff");
+    }
+
+    /// <summary>攻撃データの絵の欄（1枚）に絵を入れる。同じなら書き換えない</summary>
+    static void SetSpriteProp(string assetPath, string prop, string sprite)
+    {
+        var data = AssetDatabase.LoadAssetAtPath<AttackData>(assetPath);
+        if (data == null) return;
+        Sprite s = LoadSprite(sprite);
+        var so0 = new SerializedObject(data);
+        if (so0.FindProperty(prop).objectReferenceValue == s) return;
+        PlayerTestSceneBuilder.SetProps(data, so => so.FindProperty(prop).objectReferenceValue = s);
+        EditorUtility.SetDirty(data);
+    }
+
+    /// <summary>攻撃データの絵を入れ、色を白（絵の色のまま）にする。同じなら書き換えない</summary>
+    static void SetSpriteWhite(string assetPath, string sprite)
+    {
+        var data = AssetDatabase.LoadAssetAtPath<AttackData>(assetPath);
+        if (data == null) return;
+        Sprite s = LoadSprite(sprite);
+        if (data.Sprite == s && data.Color == Color.white) return;
+        PlayerTestSceneBuilder.SetProps(data, so =>
+        {
+            so.FindProperty("_sprite").objectReferenceValue = s;
+            so.FindProperty("_color").colorValue = Color.white;
+        });
+        EditorUtility.SetDirty(data);
+    }
+
+    // Photoshop：アイコンの紺と青（2026-11-19。【仮】）
+    static void PhotoshopTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "001e36"); Col(so, "_cloud", "0d3556");
+        Colors(so, "_hills", "000f1c", "001e36", "0d4a7a", "31a8ff", "8fd3ff");
+        Col(so, "_floor", "35394a"); Col(so, "_floorTop", "31a8ff");
+        Col(so, "_wall", "0a1622"); Col(so, "_wallHighlight", "1a2c40");
+        Col(so, "_folder", "31a8ff"); Col(so, "_folderShade", "1473c2"); Col(so, "_folderTab", "8fd3ff");
+        Col(so, "_main", "31a8ff");
+        Colors(so, "_accents", "31a8ff", "001e36");
+    }
+
+    /// <summary>召喚する味方の絵（コマ）を、攻撃データに入れる。同じなら書き換えない</summary>
+    static void SetSummonFrames(string assetPath, string sprite) => SetFrames(assetPath, "_summonFrames", sprite);
+
+    /// <summary>攻撃データのコマの欄（召喚する物の絵・予告のコマ）に絵を入れる。同じなら書き換えない</summary>
+    static void SetFrames(string assetPath, string prop, string sprite)
+    {
+        var data = AssetDatabase.LoadAssetAtPath<AttackData>(assetPath);
+        if (data == null) return;
+        Sprite[] frames = LoadFrames(sprite);
+        if (frames.Length == 0) return;
+        var so0 = new SerializedObject(data);
+        var arr = so0.FindProperty(prop);
+        bool same = arr.arraySize == frames.Length;
+        for (int i = 0; same && i < frames.Length; i++) same = arr.GetArrayElementAtIndex(i).objectReferenceValue == frames[i];
+        if (same) return;
+        PlayerTestSceneBuilder.SetProps(data, so => SetArray(so, prop, frames));
+        EditorUtility.SetDirty(data);
     }
 
     static void SetRef<T>(string assetPath, string prop, UnityEngine.Object value) where T : UnityEngine.Object
@@ -561,6 +788,18 @@ public static class ArtAssets
         Col(so, "_folder", "e4572e"); Col(so, "_folderShade", "a93a1b"); Col(so, "_folderTab", "ffb000");
         Col(so, "_main", "e4572e");
         Colors(so, "_accents", "e4572e", "ffb000", "66c0f4");
+    }
+
+    // AI：AI ロボットの水色（目とレーザー）に、夜の紺の空。差し色は白（2026-11-18。【仮】）
+    static void AiTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "10162a"); Col(so, "_cloud", "1f2a4a");
+        Colors(so, "_hills", "081022", "10203f", "1c4a7a", "3cc8e6", "bff8ff");
+        Col(so, "_floor", "3a4150"); Col(so, "_floorTop", "5ff0ff");
+        Col(so, "_wall", "1a1f2b"); Col(so, "_wallHighlight", "2e3647");
+        Col(so, "_folder", "3cc8e6"); Col(so, "_folderShade", "2696b0"); Col(so, "_folderTab", "bff8ff");
+        Col(so, "_main", "5ff0ff");
+        Colors(so, "_accents", "5ff0ff", "3cc8e6", "ffffff");
     }
 
     static void SetIcon<T>(string assetPath, string sprite) where T : UnityEngine.Object

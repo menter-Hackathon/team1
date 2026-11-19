@@ -76,3 +76,13 @@ MonoBehaviour:
   - {fileID: 1941447372151373906, guid: 94e177de2db5e431484836b50ccd6db6, type: 3}
   - {fileID: -5495548070017973452, guid: 94e177de2db5e431484836b50ccd6db6, type: 3}
   - {fileID: 4932516817129409264, guid: 94e177de2db5e431484836b50ccd6db6, type: 3}
+  _inkDanger: {fileID: 21300000, guid: be418fe36388241c8a7debca333c57c6, type: 3}
+  _mouseCursor: {fileID: 21300000, guid: 711bc41eae40e4eddab6dbe94add425c, type: 3}
+  _marqueeDash:
+  - {fileID: 4523125801214165598, guid: 828ad5fdecd184543aa809cfc439069b, type: 3}
+  - {fileID: 2745470646428481506, guid: 828ad5fdecd184543aa809cfc439069b, type: 3}
+  _statusIcons:
+  - {fileID: 21300000, guid: 3c28055eb95ec4ee1950a68219be47f3, type: 3}
+  - {fileID: 21300000, guid: fcc6329fe71c545b588bdf351bfd8b2b, type: 3}
+  - {fileID: 21300000, guid: 92a75e87f853a4a278e0a34def8dc2d7, type: 3}
+  - {fileID: 21300000, guid: 9606d3a1273fd468b90b9d7ad9d999e3, type: 3}

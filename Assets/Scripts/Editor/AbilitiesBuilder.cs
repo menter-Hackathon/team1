@@ -5,31 +5,97 @@ using UnityEngine;
 /// カテゴリの能力と、能力えらびの表を作るエディタ拡張（2026-11-17：ゲームの流れ）。
 /// ほかのシーンの作成ツールから呼ぶ（RunScenesBuilder など）。作るもの（すでにあれば作らない。数値を直すときはアセットを直接直す）：
 /// ・攻撃データ（Assets/ScriptableObjects/Attacks/Player）：棒グラフ・バケツ塗り・ボム（＋爆発）
-/// ・能力（Assets/ScriptableObjects/Skills）：Skill_BarGraph（Office）・Skill_PaintBucket（クリエイティブ）・Skill_Bomb（ゲーム）
+/// ・能力（Assets/ScriptableObjects/Skills）：Skill_BarGraph（Office）・Skill_PaintBucket（クリエイティブ）・Skill_Bomb（ゲーム）・
+///   Skill_AiAssistant（AI。2026-11-18。メニュー「Tools/Team1/AIアシスタントの能力を用意」でも作れる）
 /// ・能力えらびの表（Assets/ScriptableObjects/Run/AbilityCatalog）：カテゴリ → 能力・アプリの名前・バンドルID
 /// ・その場で作る能力のひな形（Assets/ScriptableObjects/Attacks/Player/Gen）：拡散ショット・トラップ弾（＋床）・ノヴァ。
 ///   表のひな形の欄が空なら、ブレークポイント・棒グラフ・バケツ塗り・ボムの攻撃と合わせて7つ入れる（2026-11-17）
 /// 新しいタブ（ブラウザ）・ブレークポイント（開発）は BossTestSceneBuilder が作る。
-/// SNS・チャット／AI／音楽・動画の能力はまだ無い（表に入れないので、カードにも出ない）。
+/// SNS・チャット／音楽・動画の能力はまだ無い（表に入れないので、カードにも出ない）。
 /// 数値はすべて【仮】。絵と色は ArtAssets（Tools/Team1/グラフィックを適用）が入れる。
 /// </summary>
 public static class AbilitiesBuilder
 {
     public const string CatalogPath = "Assets/ScriptableObjects/Run/AbilityCatalog.asset";
 
-    /// <summary>Zoom の能力「ギャラリービュー」のアセット（2026-11-18）</summary>
     public const string GalleryViewPath = "Assets/ScriptableObjects/Skills/Skill_App_Zoom.asset";
 
     /// <summary>カテゴリの能力5つ（と、テスト用シーンの G キーで渡すギャラリービュー）</summary>
     public struct Skills
     {
-        public SkillDefinition NewTab, Breakpoint, BarGraph, PaintBucket, Bomb;
+        public SkillDefinition NewTab, Breakpoint, BarGraph, PaintBucket, Bomb, AiAssistant;
         public SkillDefinition GalleryView;
         public SkillDefinition[] All => new[] { NewTab, Breakpoint, BarGraph, PaintBucket, Bomb };
         /// <summary>テスト用シーンの G キーで渡す順（ギャラリービューを先頭に。2026-11-18：手で試すため）</summary>
         public SkillDefinition[] ForDebugKey => GalleryView != null
             ? new[] { GalleryView, NewTab, Breakpoint, BarGraph, PaintBucket, Bomb }
             : All;
+    }
+
+    [MenuItem("Tools/Team1/AIアシスタントの能力を用意")]
+    public static void EnsureAiAssistantFromMenu()
+    {
+        SkillDefinition skill = GetOrCreateAiAssistant();
+        EnsureAiCategory(skill);
+        ArtAssets.Apply(); // ロボット・レーザーの絵、アイコン、色を入れる
+        AssetDatabase.SaveAssets();
+        Debug.Log("AIアシスタントの能力を用意しました（Skill_AiAssistant。能力えらびの表の AI カテゴリ）");
+    }
+
+    /// <summary>
+    /// AI の能力「AIアシスタント」（2026-11-18。数値は【仮】）。
+    /// 使うと、プレイヤーの後ろ上に AI ロボットが出て、プレイヤーの体の中心から6マス以内の敵へレーザーを撃つ（0.25秒ごとに当たる）。
+    /// レーザーを合計7秒撃つか、30秒たつと消える。クールタイム12秒は、ロボットが消えてから数える（PlayerSkillExecutor）。
+    /// 絵（ロボット・レーザー・アイコン）と色は ArtAssets が入れる。
+    /// </summary>
+    public static SkillDefinition GetOrCreateAiAssistant()
+    {
+        AttackData attack = BossTestSceneBuilder.GetOrCreateAttack("Player/Attack_Ability_AiAssistant", so =>
+        {
+            Kind(so, AttackKind.Summon);
+            F(so, "_windup", 0f);
+            F(so, "_cooldown", 12f);
+            I(so, "_damage", 1);
+            I(so, "_gaugeGain", 4);              // 1秒当て続けるごとに +4（近接1回分）。撃ち切ると +28
+            V(so, "_knockback", new Vector2(0.5f, 0.5f));
+            F(so, "_hitStun", 0.05f);
+            F(so, "_tickInterval", 1f);          // 1秒当て続けると1回当たる（雑魚は HP1 なので倒れる）
+            F(so, "_summonFps", 10f);
+            F(so, "_summonLifetime", 30f);
+            F(so, "_summonFireTime", 7f);
+            F(so, "_summonRange", 6f);
+            V(so, "_summonHoverOffset", new Vector2(0.9f, 1.9f));
+            F(so, "_summonFollowSharpness", 6f);
+            F(so, "_beamWidth", 6f / GameArt.PixelsPerUnit); // レーザーの絵の高さ（6ドット）と同じ
+        });
+        return BossTestSceneBuilder.GetOrCreateSkill("Skill_AiAssistant", "AIアシスタント", SkillCategory.AI, attack);
+    }
+
+    /// <summary>
+    /// 能力えらびの表に AI カテゴリ（ChatGPT・Codex・Claude・Perplexity）が無ければ足す。あれば、能力が空のときだけ入れる（手で直した値は残す）。
+    /// アプリの名前・バンドルIDは docs 9章の表から
+    /// </summary>
+    public static void EnsureAiCategory(SkillDefinition skill)
+    {
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
+        if (catalog == null || skill == null) return;
+        PlayerTestSceneBuilder.SetProps(catalog, so =>
+        {
+            var arr = so.FindProperty("_categories");
+            for (int i = 0; i < arr.arraySize; i++)
+            {
+                var e = arr.GetArrayElementAtIndex(i);
+                if (e.FindPropertyRelative("Category").intValue != (int)SkillCategory.AI) continue;
+                var s = e.FindPropertyRelative("Skill");
+                if (s.objectReferenceValue == null) s.objectReferenceValue = skill;
+                return;
+            }
+            arr.arraySize++;
+            Entry(arr.GetArrayElementAtIndex(arr.arraySize - 1), SkillCategory.AI, skill,
+                new[] { "ChatGPT", "Codex", "Claude", "Perplexity" },
+                new[] { "com.openai.", "com.anthropic.claudefordesktop", "ai.perplexity." });
+        });
+        EditorUtility.SetDirty(catalog);
     }
 
     /// <summary>能力5つと、能力えらびの表を用意する（無ければ作る）</summary>
@@ -216,8 +282,10 @@ public static class AbilitiesBuilder
             BarGraph = BossTestSceneBuilder.GetOrCreateSkill("Skill_BarGraph", "棒グラフ", SkillCategory.Office, bar),
             PaintBucket = BossTestSceneBuilder.GetOrCreateSkill("Skill_PaintBucket", "バケツ塗り", SkillCategory.Creative, paint),
             Bomb = BossTestSceneBuilder.GetOrCreateSkill("Skill_Bomb", "ボム", SkillCategory.Game, bomb),
+            AiAssistant = GetOrCreateAiAssistant(),
         };
         var catalog = GetOrCreateCatalog(skills);
+        EnsureAiCategory(skills.AiAssistant);
         FillTemplates(catalog, new[]
         {
             // 名前・攻撃・アプリごとに変える数値と範囲（すべて【仮】）
@@ -230,9 +298,215 @@ public static class AbilitiesBuilder
             ("ノヴァ", nova, AttackStat.AreaScale, 0.9f, 1.2f),
         });
         EnsureAppSkills();
+        EnsureChatSkills();
+        EnsurePhotoshopSkill();
+        EnsurePacketSkill();
         skills.GalleryView = AssetDatabase.LoadAssetAtPath<SkillDefinition>(GalleryViewPath);
         AssetDatabase.SaveAssets();
         return skills;
+    }
+
+    // ───────── ブラウザの能力「パケット」（2026-11-19。数値は【仮】） ─────────
+
+    [MenuItem("Tools/Team1/パケットの能力を用意")]
+    public static void EnsurePacketSkillFromMenu()
+    {
+        EnsurePacketSkill();
+        ArtAssets.Apply(); // パケットの絵・色・アイコンを入れる
+        AssetDatabase.SaveAssets();
+        Debug.Log("ブラウザの能力「パケット」を用意しました（能力えらびの表のブラウザの能力にしました）");
+    }
+
+    /// <summary>
+    /// ブラウザの能力「パケット」：
+    /// ・攻撃 Attack_Ability_Packet（種類 Packet）：12マス以内の敵を1体ロックオンして、棒状のパケットを5発（0.06秒おき、最初は70°の扇）撃ち、追尾させる。
+    ///   1発ダメージ1・ゲージ +2。ロックオンした敵が倒れると、応答のパケットが届いてライフが1回復。クールタイム4秒
+    /// ・能力 Skill_Packet（カテゴリ ブラウザ）。能力えらびの表のブラウザの能力が「新しいタブ」のままなら、これに替える（手で直した表は残す）。
+    ///   Chrome のボスを倒したときの能力は、ボスの設定のまま（新しいタブ）
+    /// </summary>
+    public static SkillDefinition EnsurePacketSkill()
+    {
+        AttackData attack = BossTestSceneBuilder.GetOrCreateAttack("Player/Attack_Ability_Packet", so =>
+        {
+            Kind(so, AttackKind.Packet);
+            F(so, "_windup", 0f);
+            F(so, "_cooldown", 4f);
+            I(so, "_damage", 1);
+            I(so, "_gaugeGain", 2);
+            V(so, "_knockback", new Vector2(1.5f, 1f));
+            F(so, "_hitStun", 0.1f);
+            I(so, "_projectileCount", 5);
+            F(so, "_spreadAngle", 70f);
+            F(so, "_speed", 11f);
+            F(so, "_lifetime", 2.2f);
+            V(so, "_hitSize", new Vector2(16f / GameArt.PixelsPerUnit, 4f / GameArt.PixelsPerUnit)); // 絵（16×4 ドット）と同じ
+            B(so, "_destroyOnHit", true);
+            F(so, "_packetRange", 12f);
+            F(so, "_packetInterval", 0.06f);
+            F(so, "_packetTurnRate", 540f);
+            I(so, "_packetHeal", 1);
+        });
+        SkillDefinition skill = BossTestSceneBuilder.GetOrCreateSkill("Skill_Packet", "パケット", SkillCategory.Browser, attack);
+
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
+        if (catalog == null) return skill;
+        var newTab = AssetDatabase.LoadAssetAtPath<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_NewTab.asset");
+        PlayerTestSceneBuilder.SetProps(catalog, so =>
+        {
+            var arr = so.FindProperty("_categories");
+            for (int i = 0; i < arr.arraySize; i++)
+            {
+                var e = arr.GetArrayElementAtIndex(i);
+                if (e.FindPropertyRelative("Category").intValue != (int)SkillCategory.Browser) continue;
+                var s = e.FindPropertyRelative("Skill");
+                if (s.objectReferenceValue == null || s.objectReferenceValue == newTab) s.objectReferenceValue = skill;
+            }
+        });
+        EditorUtility.SetDirty(catalog);
+        return skill;
+    }
+
+    // ───────── Photoshop の能力（2026-11-19：筆とインク。数値は【仮】） ─────────
+
+    [MenuItem("Tools/Team1/Photoshopの能力を用意")]
+    public static void EnsurePhotoshopSkillFromMenu()
+    {
+        EnsurePhotoshopSkill();
+        ArtAssets.Apply(); // 筆とインクの絵・アプリの色・アイコンを入れる
+        AssetDatabase.SaveAssets();
+        Debug.Log("Photoshop の能力を用意しました（能力えらびの表の「アプリ専用の能力」に足しました）");
+    }
+
+    /// <summary>
+    /// Photoshop の能力（取り回しのよい近距離の武器）：
+    /// ・筆 Attack_App_Photoshop（種類 Brush）：長さ3.2マス（近接の約3倍のリーチ）を、0.2秒で下（-75°）から上（80°）へ振る。
+    ///   筆にもダメージ2・ゲージ +6。振る途中で、インクが3つ飛び出す。クールタイム2.5秒
+    /// ・インク Attack_App_Photoshop_Ink：直径1.4マス。1.8秒その場に残り、敵に当たるとダメージ1・ゲージ +2 で消える
+    /// ・能力 Skill_App_Photoshop と、能力えらびの表の「アプリ専用の能力」の行（無いときだけ足す）。絵と色は ArtAssets が入れる
+    /// </summary>
+    public static SkillDefinition EnsurePhotoshopSkill()
+    {
+        AttackData ink = BossTestSceneBuilder.GetOrCreateAttack("Player/App/Attack_App_Photoshop_Ink", so =>
+        {
+            Kind(so, AttackKind.Area); // 中身は「残り続ける判定」と同じ項目を使う（大きさ・持続時間・ヒット間隔）
+            I(so, "_damage", 1);
+            I(so, "_gaugeGain", 2);
+            V(so, "_knockback", new Vector2(1f, 1f));
+            F(so, "_hitStun", 0.1f);
+            V(so, "_areaSize", new Vector2(1.4f, 1.4f)); // 2026-11-19：1 から大きくした
+            B(so, "_destroyOnHit", true);                // 敵に当たったら消える
+            F(so, "_telegraphTime", 0f);                 // 予告なし（出た瞬間から当たる。予告があるとボスのインクのように点滅してから攻撃する）
+            F(so, "_persistDuration", 1.8f);
+            F(so, "_tickInterval", 0.5f);
+        });
+        AttackData brush = BossTestSceneBuilder.GetOrCreateAttack("Player/App/Attack_App_Photoshop", so =>
+        {
+            Kind(so, AttackKind.Brush);
+            F(so, "_windup", 0f);
+            F(so, "_cooldown", 2.5f);
+            I(so, "_damage", 2);
+            I(so, "_gaugeGain", 6);
+            V(so, "_knockback", new Vector2(4f, 4f));
+            F(so, "_hitStun", 0.2f);
+            F(so, "_brushLength", 58f / GameArt.PixelsPerUnit); // 絵の長さ（58ドット）と同じ
+            F(so, "_brushWidth", 0.5f);
+            F(so, "_brushSwingTime", 0.2f);
+            V(so, "_brushAngles", new Vector2(-75f, 80f));
+            V(so, "_brushPivot", new Vector2(0.25f, 0.55f));
+            R(so, "_brushInk", ink);
+            I(so, "_brushInkCount", 3);
+            F(so, "_brushInkFling", 0.8f);
+        });
+        SkillDefinition skill = BossTestSceneBuilder.GetOrCreateSkill("Skill_App_Photoshop", "Photoshop", SkillCategory.Creative, brush);
+
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
+        if (catalog == null) return skill;
+        PlayerTestSceneBuilder.SetProps(catalog, so =>
+        {
+            var arr = so.FindProperty("_appSkills");
+            for (int i = 0; i < arr.arraySize; i++)
+            {
+                if (arr.GetArrayElementAtIndex(i).FindPropertyRelative("Label").stringValue == "Photoshop") return;
+            }
+            arr.arraySize++;
+            AppSkill(arr.GetArrayElementAtIndex(arr.arraySize - 1), "Photoshop", skill, new[] { "Photoshop", "Adobe Photoshop" }, new[] { "com.adobe.Photoshop" });
+        });
+        EditorUtility.SetDirty(catalog);
+        return skill;
+    }
+
+    // ───────── チャットアプリの能力（2026-11-19：Slack・Discord・LINE。数値は【仮】） ─────────
+
+    [MenuItem("Tools/Team1/チャットアプリの能力を用意")]
+    public static void EnsureChatSkillsFromMenu()
+    {
+        EnsureChatSkills();
+        ArtAssets.Apply(); // メッセージの絵・エフェクト・アプリの色・アイコンを入れる
+        AssetDatabase.SaveAssets();
+        Debug.Log("チャットアプリの能力（Slack・Discord・LINE）を用意しました（能力えらびの表の「アプリ専用の能力」に足しました）");
+    }
+
+    /// <summary>
+    /// アプリ1つ分：キー（アセット名）・能力の名前・表の確認用の名前・スクリーンタイムでの名前・バンドルID・
+    /// メッセージの間のすき間（マス。マイナスなら重ねてつなげる）・飛ぶ速さ・いちばん新しいメッセージを出す高さ（足元から）
+    /// </summary>
+    static readonly (string key, string name, string label, string[] names, string[] bundles, float gap, float speed, float anchorY)[] ChatApps =
+    {
+        // LINE：吹き出しが1つずつ分かれる（すき間1ドット）。3つ積むと 26 ドットで、Slack・Discord と同じ大きさ（2026-11-19）
+        ("Line", "LINE", "LINE", new[] { "LINE" }, new[] { "jp.naver.line.mac" }, 1f / GameArt.PixelsPerUnit, 16f, 0.42f),
+        // Slack・Discord：続けて送ると1つの枠につながる（1ドット重ねて、上のメッセージの下の線を隠す）。
+        // 出す高さは、いちばん下の端が LINE と同じ（足元から 0.2）になるように。小さな雑魚にも当たる（2026-11-19）
+        ("Slack", "Slack", "Slack", new[] { "Slack" }, new[] { "com.tinyspeck.slackmacgap" }, -1f / GameArt.PixelsPerUnit, 15f, 0.45f),
+        ("Discord", "Discord", "Discord", new[] { "Discord" }, new[] { "com.hnc.Discord" }, -1f / GameArt.PixelsPerUnit, 15f, 0.45f),
+    };
+
+    /// <summary>
+    /// チャットアプリの能力（Slack・Discord・LINE）を用意する：攻撃データ Attack_App_〇〇（種類 Chat）・能力 Skill_App_〇〇・
+    /// 能力えらびの表の「アプリ専用の能力」の行（無いときだけ足す。手で直した行は残す）。絵と色は ArtAssets が入れる。
+    /// 止まっている間はクールタイムなしで3つまでメッセージを出せ、最後に足してから1秒で一斉に飛ぶ。動くか3つ出したらクールタイム2.5秒
+    /// </summary>
+    public static void EnsureChatSkills()
+    {
+        var created = new System.Collections.Generic.List<(string label, SkillDefinition skill, string[] names, string[] bundles)>();
+        foreach (var app in ChatApps)
+        {
+            AttackData attack = BossTestSceneBuilder.GetOrCreateAttack($"Player/App/Attack_App_{app.key}", so =>
+            {
+                Kind(so, AttackKind.Chat);
+                F(so, "_windup", 0f);
+                F(so, "_cooldown", 2.5f);
+                I(so, "_damage", 1);
+                I(so, "_gaugeGain", 4);              // 1つにつき近接1回分。3つ全部当たると +12
+                V(so, "_knockback", new Vector2(2f, 1.5f));
+                F(so, "_hitStun", 0.15f);
+                F(so, "_speed", app.speed);
+                F(so, "_lifetime", 1.2f);
+                B(so, "_destroyOnTerrain", true);
+                B(so, "_destroyOnHit", true);
+                F(so, "_chatGap", app.gap);
+                I(so, "_chatMaxMessages", 3);
+                F(so, "_chatFireDelay", 1f);
+                V(so, "_chatAnchor", new Vector2(1.85f, app.anchorY)); // メッセージ（幅38ドット＝2.1マス）の左の端が、プレイヤーの体より前に来る（2026-11-19）
+            });
+            SkillDefinition skill = BossTestSceneBuilder.GetOrCreateSkill($"Skill_App_{app.key}", app.name, SkillCategory.SocialChat, attack);
+            created.Add((app.label, skill, app.names, app.bundles));
+        }
+
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
+        if (catalog == null) return;
+        PlayerTestSceneBuilder.SetProps(catalog, so =>
+        {
+            var arr = so.FindProperty("_appSkills");
+            foreach (var c in created)
+            {
+                bool found = false;
+                for (int i = 0; i < arr.arraySize && !found; i++) found = arr.GetArrayElementAtIndex(i).FindPropertyRelative("Label").stringValue == c.label;
+                if (found) continue;
+                arr.arraySize++;
+                AppSkill(arr.GetArrayElementAtIndex(arr.arraySize - 1), c.label, c.skill, c.names, c.bundles);
+            }
+        });
+        EditorUtility.SetDirty(catalog);
     }
 
     const string AppSkillAttackFolder = "Assets/ScriptableObjects/Attacks/Player/App";

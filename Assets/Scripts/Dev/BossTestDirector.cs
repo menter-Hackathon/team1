@@ -14,6 +14,8 @@ public class BossTestDirector : MonoBehaviour
     [SerializeField] Transform _player;
     [Tooltip("最初に出すボスの番号")]
     [SerializeField, Min(0)] int _startIndex;
+    [Tooltip("形態変化の演出中に、画面の真ん中に「アップデート中…」のバーを出すか（チャットのボスのテストシーンでは出さない。2026-11-19）")]
+    [SerializeField] bool _showUpdateBar = true;
 
     InputAction _switch;
     InputAction _reset;
@@ -136,7 +138,7 @@ public class BossTestDirector : MonoBehaviour
             GUI.color = Color.white;
             GUI.DrawTexture(new Rect(bar.x + bar.width * boss.Profile.Phase2Threshold - 1f, bar.y - 3f, 2f, bar.height + 6f), Texture2D.whiteTexture);
 
-            if (boss.State == BossState.Transition)
+            if (_showUpdateBar && boss.State == BossState.Transition)
             {
                 var r = new Rect((Screen.width - 360f) * 0.5f, Screen.height * 0.38f, 360f, 22f);
                 GUI.Label(new Rect(r.x, r.y - 40f, r.width, 36f), "アップデート中…", _bigStyle);

@@ -59,6 +59,16 @@ public class GameArt : ScriptableObject
     [Tooltip("雑魚の絵（ゲームオーバー・タイトルの飾り。シートの1コマ目を使う）")]
     [SerializeField] Sprite[] _zakoWalk;
 
+    [Header("Photoshop のボス（2026-11-19）")]
+    [Tooltip("インクの攻撃範囲（白い荒れたしぶき。赤く塗って点滅させる）")]
+    [SerializeField] Sprite _inkDanger;
+    [Tooltip("選択ツールのマウスカーソル（矢印）")]
+    [SerializeField] Sprite _mouseCursor;
+    [Tooltip("選択範囲の点線（横に並べる。2コマで点線が流れる）")]
+    [SerializeField] Sprite[] _marqueeDash;
+    [Tooltip("状態異常の印（0：速い、1：遅い、2：クールタイムが長い、3：ジャンプが高い）")]
+    [SerializeField] Sprite[] _statusIcons;
+
     public Sprite TelegraphFrame => _telegraphFrame;
     public Sprite Shadow => _shadow;
     public Sprite BreakpointMark => _breakpointMark;
@@ -85,6 +95,10 @@ public class GameArt : ScriptableObject
     public Font FontJa => _fontJa;
     public Font FontEn => _fontEn;
     public Sprite[] ZakoWalk => _zakoWalk;
+    public Sprite InkDanger => _inkDanger;
+    public Sprite MouseCursor => _mouseCursor;
+    public Sprite[] MarqueeDash => _marqueeDash;
+    public Sprite[] StatusIcons => _statusIcons;
 
     static GameArt _instance;
     static bool _loaded;

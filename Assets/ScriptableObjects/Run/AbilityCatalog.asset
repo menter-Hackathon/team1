@@ -16,7 +16,7 @@ MonoBehaviour:
   _pickCount: 1
   _categories:
   - Category: 1
-    Skill: {fileID: 11400000, guid: 9ef23ca1ac7b9443c8b04fa55802f50b, type: 2}
+    Skill: {fileID: 11400000, guid: 704ad26bd82aa402a97fca5034729dcf, type: 2}
     AppNames:
     - Google Chrome
     - Chrome
@@ -138,6 +138,17 @@ MonoBehaviour:
     - com.valvesoftware.steam
     - com.mojang.
     - com.epicgames.
+  - Category: 4
+    Skill: {fileID: 11400000, guid: b389f8d5ffc4843a29da8e439f9af54b, type: 2}
+    AppNames:
+    - ChatGPT
+    - Codex
+    - Claude
+    - Perplexity
+    BundleIdPrefixes:
+    - com.openai.
+    - com.anthropic.claudefordesktop
+    - ai.perplexity.
   _appSkills:
   - Label: Zoom
     Skill: {fileID: 11400000, guid: 403bb8d4301d9415d822fed68c95726f, type: 2}
@@ -162,6 +173,20 @@ MonoBehaviour:
     - Adobe Premiere Pro
     BundleIdPrefixes:
     - com.adobe.PremierePro
+  - Label: LINE
+    Skill: {fileID: 11400000, guid: 9a058da6ec1874cc197474c7e3d5b02b, type: 2}
+    AppNames:
+    - LINE
+    BundleIdPrefixes:
+    - jp.naver.line.mac
+  - Label: Slack
+    Skill: {fileID: 11400000, guid: d91cb93355a714928857e7e97849e32a, type: 2}
+    AppNames:
+    - Slack
+    BundleIdPrefixes:
+    - com.tinyspeck.slackmacgap
+  - Label: Discord
+    Skill: {fileID: 11400000, guid: 62a921635ed68478f817a39305100dc6, type: 2}
     FromKit: 0
   - Label: Arc
     Skill: {fileID: 11400000, guid: 7ce67a171a4f6443cb990e3adc28ae1a, type: 2}
@@ -220,6 +245,8 @@ MonoBehaviour:
     - Discord
     BundleIdPrefixes:
     - com.hnc.Discord
+  - Label: Photoshop
+    Skill: {fileID: 11400000, guid: 5fef6b5a6be9d49f88185fc058f6e957, type: 2}
     FromKit: 1
   - Label: Excel
     Skill: {fileID: 11400000, guid: 6918daaa3bcee48a296c83333c73af30, type: 2}

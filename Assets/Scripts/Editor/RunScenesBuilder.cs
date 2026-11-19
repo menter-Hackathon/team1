@@ -15,6 +15,8 @@ using UnityEngine;
 /// ・シーン（Assets/Scenes/Run）：RunTitle（【仮】タイトル）、RunLoadout（【仮】能力えらび）、Stage_Desktop（【仮】1画面のステージ）、
 ///   Stage_Scroll（横スクロール）・Stage_Windows（ウィンドウ移動）（StageLayoutsBuilder）、RunResult（【仮】リザルト）
 /// ・Build Settings にこの6つを登録する（ほかに登録されているシーンは後ろに残す）
+/// ・AI チャットのボス（AiChatBossBuilder：プレハブ・Stage_AIChat・対応アプリ表の行。2026-11-19）
+/// ・チャットのボス（ChatBossBuilder：プレハブ・チャットbot・対応アプリ表の行。2026-11-19）
 /// 数値はすべて【仮】。データ（対応アプリ表・サンプル）は上書きしないので、直したいときはそのアセットを直接直す（作り直すなら消してから実行）。
 /// 絵は ArtAssets（Tools/Team1/グラフィックを適用）が入れる。ボスのプレハブは絵ごと作り直す。
 /// </summary>
@@ -78,6 +80,10 @@ public static class RunScenesBuilder
         string resultPath = BuildResult();
         RegisterBuildScenes(titlePath, loadoutPath, stagePath, scrollPath, windowsPath, resultPath);
         FinalBossBuilder.BuildFinalBoss(); // ラスボス Terminal（無ければ作る。2026-11-18）
+        AiChatBossBuilder.BuildForRun();   // AI チャットのボス（プレハブ・ステージ・対応アプリ表の行。2026-11-19）
+        ChatBossBuilder.BuildForRun();     // チャットのボス（プレハブ・チャットbot・対応アプリ表の行。2026-11-19）
+        PhotoshopBossBuilder.BuildForRun(); // Photoshop のボス（プレハブ・インクの生命体・対応アプリ表の行。2026-11-19）
+        BrowserBossBuilder.BuildForRun();   // ブラウザのボス（プレハブ・雑魚を出すウィンドウ・対応アプリ表の行。2026-11-19）
 
         AssetDatabase.SaveAssets();
         Debug.Log($"ランのシーンを作成しました: {titlePath}, {loadoutPath}, {stagePath}, {scrollPath}, {windowsPath}, {resultPath}");
@@ -229,14 +235,27 @@ public static class RunScenesBuilder
 
     static string BuildStage(AppCatalog catalog, Sprite square, BossTestSceneBuilder.Attacks attacks, AttackData zakoShot)
     {
-        int ground = LayerMask.NameToLayer("Ground");
         int oneWay = LayerMask.NameToLayer("OneWayPlatform");
+        return BuildOneScreenStage(StageScene, terrain =>
+        {
+            PlayerTestSceneBuilder.CreateBlock("Folder_Left", new Vector2(-3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
+            PlayerTestSceneBuilder.CreateBlock("Folder_Right", new Vector2(3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
+        }, new Vector2(3.5f, 3f), new Vector2(-3.5f, 3f));
+    }
+
+    /// <summary>
+    /// 1画面のステージ（雑魚を倒すとボスが出る）を作って保存する。床と左右の壁は共通で、足場は platforms で置く（2026-11-19：AI チャットのボスのステージでも使う）。
+    /// walkerOnPlatform・shooterOnPlatform：足場の上に置く雑魚の足元（足場の上面に合わせる）
+    /// </summary>
+    internal static string BuildOneScreenStage(string sceneName, System.Action<Transform> platforms, Vector2 walkerOnPlatform, Vector2 shooterOnPlatform)
+    {
+        int ground = LayerMask.NameToLayer("Ground");
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         // 新しいシーンを開いたので、アセットを読み込み直す
-        square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
-        attacks = BossTestSceneBuilder.GetOrCreateAttacks();
-        zakoShot = StageTestSceneBuilder.GetOrCreateZakoShot();
-        catalog = AssetDatabase.LoadAssetAtPath<AppCatalog>(CatalogPath);
+        Sprite square = PlayerTestSceneBuilder.GetOrCreateSquareSprite();
+        var attacks = BossTestSceneBuilder.GetOrCreateAttacks();
+        AttackData zakoShot = StageTestSceneBuilder.GetOrCreateZakoShot();
+        var catalog = AssetDatabase.LoadAssetAtPath<AppCatalog>(CatalogPath);
         var abilities = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(AbilitiesBuilder.CatalogPath);
 
         // --- 部屋（雑魚戦テストシーンと同じ。床の上面が y=0） ---
@@ -244,8 +263,7 @@ public static class RunScenesBuilder
         PlayerTestSceneBuilder.CreateBlock("Floor", new Vector2(0f, -1f), new Vector2(22f, 2f), ground, ArtLib.BlockKind.Ground, terrain);
         PlayerTestSceneBuilder.CreateBlock("Wall_Left", new Vector2(-10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
         PlayerTestSceneBuilder.CreateBlock("Wall_Right", new Vector2(10.5f, 6f), new Vector2(1f, 14f), ground, ArtLib.BlockKind.Wall, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Folder_Left", new Vector2(-3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
-        PlayerTestSceneBuilder.CreateBlock("Folder_Right", new Vector2(3.5f, 2.85f), new Vector2(2.4f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
+        platforms?.Invoke(terrain);
         var arena = new GameObject("BattleArena").AddComponent<BattleArena>();
         PlayerTestSceneBuilder.SetProps(arena, so => so.FindProperty("_bounds").rectValue = ArenaBounds);
 
@@ -256,8 +274,8 @@ public static class RunScenesBuilder
         // --- 雑魚ウイルス ---
         var wave = new GameObject("EnemyWave").AddComponent<EnemyWave>();
         StageTestSceneBuilder.CreateWalker("Zako_Walker_Floor", new Vector2(2f, 0f), -1, wave.transform, square);
-        StageTestSceneBuilder.CreateWalker("Zako_Walker_Folder", new Vector2(3.5f, 3f), 1, wave.transform, square);
-        StageTestSceneBuilder.CreateShooter("Zako_Shooter_Folder", new Vector2(-3.5f, 3f), zakoShot, player.transform, wave.transform, square);
+        StageTestSceneBuilder.CreateWalker("Zako_Walker_Folder", walkerOnPlatform, 1, wave.transform, square);
+        StageTestSceneBuilder.CreateShooter("Zako_Shooter_Folder", shooterOnPlatform, zakoShot, player.transform, wave.transform, square);
         StageTestSceneBuilder.CreateShooter("Zako_Shooter_Floor", new Vector2(8.5f, 0f), zakoShot, player.transform, wave.transform, square);
         // 【仮】雑魚は近接1回で倒れるので、部屋の中に出し続ける。8体出し終えて、全員倒すとボスが出る（最初の4体と合わせて12体。2026-11-17）
         StageTestSceneBuilder.CreateSpawner(player.transform, zakoShot, square, wave, 8, new Vector2(2.2f, 1f), new Vector2Int(3, 6), 45f, ArenaBounds, false);
@@ -287,10 +305,19 @@ public static class RunScenesBuilder
         Camera cam = CreateCamera(new Vector3(0f, 5.5f, -10f));
         ArtLib.CreateBackground(cam);
         ArtLib.CreateHud(cam, player, director);
-        string path = $"{SceneFolder}/{StageScene}.unity";
+        string path = $"{SceneFolder}/{sceneName}.unity";
         EditorSceneManager.SaveScene(scene, path);
         return path;
     }
+
+    /// <summary>Build Settings に、シーンを1つ足す（すでにあれば何もしない。2026-11-19：AI チャットのボスのステージ）</summary>
+    internal static void AddBuildScene(string path)
+    {
+        if (EditorBuildSettings.scenes.Any(s => s.path == path)) return;
+        EditorBuildSettings.scenes = EditorBuildSettings.scenes.Append(new EditorBuildSettingsScene(path, true)).ToArray();
+    }
+
+    internal const string RunSceneFolder = SceneFolder;
 
     static string BuildResult()
     {

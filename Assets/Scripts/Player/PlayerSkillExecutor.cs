@@ -7,14 +7,22 @@ using UnityEngine;
 /// ・クールタイムは攻撃データの「間隔」。使った瞬間から数える
 /// ・クールタイムは能力ごとに覚える。捨てて拾い直しても、別の枠に入れ直しても、残り時間はそのまま
 /// ・使えるかどうか（のけぞり中・入れ替え待ち中は使えない）は PlayerSkills が判断して SkillUseRequested を出す
-/// ・2026-11-19（アプリのキット E2・E5）：クールタイムは毎フレーム「進み方の倍率」（GameBuffs.PlayerCooldown の逆数）で減らす
-///   （途中で倍率が変わっても効く）。封印（Seal）・クールタイムを進める（AdvanceCooldowns）・全部回復（RefillCooldowns）を足した
+/// ・召喚（AI アシスタント。2026-11-18）は、味方が消えてからクールタイムを数える。味方がいる間は使えない
+/// ・チャット（Slack・Discord・LINE。2026-11-19）は、止まっている間は続けて押すとメッセージが増え（最大数まで、クールタイムなし）、
+///   動くか最大数まで出したら、そこからクールタイムを数える
 /// </summary>
 [RequireComponent(typeof(PlayerSkills), typeof(AttackRunner))]
 public class PlayerSkillExecutor : MonoBehaviour
 {
     PlayerSkills _skills;
     AttackRunner _runner;
+    readonly Dictionary<SkillDefinition, float> _readyAt = new Dictionary<SkillDefinition, float>();
+    readonly Dictionary<SkillDefinition, float> _cooldownTotal = new Dictionary<SkillDefinition, float>(); // 今のクールタイムの長さ（ゲージの割合用）
+
+    /// <summary>クールタイムの倍率（状態異常「クールタイムが長い」。ふだんは1。使った瞬間の倍率で決まる。2026-11-19）</summary>
+    public float CooldownMultiplier { get; set; } = 1f;
+    // 終わってからクールタイムを数える能力（攻撃データ → 能力）。攻撃が終わったら、そこからクールタイムを数え直す
+    readonly Dictionary<AttackData, SkillDefinition> _waitingFinish = new Dictionary<AttackData, SkillDefinition>();
 
     /// <summary>能力を実行する AttackRunner（HUD が、専用の技の状態を聞くとき用）</summary>
     public AttackRunner Runner => _runner;
@@ -38,8 +46,26 @@ public class PlayerSkillExecutor : MonoBehaviour
         _runner = GetComponent<AttackRunner>();
     }
 
-    void OnEnable() => _skills.SkillUseRequested += OnSkillUseRequested;
-    void OnDisable() => _skills.SkillUseRequested -= OnSkillUseRequested;
+    void OnEnable()
+    {
+        _skills.SkillUseRequested += OnSkillUseRequested;
+        _runner.Finished += OnAttackFinished;
+    }
+
+    void OnDisable()
+    {
+        _skills.SkillUseRequested -= OnSkillUseRequested;
+        _runner.Finished -= OnAttackFinished;
+    }
+
+    void OnAttackFinished(AttackData attack)
+    {
+        if (attack == null || !_waitingFinish.TryGetValue(attack, out SkillDefinition skill)) return;
+        _waitingFinish.Remove(attack);
+        float cd = attack.Cooldown * CooldownMultiplier;
+        _readyAt[skill] = Time.time + cd;
+        _cooldownTotal[skill] = cd;
+    }
 
     void OnSkillUseRequested(int index, SkillDefinition skill) => TryUse(index, skill);
 
@@ -77,6 +103,13 @@ public class PlayerSkillExecutor : MonoBehaviour
             return false;
         }
 
+        // チャット（Slack・Discord・LINE）：ためが続いている間（止まっていて最大数まで）は、クールタイムなしでメッセージを足す
+        if (attack.Kind == AttackKind.Chat && ChatVolley.TryAppend(_runner, attack))
+        {
+            SkillUsed?.Invoke(index, skill);
+            return true;
+        }
+
         float remain = GetCooldownRemaining(skill);
         if (remain > 0f)
         {
@@ -98,6 +131,25 @@ public class PlayerSkillExecutor : MonoBehaviour
             return false;
         }
 
+        if (attack.Kind == AttackKind.Summon)
+        {
+            // 味方が消えるまでは使えない。消えたこと（Finished）を受け取れなかったときのために、いられる最大の秒数の後には使えるようにしておく
+            _readyAt[skill] = Time.time + attack.SummonLifetime + attack.Cooldown;
+            _waitingFinish[attack] = skill;
+        }
+        else if (attack.Kind == AttackKind.Chat)
+        {
+            // ためが終わる（動く・最大数まで出す）まではクールタイムを数えない。終わったら Finished から数える。
+            // 受け取れなかったときのために、待つ秒数×最大数の後には使えるようにしておく
+            _readyAt[skill] = Time.time + attack.ChatFireDelay * attack.ChatMaxMessages + attack.Cooldown;
+            _waitingFinish[attack] = skill;
+        }
+        else
+        {
+            float cd = attack.Cooldown * CooldownMultiplier;
+            _readyAt[skill] = Time.time + cd;
+            _cooldownTotal[skill] = cd;
+        }
         // 2回押しの能力（zip圧縮）は、1回目のあとはクールタイムを始めない（2026-11-18）
         bool defer = attack.Kind == AttackKind.Custom && attack.Custom != null && attack.Custom.DefersCooldown(_runner);
         if (!defer && attack.Cooldown > 0f) _remain[skill] = attack.Cooldown; // 2026-11-19：倍率は Update で（進み方）
@@ -125,14 +177,18 @@ public class PlayerSkillExecutor : MonoBehaviour
     /// <summary>クールタイムの残り秒数（今の進み方の倍率での秒数。使えるなら 0）</summary>
     public float GetCooldownRemaining(SkillDefinition skill)
     {
-        if (skill == null || !_remain.TryGetValue(skill, out float r)) return 0f;
-        return Mathf.Max(0f, r / Rate);
+        if (skill == null || !_readyAt.TryGetValue(skill, out float t)) return 0f;
+        // チャットのためが続いている間は、まだ押せるので「使える」扱い
+        if (skill.Attack != null && skill.Attack.Kind == AttackKind.Chat && ChatVolley.IsOpenFor(_runner, skill.Attack)) return 0f;
+        return Mathf.Max(0f, t - Time.time);
     }
 
     /// <summary>クールタイムの残りの割合（1＝使った直後、0＝使える）。UI のゲージ用</summary>
     public float GetCooldownRatio(SkillDefinition skill)
     {
         if (skill == null || skill.Attack == null || skill.Attack.Cooldown <= 0f) return 0f;
+        float total = _cooldownTotal.TryGetValue(skill, out float t) && t > 0f ? t : skill.Attack.Cooldown;
+        return Mathf.Clamp01(GetCooldownRemaining(skill) / total);
         if (!_remain.TryGetValue(skill, out float r)) return 0f;
         return Mathf.Clamp01(r / skill.Attack.Cooldown);
     }

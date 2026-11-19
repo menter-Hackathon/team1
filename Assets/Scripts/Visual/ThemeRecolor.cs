@@ -75,6 +75,83 @@ public static class ThemeRecolor
         return made;
     }
 
+    static readonly Dictionary<(int, int), Sprite> SmokeCache = new Dictionary<(int, int), Sprite>();
+    static readonly Dictionary<(int, uint), Sprite> ColorizeCache = new Dictionary<(int, uint), Sprite>();
+
+    /// <summary>
+    /// 絵を1つの色の濃淡にした複製（2026-11-19：通知の大技の赤いもや）。明るさを3段に分けて、暗い色・その色・明るい色に置き換える。
+    /// 塗り替えられなければ元の絵
+    /// </summary>
+    public static Sprite Colorize(Sprite src, Color color)
+    {
+        if (src == null) return src;
+        Color32 c32 = color;
+        var key = (src.GetInstanceID(), ((uint)c32.r << 16) | ((uint)c32.g << 8) | c32.b);
+        if (ColorizeCache.TryGetValue(key, out Sprite cached) && cached != null) return cached;
+        Color32[] px = Read(src, out int w, out int h);
+        if (px == null) return src;
+        float lo = float.MaxValue, hi = float.MinValue;
+        foreach (var c in px)
+        {
+            if (c.a == 0) continue;
+            float l = Lum(c);
+            lo = Mathf.Min(lo, l);
+            hi = Mathf.Max(hi, l);
+        }
+        Color32 dark = Mix(color, Color.black, 0.45f);
+        Color32 mid = Mix(color, Color.black, 0f);
+        Color32 light = Mix(color, Color.white, 0.45f);
+        for (int i = 0; i < px.Length; i++)
+        {
+            Color32 c = px[i];
+            if (c.a == 0) continue;
+            float t = hi > lo ? (Lum(c) - lo) / (hi - lo) : 0.5f;
+            Color32 to = t < 0.33f ? dark : t < 0.7f ? mid : light;
+            to.a = c.a;
+            px[i] = to;
+        }
+        Sprite made = Make(px, w, h, src, $"{src.name}_tint");
+        ColorizeCache[key] = made;
+        return made;
+    }
+
+    /// <summary>
+    /// ウイルスの黒い煙を、アプリの色味にした複製（2026-11-19：AI チャットのボスの後ろに漂う煙）。
+    /// 暗さは残し（黒っぽいまま）、色味だけをアプリの代表の色に寄せる。明るさを3段に分けて置き換える。塗り替えられなければ元の絵
+    /// </summary>
+    public static Sprite Smoke(Sprite src, AppTheme theme)
+    {
+        if (src == null || theme == null) return src;
+        var key = (src.GetInstanceID(), theme.GetInstanceID());
+        if (SmokeCache.TryGetValue(key, out Sprite cached) && cached != null) return cached;
+        Color32[] px = Read(src, out int w, out int h);
+        if (px == null) return src;
+        float lo = float.MaxValue, hi = float.MinValue;
+        foreach (var c in px)
+        {
+            if (c.a == 0) continue;
+            float l = Lum(c);
+            lo = Mathf.Min(lo, l);
+            hi = Mathf.Max(hi, l);
+        }
+        Color main = theme.Main;
+        Color32 deep = Mix(main, Color.black, 0.82f);
+        Color32 mid = Mix(main, Color.black, 0.58f);
+        Color32 light = Mix(main, Color.black, 0.3f);
+        for (int i = 0; i < px.Length; i++)
+        {
+            Color32 c = px[i];
+            if (c.a == 0) continue;
+            float t = hi > lo ? (Lum(c) - lo) / (hi - lo) : 0f;
+            Color32 to = t < 0.33f ? deep : t < 0.7f ? mid : light;
+            to.a = c.a;
+            px[i] = to;
+        }
+        Sprite made = Make(px, w, h, src, $"{src.name}_smoke_{theme.name}");
+        SmokeCache[key] = made;
+        return made;
+    }
+
     /// <summary>ステージの絵をアプリの色に塗り替えた複製。塗り替えられなければ元の絵</summary>
     public static Sprite Stage(Sprite src, AppTheme theme, Kind kind)
     {

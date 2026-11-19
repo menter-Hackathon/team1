@@ -50,6 +50,17 @@ public class BossProfile : ScriptableObject
     [SerializeField] BossPhaseSettings _phase1 = new BossPhaseSettings { WaitAfterAttack = 1.2f };
     [SerializeField] BossPhaseSettings _phase2 = new BossPhaseSettings { WaitAfterAttack = 0.8f };
 
+    [Tooltip("第2形態になった直後に、1回だけ出す大技（1回の戦いで1回だけ。エラーで止まらない）。空なら出さない（2026-11-19：AI チャットのボス）")]
+    [SerializeField] AttackData _phase2OpeningMove;
+
+    [Header("エラー（2026-11-19：AI チャットのボス。確率0なら起きない）")]
+    [Tooltip("ゲージが増える攻撃を受けたとき、エラーで止まる確率（0〜1）")]
+    [SerializeField, Range(0f, 1f)] float _errorChance;
+    [Tooltip("エラーで止まる秒数（出している途中の技も止まる）")]
+    [SerializeField, Min(0f)] float _errorStunTime = 1.2f;
+    [Tooltip("エラーが終わってから、次にエラーが起きうるまでの秒数（止まりっぱなしにならないように）")]
+    [SerializeField, Min(0f)] float _errorCooldown = 4f;
+
     [Header("移動")]
     [SerializeField] BossMovement _movement = BossMovement.None;
     [Tooltip("移動に使う瞬間移動の攻撃データ（移動が Warp のとき）")]
@@ -58,6 +69,8 @@ public class BossProfile : ScriptableObject
     [SerializeField, Min(0.1f)] float _hoverSpeed = 3f;
     [Tooltip("飛んで移動する先の x（部屋の真ん中からの距離、移動が Hover のとき）")]
     [SerializeField] float[] _hoverPointsX = { -7f, 0f, 7f };
+    [Tooltip("飛んで移動する先の高さ（部屋の床からの高さ。上の x と同じ順）。空・足りない分は、最初の高さのまま（2026-11-19：AI チャットのボスは上下にも動く）")]
+    [SerializeField] float[] _hoverPointsY;
 
     [Header("正常化したときに手に入る能力")]
     [SerializeField] SkillDefinition _reward;
@@ -84,7 +97,12 @@ public class BossProfile : ScriptableObject
     public AttackData WarpAttack => _warpAttack;
     public float HoverSpeed => _hoverSpeed;
     public float[] HoverPointsX => _hoverPointsX;
+    public float[] HoverPointsY => _hoverPointsY;
     public SkillDefinition Reward => _reward;
+    public AttackData Phase2OpeningMove => _phase2OpeningMove;
+    public float ErrorChance => _errorChance;
+    public float ErrorStunTime => _errorStunTime;
+    public float ErrorCooldown => _errorCooldown;
     public BossExtension[] Extensions => _extensions;
     /// <summary>正常化したあとのきれいなアイコン</summary>
     public Sprite NormalIcon => _normalIcon != null ? _normalIcon : _icon;
@@ -103,6 +121,28 @@ public class BossProfile : ScriptableObject
         copy._gaugeMax = Mathf.Max(1, gaugeMax);
         copy._phase2.WaitAfterAttack = Mathf.Max(0f, phase2Wait);
         copy._reward = reward;
+        return copy;
+    }
+
+    /// <summary>
+    /// 技の絵を塗り替えた複製を作る（AI チャットのボス：アプリの色にする。2026-11-19）。同じ技は1回だけ塗り替える。アセットそのものは書き換えない
+    /// </summary>
+    public BossProfile CreateRecoloredCopy(Func<Sprite, Sprite> recolor)
+    {
+        var copy = Instantiate(this);
+        copy.name = name;
+        var done = new System.Collections.Generic.Dictionary<AttackData, AttackData>();
+        AttackData Re(AttackData a)
+        {
+            if (a == null) return null;
+            if (!done.TryGetValue(a, out AttackData c)) done[a] = c = a.CreateRecoloredCopy(recolor);
+            return c;
+        }
+        AttackData[] ReAll(AttackData[] moves) => moves == null ? null : Array.ConvertAll(moves, Re);
+        copy._phase1.Moves = ReAll(_phase1.Moves);
+        copy._phase2.Moves = ReAll(_phase2.Moves);
+        copy._phase2OpeningMove = Re(_phase2OpeningMove);
+        copy._warpAttack = Re(_warpAttack);
         return copy;
     }
 

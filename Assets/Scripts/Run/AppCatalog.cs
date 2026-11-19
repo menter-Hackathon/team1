@@ -80,6 +80,12 @@ public class AppEntry
     [Tooltip("アイコンの色から作った色の組み合わせ。ステージの壁紙・床・足場・ゲージを、この色に塗り替える。空なら元の色のまま")]
     public AppTheme Theme;
 
+    [Header("代用ボスのひな形にするとき（2026-11-19：AI チャットのボス）")]
+    [Tooltip("オン：このボスを代用ボスにするのは、同じカテゴリのアプリだけ（カテゴリの分からないアプリのボスには選ばない）")]
+    public bool StandInSameCategoryOnly;
+    [Tooltip("代用ボスにしたときのステージのシーン。空なら、表の「代用ボスのステージ」")]
+    public string StandInStageScene;
+
     [Header("使用時間で変えるつまみ（docs 6章）")]
     [Tooltip("ボスのウイルス解除ゲージの最大値")]
     public IntRange GaugeMax = new IntRange(80, 140);

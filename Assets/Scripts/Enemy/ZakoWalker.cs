@@ -2,6 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// 歩く雑魚ウイルス（仕様書 4.1）。床を一定の速さで往復し、壁や足場の端で折り返す。
+/// 「プレイヤーを追いかける」をオンにすると、プレイヤーのいる方へ歩く（チャットのボスのチャットbot。2026-11-19）。
+/// 「必要なときにジャンプ」もオンにすると、プレイヤーが上の段にいて横に近いとき・進む先が壁のときに跳ぶ。
 /// 体当たりは体の Hitbox、被弾は Hurtbox → Health（HP）で受ける。
 /// 攻撃を受けると少し押し戻されて、短い間止まる。倒れたら動かない（消すのは DisableOnDeath）。
 /// </summary>
@@ -18,6 +20,19 @@ public class ZakoWalker : MonoBehaviour
     [SerializeField] LayerMask _groundMask;
     [SerializeField] float _gravity = 40f;
     [SerializeField] float _maxFallSpeed = 18f;
+    [Tooltip("オン：プレイヤーのいる方へ歩く（ジャンプはしない）。足場の端で折り返さないようにしておけば、端から落ちる")]
+    [SerializeField] bool _chasePlayer;
+    [Tooltip("プレイヤーとの横の距離がこれより近いときは、向きを変えない（行ったり来たりしないように）")]
+    [SerializeField, Min(0f)] float _chaseDeadZone = 0.4f;
+    [Tooltip("オン：追いかけるとき、必要ならジャンプする（プレイヤーが上の段にいて横に近いとき・進む先が壁のとき）")]
+    [SerializeField] bool _jumpWhenNeeded;
+    [Tooltip("ジャンプの高さ（マス）。プレイヤーは 3.2")]
+    [SerializeField, Min(0.1f)] float _jumpHeight = 3f;
+    [Tooltip("一度跳んでから、次に跳べるまでの秒数")]
+    [SerializeField, Min(0f)] float _jumpCooldown = 1.2f;
+    [Tooltip("プレイヤーがこれより高い所（足元の差、マス）にいて、横の距離が「跳ぶ横の距離」より近ければ跳ぶ")]
+    [SerializeField, Min(0f)] float _jumpIfTargetAbove = 1.2f;
+    [SerializeField, Min(0f)] float _jumpHorizontalRange = 3.5f;
 
     [Header("被弾")]
     [Tooltip("攻撃を受けてから止まる秒数")]
@@ -34,6 +49,8 @@ public class ZakoWalker : MonoBehaviour
     Health _health;
     Vector2 _velocity;
     float _pauseUntil = float.NegativeInfinity;
+    Transform _chaseTarget;
+    float _nextJump;
 
     /// <summary>歩いている向き（右 1／左 -1）</summary>
     public int Direction { get; private set; }
@@ -65,8 +82,10 @@ public class ZakoWalker : MonoBehaviour
         float dt = Time.fixedDeltaTime;
         bool stopped = _health.IsDead || Time.time < _pauseUntil;
 
+        if (!stopped && _chasePlayer) FacePlayer();
         if (stopped) _velocity.x = Mathf.MoveTowards(_velocity.x, 0f, 20f * dt);
-        else _velocity.x = Direction * _speed * GameBuffs.ZakoSpeed; // 2026-11-19：雑魚の速さの倍率（アプリのキット）
+        else _velocity.x = Direction * _speed;
+        if (!stopped && _chasePlayer && _jumpWhenNeeded) TryJump();
 
         // 足場の端に来たら、落ちる前に折り返す
         if (!stopped && _turnAtLedges && _body.IsGrounded && !HasGroundAhead()) Turn();
@@ -91,6 +110,32 @@ public class ZakoWalker : MonoBehaviour
     {
         Direction = direction >= 0 ? 1 : -1;
         _velocity = Vector2.zero;
+    }
+
+    /// <summary>必要なら跳ぶ：地面にいて、プレイヤーが上の段で横に近いか、進む先が壁のとき（跳んだら、しばらく跳ばない）</summary>
+    void TryJump()
+    {
+        if (!_body.IsGrounded || Time.time < _nextJump || _chaseTarget == null) return;
+        float dx = _chaseTarget.position.x - transform.position.x;
+        float dy = _chaseTarget.position.y - transform.position.y; // どちらも足元が原点
+        bool targetAbove = dy > _jumpIfTargetAbove && Mathf.Abs(dx) < _jumpHorizontalRange;
+        bool wallAhead = (Direction > 0 && _body.HitWallRight) || (Direction < 0 && _body.HitWallLeft);
+        if (!targetAbove && !wallAhead) return;
+        _velocity.y = Mathf.Sqrt(2f * _gravity * _jumpHeight);
+        _nextJump = Time.time + _jumpCooldown;
+    }
+
+    /// <summary>プレイヤーのいる方を向く（追いかける雑魚）</summary>
+    void FacePlayer()
+    {
+        if (_chaseTarget == null || !_chaseTarget.gameObject.activeInHierarchy)
+        {
+            var player = FindObjectOfType<PlayerController>();
+            _chaseTarget = player != null ? player.transform : null;
+            if (_chaseTarget == null) return;
+        }
+        float dx = _chaseTarget.position.x - transform.position.x;
+        if (Mathf.Abs(dx) > _chaseDeadZone) Direction = dx > 0f ? 1 : -1;
     }
 
     void Turn()

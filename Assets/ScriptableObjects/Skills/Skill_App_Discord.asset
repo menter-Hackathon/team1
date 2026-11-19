@@ -12,6 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dd5947c20f542efa401be9630a1460c, type: 3}
   m_Name: Skill_App_Discord
   m_EditorClassIdentifier: 
+  _displayName: Discord
+  _icon: {fileID: 21300000, guid: d80f65b1719b44af7a47f6bb82032415, type: 3}
+  _category: 2
+  _attack: {fileID: 11400000, guid: f3ff869ec02ed42f7b393b4242598b23, type: 2}
+  _theme: {fileID: 11400000, guid: 2e0a63c5959084b07856a4f88a9e0075, type: 2}
   _displayName: "\u30DF\u30E5\u30FC\u30C8"
   _icon: {fileID: 0}
   _category: 2

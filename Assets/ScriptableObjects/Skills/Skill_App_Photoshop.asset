@@ -12,6 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dd5947c20f542efa401be9630a1460c, type: 3}
   m_Name: Skill_App_Photoshop
   m_EditorClassIdentifier: 
+  _displayName: Photoshop
+  _icon: {fileID: 21300000, guid: 504ee083339244651b1308a47fb272ca, type: 3}
+  _category: 7
+  _attack: {fileID: 11400000, guid: cc233b7d0b418474ca4bab9fc6e5c062, type: 2}
+  _theme: {fileID: 11400000, guid: a29c3d050cba545358ee9d500f71100b, type: 2}
   _displayName: "\u30B3\u30D4\u30FC\u30B9\u30BF\u30F3\u30D7"
   _icon: {fileID: 0}
   _category: 7
