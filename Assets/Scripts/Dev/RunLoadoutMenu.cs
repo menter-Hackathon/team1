@@ -2,15 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// 【仮】能力えらびの画面（2026-11-18：デザイン担当の画面イメージに合わせた）。UI 担当の本番画面ができたら消す。
-/// 使用時間の上位3アプリのカード（GameSession.Run.Candidates）から、相棒を1つ選んでステージへ進む（2026-11-18 まさぴ〜決定）。
-/// 相棒の能力を最初から持つ。ボスは今までどおり、上位10アプリからランダムに3つ（相棒のアプリが出ることもある）。
-/// ・カード：順位（1ST〜3RD）・アプリのアイコンと名前・使用時間とメーター・固有能力（能力の名前・説明・タグ。説明とタグは【仮】）
-/// ・選んでいるカードはオレンジの縁と「▶ 選択中」。右下の「◯◯ と出撃 ▶」で決定
-/// 操作：← → か 1〜3 キー・クリックで選ぶ。Z・Enter・Space で決定。Esc か「◀ もどる」・× でタイトルへ
-/// このシーンを直接再生したときは、サンプルの使用データでランを作る（開発用）。
-/// </summary>
+/// <summary>Mac風のウィンドウで相棒を選ぶ。選択・出撃・戻る操作は本編のラン状態につなぐ。</summary>
 public class RunLoadoutMenu : MonoBehaviour
 {
     [Tooltip("このシーンを直接再生したときに使う対応アプリ表")]
@@ -21,6 +13,9 @@ public class RunLoadoutMenu : MonoBehaviour
     static readonly string[] Ranks = { "1ST", "2ND", "3RD", "4TH", "5TH" };
 
     int _selected; // 選んでいるカード
+    readonly MacDesktopGui.WindowState _window = new MacDesktopGui.WindowState();
+    AppDexMenu _dex;
+    MacDesktopFiles _files;
 
     GameSession Session => GameSession.Instance;
     IReadOnlyList<AbilityCandidate> Cards => Session != null && Session.Run != null ? Session.Run.Candidates : (IReadOnlyList<AbilityCandidate>)System.Array.Empty<AbilityCandidate>();
@@ -31,6 +26,12 @@ public class RunLoadoutMenu : MonoBehaviour
 
     void Start()
     {
+        MacDesktopWallpaper.Ensure(this);
+        _files=GetComponent<MacDesktopFiles>();
+        if(_files==null) _files=gameObject.AddComponent<MacDesktopFiles>();
+        _dex=FindObjectOfType<AppDexMenu>();
+        if(_dex==null) _dex=gameObject.AddComponent<AppDexMenu>();
+        _dex.ShowButton=false; _dex.HandleMinimizedExternally=true;
         if (Session != null && Session.Run != null) return;
         // 直接再生したとき：サンプルの使用データでランを作る
         var session = GameSession.EnsureExists(_catalog, _abilities);
@@ -59,7 +60,8 @@ public class RunLoadoutMenu : MonoBehaviour
     void Update()
     {
         var kb = Keyboard.current;
-        if (kb == null || Cards.Count == 0) return;
+        if (kb == null || !_window.IsVisible || (_dex!=null&&_dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || Cards.Count == 0) return;
+        if(MacDesktopGui.WindowShortcuts(_window)) return;
         if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) Select(Mathf.Max(0, _selected - 1));
         if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) Select(Mathf.Min(Cards.Count - 1, _selected + 1));
         Key[] keys = { Key.Digit1, Key.Digit2, Key.Digit3 };
@@ -74,61 +76,76 @@ public class RunLoadoutMenu : MonoBehaviour
 
     void OnGUI()
     {
-        if (Session == null || Session.Run == null || Session.IsTransitioning) return;
-        PixelGui.Begin();
-        float W = PixelGui.Width, H = PixelGui.Height;
-        float ox = Mathf.Round((W - 640f) * 0.5f), oy = Mathf.Round(Mathf.Max(0f, (H - 360f) * 0.5f));
-
-        // 下のバーと「◀ もどる」
-        float barY = PixelGui.BottomBar(34f);
-        if (PixelGui.BevelButton(new Rect(8f, barY + 7f, 70f, 22f), "◀ もどる")) Back();
-
-        // ウィンドウ
-        var win = new Rect(ox + 28f, oy + 14f, 584f, Mathf.Min(292f, barY - oy - 22f));
-        Rect inner = PixelGui.Window(win);
-        if (PixelGui.CloseButton(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f))) Back();
-
-        float x = inner.x + 12f, y = inner.y + 8f;
-        PixelGui.TextEn(new Rect(x, y, 140f, 10f), Session.IsSampleRun ? "SAMPLE_DATA.EXE" : "USAGE_SCAN.EXE", 8, PixelGui.LabelPurple);
-        float labelW = PixelGui.Measure(Session.IsSampleRun ? "SAMPLE_DATA.EXE" : "USAGE_SCAN.EXE", PixelGui.Style(true, 8));
-        PixelGui.Text(new Rect(x + labelW + 8f, y - 3f, 200f, 16f), Session.IsSampleRun ? "－ 訓練モード" : "－ スキャン完了", 12, PixelGui.LabelPurple);
-        PixelGui.Text(new Rect(x, y + 14f, inner.width - 24f, 20f), $"よく使うアプリ TOP{Mathf.Min(3, Cards.Count)} から、相棒を1つ選ぼう", 16, PixelGui.Ink);
-        PixelGui.Text(new Rect(x, y + 36f, inner.width - 24f, 16f), "相棒の能力は最初から使える。よく使うアプリのどれか3つが、ボスとして登場する。", 12, PixelGui.SubText);
-
-        // カード
-        int count = Mathf.Min(Cards.Count, 3);
-        float gap = 10f;
-        float cardW = Mathf.Floor((inner.width - 24f - gap * (count - 1)) / Mathf.Max(1, count));
-        float cardY = y + 58f, cardH = 182f;
-        double maxSeconds = 1;
-        for (int i = 0; i < count; i++) maxSeconds = System.Math.Max(maxSeconds, Cards[i].Seconds);
-        for (int i = 0; i < count; i++)
+        if(Session==null||Session.Run==null||Session.IsTransitioning) return;
+        PixelGui.Begin(false);
+        float w=PixelGui.Width,h=PixelGui.Height;
+        MacDesktopGui.MenuBar(w,"Virus Desktop");
+        Rect win=MacDesktopGui.CenteredWindow(w,h,584,306,false);
+        bool front=(_dex==null||!_dex.IsOpen)&&(_files==null||!_files.BlocksParentInput);
+        win=_window.Apply(win,w,h,front);
+        bool folderEnabled=GUI.enabled;
+        GUI.enabled=folderEnabled&&front&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
+        int folder=MacDesktopGui.Folders(w);
+        GUI.enabled=folderEnabled;
+        if(folder>=0&&_files!=null) { _files.Open(folder); front=false; }
+        var apps=new List<MacDesktopGui.DockItem>();
+        for(int i=0;i<Mathf.Min(Cards.Count,3);i++)
+            apps.Add(new MacDesktopGui.DockItem(Cards[i].IsFiller?(Cards[i].Skill!=null?Cards[i].Skill.DisplayName:"能力"):Cards[i].AppName,
+                Cards[i].AppIcon!=null?Cards[i].AppIcon:Cards[i].Skill!=null?Cards[i].Skill.Icon:null));
+        if(_window.IsMinimized) apps.Add(new MacDesktopGui.DockItem("相棒を選ぶ",null,_window));
+        if(_dex!=null&&_dex.IsMinimized) apps.Add(new MacDesktopGui.DockItem("アプリ図鑑",null,_dex.Window));
+        if(_files!=null&&_files.IsMinimized) apps.Add(new MacDesktopGui.DockItem("Finder",null,_files.Window));
+        bool mainEnabled=GUI.enabled;
+        GUI.enabled=mainEnabled&&front&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
+        int dock=MacDesktopGui.Dock(w,h,apps,_selected+2);
+        if(dock==0) Back();
+        else if(dock==1) _window.Open();
+        else if(dock>=2&&dock-2<apps.Count)
         {
-            var r = new Rect(x + i * (cardW + gap), cardY, cardW, cardH);
-            DrawCard(r, i, Cards[i], i == _selected, maxSeconds);
-            if (GUI.Button(r, GUIContent.none, GUIStyle.none)) Select(i);
+            if(apps[dock-2].Window!=null) apps[dock-2].Window.Open();
+            else { Select(dock-2); _window.Open(); }
         }
-        PixelGui.Text(new Rect(x, cardY + cardH + 6f, 300f, 16f), "← → で選択　Z で決定", 12, PixelGui.SubText);
-
-        // 出撃ボタン（ウィンドウの下の縁に重ねる）
-        string name = CanConfirm ? (Cards[_selected].IsFiller ? Cards[_selected].Skill.DisplayName : Cards[_selected].AppName) : "";
-        string label = $"{PixelGui.Fit(name, PixelGui.Style(false, 12), 120f)} と出撃 ▶";
-        float bw = Mathf.Max(150f, Mathf.Ceil(PixelGui.Measure(label, PixelGui.Style(false, 12))) + 32f);
-        bool was = GUI.enabled;
-        GUI.enabled = CanConfirm;
-        if (PixelGui.PrimaryButton(new Rect(win.xMax - bw - 20f, win.yMax - 16f, bw, 30f), label, true)) Confirm();
-        GUI.enabled = was;
+        GUI.enabled=mainEnabled&&front;
+        if(!_window.IsVisible) { GUI.enabled=mainEnabled; PixelGui.End(); return; }
+        Rect inner=MacDesktopGui.Window(win,"相棒を選ぶ",out var action);
+        _window.Handle(action);
+        if(!_window.IsVisible) { GUI.enabled=mainEnabled; PixelGui.End(); return; }
+        float x=inner.x,y=inner.y;
+        PixelGui.Text(new Rect(x,y,inner.width,20),$"よく使うアプリ TOP{Mathf.Min(3,Cards.Count)} から、相棒を1つ選ぼう",16,MacDesktopGui.Ink);
+        PixelGui.Text(new Rect(x,y+23,inner.width,16),Session.IsSampleRun?
+            "訓練モード：サンプルのアプリから、最初に使う能力を選びます。":
+            "選んだ相棒の能力を最初から装備して、デスクトップの駆除へ。",12,MacDesktopGui.Muted);
+        int count=Mathf.Min(Cards.Count,3);
+        float gap=10f,cardW=Mathf.Floor((inner.width-gap*(count-1))/Mathf.Max(1,count));
+        float cardY=y+44f,cardH=176f;
+        double maxSeconds=1;
+        for(int i=0;i<count;i++) maxSeconds=System.Math.Max(maxSeconds,Cards[i].Seconds);
+        for(int i=0;i<count;i++)
+        {
+            Rect card=new Rect(x+i*(cardW+gap),cardY,cardW,cardH);
+            DrawCard(card,i,Cards[i],i==_selected,maxSeconds);
+            if(GUI.Button(card,GUIContent.none,GUIStyle.none)) Select(i);
+        }
+        float footer=inner.yMax-26;
+        if(MacDesktopGui.Button(new Rect(x,footer,76,26),"もどる")) Back();
+        PixelGui.Text(new Rect(x+88,footer+4,180,18),"← → 選択　Enter 決定",12,MacDesktopGui.Muted);
+        if(MacDesktopGui.Button(new Rect(x+280,footer,80,26),"図鑑")&&_dex!=null) _dex.Open();
+        string appName=CanConfirm?(Cards[_selected].IsFiller?Cards[_selected].Skill.DisplayName:Cards[_selected].AppName):"";
+        string label=$"{PixelGui.Fit(appName,PixelGui.Style(false,12),110)} と出撃";
+        bool was=GUI.enabled; GUI.enabled=was&&CanConfirm;
+        if(MacDesktopGui.Button(new Rect(inner.xMax-180,footer,180,26),label,true)) Confirm();
+        GUI.enabled=mainEnabled;
         PixelGui.End();
     }
 
     void DrawCard(Rect r, int index, AbilityCandidate c, bool selected, double maxSeconds)
     {
-        PixelGui.CardBox(r, selected);
+        MacDesktopGui.Card(r, selected);
         float x = r.x + 10f, w = r.width - 20f;
         float y = r.y + 8f;
-        Color accent = selected ? PixelGui.Orange : PixelGui.FrameDark;
+        Color accent = selected ? MacDesktopGui.Blue : MacDesktopGui.Muted;
         PixelGui.TextEn(new Rect(x, y + 2f, 60f, 10f), index < Ranks.Length ? Ranks[index] : $"{index + 1}TH", 8, accent);
-        if (selected) PixelGui.Chip(new Rect(r.xMax - 70f, y, 60f, 16f), "▶ 選択中");
+        if(selected) PixelGui.Text(new Rect(r.xMax-65,y,55,16),"選択中",12,MacDesktopGui.Blue,TextAnchor.MiddleRight);
 
         // アプリ（アイコン 16 ドットを2倍）・名前・使用時間
         y += 20f;
@@ -148,14 +165,22 @@ public class RunLoadoutMenu : MonoBehaviour
         y += 50f;
         PixelGui.DottedLine(x, y, w, PixelGui.Muted);
         y += 6f;
-        PixelGui.Text(new Rect(x, y, w, 14f), "固有能力", 12, PixelGui.LabelPurple);
+        PixelGui.Text(new Rect(x, y, w, 14f), "固有能力", 12, MacDesktopGui.Blue);
         if (c.Skill != null)
         {
             PixelGui.DrawSprite(new Rect(x, y + 16f, 16f, 16f), c.Skill.Icon != null ? c.Skill.Icon : c.AppIcon); // アイコンが空の能力は、アプリのアイコンで
             PixelGui.TextFit(new Rect(x + 20f, y + 15f, w - 20f, 18f), c.Skill.DisplayName, 16, PixelGui.Ink);
             PixelGui.Text(new Rect(x, y + 36f, w, 30f), SkillTexts.Description(c.Skill), 12, PixelGui.BodyText, TextAnchor.UpperLeft, true);
             float tx = x;
-            foreach (string tag in SkillTexts.Tags(c.Skill)) tx += PixelGui.OutlineTag(tx, r.yMax - 26f, tag) + 4f;
+            foreach(string tag in SkillTexts.Tags(c.Skill))
+            {
+                float tw=Mathf.Ceil(PixelGui.Measure(tag,PixelGui.Style(false,12)))+12;
+                if(tx+tw>r.xMax-8) break;
+                Rect badge=new Rect(tx,r.yMax-23,tw,16);
+                MacDesktopGui.Rounded(badge,new Color32(231,240,253,255),3);
+                PixelGui.Text(badge,tag,12,MacDesktopGui.Blue,TextAnchor.MiddleCenter);
+                tx+=tw+4;
+            }
         }
     }
 

@@ -25,9 +25,6 @@ public class DesktopScreen : MonoBehaviour
     const float FinalDelay = 0.45f; // 前のアプリが元に戻ってから、ラスボスが Dock に現れるまで
     const float FinalGlitch = 0.35f; // ラスボスが現れるときに乱れている時間
 
-    static readonly Color WallClean = new Color32(0x4f, 0x86, 0xb8, 0xff);
-    static readonly Color WallInfected = new Color32(0x2a, 0x0c, 0x3e, 0xff);
-    static readonly Color MenuBar = new Color32(0xee, 0xee, 0xf2, 0xff);
     static readonly Color FolderBody = new Color32(0x7c, 0xb7, 0xe8, 0xff);
     static readonly Color FolderTab = new Color32(0x5a, 0x95, 0xcc, 0xff);
     static readonly Color InfectTint = new Color(1f, 0.55f, 1f, 1f);
@@ -74,12 +71,14 @@ public class DesktopScreen : MonoBehaviour
         _openAt = -1f;
         IsDone = false;
         _visible = true;
+        MacDesktopWallpaper.Ensure(this,()=>_visible&&_run!=null);
     }
 
     public void Hide()
     {
         _visible = false;
         _run = null;
+        GetComponent<MacDesktopWallpaper>()?.Refresh();
     }
 
     float T => Time.unscaledTime - _shownAt;
@@ -166,13 +165,6 @@ public class DesktopScreen : MonoBehaviour
 
     static void DrawWallpaper(float W, float H, float infectedRatio, int infected)
     {
-        Color baseColor = Color.Lerp(WallClean, WallInfected, infectedRatio);
-        const int bands = 12; // 上を明るく、下を暗く（ドット絵の階調）
-        for (int i = 0; i < bands; i++)
-        {
-            float y0 = Mathf.Round(H * i / bands), y1 = Mathf.Round(H * (i + 1) / bands);
-            PixelGui.Fill(new Rect(0f, y0, W, y1 - y0), Shade(baseColor, Mathf.Lerp(1.18f, 0.78f, i / (float)(bands - 1))));
-        }
         if (infected <= 0) return;
 
         // 乱れ：感染したアプリの数だけ、マゼンタと黒のかけらがチラつく。ときどき横に裂ける
@@ -191,16 +183,13 @@ public class DesktopScreen : MonoBehaviour
         }
     }
 
-    // 明るさだけ変える（不透明のまま。下の前のステージを透かさない）
-    static Color Shade(Color c, float k) => new Color(Mathf.Clamp01(c.r * k), Mathf.Clamp01(c.g * k), Mathf.Clamp01(c.b * k), 1f);
-
     // 右上のフォルダ（感染したアプリの数だけ、上から紫に染まって乱れる）
     static void DrawFolders(float W, int infected)
     {
         int step = Mathf.FloorToInt(Time.unscaledTime * 6f);
         for (int i = 0; i < Folders.Length; i++)
         {
-            float cx = W - 44f, y = 30f + i * 58f;
+            float cx = W - 44f, y = 43f + i * 58f;
             bool bad = i < infected;
             Color body = bad ? PixelGui.Lilac : FolderBody, tab = bad ? PixelGui.LabelPurple : FolderTab;
             float jx = bad && (step + i) % 5 == 0 ? 2f : 0f;
@@ -213,24 +202,8 @@ public class DesktopScreen : MonoBehaviour
         }
     }
 
-    static void DrawMenuBar(float W, int infected)
-    {
-        PixelGui.Fill(new Rect(0f, 0f, W, 16f), MenuBar);
-        PixelGui.Fill(new Rect(0f, 16f, W, 1f), PixelGui.Frame);
-        PixelGui.TextEn(new Rect(10f, 4f, 80f, 8f), "Desktop", 8, PixelGui.Ink);
-        PixelGui.Text(new Rect(80f, 0f, 260f, 16f), "ファイル　編集　表示　ウインドウ", 12, PixelGui.BodyText);
-        string clock = System.DateTime.Now.ToString("H:mm");
-        float cw = Mathf.Ceil(PixelGui.Measure(clock, PixelGui.Style(true, 8)));
-        PixelGui.TextEn(new Rect(W - 10f - cw, 4f, cw + 2f, 8f), clock, 8, PixelGui.Ink);
-        if (infected <= 0) return;
-        // 感染の印：ウイルスの絵と数
-        Sprite zako = ZakoFrame(0f);
-        string count = $"x{infected}";
-        float nw = Mathf.Ceil(PixelGui.Measure(count, PixelGui.Style(true, 8)));
-        float x = W - 22f - cw - nw;
-        PixelGui.TextEn(new Rect(x, 4f, nw + 2f, 8f), count, 8, PixelGui.Magenta);
-        if (zako != null) PixelGui.DrawSprite(new Rect(x - 17f, 0f, 16f, 16f), zako);
-    }
+    static void DrawMenuBar(float W,int infected)
+        => MacDesktopGui.MenuBar(W,"Finder",infected>0?$"感染 {infected}":null);
 
     // ───────── Dock ─────────
 
@@ -246,9 +219,7 @@ public class DesktopScreen : MonoBehaviour
         int n = Mathf.Max(1, apps.Count);
         float dockW = n * icon + (n - 1) * gap + pad * 2f, dockH = icon + pad * 2f;
         var dock = new Rect(Mathf.Round((W - dockW) * 0.5f), Mathf.Round(H - dockH - 6f), dockW, dockH);
-        PixelGui.Fill(dock, new Color(1f, 1f, 1f, 0.28f));
-        PixelGui.Border(dock, new Color(1f, 1f, 1f, 0.6f), 1f);
-        PixelGui.Fill(new Rect(dock.x + 1f, dock.y + 1f, dock.width - 2f, 1f), new Color(1f, 1f, 1f, 0.5f));
+        MacDesktopGui.DockPlate(dock);
 
         Rect target = new Rect(W * 0.5f - 16f, H * 0.5f - 16f, 32f, 32f);
         targetHome = target;
@@ -386,17 +357,18 @@ public class DesktopScreen : MonoBehaviour
             Mathf.Round(Mathf.Lerp(from.x, to.x, p)), Mathf.Round(Mathf.Lerp(from.y, to.y, p)),
             Mathf.Round(Mathf.Lerp(from.width, to.width, p)), Mathf.Round(Mathf.Lerp(from.height, to.height, p)));
         AppTheme theme = stage != null ? stage.App.Theme : null;
-        Color bar = theme != null ? theme.Main : PixelGui.Magenta;
+        Color bar = new Color32(231,234,240,255);
         Color body = theme != null ? theme.Sky : PixelGui.Panel;
-        PixelGui.Fill(r, PixelGui.FrameDark);
+        PixelGui.Fill(r, MacDesktopGui.BorderColor);
         Rect inner = PixelGui.Inset(r, 1f);
-        float barH = Mathf.Round(Mathf.Lerp(3f, 14f, p));
+        float barH = Mathf.Round(Mathf.Lerp(3f, 24f, p));
         PixelGui.Fill(new Rect(inner.x, inner.y, inner.width, barH), bar);
         PixelGui.Fill(new Rect(inner.x, inner.y + barH, inner.width, inner.height - barH), body);
-        if (barH >= 10f)
+        if (barH >= 20f && inner.width>=80f)
         {
-            Color[] lights = { new Color32(0xff, 0x5f, 0x57, 0xff), new Color32(0xfe, 0xbc, 0x2e, 0xff), new Color32(0x28, 0xc8, 0x40, 0xff) };
-            for (int i = 0; i < lights.Length; i++) PixelGui.Fill(new Rect(inner.x + 5f + i * 8f, inner.y + 4f, 5f, 5f), lights[i]);
+            MacDesktopGui.TrafficLights(inner);
+            if(inner.width>230f&&stage!=null)
+                PixelGui.TextFit(new Rect(inner.x+65,inner.y+3,inner.width-130,18),stage.App.DisplayName,12,MacDesktopGui.Ink,TextAnchor.MiddleCenter);
         }
         if (stage != null && stage.Icon16 != null && inner.height > 60f)
         {

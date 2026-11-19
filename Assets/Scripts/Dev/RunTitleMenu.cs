@@ -3,15 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// 【仮】タイトル画面：使用データの読み込み方を選んでランを始める（仕様書 8.3）。UI 担当の本番画面ができたら消す。
-/// スクリーンタイムのスキャン、またはサンプルでの訓練からランを始める。
-/// 2026-11-18：デザイン担当の画面イメージの色と並びに合わせた（描き方だけ。スキャンの流れはそのまま）。
-/// ・壁紙の上にウィンドウ。「C:\DESKTOP\INFECTED.EXE」・ロゴ「VIRUS DESKTOP」（マゼンタの影）・仮タイトル
-/// ・メニュー：はじめる・ずかん・おわる（せっていは中身が無いので置かない。2026-11-18 まさぴ〜決定）。↑↓ で選び、Z か Enter で決定
-/// ・はじめる → 「端末をスキャン」か「訓練モード」を選ぶ → スキャンなら今までどおりの読み取りと結果
-/// ・下のバーに「PRESS Z / ENTER」と版
-/// </summary>
+/// <summary>Mac風のデスクトップからスキャン・訓練・図鑑へ進むタイトル。</summary>
 public class RunTitleMenu : MonoBehaviour
 {
     [Tooltip("GameSession が無いとき（このシーンを最初に開いたとき）に使う対応アプリ表")]
@@ -24,19 +16,28 @@ public class RunTitleMenu : MonoBehaviour
     List<AppUsage> _detectedApps;
     List<(string Name, int Seconds)> _topApps;
     string _error;
-    Vector2 _scroll;
+    readonly List<MacDesktopGui.DockItem> _dockApps = new List<MacDesktopGui.DockItem>();
+    readonly MacDesktopGui.WindowState _window = new MacDesktopGui.WindowState();
     Page _page = Page.Menu;
     int _focus;
     AppDexMenu _dex;
+    MacDesktopFiles _files;
 
     GameSession Session => GameSession.Instance != null ? GameSession.Instance : GameSession.EnsureExists(_catalog);
 
     void Start()
     {
+        MacDesktopWallpaper.Ensure(this);
+        _files=GetComponent<MacDesktopFiles>();
+        if(_files==null) _files=gameObject.AddComponent<MacDesktopFiles>();
         // 図鑑はメニューの「ずかん」から開く（右上のボタンは出さない）
         _dex = FindObjectOfType<AppDexMenu>();
         if (_dex == null) _dex = gameObject.AddComponent<AppDexMenu>();
         _dex.ShowButton = false;
+        _dex.HandleMinimizedExternally = true;
+        if(Session.Catalog!=null) foreach(var app in Session.Catalog.Apps)
+            if(app!=null&&app.Profile!=null&&_dockApps.Count<4)
+                _dockApps.Add(new MacDesktopGui.DockItem(app.DisplayName,app.Profile.Icon));
     }
 
     // ───────── キー ─────────
@@ -44,7 +45,8 @@ public class RunTitleMenu : MonoBehaviour
     void Update()
     {
         var kb = Keyboard.current;
-        if (kb == null || (_dex != null && _dex.IsOpen) || Session.IsTransitioning) return;
+        if (kb == null || !_window.IsVisible || (_dex != null && _dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || Session.IsTransitioning) return;
+        if(MacDesktopGui.WindowShortcuts(_window)) return;
         bool up = kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame;
         bool down = kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame;
         bool ok = kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame;
@@ -67,6 +69,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void OpenPage(Page page)
     {
+        _window.Open();
         _page = page;
         _focus = 0;
         _error = null;
@@ -111,74 +114,64 @@ public class RunTitleMenu : MonoBehaviour
 
     void OnGUI()
     {
-        GameSession session = Session;
-        if (session.IsTransitioning) return;
-        PixelGui.Begin();
-        float W = PixelGui.Width, H = PixelGui.Height;
-        float ox = Mathf.Round((W - 640f) * 0.5f), oy = Mathf.Round(Mathf.Max(0f, (H - 360f) * 0.5f));
-        float barY = PixelGui.BottomBar(34f);
-        PixelGui.TextEn(new Rect(12f, barY + 13f, 200f, 10f), "PRESS Z / ENTER", 8, PixelGui.White);
-        PixelGui.Text(new Rect(W - 172f, barY + 9f, 160f, 16f), "prototype ver 0.1", 12, PixelGui.White, TextAnchor.MiddleRight);
-
-        bool wide = _scan;
-        var win = wide
-            ? new Rect(Mathf.Round((W - 540f) * 0.5f), oy + 10f, 540f, Mathf.Min(306f, barY - oy - 20f))
-            : new Rect(ox + 112f, oy + 58f, 420f, Mathf.Min(256f, barY - oy - 66f));
-        if (!wide) DrawDecoration(win); // 広いウィンドウ（スキャン）のときは後ろがほとんど隠れるので描かない
-        Rect inner = PixelGui.Window(win);
-        DrawCloseMark(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f));
-
-        if (_scan) DrawScanPanel(session, inner);
-        else if (_page == Page.Mode) DrawModePanel(inner);
-        else DrawMenu(inner);
-        PixelGui.End();
-    }
-
-    // 後ろのウィンドウ・その上に立つプレイヤー・ウイルス（飾り）
-    void DrawDecoration(Rect win)
-    {
-        var back = new Rect(win.x - 82f, win.y - 10f, 280f, 200f);
-        PixelGui.Window(back);
-        PixelGui.Fill(new Rect(back.x + 9f, back.yMax - 30f, back.width - 18f, 21f), PixelGui.Frame);
-        DrawCloseMark(new Rect(back.xMax - 24f, back.y - 6f, 36f, 36f));
-        GameArt art = GameArt.Instance;
-        if (art == null) return;
-        PixelGui.DrawPlayer(back.x + 60f, back.y);
-        if (art.ZakoWalk != null && art.ZakoWalk.Length > 0)
+        GameSession session=Session;
+        if(session.IsTransitioning) return;
+        PixelGui.Begin(false);
+        float w=PixelGui.Width,h=PixelGui.Height;
+        MacDesktopGui.MenuBar(w,"Virus Desktop");
+        Rect win=MacDesktopGui.CenteredWindow(w,h,_scan?540:420,_scan?306:268,!_scan);
+        bool front=(_dex==null||!_dex.IsOpen)&&(_files==null||!_files.BlocksParentInput);
+        win=_window.Apply(win,w,h,front);
+        bool folderEnabled=GUI.enabled;
+        GUI.enabled=folderEnabled&&front&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
+        int folder=MacDesktopGui.Folders(w);
+        GUI.enabled=folderEnabled;
+        if(folder>=0&&_files!=null) { _files.Open(folder); front=false; }
+        bool was=GUI.enabled;
+        bool active=front;
+        var items=new List<MacDesktopGui.DockItem>(_dockApps);
+        if(_window.IsMinimized) items.Add(new MacDesktopGui.DockItem("Virus Desktop",null,_window));
+        if(_dex!=null&&_dex.IsMinimized) items.Add(new MacDesktopGui.DockItem("アプリ図鑑",null,_dex.Window));
+        if(_files!=null&&_files.IsMinimized) items.Add(new MacDesktopGui.DockItem("Finder",null,_files.Window));
+        GUI.enabled=was&&active&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
+        int dock=MacDesktopGui.Dock(w,h,items);
+        if(dock==0)
         {
-            Sprite z = art.ZakoWalk[Mathf.FloorToInt(Time.unscaledTime * 6f) % art.ZakoWalk.Length];
-            Rect zr = z.textureRect;
-            float zw = zr.width * 2f, zh = zr.height * 2f;
-            PixelGui.DrawSprite(new Rect(back.x - zw * 0.3f, back.yMax - zh * 0.6f, zw, zh), z, new Color(0.75f, 0.75f, 0.75f));
-            PixelGui.DrawSprite(new Rect(win.xMax - zw * 0.5f, win.yMax - zh * 0.5f, zw, zh), z, new Color(1f, 0.55f, 1f));
-            // マゼンタのかけら（ウイルスから散る）
-            for (int i = 0; i < 4; i++)
-            {
-                float t = (Time.unscaledTime * 0.7f + i * 0.25f) % 1f;
-                PixelGui.Fill(new Rect(win.xMax + zw * 0.4f + i * 5f, win.yMax - zh * 0.4f - t * 40f, 3f, 3f), new Color(0.93f, 0.22f, 1f, 1f - t));
-            }
+            _window.Open();
+            if(!_scanning) { if(_scan) ReturnToMenu(); OpenPage(Page.Menu); }
         }
-    }
-
-    // 押せない ×（飾り。ウィンドウらしく見せる）
-    static void DrawCloseMark(Rect r)
-    {
-        bool was = GUI.enabled;
-        GUI.enabled = false;
-        PixelGui.CloseButton(r);
-        GUI.enabled = was;
+        else if(dock==1)
+        {
+            bool hidden=!_window.IsVisible; _window.Open();
+            if(!hidden&&!_scanning) { if(_scan) ReturnToMenu(); OpenPage(Page.Mode); }
+        }
+        else if(dock>=2&&dock-2<items.Count)
+        {
+            if(items[dock-2].Window!=null) items[dock-2].Window.Open();
+            else if(_dex!=null) _dex.Open();
+        }
+        GUI.enabled=was&&front;
+        if(!_window.IsVisible) { GUI.enabled=was; PixelGui.End(); return; }
+        Rect inner=MacDesktopGui.Window(win,_scan?"スクリーンタイム":"Virus Desktop",out var action);
+        _window.Handle(action);
+        if(!_window.IsVisible) { GUI.enabled=was; PixelGui.End(); return; }
+        if(_scan) DrawScanPanel(session,inner);
+        else if(_page==Page.Mode) DrawModePanel(inner);
+        else DrawMenu(inner);
+        GUI.enabled=was;
+        PixelGui.End();
     }
 
     void DrawMenu(Rect inner)
     {
         float cx = inner.center.x;
-        float y = inner.y + 10f;
-        PixelGui.TextEn(new Rect(inner.x, y, inner.width, 10f), "C:\\DESKTOP\\INFECTED.EXE", 8, PixelGui.LabelPurple, TextAnchor.MiddleCenter);
+        float y = inner.y + Mathf.Max(10f,(inner.height-210f)*0.5f);
+        PixelGui.TextEn(new Rect(inner.x, y, inner.width, 10f), "~/Desktop", 8, MacDesktopGui.Blue, TextAnchor.MiddleCenter);
         GUIStyle logo = PixelGui.Style(true, 24, TextAnchor.MiddleCenter);
-        PixelGui.ShadowText(new Rect(inner.x, y + 16f, inner.width, 28f), "VIRUS", logo, PixelGui.Ink, PixelGui.Magenta, 2f);
-        PixelGui.ShadowText(new Rect(inner.x, y + 44f, inner.width, 28f), "DESKTOP", logo, PixelGui.Ink, PixelGui.Magenta, 2f);
-        PixelGui.Text(new Rect(inner.x, y + 80f, inner.width, 16f), "デスクトップを取り戻せ（仮タイトル）", 12, PixelGui.BodyText, TextAnchor.MiddleCenter);
-        string[] items = { "はじめる", "ずかん", "おわる" };
+        PixelGui.ShadowText(new Rect(inner.x, y + 16f, inner.width, 28f), "VIRUS", logo, MacDesktopGui.Ink, new Color32(170,193,226,255), 1f);
+        PixelGui.ShadowText(new Rect(inner.x, y + 44f, inner.width, 28f), "DESKTOP", logo, MacDesktopGui.Ink, new Color32(170,193,226,255), 1f);
+        PixelGui.Text(new Rect(inner.x, y + 80f, inner.width, 16f), "このMacのデスクトップを取り戻せ", 12, PixelGui.BodyText, TextAnchor.MiddleCenter);
+        string[] items = { "はじめる", "アプリ図鑑", "終了" };
         for (int i = 0; i < items.Length; i++)
         {
             var r = new Rect(cx - 80f, y + 106f + i * 30f, 160f, 24f);
@@ -190,7 +183,7 @@ public class RunTitleMenu : MonoBehaviour
     void DrawModePanel(Rect inner)
     {
         float x = inner.x + 14f, y = inner.y + 10f, w = inner.width - 28f;
-        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "START.EXE", 8, PixelGui.LabelPurple);
+        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "Virus Desktop.app", 8, MacDesktopGui.Blue);
         PixelGui.Text(new Rect(x, y + 14f, w, 20f), "はじめかたを選ぶ", 16, PixelGui.Ink);
         bool canScan = MacScreenTime.CanScan;
         var items = new List<(string label, string note)>();
@@ -212,28 +205,13 @@ public class RunTitleMenu : MonoBehaviour
         if (!string.IsNullOrEmpty(_error)) PixelGui.Text(new Rect(x, inner.yMax - 40f, w, 32f), _error, 12, PixelGui.DarkRed, TextAnchor.UpperLeft, true);
     }
 
-    // メニューの1行：選んでいる行はオレンジの帯に「▶」
-    static bool MenuItem(Rect r, string text, bool focused, TextAnchor anchor = TextAnchor.MiddleCenter)
-    {
-        bool hover = r.Contains(Event.current.mousePosition);
-        if (focused || hover)
-        {
-            PixelGui.Fill(r, PixelGui.DarkRed);
-            PixelGui.Fill(new Rect(r.x + 1f, r.y + 1f, r.width - 3f, r.height - 3f), PixelGui.Orange);
-            string t = text.StartsWith("◀") ? text : "▶ " + text;
-            PixelGui.Text(new Rect(r.x + (anchor == TextAnchor.MiddleLeft ? 8f : 0f), r.y - 1f, r.width - 8f, r.height), t, 12, PixelGui.White, anchor);
-        }
-        else
-        {
-            PixelGui.Text(new Rect(r.x + (anchor == TextAnchor.MiddleLeft ? 22f : 0f), r.y - 1f, r.width - 8f, r.height), text, 12, PixelGui.Ink, anchor);
-        }
-        return GUI.Button(r, GUIContent.none, GUIStyle.none);
-    }
+    static bool MenuItem(Rect r,string text,bool focused,TextAnchor anchor=TextAnchor.MiddleCenter)
+        => MacDesktopGui.Button(r,text,false,focused);
 
     void DrawScanPanel(GameSession session, Rect inner)
     {
         float x = inner.x + 14f, y = inner.y + 10f, w = inner.width - 28f;
-        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "USAGE_SCAN.EXE", 8, PixelGui.LabelPurple);
+        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "Screen Time", 8, MacDesktopGui.Blue);
         if (_topApps == null)
         {
             PixelGui.Text(new Rect(x, y + 14f, w, 20f), _scanning ? "スクリーンタイムを確認中" : "端末をスキャン", 16, PixelGui.Ink);
@@ -243,7 +221,7 @@ public class RunTitleMenu : MonoBehaviour
             {
                 // 読み取り中：メーターを流す
                 float t = Time.unscaledTime % 1.2f / 1.2f;
-                PixelGui.Meter(new Rect(x, y + 116f, 200f, 6f), 10, t, PixelGui.Orange, PixelGui.Muted);
+                PixelGui.Meter(new Rect(x, y + 116f, 200f, 6f), 10, t, MacDesktopGui.Blue, PixelGui.Muted);
             }
         }
         else
@@ -256,13 +234,13 @@ public class RunTitleMenu : MonoBehaviour
                 var app = _topApps[i];
                 int minutes = app.Seconds / 60;
                 string duration = minutes >= 60 ? $"{minutes / 60}時間 {minutes % 60}分" : minutes > 0 ? $"{minutes}分" : $"{app.Seconds}秒";
-                var row = new Rect(x, ry, w, 30f);
-                PixelGui.WhiteBox(row);
-                PixelGui.Chip(new Rect(row.x + 6f, row.y + 6f, 18f, 16f), $"{i + 1}");
+                var row = new Rect(x, ry, w, 28f);
+                MacDesktopGui.Card(row,false);
+                PixelGui.Text(new Rect(row.x+6,row.y+6,18,16),$"{i+1}",12,MacDesktopGui.Blue,TextAnchor.MiddleCenter);
                 PixelGui.TextFit(new Rect(row.x + 32f, row.y + 5f, row.width - 150f, 16f), app.Name, 12, PixelGui.Ink);
                 PixelGui.Text(new Rect(row.xMax - 110f, row.y + 5f, 100f, 16f), duration, 12, PixelGui.Ink, TextAnchor.MiddleRight);
-                PixelGui.Fill(new Rect(row.x + 32f, row.yMax - 6f, (row.width - 44f) * app.Seconds / Mathf.Max(1, _topApps[0].Seconds), 2f), PixelGui.Orange);
-                ry += 34f;
+                PixelGui.Fill(new Rect(row.x + 32f, row.yMax - 6f, (row.width - 44f) * app.Seconds / Mathf.Max(1, _topApps[0].Seconds), 2f), MacDesktopGui.Blue);
+                ry += 30f;
             }
             // 2026-11-17（まさぴ〜）：上位10アプリが、ボスの候補（この中からランダムに3つ）
             string targets = _detectedApps.Count > 0
@@ -276,9 +254,9 @@ public class RunTitleMenu : MonoBehaviour
 
         if (_scanning) return;
         float by = inner.yMax - 30f;
-        if (PixelGui.SecondaryButton(new Rect(x, by, 90f, 24f), "◀ もどる")) ReturnToMenu();
+        if (MacDesktopGui.Button(new Rect(x, by, 90f, 24f), "もどる")) ReturnToMenu();
         string primary = _detectedApps?.Count > 0 ? "駆除を開始 ▶" : "もう一度スキャン";
-        if (PixelGui.PrimaryButton(new Rect(inner.xMax - 14f - 140f, by, 140f, 24f), primary, true)) ScanPrimary();
+        if (MacDesktopGui.Button(new Rect(inner.xMax - 14f - 140f, by, 140f, 24f), primary, true)) ScanPrimary();
     }
 
     void ReturnToMenu()
@@ -287,7 +265,6 @@ public class RunTitleMenu : MonoBehaviour
         _error = null;
         _detectedApps = null;
         _topApps = null;
-        _scroll = Vector2.zero;
     }
 
     // 2026-11-17（まさぴ〜）：ゲームがボスにしないアプリ（Finder・設定・iPhone のアプリなど）は、候補に出さない
