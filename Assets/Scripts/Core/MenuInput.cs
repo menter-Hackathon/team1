@@ -8,6 +8,7 @@ using UnityEngine.InputSystem;
 /// ・決定：Z／Enter／テンキーの Enter（Space は画面ごとに選ぶ）、A（下のボタン）／START
 /// ・もどる：Esc／Backspace、B（右のボタン）／SELECT（Back）
 /// ・前の項目・次の項目（図鑑の絞り込みなど）：Q／E、L（LB）／R（RB）
+/// ・一時停止：Esc、START（ゲーム中。PauseMenu）
 /// キーボードのキーは、今までの各画面のキーと同じ。のちのキーコンフィグは、ここの割り当てを変える
 /// </summary>
 public static class MenuInput
@@ -17,7 +18,7 @@ public static class MenuInput
     const float RepeatDelay = 0.45f;   // 倒し続けたとき、続けて動き始めるまでの秒数
     const float RepeatInterval = 0.14f; // 続けて動く間隔
 
-    static InputAction _up, _down, _left, _right, _confirm, _confirmSpace, _back, _stick, _prevTab, _nextTab;
+    static InputAction _up, _down, _left, _right, _confirm, _confirmSpace, _back, _stick, _prevTab, _nextTab, _pause;
     static int _frame = -1;
     static Vector2Int _stickDir, _stickStep;
     static float _repeatAt;
@@ -39,12 +40,15 @@ public static class MenuInput
     /// <summary>次の項目（E・R）</summary>
     public static bool NextTab => Pressed(ref _nextTab);
 
+    /// <summary>一時停止（Esc・START）。ゲーム中に PauseMenu が見る</summary>
+    public static bool Pause => Pressed(ref _pause);
+
     // ドメインの再読み込みをしない設定でも、遊ぶたびに作り直す
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics()
     {
-        foreach (var a in new[] { _up, _down, _left, _right, _confirm, _confirmSpace, _back, _stick, _prevTab, _nextTab }) a?.Dispose();
-        _up = _down = _left = _right = _confirm = _confirmSpace = _back = _stick = _prevTab = _nextTab = null;
+        foreach (var a in new[] { _up, _down, _left, _right, _confirm, _confirmSpace, _back, _stick, _prevTab, _nextTab, _pause }) a?.Dispose();
+        _up = _down = _left = _right = _confirm = _confirmSpace = _back = _stick = _prevTab = _nextTab = _pause = null;
         _frame = -1;
         _stickDir = _stickStep = Vector2Int.zero;
     }
@@ -61,6 +65,7 @@ public static class MenuInput
         _back = Button("MenuBack", "<Keyboard>/escape", "<Keyboard>/backspace", "<Gamepad>/buttonEast", "<Gamepad>/select");
         _prevTab = Button("MenuPrevTab", "<Keyboard>/q", "<Gamepad>/leftShoulder");
         _nextTab = Button("MenuNextTab", "<Keyboard>/e", "<Gamepad>/rightShoulder");
+        _pause = Button("MenuPause", "<Keyboard>/escape", "<Gamepad>/start");
         _stick = new InputAction("MenuStick", InputActionType.Value, "<Gamepad>/leftStick", expectedControlType: "Vector2");
         _stick.Enable();
     }

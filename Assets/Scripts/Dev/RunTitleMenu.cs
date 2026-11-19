@@ -45,6 +45,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void Update()
     {
+        if (PauseMenu.BlocksInput) return; // 設定（歯車）を開いている間は、タイトルを操作しない（2026-11-20）
         if (!_window.IsVisible || (_dex != null && _dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || Session.IsTransitioning) return;
         if(MacDesktopGui.WindowShortcuts(_window)) return;
         // キーボードとコントローラー（十字キー・左スティック・A／START で決定・B で戻る）。2026-11-20
@@ -59,7 +60,7 @@ public class RunTitleMenu : MonoBehaviour
             else if (ok) ScanPrimary();
             return;
         }
-        int count = _page == Page.Menu ? 3 : ModeCount;
+        int count = _page == Page.Menu ? 4 : ModeCount; // メニューの4つ目は、右下の歯車（設定）
         if (up) _focus = (_focus + count - 1) % count;
         if (down) _focus = (_focus + 1) % count;
         if (up || down) GameAudio.Event("ui_move");
@@ -89,6 +90,7 @@ public class RunTitleMenu : MonoBehaviour
             if (index == 0) OpenPage(Page.Mode);
             else if (index == 1 && _dex != null) _dex.Open();
             else if (index == 2) Quit();
+            else if (index == 3) PauseMenu.OpenSettings(); // 右下の歯車：音量・キー設定（2026-11-20。音は上の ui_decide）
             return;
         }
         // はじめかた：スキャン（できるとき）・訓練モード・もどる
@@ -143,6 +145,9 @@ public class RunTitleMenu : MonoBehaviour
         if(_files!=null&&_files.IsMinimized) items.Add(new MacDesktopGui.DockItem("Finder",null,_files.Window));
         GUI.enabled=was&&active&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
         int dock=MacDesktopGui.Dock(w,h,items);
+        // 右下の歯車：設定（音量・キー設定）。キー・コントローラーでは、メニューの「終了」の下（2026-11-20）
+        GUI.enabled=was&&active&&!PauseMenu.IsOpen;
+        if(SettingsGear(new Rect(w-40,h-84,30,30),_window.IsVisible&&!_scan&&_page==Page.Menu&&_focus==3)) OpenSettings(); // どの画面（はじめかた・スキャン）からでも、その画面のまま設定を開く
         if(dock==0)
         {
             _window.Open();
@@ -213,8 +218,53 @@ public class RunTitleMenu : MonoBehaviour
         if (!string.IsNullOrEmpty(_error)) PixelGui.Text(new Rect(x, inner.yMax - 40f, w, 32f), _error, 12, PixelGui.DarkRed, TextAnchor.UpperLeft, true);
     }
 
+    /// <summary>右下の歯車をマウスで押した：今の画面（ページ・選んでいる項目）はそのままで、設定を開く</summary>
+    static void OpenSettings()
+    {
+        if(PauseMenu.IsOpen) return;
+        GameAudio.Event("ui_decide");
+        PauseMenu.OpenSettings();
+    }
+
     static bool MenuItem(Rect r,string text,bool focused,TextAnchor anchor=TextAnchor.MiddleCenter)
         => MacDesktopGui.Button(r,text,false,focused);
+
+    // 歯車のドット絵（16×16。# が線）
+    static readonly string[] Gear =
+    {
+        "......####......",
+        "......####......",
+        "..##..####..##..",
+        "..############..",
+        "...##########...",
+        "..####....####..",
+        "#####......#####",
+        "#####......#####",
+        "#####......#####",
+        "#####......#####",
+        "..####....####..",
+        "...##########...",
+        "..############..",
+        "..##..####..##..",
+        "......####......",
+        "......####......",
+    };
+
+    /// <summary>右下の歯車のボタン（設定）。押されたら true。focused：キー・コントローラーで選んでいる</summary>
+    static bool SettingsGear(Rect r,bool focused)
+    {
+        bool hover=r.Contains(Event.current.mousePosition)&&GUI.enabled;
+        bool blue=focused||hover;
+        MacDesktopGui.Rounded(r,blue?new Color32(0,81,188,255):MacDesktopGui.BorderColor,6);
+        MacDesktopGui.Rounded(PixelGui.Inset(r,1),blue?MacDesktopGui.Blue:new Color(1f,1f,1f,0.92f),5);
+        Color ink=blue?Color.white:MacDesktopGui.Ink;
+        float ox=r.x+Mathf.Floor((r.width-Gear[0].Length)*0.5f), oy=r.y+Mathf.Floor((r.height-Gear.Length)*0.5f);
+        for(int y=0;y<Gear.Length;y++)
+            for(int x=0;x<Gear[y].Length;x++)
+                if(Gear[y][x]=='#') PixelGui.Fill(new Rect(ox+x,oy+y,1,1),ink);
+        if(hover||focused) PixelGui.ShadowText(new Rect(r.x-52,r.y+7,46,16),"設定",PixelGui.Style(false,12,TextAnchor.MiddleRight),PixelGui.White,MacDesktopGui.Ink,1);
+        return GUI.Button(r,GUIContent.none,GUIStyle.none);
+    }
 
     void DrawScanPanel(GameSession session, Rect inner)
     {

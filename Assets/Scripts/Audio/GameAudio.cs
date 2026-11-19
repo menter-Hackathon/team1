@@ -93,6 +93,7 @@ public partial class GameAudio : MonoBehaviour
         LogPlays = false;
         _master = _bgmVolume = _seVolume = -1f;
         _warned.Clear();
+        GamePaused = false;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -411,6 +412,43 @@ public partial class GameAudio : MonoBehaviour
 
     /// <summary>赤い予告（線・枠）が出た。たくさん出るので、0.15秒に1回まで</summary>
     public static void Telegraph() => Event("telegraph");
+
+    // ───────── 一時停止（2026-11-20：PauseMenu） ─────────
+
+    /// <summary>ゲームが一時停止しているか（PauseMenu が切り替える）</summary>
+    public static bool GamePaused { get; private set; }
+    readonly List<AudioSource> _pausedVoices = new List<AudioSource>();
+
+    /// <summary>
+    /// 一時停止：今鳴っている SE（技の音など）を止める／続きから鳴らす。
+    /// BGM と、止めている間に新しく鳴らす音（メニューのカーソル・決定の音）は止めない
+    /// </summary>
+    public static void SetGamePaused(bool paused)
+    {
+        if (GamePaused == paused) return;
+        GamePaused = paused;
+        try
+        {
+            GameAudio a = Ensure();
+            if (a == null) return;
+            if (paused)
+            {
+                a._pausedVoices.Clear();
+                foreach (Voice v in a._voices)
+                {
+                    if (v.Src == null || !v.Src.isPlaying) continue;
+                    v.Src.Pause();
+                    a._pausedVoices.Add(v.Src);
+                }
+            }
+            else
+            {
+                foreach (AudioSource s in a._pausedVoices) if (s != null) s.UnPause();
+                a._pausedVoices.Clear();
+            }
+        }
+        catch (Exception e) { LogOnce("SetGamePaused", e); }
+    }
 
     void PlayEventNow(string key, float pitchMul)
     {

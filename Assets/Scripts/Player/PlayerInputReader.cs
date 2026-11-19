@@ -10,6 +10,7 @@ using UnityEngine.InputSystem;
 /// ・近接：J／F（ゲームパッドは左のボタン）　・ダッシュ：K／左 Shift、RT
 /// 　F は【仮】右手でマウスを持ったまま左手だけで遊べるように足した（2026-11-16 まさぴ〜）
 /// ・スキル：1／2／3（Y／B／RB）、選択 Q／E（LB）、捨てる X 長押し（LT 長押し）
+/// キーボードのメインのキーは、一時停止のメニューの「キー設定」で変えられる（KeyBindings。上はその初期設定。2026-11-20）
 /// </summary>
 public class PlayerInputReader : MonoBehaviour
 {
@@ -113,6 +114,7 @@ public class PlayerInputReader : MonoBehaviour
 
     void OnEnable()
     {
+        KeyBindings.Apply(_actions); // キー設定（一時停止のメニューで変えたキー）を反映する（2026-11-20）
         foreach (var action in _actions) action.Enable();
     }
 
