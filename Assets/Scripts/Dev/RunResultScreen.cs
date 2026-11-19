@@ -30,13 +30,13 @@ public class RunResultScreen : MonoBehaviour
     void Update()
     {
         if (_dex != null && _dex.IsOpen) return;
-        var kb = Keyboard.current;
-        if (kb == null || GameSession.Instance == null) return;
+        if (GameSession.Instance == null) return;
         int before = _focus;
-        if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) _focus = Mathf.Max(0, _focus - 1);
-        if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) _focus = Mathf.Min(2, _focus + 1);
+        // キーボードとコントローラー（2026-11-20）。Space では決めない（今までどおり）
+        if (MenuInput.Left) _focus = Mathf.Max(0, _focus - 1);
+        if (MenuInput.Right) _focus = Mathf.Min(2, _focus + 1);
         if (_focus != before) GameAudio.Event("ui_move");
-        if (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) Choose(_focus);
+        if (MenuInput.Confirm(allowSpace: false)) Choose(_focus);
     }
 
     void Choose(int index)

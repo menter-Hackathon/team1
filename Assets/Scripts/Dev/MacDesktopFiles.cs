@@ -37,7 +37,7 @@ public sealed class MacDesktopFiles : MonoBehaviour
             if(!_window.IsVisible) _dismissedFrame=Time.frameCount;
             return;
         }
-        if(Keyboard.current!=null&&Keyboard.current.escapeKey.wasPressedThisFrame) Close();
+        if(MenuInput.Back) Close(); // Esc・Backspace・コントローラーの B（2026-11-20）
     }
 
     void OnGUI()

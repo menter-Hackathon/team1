@@ -37,13 +37,13 @@ public class GameOverScreen : MonoBehaviour
             _tick = tick;
             GameAudio.Event("gameover_tick", 1f + tick * 0.04f); // ゲージが増えるほど高く
         }
-        var kb = Keyboard.current;
-        if (kb == null || Time.unscaledTime - _shownAt < 0.4f) return; // 倒れた瞬間の押しっぱなしで決めない
+        if (Time.unscaledTime - _shownAt < 0.4f) return; // 倒れた瞬間の押しっぱなしで決めない
         int before = _focus;
-        if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) _focus = 0;
-        if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) _focus = 1;
+        // キーボードとコントローラー（2026-11-20）。Space では決めない（今までどおり）
+        if (MenuInput.Left) _focus = 0;
+        if (MenuInput.Right) _focus = 1;
         if (_focus != before) GameAudio.Event("ui_move");
-        if (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) Choose(_focus);
+        if (MenuInput.Confirm(allowSpace: false)) Choose(_focus);
     }
 
     void Choose(int index)

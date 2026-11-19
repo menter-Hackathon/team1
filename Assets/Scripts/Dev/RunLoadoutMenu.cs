@@ -13,6 +13,7 @@ public class RunLoadoutMenu : MonoBehaviour
     static readonly string[] Ranks = { "1ST", "2ND", "3RD", "4TH", "5TH" };
 
     int _selected; // 選んでいるカード
+    int _footer = -1; // キー・コントローラーで選んでいる下のボタン（-1 = カードの列、0 もどる・1 図鑑・2 出撃）。2026-11-20
     readonly MacDesktopGui.WindowState _window = new MacDesktopGui.WindowState();
     AppDexMenu _dex;
     MacDesktopFiles _files;
@@ -64,18 +65,47 @@ public class RunLoadoutMenu : MonoBehaviour
     void Update()
     {
         var kb = Keyboard.current;
-        if (kb == null || !_window.IsVisible || (_dex!=null&&_dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || Cards.Count == 0) return;
+        if (!_window.IsVisible || (_dex!=null&&_dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || Cards.Count == 0) return;
         if(MacDesktopGui.WindowShortcuts(_window)) return;
-        if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) Select(Mathf.Max(0, _selected - 1));
-        if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) Select(Mathf.Min(Cards.Count - 1, _selected + 1));
+        // キーボードとコントローラー（十字キー・左スティックで選ぶ・A／START で決定・B で戻る）。2026-11-20
+        // ↓ で下のボタンの列（もどる・図鑑・出撃）へ、↑ でカードの列へ戻る
+        if (_footer >= 0)
+        {
+            int before = _footer;
+            if (MenuInput.Left) _footer = Mathf.Max(0, _footer - 1);
+            if (MenuInput.Right) _footer = Mathf.Min(2, _footer + 1);
+            if (MenuInput.Up) _footer = -1;
+            if (_footer != before) GameAudio.Event("ui_move");
+            if (_footer >= 0 && MenuInput.Confirm()) { PressFooter(_footer); return; }
+            if (MenuInput.Back) Back();
+            return;
+        }
+        if (MenuInput.Left) Select(Mathf.Max(0, _selected - 1));
+        if (MenuInput.Right) Select(Mathf.Min(Cards.Count - 1, _selected + 1));
+        if (MenuInput.Down) { _footer = 2; GameAudio.Event("ui_move"); return; }
         Key[] keys = { Key.Digit1, Key.Digit2, Key.Digit3 };
         Key[] pad = { Key.Numpad1, Key.Numpad2, Key.Numpad3 };
         for (int i = 0; i < keys.Length; i++)
         {
-            if (kb[keys[i]].wasPressedThisFrame || kb[pad[i]].wasPressedThisFrame) Select(i);
+            if (kb != null && (kb[keys[i]].wasPressedThisFrame || kb[pad[i]].wasPressedThisFrame)) Select(i);
         }
-        if (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame) Confirm();
-        if (kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame) Back();
+        if (MenuInput.Confirm()) Confirm();
+        if (MenuInput.Back) Back();
+    }
+
+    /// <summary>下のボタンを押す（キー・コントローラーから）。0 もどる・1 図鑑・2 出撃</summary>
+    void PressFooter(int index)
+    {
+        if (index == 0) Back();
+        else if (index == 1 && _dex != null) { GameAudio.Event("ui_decide"); _dex.Open(); }
+        else if (index == 2) Confirm();
+    }
+
+    /// <summary>キー・コントローラーで選んでいるボタンの枠（マウスで押すときは出さない）</summary>
+    void FooterFocus(Rect r, int index)
+    {
+        if (_footer != index || Event.current.type != EventType.Repaint) return;
+        PixelGui.Border(new Rect(r.x - 3f, r.y - 3f, r.width + 6f, r.height + 6f), MacDesktopGui.Blue, 2f);
     }
 
     void OnGUI()
@@ -128,16 +158,18 @@ public class RunLoadoutMenu : MonoBehaviour
         {
             Rect card=new Rect(x+i*(cardW+gap),cardY,cardW,cardH);
             DrawCard(card,i,Cards[i],i==_selected,maxSeconds);
-            if(GUI.Button(card,GUIContent.none,GUIStyle.none)) Select(i);
+            if(GUI.Button(card,GUIContent.none,GUIStyle.none)) { Select(i); _footer=-1; }
         }
         float footer=inner.yMax-26;
-        if(MacDesktopGui.Button(new Rect(x,footer,76,26),"もどる")) Back();
-        PixelGui.Text(new Rect(x+88,footer+4,180,18),"← → 選択　Enter 決定",12,MacDesktopGui.Muted);
-        if(MacDesktopGui.Button(new Rect(x+280,footer,80,26),"図鑑")&&_dex!=null) _dex.Open();
+        Rect backRect=new Rect(x,footer,76,26), dexRect=new Rect(x+280,footer,80,26), goRect=new Rect(inner.xMax-180,footer,180,26);
+        FooterFocus(backRect,0); FooterFocus(dexRect,1); FooterFocus(goRect,2);
+        if(MacDesktopGui.Button(backRect,"もどる",false,_footer==0)) Back();
+        PixelGui.Text(new Rect(x+88,footer+4,180,18),"←→↓ 選択　Enter 決定",12,MacDesktopGui.Muted);
+        if(MacDesktopGui.Button(dexRect,"図鑑",false,_footer==1)&&_dex!=null) _dex.Open();
         string appName=CanConfirm?(Cards[_selected].IsFiller?Cards[_selected].Skill.DisplayName:Cards[_selected].AppName):"";
         string label=$"{PixelGui.Fit(appName,PixelGui.Style(false,12),110)} と出撃";
         bool was=GUI.enabled; GUI.enabled=was&&CanConfirm;
-        if(MacDesktopGui.Button(new Rect(inner.xMax-180,footer,180,26),label,true)) Confirm();
+        if(MacDesktopGui.Button(goRect,label,true)) Confirm();
         GUI.enabled=mainEnabled;
         PixelGui.End();
     }

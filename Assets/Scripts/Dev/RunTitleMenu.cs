@@ -45,13 +45,13 @@ public class RunTitleMenu : MonoBehaviour
 
     void Update()
     {
-        var kb = Keyboard.current;
-        if (kb == null || !_window.IsVisible || (_dex != null && _dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || Session.IsTransitioning) return;
+        if (!_window.IsVisible || (_dex != null && _dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || Session.IsTransitioning) return;
         if(MacDesktopGui.WindowShortcuts(_window)) return;
-        bool up = kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame;
-        bool down = kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame;
-        bool ok = kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame;
-        bool back = kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame;
+        // キーボードとコントローラー（十字キー・左スティック・A／START で決定・B で戻る）。2026-11-20
+        bool up = MenuInput.Up;
+        bool down = MenuInput.Down;
+        bool ok = MenuInput.Confirm();
+        bool back = MenuInput.Back;
         if (_scan)
         {
             if (_scanning) return;
