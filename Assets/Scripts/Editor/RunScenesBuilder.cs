@@ -37,6 +37,21 @@ public static class RunScenesBuilder
     static readonly Vector2 ChromeSpawn = new Vector2(0f, 2.5f + 1.5f);
     static readonly Vector2 VSCodeSpawn = new Vector2(7f, 1.5f);
 
+    [MenuItem("Tools/Team1/ゲームオーバー演出を確認")]
+    static void PreviewGameOver()
+    {
+        if (EditorApplication.isPlaying)
+        {
+            if (GameSession.Instance != null && GameSession.Instance.Run != null) GameSession.Instance.ShowGameOver();
+            else Debug.LogWarning("先にランを開始してください。");
+            return;
+        }
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        EditorSceneManager.OpenScene(SceneFolder + "/" + ResultScene + ".unity");
+        SessionState.SetBool("Team1.PreviewMacGameOver", true);
+        EditorApplication.isPlaying = true;
+    }
+
     [MenuItem("Tools/Team1/リザルト画面を確認")]
     static void PreviewResult()
     {
