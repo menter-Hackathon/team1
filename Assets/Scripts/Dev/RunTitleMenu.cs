@@ -28,6 +28,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void Start()
     {
+        GameAudio.PlayBgm("bgm_title"); // タイトルの曲（2026-11-20：画面を Mac 仕様にしたときに消えていたので戻した）
         MacDesktopWallpaper.Ensure(this);
         _files=GetComponent<MacDesktopFiles>();
         if(_files==null) _files=gameObject.AddComponent<MacDesktopFiles>();
