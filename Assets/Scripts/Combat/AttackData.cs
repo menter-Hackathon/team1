@@ -190,6 +190,15 @@ public class AttackData : ScriptableObject
     [Tooltip("移動ツールの矢印の長さ（マス）")]
     [SerializeField, Min(0.1f)] float _warningGizmoSize = 1.3f;
 
+    // ───────── 専用の技（Custom） ─────────
+    [Header("専用の技（Custom のとき。2026-11-18）")]
+    [Tooltip("技の中身（CustomAttack を継いだアセット）。技ごとの数値もこちらに持つ")]
+    [SerializeField] CustomAttack _custom;
+    [Tooltip("【仮】場に残る技（docs/app-boss-skills-design.md 1-3）。場に残る技の効果が出ている間、ボスはほかの場に残る技を選ばない")]
+    [SerializeField] bool _lingering;
+    [Tooltip("【仮】床が文字化けしている間（rm -rf）は選ばない（文字列の雨など、床に逃げ場が要る技）")]
+    [SerializeField] bool _avoidWhileFloorCorrupted;
+
     // ───────── Warp ─────────
     [Header("Warp のとき")]
     [SerializeField] WarpDestination _warpDestination = WarpDestination.Forward;
@@ -272,6 +281,10 @@ public class AttackData : ScriptableObject
     public float DropInterval => _dropInterval;
     public Vector2 AppearTopRange => _appearTopRange;
     public float ReachHeight => _reachHeight;
+
+    public CustomAttack Custom => _custom;
+    public bool Lingering => _lingering;
+    public bool AvoidWhileFloorCorrupted => _avoidWhileFloorCorrupted;
 
     public int LockOnCount => _lockOnCount;
     public Color LockOnMarkColor => _lockOnMarkColor;

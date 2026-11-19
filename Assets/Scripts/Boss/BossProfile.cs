@@ -68,6 +68,10 @@ public class BossProfile : ScriptableObject
     [Tooltip("戦闘の間ずっと効く効果。空なら無し")]
     [SerializeField] SkillPassive _passive;
 
+    [Header("ボスに足す仕組み（2026-11-18）")]
+    [Tooltip("そのボスだけの仕組み（Terminal の再起動の演出など）。プロフィールを受け取ったときに、ボスに足される")]
+    [SerializeField] BossExtension[] _extensions;
+
     public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
     public Sprite Icon => _icon;
     public int GaugeMax => _gaugeMax;
@@ -81,6 +85,7 @@ public class BossProfile : ScriptableObject
     public float HoverSpeed => _hoverSpeed;
     public float[] HoverPointsX => _hoverPointsX;
     public SkillDefinition Reward => _reward;
+    public BossExtension[] Extensions => _extensions;
     /// <summary>正常化したあとのきれいなアイコン</summary>
     public Sprite NormalIcon => _normalIcon != null ? _normalIcon : _icon;
     public SkillPassive Passive => _passive;

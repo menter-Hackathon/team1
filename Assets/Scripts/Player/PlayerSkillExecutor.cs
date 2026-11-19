@@ -16,6 +16,9 @@ public class PlayerSkillExecutor : MonoBehaviour
 {
     PlayerSkills _skills;
     AttackRunner _runner;
+
+    /// <summary>能力を実行する AttackRunner（HUD が、専用の技の状態を聞くとき用）</summary>
+    public AttackRunner Runner => _runner;
     readonly Dictionary<SkillDefinition, float> _readyAt = new Dictionary<SkillDefinition, float>();
     readonly Dictionary<SkillDefinition, float> _cooldownOf = new Dictionary<SkillDefinition, float>();
     readonly Dictionary<SkillDefinition, int> _turn = new Dictionary<SkillDefinition, int>();
@@ -66,14 +69,9 @@ public class PlayerSkillExecutor : MonoBehaviour
         }
         if (!_runner.Run(attack)) return false;
 
-        _readyAt[skill] = Time.time + attack.Cooldown;
-        _cooldownOf[skill] = attack.Cooldown;
-        if (skill.HasAttackCycle)
-        {
-            _turn.TryGetValue(skill, out int turn);
-            _turn[skill] = turn + 1;
-            NextAttackChanged?.Invoke(skill, GetNextAttack(skill));
-        }
+        // 2回押しの能力（zip圧縮）は、1回目のあとはクールタイムを始めない（2026-11-18）
+        bool defer = attack.Kind == AttackKind.Custom && attack.Custom != null && attack.Custom.DefersCooldown(_runner);
+        if (!defer) _readyAt[skill] = Time.time + attack.Cooldown;
         SkillUsed?.Invoke(index, skill);
         return true;
     }

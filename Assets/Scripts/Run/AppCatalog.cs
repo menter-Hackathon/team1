@@ -23,6 +23,31 @@ public struct FloatRange
 }
 
 /// <summary>
+/// 代用ボスのアプリに、専用のボスの設定（技）を使う（2026-11-18：Finder・Premiere Pro。docs/app-boss-skills-design.md 1-5）。
+/// 見た目（アイコンから作るウィンドウ）・ステージ（代用ボスの1画面）・ステージの色・手に入る能力は、代用ボスのまま。技と強さだけを差し替える
+/// </summary>
+[Serializable]
+public class AppBossEntry
+{
+    [Tooltip("表の上で見分けるための名前（ゲームには出ない）")]
+    public string Label;
+    [Tooltip("アプリの名前（単語ごとに比べる。大文字小文字は区別しない）")]
+    public string[] AppNames;
+    [Tooltip("バンドルIDの前方一致")]
+    public string[] BundleIdPrefixes;
+    [Tooltip("ボスのプレハブ（動き方に合う物。浮くなら Chrome のもの）。空なら、代用ボスのひな形のプレハブ")]
+    public BossController BossPrefab;
+    [Tooltip("ボスの設定（技・形態）")]
+    public BossProfile Profile;
+    [Tooltip("ボスのウイルス解除ゲージの最大値（使用時間で変える）")]
+    public IntRange GaugeMax;
+    [Tooltip("第2形態の、攻撃の後の待ち時間（秒。使用時間で変える）")]
+    public FloatRange Phase2Wait;
+
+    public bool Matches(AppUsageRow row) => AppMatch.Matches(row, AppNames, BundleIdPrefixes);
+}
+
+/// <summary>
 /// 対応アプリ1つ分。バンドルIDの照合、出てくるボス、強さのつまみを持つ。
 /// </summary>
 [Serializable]
@@ -90,8 +115,22 @@ public class AppCatalog : ScriptableObject
     [Header("ラスボス（2026-11-18 まさぴ〜決定：Terminal）")]
     [Tooltip("毎回、最後のステージに出るボス（使用時間に関係なく出る。ランダムの候補からは外す）。プレハブかプロフィールが空なら出さない。強さはいつも最大")]
     [SerializeField] AppEntry _finalBoss;
+    [Header("代用ボスの専用の技（2026-11-18：Finder・Premiere Pro）")]
+    [Tooltip("当たったアプリの代用ボスは、ここのボスの設定（技）を使う。見た目・ステージ・能力は代用ボスのまま")]
+    [SerializeField] AppBossEntry[] _appBosses;
 
     public float FullStrengthHours => _fullStrengthHours;
+    public AppBossEntry[] AppBosses => _appBosses ?? Array.Empty<AppBossEntry>();
+
+    /// <summary>このアプリ専用のボスの設定（無ければ null）</summary>
+    public AppBossEntry FindAppBoss(AppUsageRow row)
+    {
+        foreach (var e in AppBosses)
+        {
+            if (e != null && e.Profile != null && e.Matches(row)) return e;
+        }
+        return null;
+    }
     public AppEntry[] Apps => _apps ?? Array.Empty<AppEntry>();
     public string StandInStageScene => _standInStageScene;
     /// <summary>ラスボス（プレハブとプロフィールが入っているときだけ）。無ければ null</summary>

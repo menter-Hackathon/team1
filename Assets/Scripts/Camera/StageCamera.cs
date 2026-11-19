@@ -54,14 +54,46 @@ public class StageCamera : MonoBehaviour
         transform.position = pos;
     }
 
+    // ───────── 画面のゆれ（2026-11-18：ボスの技の演出。レーザーツール・再起動など） ─────────
+    static float _shakeStart, _shakeUntil = float.NegativeInfinity, _shakeAmplitude;
+    Vector3 _shakeOffset;
+
+    /// <summary>【仮】画面をゆらす（amplitude マス、duration 秒。だんだん弱くなる）。強いゆれが続いている間は、弱いゆれで上書きしない</summary>
+    public static void Shake(float amplitude, float duration)
+    {
+        // StageCamera の無いカメラ（1画面のステージ Stage_Desktop）では、カメラに付けるゆれの部品に任せる
+        Camera cam = Camera.main;
+        if (cam != null && !cam.TryGetComponent(out StageCamera _))
+        {
+            TerminalCameraShake.Shake(duration, amplitude);
+            return;
+        }
+        float now = Time.time;
+        float remain = _shakeUntil > now ? _shakeAmplitude * (_shakeUntil - now) / Mathf.Max(0.01f, _shakeUntil - _shakeStart) : 0f;
+        if (amplitude < remain) return;
+        _shakeStart = now;
+        _shakeUntil = now + Mathf.Max(0.01f, duration);
+        _shakeAmplitude = amplitude;
+    }
+
     void LateUpdate()
     {
-        if (_target == null) return;
-        float goal = Goal();
-        float smooth = _locked || _mode == Mode.Rooms ? _roomPanTime : _smoothTime;
-        Vector3 pos = transform.position;
-        pos.x = Mathf.SmoothDamp(pos.x, goal, ref _velocityX, smooth);
-        transform.position = pos;
+        Vector3 pos = transform.position - _shakeOffset; // 前のフレームのゆれを外してから動かす
+        if (_target != null)
+        {
+            float goal = Goal();
+            float smooth = _locked || _mode == Mode.Rooms ? _roomPanTime : _smoothTime;
+            pos.x = Mathf.SmoothDamp(pos.x, goal, ref _velocityX, smooth);
+        }
+        float now = Time.time;
+        if (now < _shakeUntil)
+        {
+            float k = (_shakeUntil - now) / Mathf.Max(0.01f, _shakeUntil - _shakeStart);
+            float a = _shakeAmplitude * k;
+            _shakeOffset = new Vector3(Random.Range(-a, a), Random.Range(-a, a) * 0.5f, 0f);
+        }
+        else _shakeOffset = Vector3.zero;
+        transform.position = pos + _shakeOffset;
     }
 
     float Goal()

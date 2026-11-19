@@ -161,6 +161,12 @@ public class PixelHud : MonoBehaviour
             return;
         }
         Color edge = highlight ? PixelGui.White : skill.Theme != null ? skill.Theme.Main : PixelGui.Frame;
+        // 専用の技の能力（2026-11-18）：もう一度押せる間（zip を持っている間）はふちを光らせ、枠の絵を変える（次に投げるアイコン）
+        CustomAttack custom = skill.Attack != null && skill.Attack.Kind == AttackKind.Custom ? skill.Attack.Custom : null;
+        AttackRunner runner = _executor != null ? _executor.Runner : null;
+        bool charged = custom != null && runner != null && custom.IsCharged(runner);
+        if (charged && Mathf.FloorToInt(Time.time / 0.25f) % 2 == 0) edge = custom.ChargedColor;
+        Sprite dynamicIcon = custom != null && runner != null ? custom.DisplayIcon(runner) : null;
         PixelGui.Fill(r, PixelGui.FrameDark);
         PixelGui.Fill(PixelGui.Inset(r, 1f), edge);
         PixelGui.Fill(PixelGui.Inset(r, 3f), PixelGui.SlotBg);
@@ -168,12 +174,12 @@ public class PixelHud : MonoBehaviour
         RunState run = GameSession.Instance != null ? GameSession.Instance.Run : null;
         Sprite source = run != null ? run.SourceIcon(skill) : null;
         var icon = new Rect(r.x + 2f, r.y + 2f, 32f, 32f);
-        PixelGui.DrawSprite(icon, skill.Icon != null ? skill.Icon : source);
-        float ratio = cooldownOverride ?? (_executor != null ? _executor.GetCooldownRatio(skill) : 0f);
+        PixelGui.DrawSprite(icon, dynamicIcon != null ? dynamicIcon : skill.Icon != null ? skill.Icon : source);
+        float ratio = _executor != null ? _executor.GetCooldownRatio(skill) : 0f;
         if (ratio > 0f) PixelGui.Fill(new Rect(icon.x, icon.y, icon.width, Mathf.Ceil(icon.height * ratio)), CooldownColor);
 
         // 元になったアプリのアイコンを右下に小さく重ねる（どのアプリの技か、絵で分かるように。2026-11-18：メンターのFB）
-        if (source != null && skill.Icon != null)
+        if (source != null && (skill.Icon != null || dynamicIcon != null))
         {
             var badge = new Rect(r.xMax - 15f, r.yMax - 15f, 18f, 18f);
             PixelGui.Fill(badge, PixelGui.FrameDark);
@@ -239,10 +245,18 @@ public class PixelHud : MonoBehaviour
         PixelGui.DrawSprite(iconRect, boss.Profile != null ? boss.Profile.Icon : null);
         Rect fillArea = GaugeFrame(gauge);
         float ratio = boss.Gauge != null ? Mathf.Clamp01(boss.Gauge.Ratio) : 0f;
+        // そのボスだけの棒の見せ方（2026-11-18：Terminal は本当の50%で満タンに見せ、再起動で空・赤に戻す）
+        IBossGaugeDisplay display = boss.GetComponent<IBossGaugeDisplay>();
+        Color? overrideColor = null;
+        if (display != null)
+        {
+            ratio = Mathf.Clamp01(display.DisplayRatio(boss));
+            overrideColor = display.FillColor(boss);
+        }
         // ゲージの色：そのステージのアプリの色（4色なら左から4つに区切る）。形態変化中は赤く点滅、正常化で白
         AppTheme theme = _director != null && _director.Plan != null ? _director.Plan.Theme : null;
         Color[] colors = theme != null && theme.Accents != null && theme.Accents.Length > 0 ? theme.Accents : new[] { GaugeColor };
-        bool angry = boss.State == BossState.Transition && Mathf.FloorToInt(Time.time / 0.1f) % 2 == 0;
+        bool angry = display == null && boss.State == BossState.Transition && Mathf.FloorToInt(Time.time / 0.1f) % 2 == 0;
         bool done = boss.State == BossState.Normalized || boss.State == BossState.Ejected;
         int n = Mathf.Clamp(colors.Length, 1, 4);
         float fillW = Mathf.Round(fillArea.width * ratio);
@@ -251,9 +265,9 @@ public class PixelHud : MonoBehaviour
             float segStart = Mathf.Round(fillArea.width * i / n), segEnd = Mathf.Round(fillArea.width * (i + 1) / n);
             float w = Mathf.Clamp(fillW - segStart, 0f, segEnd - segStart);
             if (w <= 0f) continue;
-            PixelGui.Fill(new Rect(fillArea.x + segStart, fillArea.y, w, fillArea.height), done ? PixelGui.White : angry ? GaugeAngryColor : colors[i]);
+            PixelGui.Fill(new Rect(fillArea.x + segStart, fillArea.y, w, fillArea.height), done ? PixelGui.White : angry ? GaugeAngryColor : overrideColor ?? colors[i]);
         }
-        if (boss.State == BossState.Fighting || boss.State == BossState.Transition)
+        if ((boss.State == BossState.Fighting || boss.State == BossState.Transition) && (display == null || display.ShowThresholdMark(boss)))
         {
             float threshold = boss.Profile != null ? boss.Profile.Phase2Threshold : 0.5f;
             PixelGui.Fill(new Rect(fillArea.x + Mathf.Round(fillArea.width * threshold), gauge.y - 2f, 2f, gauge.height + 4f), PixelGui.Ink);

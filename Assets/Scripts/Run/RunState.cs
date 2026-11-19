@@ -212,6 +212,9 @@ public static class RunPlanner
             AbilityCategoryEntry category = abilities != null ? abilities.Find(row) : null;
             AppEntry template = templates.FirstOrDefault(a => category != null && a.Category == category.Category)
                 ?? templates[(int)(PixelIcon.Hash(row.Name) % (uint)templates.Count)];
+            // このアプリ専用のボスの設定（Finder・Premiere Pro）があれば、技と強さだけそれにする（2026-11-18）
+            AppBossEntry ownBoss = catalog.FindAppBoss(row);
+            if (ownBoss != null && ownBoss.BossPrefab != null) template = templates.FirstOrDefault(a => a.BossPrefab == ownBoss.BossPrefab) ?? template;
             AppVisual visual = AppVisuals.Get(row);
             SkillDefinition reward = abilities != null ? abilities.SkillFor(row) : null;
             if (reward == null) reward = AppVisuals.Generate(row, abilities, null);
@@ -220,13 +223,13 @@ public static class RunPlanner
                 DisplayName = row.Name,
                 BundleIdPrefixes = string.IsNullOrEmpty(row.BundleId) ? System.Array.Empty<string>() : new[] { row.BundleId }, // 図鑑のアイコン用
                 Category = category != null ? category.Category : SkillCategory.Unknown,
-                BossPrefab = template.BossPrefab,
-                Profile = template.Profile,
+                BossPrefab = ownBoss != null && ownBoss.BossPrefab != null ? ownBoss.BossPrefab : template.BossPrefab,
+                Profile = ownBoss != null ? ownBoss.Profile : template.Profile,
                 SpawnPosition = template.SpawnPosition,
                 StageScene = catalog.StandInStageScene,
                 Theme = visual != null ? visual.Theme : template.Theme,
-                GaugeMax = template.GaugeMax,
-                Phase2Wait = template.Phase2Wait,
+                GaugeMax = ownBoss != null ? ownBoss.GaugeMax : template.GaugeMax,
+                Phase2Wait = ownBoss != null ? ownBoss.Phase2Wait : template.Phase2Wait,
             };
             plans.Add(CreatePlan(catalog, standIn, p.seconds, reward, visual));
         }
