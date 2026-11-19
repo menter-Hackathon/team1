@@ -257,8 +257,10 @@ public class AttackRunner : MonoBehaviour
                 break;
             case AttackKind.BombSite:
                 yield return BombSiteRoutine(data);
+                break;
             case AttackKind.LockOn:
                 yield return LockOnRoutine(data);
+                break;
             case AttackKind.PhysicsObject:
                 yield return PhysicsObjectRoutine(data);
                 break;

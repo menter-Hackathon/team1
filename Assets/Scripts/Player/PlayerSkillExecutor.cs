@@ -10,25 +10,31 @@ using UnityEngine;
 /// ・召喚（AI アシスタント。2026-11-18）は、味方が消えてからクールタイムを数える。味方がいる間は使えない
 /// ・チャット（Slack・Discord・LINE。2026-11-19）は、止まっている間は続けて押すとメッセージが増え（最大数まで、クールタイムなし）、
 ///   動くか最大数まで出したら、そこからクールタイムを数える
+/// ・「順番に切り替わる攻撃」があるスキル（Office）は、使うたびに次の攻撃へ進む。次の攻撃は GetNextAttack と
+///   NextAttackChanged で分かる（スロットのアイコンを変える用）。順番も能力ごとに覚える
+/// ・攻撃データが無く「装備中ずっと効く効果」だけのスキル（Steam）は、ボタンを押しても何もしない
 /// </summary>
 [RequireComponent(typeof(PlayerSkills), typeof(AttackRunner))]
 public class PlayerSkillExecutor : MonoBehaviour
 {
     PlayerSkills _skills;
     AttackRunner _runner;
-    readonly Dictionary<SkillDefinition, float> _readyAt = new Dictionary<SkillDefinition, float>();
-    readonly Dictionary<SkillDefinition, float> _cooldownTotal = new Dictionary<SkillDefinition, float>(); // 今のクールタイムの長さ（ゲージの割合用）
 
     /// <summary>クールタイムの倍率（状態異常「クールタイムが長い」。ふだんは1。使った瞬間の倍率で決まる。2026-11-19）</summary>
     public float CooldownMultiplier { get; set; } = 1f;
-    // 終わってからクールタイムを数える能力（攻撃データ → 能力）。攻撃が終わったら、そこからクールタイムを数え直す
-    readonly Dictionary<AttackData, SkillDefinition> _waitingFinish = new Dictionary<AttackData, SkillDefinition>();
 
     /// <summary>能力を実行する AttackRunner（HUD が、専用の技の状態を聞くとき用）</summary>
     public AttackRunner Runner => _runner;
     // 能力ごとの、クールタイムの残り（倍率をかける前の秒数。毎フレーム、進み方の倍率で減らす）
     readonly Dictionary<SkillDefinition, float> _remain = new Dictionary<SkillDefinition, float>();
+    readonly Dictionary<SkillDefinition, float> _cooldownTotal = new Dictionary<SkillDefinition, float>(); // 今のクールタイムの長さ（ゲージの割合用）
     readonly List<SkillDefinition> _keys = new List<SkillDefinition>();
+    // 終わってからクールタイムを数える能力（召喚・チャット）。攻撃データ → 能力。攻撃が終わったら、そこからクールタイムを数える
+    readonly Dictionary<AttackData, SkillDefinition> _waitingFinish = new Dictionary<AttackData, SkillDefinition>();
+    // 終わるのを待っている能力の、念のための期限（Finished を受け取れなかったときは、この時刻を過ぎたら使える）
+    readonly Dictionary<SkillDefinition, float> _waitUntil = new Dictionary<SkillDefinition, float>();
+    // 順番に切り替わる攻撃（Office）の、次の番号
+    readonly Dictionary<SkillDefinition, int> _turn = new Dictionary<SkillDefinition, int>();
     // 封印（2026-11-19）：全部の枠と、枠ごとの「使えるようになる時刻」
     float _sealAllUntil;
     readonly float[] _sealSlotUntil = new float[8];
@@ -62,9 +68,8 @@ public class PlayerSkillExecutor : MonoBehaviour
     {
         if (attack == null || !_waitingFinish.TryGetValue(attack, out SkillDefinition skill)) return;
         _waitingFinish.Remove(attack);
-        float cd = attack.Cooldown * CooldownMultiplier;
-        _readyAt[skill] = Time.time + cd;
-        _cooldownTotal[skill] = cd;
+        _waitUntil.Remove(skill);
+        StartCooldown(skill, attack.Cooldown);
     }
 
     void OnSkillUseRequested(int index, SkillDefinition skill) => TryUse(index, skill);
@@ -89,6 +94,14 @@ public class PlayerSkillExecutor : MonoBehaviour
             }
             else _remain[k] = r;
         }
+    }
+
+    /// <summary>次に使ったときに出る攻撃データ（順番に切り替わらないスキルは、いつも攻撃データ）</summary>
+    public AttackData GetNextAttack(SkillDefinition skill)
+    {
+        if (skill == null) return null;
+        _turn.TryGetValue(skill, out int turn);
+        return skill.GetAttack(turn);
     }
 
     /// <summary>スキルを使う。使えたら true</summary>
@@ -124,7 +137,7 @@ public class PlayerSkillExecutor : MonoBehaviour
             GameAudio.Event("skill_denied");
             return false;
         }
-        DressFor(skill);
+        DressFor(skill, attack);
         if (!_runner.Run(attack))
         {
             GameAudio.Event("skill_denied"); // 相手がいない・使えない
@@ -134,41 +147,53 @@ public class PlayerSkillExecutor : MonoBehaviour
         if (attack.Kind == AttackKind.Summon)
         {
             // 味方が消えるまでは使えない。消えたこと（Finished）を受け取れなかったときのために、いられる最大の秒数の後には使えるようにしておく
-            _readyAt[skill] = Time.time + attack.SummonLifetime + attack.Cooldown;
+            _waitUntil[skill] = Time.time + attack.SummonLifetime + attack.Cooldown;
             _waitingFinish[attack] = skill;
         }
         else if (attack.Kind == AttackKind.Chat)
         {
             // ためが終わる（動く・最大数まで出す）まではクールタイムを数えない。終わったら Finished から数える。
             // 受け取れなかったときのために、待つ秒数×最大数の後には使えるようにしておく
-            _readyAt[skill] = Time.time + attack.ChatFireDelay * attack.ChatMaxMessages + attack.Cooldown;
+            _waitUntil[skill] = Time.time + attack.ChatFireDelay * attack.ChatMaxMessages + attack.Cooldown;
             _waitingFinish[attack] = skill;
         }
         else
         {
-            float cd = attack.Cooldown * CooldownMultiplier;
-            _readyAt[skill] = Time.time + cd;
-            _cooldownTotal[skill] = cd;
+            // 2回押しの能力（zip圧縮）は、1回目のあとはクールタイムを始めない（2026-11-18）
+            bool defer = attack.Kind == AttackKind.Custom && attack.Custom != null && attack.Custom.DefersCooldown(_runner);
+            if (!defer) StartCooldown(skill, attack.Cooldown);
         }
-        // 2回押しの能力（zip圧縮）は、1回目のあとはクールタイムを始めない（2026-11-18）
-        bool defer = attack.Kind == AttackKind.Custom && attack.Custom != null && attack.Custom.DefersCooldown(_runner);
-        if (!defer && attack.Cooldown > 0f) _remain[skill] = attack.Cooldown; // 2026-11-19：倍率は Update で（進み方）
+        if (skill.HasAttackCycle)
+        {
+            _turn.TryGetValue(skill, out int turn);
+            _turn[skill] = turn + 1;
+            NextAttackChanged?.Invoke(skill, GetNextAttack(skill));
+        }
         SkillUsed?.Invoke(index, skill);
         return true;
+    }
+
+    // クールタイムを数え始める（倍率をかける前の秒数で覚える。進み方の倍率は Update で）
+    void StartCooldown(SkillDefinition skill, float seconds)
+    {
+        float cd = seconds * CooldownMultiplier;
+        if (skill == null || cd <= 0f) return;
+        _remain[skill] = cd;
+        _cooldownTotal[skill] = cd;
     }
 
     /// <summary>
     /// 能力の見た目（スキン・アプリの色・アプリのアイコン）を入れる（2026-11-18：スキルの見た目 1-1）。
     /// 能力は同時に使えるので、攻撃データごとに覚えさせる（SkinDresser.Remember）。AttackRunner.Skin は最後に使った能力
     /// </summary>
-    void DressFor(SkillDefinition skill)
+    void DressFor(SkillDefinition skill, AttackData attack)
     {
         SkinId skin = SkinTables.ForSkill(skill);
         Sprite icon = null;
         GameSession session = GameSession.Instance;
         if (session != null && session.Run != null) icon = session.Run.SourceIcon(skill);
         if (icon == null) icon = skill.Icon;
-        SkinDresser.Remember(skill.Attack, skin, skill.Theme, icon);
+        SkinDresser.Remember(attack, skin, skill.Theme, icon);
         _runner.Skin = skin;
         _runner.SkinTheme = skill.Theme;
         _runner.SkinIcon = icon;
@@ -177,20 +202,22 @@ public class PlayerSkillExecutor : MonoBehaviour
     /// <summary>クールタイムの残り秒数（今の進み方の倍率での秒数。使えるなら 0）</summary>
     public float GetCooldownRemaining(SkillDefinition skill)
     {
-        if (skill == null || !_readyAt.TryGetValue(skill, out float t)) return 0f;
+        if (skill == null) return 0f;
         // チャットのためが続いている間は、まだ押せるので「使える」扱い
         if (skill.Attack != null && skill.Attack.Kind == AttackKind.Chat && ChatVolley.IsOpenFor(_runner, skill.Attack)) return 0f;
-        return Mathf.Max(0f, t - Time.time);
+        float remain = _remain.TryGetValue(skill, out float r) ? r / Rate : 0f;
+        if (_waitUntil.TryGetValue(skill, out float until)) remain = Mathf.Max(remain, until - Time.time); // 召喚・チャットが終わるのを待っている
+        return Mathf.Max(0f, remain);
     }
 
     /// <summary>クールタイムの残りの割合（1＝使った直後、0＝使える）。UI のゲージ用</summary>
     public float GetCooldownRatio(SkillDefinition skill)
     {
-        if (skill == null || skill.Attack == null || skill.Attack.Cooldown <= 0f) return 0f;
-        float total = _cooldownTotal.TryGetValue(skill, out float t) && t > 0f ? t : skill.Attack.Cooldown;
-        return Mathf.Clamp01(GetCooldownRemaining(skill) / total);
+        if (skill == null) return 0f;
+        if (_waitUntil.TryGetValue(skill, out float until) && until > Time.time) return 1f; // 終わるのを待っている間は、いっぱいのまま
         if (!_remain.TryGetValue(skill, out float r)) return 0f;
-        return Mathf.Clamp01(r / skill.Attack.Cooldown);
+        float total = _cooldownTotal.TryGetValue(skill, out float t) && t > 0f ? t : r;
+        return Mathf.Clamp01(r / total);
     }
 
     // ───────── 2026-11-19：アプリのキットの入口（E5。KitPlayer から呼ぶ） ─────────

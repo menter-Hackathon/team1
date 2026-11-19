@@ -229,38 +229,6 @@ public static class RunPlanner
             }
             AppUsageRow row = p.row;
             row.Seconds = p.seconds;
-            AbilityCategoryEntry category = abilities != null ? abilities.Find(row) : null;
-            // カテゴリ：カテゴリの表で分からなければ、アプリ専用の能力のカテゴリ（Slack・Discord・LINE は SNS・チャット。2026-11-19）
-            SkillCategory cat = category != null ? category.Category
-                : abilities?.FindAppSkill(row)?.Skill != null ? abilities.FindAppSkill(row).Skill.Category : SkillCategory.Unknown;
-            // 同じカテゴリのひな形のうち、そのカテゴリ専用のひな形（ブラウザのボスなど）を優先する（2026-11-19。Chrome そのものは対応表のボスのまま）
-            AppEntry template = cat != SkillCategory.Unknown
-                ? templates.Where(a => a.Category == cat).OrderByDescending(a => a.StandInSameCategoryOnly).FirstOrDefault()
-                : null;
-            if (template == null)
-            {
-                // カテゴリの近いボスが無ければ、名前で決める（同じカテゴリ専用のひな形＝AI チャットのボスは選ばない。2026-11-19）
-                var general = templates.Where(a => !a.StandInSameCategoryOnly).ToList();
-                if (general.Count == 0) general = templates;
-                template = general[(int)(PixelIcon.Hash(row.Name) % (uint)general.Count)];
-            }
-            AppVisual visual = AppVisuals.Get(row);
-            SkillDefinition reward = abilities != null ? abilities.SkillFor(row) : null;
-            if (reward == null) reward = AppVisuals.Generate(row, abilities, null);
-            var standIn = new AppEntry
-            {
-                DisplayName = row.Name,
-                BundleIdPrefixes = string.IsNullOrEmpty(row.BundleId) ? System.Array.Empty<string>() : new[] { row.BundleId }, // 図鑑のアイコン用
-                Category = cat,
-                BossPrefab = template.BossPrefab,
-                Profile = template.Profile,
-                SpawnPosition = template.SpawnPosition,
-                StageScene = !string.IsNullOrEmpty(template.StandInStageScene) ? template.StandInStageScene : catalog.StandInStageScene,
-                Theme = visual != null ? visual.Theme : template.Theme,
-                GaugeMax = template.GaugeMax,
-                Phase2Wait = template.Phase2Wait,
-            };
-            plans.Add(CreatePlan(catalog, standIn, p.seconds, reward, visual));
             BossLook look = StandIn(catalog, abilities, row, templates);
             SkillDefinition reward = abilities != null ? abilities.SkillFor(row) : null;
             if (reward == null) reward = AppVisuals.Generate(row, abilities, null);
@@ -279,7 +247,7 @@ public static class RunPlanner
         if (catalog.IsFinalBossApp(row.BundleId, row.Name)) return FinalBossLook(catalog);
         AppEntry entry = catalog.Find(row.BundleId) ?? catalog.FindByName(row.Name);
         if (entry != null && entry.BossPrefab != null && entry.Profile != null) return new BossLook { App = entry };
-        var templates = catalog.Apps.Where(a => a != null && a.BossPrefab != null && a.Profile != null).ToList();
+        var templates = catalog.Apps.Where(a => a != null && a.BossPrefab != null && a.Profile != null && !a.ExcludeFromStandIn).ToList();
         return templates.Count > 0 ? StandIn(catalog, abilities, row, templates) : null;
     }
 
@@ -291,8 +259,20 @@ public static class RunPlanner
     static BossLook StandIn(AppCatalog catalog, AbilityCatalog abilities, AppUsageRow row, List<AppEntry> templates)
     {
         AbilityCategoryEntry category = abilities != null ? abilities.Find(row) : null;
-        AppEntry template = templates.FirstOrDefault(a => category != null && a.Category == category.Category)
-            ?? templates[(int)(PixelIcon.Hash(row.Name) % (uint)templates.Count)];
+        // カテゴリ：カテゴリの表で分からなければ、アプリ専用の能力のカテゴリ（Slack・Discord・LINE は SNS・チャット。2026-11-19）
+        SkillDefinition appSkill = abilities?.FindAppSkill(row)?.Skill;
+        SkillCategory cat = category != null ? category.Category : appSkill != null ? appSkill.Category : SkillCategory.Unknown;
+        // 同じカテゴリのひな形のうち、そのカテゴリ専用のひな形（ブラウザのボスなど）を優先する（2026-11-19。Chrome そのものは対応表のボスのまま）
+        AppEntry template = cat != SkillCategory.Unknown
+            ? templates.Where(a => a.Category == cat).OrderByDescending(a => a.StandInSameCategoryOnly).FirstOrDefault()
+            : null;
+        if (template == null)
+        {
+            // カテゴリの近いボスが無ければ、名前で決める（同じカテゴリ専用のひな形＝AI チャットのボスは選ばない。2026-11-19）
+            var general = templates.Where(a => !a.StandInSameCategoryOnly).ToList();
+            if (general.Count == 0) general = templates;
+            template = general[(int)(PixelIcon.Hash(row.Name) % (uint)general.Count)];
+        }
         // このアプリ専用のボスの設定（Finder・Premiere Pro）があれば、技と強さだけそれにする（2026-11-18）
         AppBossEntry ownBoss = catalog.FindAppBoss(row);
         if (ownBoss != null && ownBoss.BossPrefab != null) template = templates.FirstOrDefault(a => a.BossPrefab == ownBoss.BossPrefab) ?? template;
@@ -301,16 +281,32 @@ public static class RunPlanner
         {
             DisplayName = row.Name,
             BundleIdPrefixes = string.IsNullOrEmpty(row.BundleId) ? System.Array.Empty<string>() : new[] { row.BundleId }, // 図鑑のアイコン用
-            Category = category != null ? category.Category : SkillCategory.Unknown,
+            Category = cat,
             BossPrefab = ownBoss != null && ownBoss.BossPrefab != null ? ownBoss.BossPrefab : template.BossPrefab,
             Profile = ownBoss != null ? ownBoss.Profile : template.Profile,
             SpawnPosition = template.SpawnPosition,
-            StageScene = catalog.StandInStageScene,
+            StageScene = !string.IsNullOrEmpty(template.StandInStageScene) ? template.StandInStageScene : catalog.StandInStageScene,
             Theme = visual != null ? visual.Theme : template.Theme,
             GaugeMax = ownBoss != null ? ownBoss.GaugeMax : template.GaugeMax,
             Phase2Wait = ownBoss != null ? ownBoss.Phase2Wait : template.Phase2Wait,
         };
         return new BossLook { App = standIn, Visual = visual };
+    }
+
+    /// <summary>
+    /// 「アイコンから見た目を作る」の行（Office・Unity・Steam。AppEntry.IconLook）の見た目。それ以外は null。
+    /// row：使用時間の行（無ければ表の名前とバンドルIDから作る）
+    /// </summary>
+    public static AppVisual IconLookOf(AppEntry entry, AppUsageRow? row)
+    {
+        if (entry == null || !entry.IconLook) return null;
+        AppUsageRow r = row ?? new AppUsageRow
+        {
+            Name = entry.DisplayName,
+            BundleId = entry.BundleIdPrefixes?.FirstOrDefault(b => !string.IsNullOrEmpty(b)) ?? "",
+            Seconds = 1,
+        };
+        return AppVisuals.Get(r);
     }
 
     /// <summary>ラスボス（Terminal）の見た目：代用ボスと同じく、本物のアイコンから作る。ステージの色は表のテーマ。表に無ければ null</summary>
