@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3ca3acb35db24b94a3161ce3b7d6196, type: 3}
+  m_Name: PowerPoint_SlideDrop_P1
+  m_EditorClassIdentifier: 
+  _fall: {fileID: 11400000, guid: 6f7c8e1df0a1b41aa81b5db656d3f109, type: 2}
+  _wave: {fileID: 0}
+  _count: 2
+  _interval: 0.5
+  _aimEach: 1
+  _waves: 0
+  _waveSpeed: 9
+  _waveHeight: 0.8
+  _waveWidth: 0.7
+  _fallArt: 
+  _waveArt: 

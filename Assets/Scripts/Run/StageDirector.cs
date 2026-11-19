@@ -70,6 +70,14 @@ public class StageDirector : MonoBehaviour
             if (armor != null) armor.SetWindowStages(BossWindowArt.Create(Plan.Visual.Icon24, Plan.App.Theme, $"BossWindow_{Plan.App.DisplayName}"));
         }
         if (_player != null && Boss.TryGetComponent(out AttackRunner runner)) runner.Target = _player.transform;
+        // ボスの攻撃の見た目（スキン）：そのステージのアプリから決める。色とアイコンも（2026-11-18：スキルの見た目 1-1）
+        if (Boss.TryGetComponent(out AttackRunner bossRunner))
+        {
+            string bundle = Plan.App.BundleIdPrefixes != null && Plan.App.BundleIdPrefixes.Length > 0 ? Plan.App.BundleIdPrefixes[0] : null;
+            bossRunner.Skin = SkinTables.ForApp(Plan.App.DisplayName, bundle);
+            bossRunner.SkinTheme = Plan.App.Theme;
+            bossRunner.SkinIcon = Plan.Visual != null ? (Plan.Visual.Icon16 != null ? Plan.Visual.Icon16 : Plan.Visual.Icon12) : (Plan.Icon16 != null ? Plan.Icon16 : Plan.Profile != null ? Plan.Profile.Icon : null);
+        }
         if (_entrance != null) _entrance.SetBoss(Boss);
     }
 
@@ -83,6 +91,7 @@ public class StageDirector : MonoBehaviour
             if (_playerHealth != null) _playerHealth.Died += OnPlayerDied;
         }
         Boss.Normalized += OnBossNormalized;
+        GameAudio.StageStarted();
         _session.NotifyStageStarted();
     }
 

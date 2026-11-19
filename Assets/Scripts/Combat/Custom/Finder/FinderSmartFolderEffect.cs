@@ -48,6 +48,9 @@ public class FinderSmartFolderEffect : CustomEffect
     float _folderOpenedAt;
     float _closeStart = -1f;
     int _activating;
+    // 2026-11-18：スキルの見た目（docs/app-skill-visuals-design.md 11-2）【仮】
+    Transform _rays;                    // フォルダの口から出る、タグの色の光の線 3本（ゆっくり回る）
+    readonly List<SpriteRenderer> _raySrs = new List<SpriteRenderer>();
 
     /// <summary>プレイヤーに付いているタグ（-1＝なし、0＝赤、1＝青）。テスト用</summary>
     public int PlayerTag => _tag;
@@ -80,6 +83,10 @@ public class FinderSmartFolderEffect : CustomEffect
         }
         _headTagSr.sprite = FinderArt.TagBall(HeadTagDots, tag);
         _headTag.position = HeadTagPosition();
+        // タグが付いた瞬間：頭の上のタグの丸から、同じ色の小さい輪が広がる（0.15秒。11-2）
+        Transform ring = FinderArt.Child(transform, "TagRing", HeadTagPosition());
+        SpriteRenderer rs = AttackRunner.AddVisual(ring, FinderArt.Ring(12, 1), FinderArt.TagColor(tag), Vector2.one * (12 * FinderArt.Dot), HeadTagOrder, "Ring");
+        GenericFrameTweens.Of(ring.gameObject).Scale(ring, Vector3.one, Vector3.one * 2.6f, 0.15f).Alpha(rs, 1f, 0f, 0.15f).Kill(0.16f);
     }
 
     // ───────── 進める ─────────
@@ -173,10 +180,14 @@ public class FinderSmartFolderEffect : CustomEffect
         {
             foreach (var s in _spikes[c])
             {
-                if (s != null) Destroy(s.gameObject);
+                if (s == null) continue;
+                // 残ったトゲ付きファイルは、紙くずの丸になって下へ落ちる（11-2。2026-11-18）
+                GenericFrameShard.Spawn(s.transform.position, FinderSkinArt.PaperBall, Color.white, new Vector2(Random.Range(-1f, 1f), 1.5f), 22f, 0.6f, 22, Random.Range(-360f, 360f));
+                Destroy(s.gameObject);
             }
             foreach (var line in _lines[c]) line.Visible = false;
         }
+        DropPaper();
         end = Time.time + _attack.CloseTime;
         while (Time.time < end) yield return null;
         Destroy(gameObject);
@@ -314,6 +325,35 @@ public class FinderSmartFolderEffect : CustomEffect
         _glow.enabled = false;
         _folderOpenedAt = Time.time;
         _folder.localScale = new Vector3(1f, 0.05f, 1f);
+
+        // フォルダの口から、タグの色の光の線が 3本（11-2。2026-11-18）
+        _rays = FinderArt.Child(transform, "Rays", (Vector2)_folder.position + new Vector2(0f, size.y * 0.6f));
+        for (int i = 0; i < 3; i++)
+        {
+            Transform arm = FinderArt.Child(_rays, "Ray", _rays.position);
+            arm.localRotation = Quaternion.Euler(0f, 0f, i * 120f);
+            SpriteRenderer sr = AttackRunner.AddVisual(arm, PlaceholderSprites.Square, Color.white, new Vector2(1.1f, 2f * FinderArt.Dot), GlowOrder, "Beam");
+            sr.transform.localPosition = new Vector3(0.75f, 0f, 0f);
+            sr.enabled = false;
+            _raySrs.Add(sr);
+        }
+    }
+
+    /// <summary>フォルダが閉じるとき、書類が1枚ひらひら落ちる（11-2。2026-11-18）</summary>
+    void DropPaper()
+    {
+        if (_folder == null) return;
+        Vector2 from = (Vector2)_folder.position + new Vector2(0f, _attack.FolderSize.y * 0.5f);
+        Transform paper = GenericFrameKit.Loose("Gen4_FinderPaper", from);
+        SpriteRenderer sr = GenericFrameKit.Spr(paper, FinderSkinArt.Doc6, Vector2.zero, Color.white, FolderOrder + 1, 1.5f, "Doc");
+        float phase = Random.Range(0f, 6f);
+        GenericFrameTweens.Of(paper.gameObject).Each(0.8f, k =>
+        {
+            if (paper == null) return;
+            paper.position = from + new Vector2(Mathf.Sin(k * 9f + phase) * 0.35f, -k * 2.4f);
+            paper.rotation = Quaternion.Euler(0f, 0f, Mathf.Sin(k * 9f + phase + 1f) * 30f);
+            GenericFrameKit.SetAlpha(sr, k < 0.7f ? 1f : 1f - (k - 0.7f) / 0.3f);
+        }).Kill(0.8f);
     }
 
     // ───────── 見た目の動き ─────────
@@ -341,6 +381,19 @@ public class FinderSmartFolderEffect : CustomEffect
                 ? 1f - Mathf.Clamp01((now - _closeStart) / Mathf.Max(0.01f, _attack.CloseTime))
                 : Mathf.Clamp01((now - _folderOpenedAt) / FolderPopTime);
             _folder.localScale = new Vector3(1f, Mathf.Max(0.05f, k), 1f);
+        }
+        // フォルダの口の光の線：色が動いている間、ゆっくり回る
+        if (_rays != null)
+        {
+            bool on = _glowTag >= 0 && _closeStart < 0f;
+            _rays.localRotation = Quaternion.Euler(0f, 0f, now * 40f);
+            Color rc = _glowTag >= 0 ? FinderArt.TagColor(_glowTag) : Color.white;
+            rc.a = 0.45f + 0.15f * Mathf.Sin(now * 10f);
+            foreach (var sr in _raySrs)
+            {
+                sr.enabled = on;
+                sr.color = rc;
+            }
         }
         // タグの色の光：色が動き出すと中から広がり、ゆっくり脈打つ
         if (_glow != null)

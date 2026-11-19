@@ -155,8 +155,10 @@ public static class RunPlanner
         float t = catalog.StrengthFromSeconds(usageSeconds);
 
         // 複製しない（能力ごとのレベル・クールタイムを、同じ能力として数えるため）
-        SkillDefinition reward = rewardOverride != null ? rewardOverride : app.Profile.Reward;
-        BossProfile profile = app.Profile.CreateScaledCopy(app.GaugeMax.Lerp(t), app.Phase2Wait.Lerp(t), reward);
+        // 本物のアプリだけの設定があれば、それを使う（2026-11-19：Chrome・VS Code の専用の技。代用ボスは OwnProfile が空）
+        BossProfile baseProfile = app.OwnProfile != null ? app.OwnProfile : app.Profile;
+        SkillDefinition reward = rewardOverride != null ? rewardOverride : baseProfile.Reward;
+        BossProfile profile = baseProfile.CreateScaledCopy(app.GaugeMax.Lerp(t), app.Phase2Wait.Lerp(t), reward);
         if (visual != null) profile.SetLook(app.DisplayName, visual.Icon12);
 
         return new StagePlan

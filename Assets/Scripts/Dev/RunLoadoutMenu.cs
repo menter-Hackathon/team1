@@ -8,7 +8,8 @@ using UnityEngine.InputSystem;
 /// 相棒の能力を最初から持つ。ボスは今までどおり、上位10アプリからランダムに3つ（相棒のアプリが出ることもある）。
 /// ・カード：順位（1ST〜3RD）・アプリのアイコンと名前・使用時間とメーター・固有能力（能力の名前・説明・タグ。説明とタグは【仮】）
 /// ・選んでいるカードはオレンジの縁と「▶ 選択中」。右下の「◯◯ と出撃 ▶」で決定
-/// 操作：← → か 1〜3 キー・クリックで選ぶ。Z・Enter・Space で決定。Esc か「◀ もどる」・× でタイトルへ
+/// 操作：← → か 1〜3 キー・クリックで選ぶ。Z・Enter・Space で決定。Esc か「◀ もどる」・左上の赤い丸でタイトルへ
+/// 2026-11-19：ウィンドウを Mac の形にした（docs/mac-look-design.md 6章の 2）。並び・中身は前のまま
 /// このシーンを直接再生したときは、サンプルの使用データでランを作る（開発用）。
 /// </summary>
 public class RunLoadoutMenu : MonoBehaviour
@@ -31,6 +32,7 @@ public class RunLoadoutMenu : MonoBehaviour
 
     void Start()
     {
+        GameAudio.PlayBgm("bgm_loadout");
         if (Session != null && Session.Run != null) return;
         // 直接再生したとき：サンプルの使用データでランを作る
         var session = GameSession.EnsureExists(_catalog, _abilities);
@@ -41,6 +43,7 @@ public class RunLoadoutMenu : MonoBehaviour
     public void Select(int index)
     {
         if (Session == null || Session.IsTransitioning || index < 0 || index >= Cards.Count) return;
+        if (index != _selected) GameAudio.Event("ui_card");
         _selected = index;
     }
 
@@ -48,12 +51,15 @@ public class RunLoadoutMenu : MonoBehaviour
     public void Confirm()
     {
         if (!CanConfirm) return;
+        GameAudio.Event("ui_decide");
         Session.ConfirmLoadout(new List<SkillDefinition> { Cards[_selected].Skill });
     }
 
     void Back()
     {
-        if (Session != null && !Session.IsTransitioning) Session.ReturnToTitle();
+        if (Session == null || Session.IsTransitioning) return;
+        GameAudio.Event("ui_cancel");
+        Session.ReturnToTitle();
     }
 
     void Update()
@@ -83,15 +89,14 @@ public class RunLoadoutMenu : MonoBehaviour
         float barY = PixelGui.BottomBar(34f);
         if (PixelGui.BevelButton(new Rect(8f, barY + 7f, 70f, 22f), "◀ もどる")) Back();
 
-        // ウィンドウ
+        // ウィンドウ（2026-11-19：Mac の形。題名はタイトルバーのまん中。閉じるのは左上の赤い丸＝前の右上の ×）
         var win = new Rect(ox + 28f, oy + 14f, 584f, Mathf.Min(292f, barY - oy - 22f));
-        Rect inner = PixelGui.Window(win);
-        if (PixelGui.CloseButton(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f))) Back();
+        Rect inner = PixelGui.Window(win, Session.IsSampleRun ? "Sample Data" : "Usage Scan", PixelGui.LabelPurple);
+        if (PixelGui.WindowClose(win)) Back();
 
         float x = inner.x + 12f, y = inner.y + 8f;
-        PixelGui.TextEn(new Rect(x, y, 140f, 10f), Session.IsSampleRun ? "SAMPLE_DATA.EXE" : "USAGE_SCAN.EXE", 8, PixelGui.LabelPurple);
-        float labelW = PixelGui.Measure(Session.IsSampleRun ? "SAMPLE_DATA.EXE" : "USAGE_SCAN.EXE", PixelGui.Style(true, 8));
-        PixelGui.Text(new Rect(x + labelW + 8f, y - 3f, 200f, 16f), Session.IsSampleRun ? "－ 訓練モード" : "－ スキャン完了", 12, PixelGui.LabelPurple);
+        // 前は SAMPLE_DATA.EXE（USAGE_SCAN.EXE）のあとに「－ 訓練モード」。題名はタイトルバーへ移したので、「－」を取って左の端に置く
+        PixelGui.Text(new Rect(x, y - 3f, 200f, 16f), Session.IsSampleRun ? "訓練モード" : "スキャン完了", 12, PixelGui.LabelPurple);
         PixelGui.Text(new Rect(x, y + 14f, inner.width - 24f, 20f), $"よく使うアプリ TOP{Mathf.Min(3, Cards.Count)} から、相棒を1つ選ぼう", 16, PixelGui.Ink);
         PixelGui.Text(new Rect(x, y + 36f, inner.width - 24f, 16f), "相棒の能力は最初から使える。よく使うアプリのどれか3つが、ボスとして登場する。", 12, PixelGui.SubText);
 

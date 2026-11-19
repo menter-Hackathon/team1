@@ -104,5 +104,6 @@ public class EnemyWave : MonoBehaviour
         if (_cleared) return;
         _cleared = true;
         Cleared?.Invoke();
+        if (Time.timeSinceLevelLoad > 1f) GameAudio.Event("wave_clear"); // 始まった瞬間から空の集まりでは鳴らさない
     }
 }

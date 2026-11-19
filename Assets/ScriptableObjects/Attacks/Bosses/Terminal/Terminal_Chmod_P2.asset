@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _command: chmod 000 player
   _sealTime: 3
-  _pillar: {fileID: 11400000, guid: 224d4012aae4d4f358c63ec9da56960e, type: 2}
-  _pillarRepeats: 2
-  _pillarInterval: 1.2
-  _pillarDelay: 0.3
   _zoneWidth: 5
   _zoneCount: 3
   _zoneSpacing: 7.5
   _judgeInset: 0.2
   _fadeTime: 0.3
+  _pillar: {fileID: 11400000, guid: 224d4012aae4d4f358c63ec9da56960e, type: 2}
+  _pillarRepeats: 2
+  _pillarInterval: 1.2
+  _pillarDelay: 0.3

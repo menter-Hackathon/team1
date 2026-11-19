@@ -29,14 +29,26 @@ public class VirusGauge : MonoBehaviour, IDamageable
     public event Action<DamageInfo> Gained;
     /// <summary>最大値になったとき（1回だけ）</summary>
     public event Action Filled;
+    /// <summary>どれかのゲージが最大値になったとき（とどめの隅の通知・Terminal の [Process completed]。2026-11-18：スキルの見た目 1-5）</summary>
+    public static event Action<VirusGauge> AnyFilled;
 
     public bool TryTakeDamage(in DamageInfo info)
     {
         if (!isActiveAndEnabled || IsFull || Invincible) return false;
         if (info.SourceTeam == _team || info.GaugeGain <= 0) return false;
-        Add(info.GaugeGain);
+        // 受けるゲージの倍率（2026-11-19：アプリのキット。StatMods.Boss.GaugeTaken → GameBuffs）。近接なら近接の倍率も掛ける
+        float k = GameBuffs.BossGaugeTaken * (IsMelee(info) ? GameBuffs.PlayerMeleeGauge : 1f);
+        Add(Mathf.Max(1, Mathf.RoundToInt(info.GaugeGain * k)));
         Gained?.Invoke(info);
+        if (!IsFull) GameAudio.Event("boss_hit"); // 満タンにした一撃は boss_purged の音
         return true;
+    }
+
+    /// <summary>プレイヤーの近接の当たりか（近接の判定は攻撃データを持たず、当てた物がプレイヤー。2026-11-19）</summary>
+    static bool IsMelee(in DamageInfo info)
+    {
+        if (info.SourceTeam != Team.Player || info.Data != null || info.Source == null) return false;
+        return info.Source.GetComponentInParent<PlayerMeleeAttack>() != null;
     }
 
     /// <summary>ゲージを直接増やす（デバッグ用。無敵中でも増える）</summary>
@@ -45,7 +57,24 @@ public class VirusGauge : MonoBehaviour, IDamageable
         if (IsFull || amount <= 0) return;
         Current = Mathf.Min(_max, Current + amount);
         Changed?.Invoke(Current, _max);
-        if (IsFull) Filled?.Invoke();
+        if (IsFull)
+        {
+            Filled?.Invoke();
+            AnyFilled?.Invoke(this);
+        }
+    }
+
+    /// <summary>
+    /// 【仮】ゲージを戻す（2026-11-19：アプリのキット E5。Zoom の 40分で切れる）。0 より下にしない。満タンなら戻さない。
+    /// 50％を下回っても、ボスは第2形態のまま（BossController は形態を戻さない）。戻した量を返す
+    /// </summary>
+    public int Remove(int amount)
+    {
+        if (IsFull || amount <= 0 || Current <= 0) return 0;
+        int before = Current;
+        Current = Mathf.Max(0, Current - amount);
+        Changed?.Invoke(Current, _max);
+        return before - Current;
     }
 
     /// <summary>最大値を変える（使用時間による強さの調整用）。今の値は 0 に戻す</summary>

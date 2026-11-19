@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8094863f25b946a8a1c21b80354fc53, type: 3}
+  m_Name: Slack_ReactionRain_P1
+  m_EditorClassIdentifier: 
+  _drop: {fileID: 11400000, guid: 4e5e86cde924f4b08bc7e79ec825282b, type: 2}
+  _count: 5
+  _spacing: 3
+  _placeInterval: 0.15
+  _hold: 0.6
+  _dropInterval: 0.25
+  _messageWidth: 14

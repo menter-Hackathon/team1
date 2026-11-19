@@ -107,6 +107,7 @@ public class PlayerController : MonoBehaviour
     public event Action Landed;
     /// <summary>ダッシュを始めた瞬間（SE・エフェクト・アニメーション用）</summary>
     public event Action Dashed;
+    float _airTopY; // 空中で一番高かった位置（強い着地の音）
 
     float Gravity => 2f * _jumpHeight / (_timeToApex * _timeToApex);
     float JumpVelocity => Gravity * _timeToApex;
@@ -183,7 +184,7 @@ public class PlayerController : MonoBehaviour
 
         // --- 横移動 ---
         float inputX = controllable ? _input.Move.x : 0f;
-        float targetX = inputX * _moveSpeed * Mathf.Max(0.05f, MoveSpeedMultiplier);
+        float targetX = inputX * _moveSpeed * Mathf.Max(0.05f, MoveSpeedMultiplier * GameBuffs.PlayerSpeed);
         bool hasInput = Mathf.Abs(targetX) > 0.01f;
         float accel;
         if (stunned) accel = _knockbackDeceleration; // のけぞり中は弱い減速で吹き飛ばす
@@ -205,6 +206,7 @@ public class PlayerController : MonoBehaviour
             _lastJumpPressedTime = float.NegativeInfinity;
             _lastGroundedTime = float.NegativeInfinity;
             Jumped?.Invoke();
+            GameAudio.Event("player_jump");
         }
 
         // --- 可変ジャンプ：上昇中にボタンを離したら減速 ---
@@ -251,7 +253,12 @@ public class PlayerController : MonoBehaviour
             EndDash(); // 次のフレームで終わるので、ふつうの速さに戻しておく
         }
 
-        if (_body.IsGrounded && !_wasGrounded) Landed?.Invoke();
+        if (_body.IsGrounded && !_wasGrounded)
+        {
+            Landed?.Invoke();
+            if (_airTopY - transform.position.y > _jumpHeight + 1f) GameAudio.Event("player_land"); // 強い着地（ジャンプより高い所から）だけ
+        }
+        _airTopY = _body.IsGrounded ? transform.position.y : Mathf.Max(_airTopY, transform.position.y);
         _wasGrounded = _body.IsGrounded;
     }
 
@@ -271,6 +278,7 @@ public class PlayerController : MonoBehaviour
         _isJumpRising = false;
         _velocity = new Vector2(_dashDirection * _dashSpeed, 0f);
         Dashed?.Invoke();
+        GameAudio.Event("player_dash");
     }
 
     /// <summary>ダッシュを終わらせ、横の速さをふつうの移動速度に戻す（急に止まらないように）</summary>

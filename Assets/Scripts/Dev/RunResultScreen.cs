@@ -8,7 +8,8 @@ using UnityEngine.InputSystem;
 ///   正常化したアプリはアイコンで並べ、このランで初めて図鑑に色が付いたアプリは、きらきら光らせて「NEW」を付ける
 /// ・右：防衛ランク（【仮】RunState.Rank）と相棒
 /// ・ボタン：「ずかん」（アプリ図鑑）・「もう一度あそぶ」（同じ使用データで新しいラン）・「タイトルへ ▶」
-/// 操作：← → で選び、Z か Enter で決定（最初は「タイトルへ」）
+/// 操作：← → で選び、Z か Enter で決定（最初は「タイトルへ」）。左上の赤い丸でもタイトルへ
+/// 2026-11-19：ウィンドウを Mac の形にした（docs/mac-look-design.md 6章の 2）。並び・中身は前のまま
 /// </summary>
 public class RunResultScreen : MonoBehaviour
 {
@@ -22,13 +23,17 @@ public class RunResultScreen : MonoBehaviour
         _dex.ShowButton = false; // ボタンはこの画面に出す
     }
 
+    void Start() => GameAudio.ResultShown(GameSession.Instance != null ? GameSession.Instance.Run : null);
+
     void Update()
     {
         if (_dex != null && _dex.IsOpen) return;
         var kb = Keyboard.current;
         if (kb == null || GameSession.Instance == null) return;
+        int before = _focus;
         if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) _focus = Mathf.Max(0, _focus - 1);
         if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) _focus = Mathf.Min(2, _focus + 1);
+        if (_focus != before) GameAudio.Event("ui_move");
         if (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) Choose(_focus);
     }
 
@@ -36,6 +41,7 @@ public class RunResultScreen : MonoBehaviour
     {
         GameSession session = GameSession.Instance;
         if (session == null || session.IsTransitioning) return;
+        GameAudio.Event(index == 1 ? "ui_start" : "ui_decide");
         if (index == 0 && _dex != null) _dex.Open();
         else if (index == 1 && session.CanPlayAgain) session.PlayAgain(out _);
         else if (index == 2) session.ReturnToTitle();
@@ -51,14 +57,15 @@ public class RunResultScreen : MonoBehaviour
         float ox = Mathf.Round((W - 640f) * 0.5f), oy = Mathf.Round(Mathf.Max(0f, (H - 360f) * 0.5f));
         float barY = PixelGui.BottomBar(34f);
 
-        // 後ろのウィンドウ（飾り）と、手前のウィンドウ
-        PixelGui.Window(new Rect(ox + 60f, oy + 38f, 200f, 210f));
+        // 後ろのウィンドウ（飾り。信号機は灰）と、手前のウィンドウ
+        // 2026-11-19：Mac の形。題名はタイトルバーのまん中（前は SCAN_REPORT.TXT を中の左上に）。閉じるのは左上の赤い丸＝前の右上の ×
+        bool dexOpen = _dex != null && _dex.IsOpen;
+        PixelGui.Window(new Rect(ox + 60f, oy + 38f, 200f, 210f), null, PixelGui.Ink, false);
         var win = new Rect(ox + 80f, oy + 18f, 478f, Mathf.Min(286f, barY - oy - 26f));
-        Rect inner = PixelGui.Window(win);
-        if (PixelGui.CloseButton(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f))) Choose(2);
+        Rect inner = PixelGui.Window(win, "Scan Report.txt", PixelGui.LabelGreen, !dexOpen);
+        if (PixelGui.WindowClose(win)) Choose(2);
 
         float x = inner.x + 12f, y = inner.y + 8f;
-        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "SCAN_REPORT.TXT", 8, PixelGui.LabelGreen);
         PixelGui.Text(new Rect(x, y + 14f, 300f, 28f), "システム復旧完了", 24, PixelGui.Ink);
         PixelGui.Text(new Rect(x, y + 44f, inner.width - 24f, 16f), "すべてのウイルスを駆除し、デスクトップを取り戻した。", 12, PixelGui.SubText);
 
@@ -110,7 +117,6 @@ public class RunResultScreen : MonoBehaviour
         PixelGui.TextFit(new Rect(partner.x + 44f, partner.y + 22f, partner.width - 50f, 16f), partnerName, 12, PixelGui.Ink);
 
         // ボタン（ウィンドウの下の縁に重ねる）
-        bool dexOpen = _dex != null && _dex.IsOpen;
         bool was = GUI.enabled;
         GUI.enabled = !dexOpen;
         float by = win.yMax - 16f;

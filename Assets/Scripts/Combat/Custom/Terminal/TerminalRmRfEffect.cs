@@ -8,6 +8,7 @@ using UnityEngine;
 /// ・見た目：点滅は床の上の線の赤と、うすい赤の帯。くずれると床の絵を黒でかくし、赤と白の小さい文字が 0.1秒ごとに入れ替わる帯になる
 /// ・形態変化・正常化・技の途中で止められたときは、この GameObject ごと消えるので、床はすぐ元に戻る
 /// 出ている間：場に残る技の効果（Lingers）・床が文字化けしている（CorruptsFloor）
+/// 2026-11-19：消す区画を番号の並びで受け取る（第1形態は端から順番、第2形態はランダムに同時。ステージのギミックは1区画）
 /// </summary>
 public class TerminalRmRfEffect : CustomEffect
 {
@@ -22,7 +23,8 @@ public class TerminalRmRfEffect : CustomEffect
 
     class Section
     {
-        public int Order;
+        public int Order;   // 消える順（時刻の計算に使う）
+        public int Index;   // 区画の番号（0＝左の端）
         public float CenterX;
         public float Width;
         public Transform Root;
@@ -44,12 +46,24 @@ public class TerminalRmRfEffect : CustomEffect
     float _start;
     float _floorY;
     float _nextSwap;
+    float _restoreAt;
     bool _hitsOff;
     readonly List<Section> _sections = new List<Section>();
 
+    /// <summary>端から順番に消す（fromRight：右の端から）</summary>
     public static TerminalRmRfEffect Spawn(AttackRunner owner, AttackData data, TerminalRmRfAttack cfg, bool fromRight)
     {
-        if (owner == null || data == null || cfg == null) return null;
+        if (cfg == null) return null;
+        int count = Mathf.Max(1, cfg.SectionCount);
+        var list = new int[cfg.ErasedSections];
+        for (int k = 0; k < list.Length; k++) list[k] = fromRight ? count - 1 - k : k;
+        return Spawn(owner, data, cfg, list);
+    }
+
+    /// <summary>sections の区画（0＝左の端）を、並びの順に消す（時刻のずれは cfg の SectionStagger。0 なら同時）</summary>
+    public static TerminalRmRfEffect Spawn(AttackRunner owner, AttackData data, TerminalRmRfAttack cfg, IReadOnlyList<int> sections)
+    {
+        if (owner == null || data == null || cfg == null || sections == null || sections.Count == 0) return null;
         Rect arena = BattleArena.GetBounds();
         GameObject go = owner.CreateSpawnedObject("TerminalRmRf", new Vector2(arena.center.x, arena.yMin));
         var fx = go.AddComponent<TerminalRmRfEffect>();
@@ -61,15 +75,16 @@ public class TerminalRmRfEffect : CustomEffect
 
         int count = Mathf.Max(1, cfg.SectionCount);
         float w = arena.width / count;
-        for (int k = 0; k < cfg.ErasedSections; k++)
+        for (int k = 0; k < sections.Count; k++)
         {
-            int index = fromRight ? count - 1 - k : k;
-            fx._sections.Add(fx.BuildSection(k, arena.xMin + w * (index + 0.5f), w));
+            int index = Mathf.Clamp(sections[k], 0, count - 1);
+            fx._sections.Add(fx.BuildSection(k, index, arena.xMin + w * (index + 0.5f), w));
         }
+        fx._restoreAt = cfg.RestoreAtFor(fx._sections.Count);
         return fx;
     }
 
-    Section BuildSection(int order, float centerX, float width)
+    Section BuildSection(int order, int index, float centerX, float width)
     {
         float band = _cfg.BandHeight;
         var root = new GameObject($"Section{order}").transform;
@@ -77,7 +92,7 @@ public class TerminalRmRfEffect : CustomEffect
         root.SetParent(transform, false);
         root.position = new Vector3(centerX, _floorY, 0f);
 
-        var s = new Section { Order = order, CenterX = centerX, Width = width, Root = root };
+        var s = new Section { Order = order, Index = index, CenterX = centerX, Width = width, Root = root };
         // 点滅：床の上の線（2ドット）と、うすい赤の帯（文字化けになる範囲）
         s.Line = TerminalArt.Box(root, new Vector2(0f, -TerminalArt.Pixel), new Vector2(width, TerminalArt.Pixel * 2f), TerminalArt.Red, LineOrder, "Line");
         s.Band = TerminalArt.Box(root, new Vector2(0f, band * 0.5f), new Vector2(width, band), TerminalArt.WithAlpha(TerminalArt.Red, 0.25f), BandOrder, "Band");
@@ -105,7 +120,7 @@ public class TerminalRmRfEffect : CustomEffect
         float t = Time.time - _start;
         float now = Time.time;
         bool blinkOn = Mathf.FloorToInt(now / BlinkInterval) % 2 == 0;
-        float whiteAt = _cfg.RestoreAt - _cfg.RestoreBlinkTime;
+        float whiteAt = _restoreAt - _cfg.RestoreBlinkTime;
 
         foreach (var s in _sections)
         {
@@ -126,6 +141,7 @@ public class TerminalRmRfEffect : CustomEffect
                 s.Cover.enabled = true;
                 TerminalGlyphBurst.Spawn(_owner, new Vector2(s.CenterX, _floorY - 0.15f), new Vector2(s.Width, 0.3f), 12,
                     TerminalArt.Green, TerminalArt.CrumbleGlyphs, 6f / 18f, 0.6f, GlyphOrder);
+                LogScroll(s);
             }
             if (t < _cfg.CorruptAt(s.Order)) continue;
             if (!s.Corrupted)
@@ -168,7 +184,45 @@ public class TerminalRmRfEffect : CustomEffect
             }
         }
 
-        if (t >= _cfg.RestoreAt) Destroy(gameObject);
+        if (t >= _restoreAt)
+        {
+            foreach (var s in _sections) RestoredOk(s);
+            Destroy(gameObject);
+        }
+    }
+
+    // ───────── 足した見た目（2026-11-18：スキルの見た目 13-2） ─────────
+
+    /// <summary>くずれる区画の上に、灰色の小さい行（rm: floor/01 の形）が、下から上へ速く流れる（0.3秒）</summary>
+    void LogScroll(Section s)
+    {
+        float px = TerminalArt.Pixel;
+        Color gray = TerminalArt.WithAlpha(TerminalArt.Gray, 0.75f);
+        for (int i = 0; i < 6; i++)
+        {
+            float len = Mathf.Min(s.Width * 0.8f, Random.Range(10, 26) * px);
+            float x = s.CenterX - s.Width * 0.4f + len * 0.5f;
+            Vector2 at = new Vector2(x, _floorY + 0.15f + i * 0.08f);
+            FxAnim bar = FxAnim.Sprite(FxArt.Rect(Mathf.RoundToInt(len / px), 2), at, GlyphOrder, 0.3f, gray, 1f, "RmLog")
+                .Velocity(new Vector2(0f, Random.Range(6f, 9f))).Delay(i * 0.035f).FadeFrom(0.5f);
+            bar.transform.SetParent(transform, true); // 技ごと消えるように（形態変化・正常化）
+        }
+        FxAnim text = FxKit.Text($"rm: floor/{s.Index + 1:00}", new Vector2(s.CenterX - s.Width * 0.4f, _floorY + 0.3f), 0.4f, gray, GlyphOrder, 0.35f,
+            new Color(0f, 0f, 0f, 0.6f), true, TextAnchor.MiddleLeft).Velocity(new Vector2(0f, 7f)).FadeFrom(0.5f);
+        text.transform.SetParent(transform, true);
+    }
+
+    /// <summary>戻るとき、区画の上に緑の [1] + done（ふわっと浮いて消える。2026-11-19：[ OK ] → zsh のジョブの行）</summary>
+    void RestoredOk(Section s)
+    {
+        if (!s.Crumbled) return;
+        FxAnim ok = FxKit.Text(TerminalOkStack.DoneLine, new Vector2(s.CenterX, _floorY + _cfg.BandHeight + 0.35f), 0.4f, TerminalArt.Green, GlyphOrder + 1, 0.8f, TerminalArt.Black)
+            .Pop().Rise(0.4f).FadeFrom(0.6f);
+        if (_owner != null)
+        {
+            ok.gameObject.AddComponent<SkinFxMarker>();
+            _owner.Register(ok.gameObject); // 正常化で消える
+        }
     }
 
     /// <summary>文字化けの床の字（赤と白の小さい字）を、区画の幅 × 帯の高さに並べる</summary>

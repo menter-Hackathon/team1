@@ -15,7 +15,8 @@ MonoBehaviour:
   _command: sudo rm -rf /floor
   _sectionCount: 5
   _erasedSections: 3
-  _randomSide: 0
+  _randomSections: 0
+  _alternateSides: 1
   _firstBlinkDelay: 0.2
   _sectionStagger: 0.6
   _blinkTime: 0.8
@@ -23,3 +24,6 @@ MonoBehaviour:
   _lingerTime: 3
   _restoreBlinkTime: 0.5
   _bandHeight: 1.2
+  _randomCommand: sudo rm -rf /floor/*
+  _randomCount: 3
+  _randomBlinkTime: 1.5

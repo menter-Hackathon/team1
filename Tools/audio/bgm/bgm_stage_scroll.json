@@ -1,0 +1,94 @@
+{
+ "id": "bgm_stage_scroll",
+ "desc": "横スクロールのステージ（Chrome）。ウェブページの上を走り抜ける、前へ前へ進む速い曲。ベースは馬のかけ足のリズム。Eメジャー",
+ "bpm": 156,
+ "steps_per_beat": 4,
+ "beats_per_bar": 4,
+ "swing": 0.0,
+ "instruments": {
+  "lead": {
+   "wave": "pulse",
+   "duty": 0.5,
+   "env": {
+    "a": 0.004,
+    "d": 0.09,
+    "s": 0.6,
+    "r": 0.05
+   },
+   "vol": 0.27,
+   "vib": [
+    0.12,
+    6.0,
+    0.2
+   ]
+  },
+  "harm": {
+   "wave": "pulse",
+   "duty": 0.25,
+   "env": {
+    "a": 0.002,
+    "d": 0.06,
+    "s": 0.3,
+    "r": 0.03
+   },
+   "vol": 0.266,
+   "arp_rate": 0.035
+  },
+  "bass": {
+   "wave": "triangle",
+   "env": {
+    "a": 0.002,
+    "d": 0.04,
+    "s": 0.9,
+    "r": 0.02
+   },
+   "vol": 0.331
+  },
+  "drums": {
+   "kit": "chip",
+   "vol": 0.529
+  }
+ },
+ "patterns": {
+  "lead_a": "B4 - E5 - G#5 - B5 - - - G#5 - E5 - G#5 - | F#5 - G#5 - E5 - - - - - . B4 E5 - F#5 - | G#5 - E5 - C#5 - G#5 - - - E5 - C#5 - E5 - | D#5 - E5 - C#5 - - - - - . . C#5 - E5 - | A5 - - E5 - - C#5 - E5 - A5 - C#6 - - - | B5 - - F#5 - - D#5 - F#5 - B5 - D#6 - - - | E6 - - - B5 - G#5 - E5 - G#5 - B5 - G#5 - | F#5 - . F#5 . F#5 - . B5 - A5 - F#5 - D#5 - |",
+  "harm_a": ". . E3+G#3+B3 - . . E3+G#3+B3 - . . E3+G#3+B3 - . . E3+G#3+B3 - | . . E3+G#3+B3 - . . E3+G#3+B3 - . . E3+G#3+B3 - . . E3+G#3+B3 - | . . C#4+E4+G#4 - . . C#4+E4+G#4 - . . C#4+E4+G#4 - . . C#4+E4+G#4 - | . . C#4+E4+G#4 - . . C#4+E4+G#4 - . . C#4+E4+G#4 - . . C#4+E4+G#4 - | . . A3+C#4+E4 - . . A3+C#4+E4 - . . A3+C#4+E4 - . . A3+C#4+E4 - | . . B3+D#4+F#4 - . . B3+D#4+F#4 - . . B3+D#4+F#4 - . . B3+D#4+F#4 - | . . E3+G#3+B3 - . . E3+G#3+B3 - . . E3+G#3+B3 - . . E3+G#3+B3 - | . . B3+D#4+F#4 - . . B3+D#4+F#4 - . . B3+D#4+F#4 - . . B3+D#4+F#4 - |",
+  "bass_a": "E2 . E2 E2 E2 . E2 E2 E3 . E2 E2 B2 . E2 E2 | E2 . E2 E2 E2 . E2 E2 E3 . E2 E2 B2 . E2 E2 | C#3 . C#3 C#3 C#3 . C#3 C#3 C#4 . C#3 C#3 G#3 . C#3 C#3 | C#3 . C#3 C#3 C#3 . C#3 C#3 C#4 . C#3 C#3 G#3 . C#3 C#3 | A2 . A2 A2 A2 . A2 A2 A3 . A2 A2 E3 . A2 A2 | B2 . B2 B2 B2 . B2 B2 B3 . B2 B2 F#3 . B2 B2 | E2 . E2 E2 E2 . E2 E2 E3 . E2 E2 B2 . E2 E2 | B2 . B2 B2 B2 . B2 B2 B3 . B2 B2 F#3 . B2 B2 |",
+  "drums_a": "k+c . h h s . h h k k h h s . h h | k . h h s . h h k k h h s . h h | k . h h s . h h k k h h s . h h | k . h h s . h h k k h h s . h h | k . h h s . h h k k h h s . h h | k . h h s . h h k k h h s . h h | k . h h s . h h k k h h s . h h | k . h h s . h h k k s s s s m t |",
+  "lead_c": "C#5 E5 G#5 . C#5 E5 G#5 . C#6 - G#5 - E5 - . . | C#5 E5 A5 . C#5 E5 A5 . C#6 - A5 - E5 - . . | B4 E5 G#5 . B4 E5 G#5 . B5 - G#5 - E5 - . . | B4 D#5 F#5 . B4 D#5 F#5 . B5 - F#5 - D#5 - F#5 - | G#5 - - - E5 - C#5 - E5 - - - G#5 - - - | A5 - - - E5 - C#5 - E5 - - - A5 - - - | B5 - - - F#5 - D#5 - F#5 - - - B5 - - - | B5 - A5 - F#5 - D#5 - F#5 - A5 - B5 - D#6 - |",
+  "harm_c": "C#4+E4+G#4 - - - - - - - - - - - . . . . | A3+C#4+E4 - - - - - - - - - - - . . . . | E3+G#3+B3 - - - - - - - - - - - . . . . | B3+D#4+F#4 - - - - - - - - - - - . . . . | C#4+E4+G#4 - - - - - - - - - - - . . . . | A3+C#4+E4 - - - - - - - - - - - . . . . | B3+D#4+F#4 - - - - - - - - - - - . . . . | B3+D#4+F#4 - - - - - - - - - - - . . . . |",
+  "bass_c": "C#3 - C#4 - C#3 - C#4 - C#3 - C#4 - C#3 - C#4 - | A2 - A3 - A2 - A3 - A2 - A3 - A2 - A3 - | E2 - E3 - E2 - E3 - E2 - E3 - E2 - E3 - | B2 - B3 - B2 - B3 - B2 - B3 - B2 - B3 - | C#3 - C#4 - C#3 - C#4 - C#3 - C#4 - C#3 - C#4 - | A2 - A3 - A2 - A3 - A2 - A3 - A2 - A3 - | B2 - B3 - B2 - B3 - B2 - B3 - B2 - B3 - | B2 - B3 - B2 - B3 - B2 - B3 - B2 - B3 - |",
+  "drums_c": "k+c . h . . . h . k . h . s . h . | k . h . . . h . k . h . s . h . | k . h . . . h . k . h . s . h . | k . h . . . h . k . h . s . h . | k . h . s . h . k k h . s . h h | k . h . s . h . k k h . s . h h | k . h . s . h . k k h . s . h h | k . s . k . s . k s k s s s s! s! |",
+  "lead_b": "C#6 - - - - - B5 - A5 - - - E5 - A5 - | B5 - - - - - A5 - F#5 - - - D#5 - F#5 - | G#5 - - - - - B5 - D#6 - - - B5 - G#5 - | E5 - - - G#5 - C#6 - - - - - . . G#5 - | A5 - C#6 - E6 - - - C#6 - A5 - C#6 - - - | F#5 - B5 - D#6 - - - B5 - F#5 - B5 - - - | E5 - - G5 - - C6 - . C6 . C6 G5 - E5 - | F#5 - - A5 - - D6 - . D6 . D6 A5 - D6 - |",
+  "harm_b": "A3+C#4+E4 - - A3+C#4+E4 - - A3+C#4+E4 - A3+C#4+E4 - - A3+C#4+E4 - - A3+C#4+E4 - | B3+D#4+F#4 - - B3+D#4+F#4 - - B3+D#4+F#4 - B3+D#4+F#4 - - B3+D#4+F#4 - - B3+D#4+F#4 - | G#3+B3+D#4 - - G#3+B3+D#4 - - G#3+B3+D#4 - G#3+B3+D#4 - - G#3+B3+D#4 - - G#3+B3+D#4 - | C#4+E4+G#4 - - C#4+E4+G#4 - - C#4+E4+G#4 - C#4+E4+G#4 - - C#4+E4+G#4 - - C#4+E4+G#4 - | A3+C#4+E4 - - A3+C#4+E4 - - A3+C#4+E4 - A3+C#4+E4 - - A3+C#4+E4 - - A3+C#4+E4 - | B3+D#4+F#4 - - B3+D#4+F#4 - - B3+D#4+F#4 - B3+D#4+F#4 - - B3+D#4+F#4 - - B3+D#4+F#4 - | C4+E4+G4 - - C4+E4+G4 - - C4+E4+G4 - C4+E4+G4 - - C4+E4+G4 - - C4+E4+G4 - | D4+F#4+A4 - - D4+F#4+A4 - - D4+F#4+A4 - D4+F#4+A4 - - D4+F#4+A4 - - D4+F#4+A4 - |",
+  "bass_b": "A2 - A2 - A2 - A2 A3 A2 - A2 - A2 - E3 A3 | B2 - B2 - B2 - B2 B3 B2 - B2 - B2 - F#3 B3 | G#2 - G#2 - G#2 - G#2 G#3 G#2 - G#2 - G#2 - D#3 G#3 | C#3 - C#3 - C#3 - C#3 C#4 C#3 - C#3 - C#3 - G#3 C#4 | A2 - A2 - A2 - A2 A3 A2 - A2 - A2 - E3 A3 | B2 - B2 - B2 - B2 B3 B2 - B2 - B2 - F#3 B3 | C3 - C3 - C3 - C3 C4 C3 - C3 - C3 - G3 C4 | D3 - D3 - D3 - D3 D4 D3 - D3 - D3 - A3 D4 |",
+  "drums_b": "k+c . o . s . o h k k o . s . o h | k . o . s . o h k k o . s . o h | k . o . s . o h k k o . s . o h | k . o . s . o h k k o . s . o h | k . o . s . o h k k o . s . o h | k . o . s . o h k k o . s . o h | k . o . s . o h k k o . s . o h | k . o . s . k k s s m m t t s! s! |"
+ },
+ "sections": {
+  "A": {
+   "bars": 8,
+   "lead": "lead_a",
+   "harm": "harm_a",
+   "bass": "bass_a",
+   "drums": "drums_a"
+  },
+  "C": {
+   "bars": 8,
+   "lead": "lead_c",
+   "harm": "harm_c",
+   "bass": "bass_c",
+   "drums": "drums_c"
+  },
+  "B": {
+   "bars": 8,
+   "lead": "lead_b",
+   "harm": "harm_b",
+   "bass": "bass_b",
+   "drums": "drums_b"
+  }
+ },
+ "loop": [
+  "A",
+  "C",
+  "B"
+ ]
+}

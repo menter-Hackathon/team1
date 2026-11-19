@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: Custom_Premiere_Razor
   m_EditorClassIdentifier: 
   _sectionWidth: 4
-  _lineClearance: 1
+  _maxExitDistance: 2.5
   _telegraphTime: 0.9
   _cutTime: 0.15
-  _deleteTime: 0.3
+  _blackTime: 0.25
+  _closeTime: 0.4
+  _seamTime: 0.5
   _removeTime: 4
   _blinkTime: 1
   _approach: 4

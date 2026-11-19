@@ -7,7 +7,9 @@ using UnityEngine.InputSystem;
 /// 【仮】タイトル画面：使用データの読み込み方を選んでランを始める（仕様書 8.3）。UI 担当の本番画面ができたら消す。
 /// スクリーンタイムのスキャン、またはサンプルでの訓練からランを始める。
 /// 2026-11-18：デザイン担当の画面イメージの色と並びに合わせた（描き方だけ。スキャンの流れはそのまま）。
-/// ・壁紙の上にウィンドウ。「C:\DESKTOP\INFECTED.EXE」・ロゴ「VIRUS DESKTOP」（マゼンタの影）・仮タイトル
+/// ・壁紙の上にウィンドウ。ロゴ「VIRUS DESKTOP」（マゼンタの影）・仮タイトル
+/// ・2026-11-19：ウィンドウを Mac の形にした（docs/mac-look-design.md 6章の 2。左上に信号機、題名はまん中で「~/Desktop/Infected.app」）。
+///   信号機は飾り（前の右上の × と同じく押せない）。並び・中身は前のまま
 /// ・メニュー：はじめる・ずかん・おわる（せっていは中身が無いので置かない。2026-11-18 まさぴ〜決定）。↑↓ で選び、Z か Enter で決定
 /// ・はじめる → 「端末をスキャン」か「訓練モード」を選ぶ → スキャンなら今までどおりの読み取りと結果
 /// ・下のバーに「PRESS Z / ENTER」と版
@@ -37,6 +39,7 @@ public class RunTitleMenu : MonoBehaviour
         _dex = FindObjectOfType<AppDexMenu>();
         if (_dex == null) _dex = gameObject.AddComponent<AppDexMenu>();
         _dex.ShowButton = false;
+        GameAudio.PlayBgm("bgm_title");
     }
 
     // ───────── キー ─────────
@@ -59,8 +62,13 @@ public class RunTitleMenu : MonoBehaviour
         int count = _page == Page.Menu ? 3 : ModeCount;
         if (up) _focus = (_focus + count - 1) % count;
         if (down) _focus = (_focus + 1) % count;
+        if (up || down) GameAudio.Event("ui_move");
         if (ok) Choose(_focus);
-        if (back && _page == Page.Mode) OpenPage(Page.Menu);
+        if (back && _page == Page.Mode)
+        {
+            GameAudio.Event("ui_cancel");
+            OpenPage(Page.Menu);
+        }
     }
 
     int ModeCount => MacScreenTime.CanScan ? 3 : 2;
@@ -74,6 +82,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void Choose(int index)
     {
+        GameAudio.Event(_page == Page.Mode && index == ModeCount - 1 ? "ui_cancel" : "ui_decide"); // はじめるときは ui_start（Begin）が勝つ
         if (_page == Page.Menu)
         {
             if (index == 0) OpenPage(Page.Mode);
@@ -94,6 +103,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void ScanPrimary()
     {
+        GameAudio.Event("ui_decide");
         if (_detectedApps?.Count > 0) Begin(new ManualUsageProvider(_detectedApps));
         else Scan(Session.Catalog);
     }
@@ -125,8 +135,9 @@ public class RunTitleMenu : MonoBehaviour
             ? new Rect(Mathf.Round((W - 540f) * 0.5f), oy + 10f, 540f, Mathf.Min(306f, barY - oy - 20f))
             : new Rect(ox + 112f, oy + 58f, 420f, Mathf.Min(256f, barY - oy - 66f));
         if (!wide) DrawDecoration(win); // 広いウィンドウ（スキャン）のときは後ろがほとんど隠れるので描かない
-        Rect inner = PixelGui.Window(win);
-        DrawCloseMark(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f));
+        // 題名は Mac の書き方（前は C:\DESKTOP\INFECTED.EXE・START.EXE・USAGE_SCAN.EXE）。図鑑を開いている間は後ろのウィンドウ（信号機が灰）
+        string title = _scan ? "Usage Scan" : _page == Page.Mode ? "Start" : "~/Desktop/Infected.app";
+        Rect inner = PixelGui.Window(win, title, PixelGui.LabelPurple, _dex == null || !_dex.IsOpen);
 
         if (_scan) DrawScanPanel(session, inner);
         else if (_page == Page.Mode) DrawModePanel(inner);
@@ -138,9 +149,8 @@ public class RunTitleMenu : MonoBehaviour
     void DrawDecoration(Rect win)
     {
         var back = new Rect(win.x - 82f, win.y - 10f, 280f, 200f);
-        PixelGui.Window(back);
+        PixelGui.Window(back, null, PixelGui.Ink, false); // 後ろのウィンドウ（信号機は灰）
         PixelGui.Fill(new Rect(back.x + 9f, back.yMax - 30f, back.width - 18f, 21f), PixelGui.Frame);
-        DrawCloseMark(new Rect(back.xMax - 24f, back.y - 6f, 36f, 36f));
         GameArt art = GameArt.Instance;
         if (art == null) return;
         PixelGui.DrawPlayer(back.x + 60f, back.y);
@@ -160,20 +170,10 @@ public class RunTitleMenu : MonoBehaviour
         }
     }
 
-    // 押せない ×（飾り。ウィンドウらしく見せる）
-    static void DrawCloseMark(Rect r)
-    {
-        bool was = GUI.enabled;
-        GUI.enabled = false;
-        PixelGui.CloseButton(r);
-        GUI.enabled = was;
-    }
-
     void DrawMenu(Rect inner)
     {
         float cx = inner.center.x;
-        float y = inner.y + 10f;
-        PixelGui.TextEn(new Rect(inner.x, y, inner.width, 10f), "C:\\DESKTOP\\INFECTED.EXE", 8, PixelGui.LabelPurple, TextAnchor.MiddleCenter);
+        float y = inner.y + 10f; // 題名（前はここに C:\DESKTOP\INFECTED.EXE）は、タイトルバーのまん中へ移した
         GUIStyle logo = PixelGui.Style(true, 24, TextAnchor.MiddleCenter);
         PixelGui.ShadowText(new Rect(inner.x, y + 16f, inner.width, 28f), "VIRUS", logo, PixelGui.Ink, PixelGui.Magenta, 2f);
         PixelGui.ShadowText(new Rect(inner.x, y + 44f, inner.width, 28f), "DESKTOP", logo, PixelGui.Ink, PixelGui.Magenta, 2f);
@@ -189,8 +189,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void DrawModePanel(Rect inner)
     {
-        float x = inner.x + 14f, y = inner.y + 10f, w = inner.width - 28f;
-        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "START.EXE", 8, PixelGui.LabelPurple);
+        float x = inner.x + 14f, y = inner.y + 10f, w = inner.width - 28f; // 題名「Start」はタイトルバー
         PixelGui.Text(new Rect(x, y + 14f, w, 20f), "はじめかたを選ぶ", 16, PixelGui.Ink);
         bool canScan = MacScreenTime.CanScan;
         var items = new List<(string label, string note)>();
@@ -232,8 +231,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void DrawScanPanel(GameSession session, Rect inner)
     {
-        float x = inner.x + 14f, y = inner.y + 10f, w = inner.width - 28f;
-        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "USAGE_SCAN.EXE", 8, PixelGui.LabelPurple);
+        float x = inner.x + 14f, y = inner.y + 10f, w = inner.width - 28f; // 題名「Usage Scan」はタイトルバー
         if (_topApps == null)
         {
             PixelGui.Text(new Rect(x, y + 14f, w, 20f), _scanning ? "スクリーンタイムを確認中" : "端末をスキャン", 16, PixelGui.Ink);
@@ -283,6 +281,7 @@ public class RunTitleMenu : MonoBehaviour
 
     void ReturnToMenu()
     {
+        GameAudio.Event("ui_cancel");
         _scan = false;
         _error = null;
         _detectedApps = null;
@@ -334,5 +333,6 @@ public class RunTitleMenu : MonoBehaviour
     void Begin(IAppUsageProvider provider)
     {
         if (!Session.StartRun(provider, out string error)) _error = error;
+        else GameAudio.Event("ui_start");
     }
 }

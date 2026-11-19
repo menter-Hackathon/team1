@@ -47,11 +47,25 @@ public class Health : MonoBehaviour, IDamageable
     /// </summary>
     public static bool DebugInvincible { get; set; }
 
+    /// <summary>
+    /// 【仮】被弾の直前に止める口（2026-11-19：アプリのキット。Firefox の広告ブロックなど）。true を返すと、その当たりを止める（ダメージなし）。
+    /// null なら今までどおり。攻撃の判定から来た当たり（DamageInfo.Source がある物）だけで呼ぶ（落下など、ダメージ以外の減り方は止めない）。
+    /// 直接入れずに KitPlayer.Guard を使う（プレイヤーだけを守り、時間・シーンの切り替え・100％で必ず外れる）
+    /// </summary>
+    public static Func<Health, DamageInfo, bool> Guard;
+
     public bool TryTakeDamage(in DamageInfo info)
     {
         if (!isActiveAndEnabled || IsDead || IsInvincible) return false;
         if (DebugInvincible && _team == Team.Player) return false;
         if (info.SourceTeam == _team) return false;
+        if (Guard != null && info.Source != null)
+        {
+            bool blocked = false;
+            try { blocked = Guard(this, info); }
+            catch (Exception e) { Debug.LogException(e); }
+            if (blocked) return false;
+        }
 
         int amount = _oneDamagePerHit ? 1 : info.Amount;
         if (amount <= 0) return false;
@@ -78,7 +92,11 @@ public class Health : MonoBehaviour, IDamageable
         if (IsDead || amount <= 0) return;
         int before = Current;
         Current = Mathf.Min(_max, Current + amount);
-        if (Current != before) Changed?.Invoke(Current, _max);
+        if (Current != before)
+        {
+            Changed?.Invoke(Current, _max);
+            if (_team == Team.Player) GameAudio.Event("player_heal");
+        }
     }
 
     /// <summary>指定した秒数だけ無敵にする（回避スキルなど）。すでに長い無敵中なら短くはしない</summary>

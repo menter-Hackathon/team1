@@ -1,0 +1,123 @@
+{
+ "id": "bgm_boss_final",
+ "desc": "ラスボス Terminal。暗く重いハッカーの曲。低いパルスのベース、キーを打ち続けるような16分のオスティナートとハイハット、ノイズの一撃。ウイルスのモチーフを低く、フリジアン（♭2）でいちばん不気味に。Dマイナー",
+ "bpm": 152,
+ "steps_per_beat": 4,
+ "beats_per_bar": 4,
+ "swing": 0.0,
+ "instruments": {
+  "lead": {
+   "wave": "pulse",
+   "duty": 0.25,
+   "env": {
+    "a": 0.003,
+    "d": 0.1,
+    "s": 0.6,
+    "r": 0.05
+   },
+   "vol": 0.3,
+   "detune": 10,
+   "echo": [
+    3,
+    0.3,
+    0.2
+   ]
+  },
+  "ost": {
+   "wave": "pulse",
+   "duty": 0.125,
+   "env": {
+    "a": 0.001,
+    "d": 0.04,
+    "s": 0.15,
+    "r": 0.02
+   },
+   "vol": 0.247
+  },
+  "pad": {
+   "wave": "saw",
+   "env": {
+    "a": 0.01,
+    "d": 0.15,
+    "s": 0.6,
+    "r": 0.08
+   },
+   "vol": 0.14,
+   "lp": 1600
+  },
+  "bass": {
+   "wave": "pulse",
+   "duty": 0.25,
+   "env": {
+    "a": 0.002,
+    "d": 0.06,
+    "s": 0.7,
+    "r": 0.03
+   },
+   "vol": 0.288,
+   "lp": 1800
+  },
+  "drums": {
+   "kit": "chip",
+   "vol": 0.598
+  }
+ },
+ "patterns": {
+  "ost_i": ". . . . . . . . . . . . . . . . | D4 D5 A4 D4 . D5 A4 . D4 D5 Bb4 D4 . D5 A4 . |",
+  "bass_i": "D2 - - - - - - - - - - - - - - - | D2 - - - - - - - . . D2 . D2 D2 . . |",
+  "drums_i": "h' h' . h' h' h' . h' . h' h' . h' h' h' . | h' h' . h' h' h' . h' k . k . s s s! s! |",
+  "lead_a": "D4 - F4 - A4 - G#4 A4 - - E4 - - - . . | F4 - E4 - D4 - C#4 - D4 - - - . . . . | D5 - F5 - A5 - G#5 A5 - - E5 - - - . . | F5 - E5 - D5 - C#5 - D5 - - - . . A4 . | D5 - F5 - Bb5 - A5 Bb5 - - F5 - - - . . | F5 - Eb5 - D5 - C5 - D5 - - - . . . . | C#5 - E5 - A5 - G#5 A5 - - E5 - - - . . | G5 - F5 - E5 - C#5 - E5 - A5 - C#6 - - . |",
+  "ost_a": "D4 D5 A4 D4 . D5 A4 . D4 D5 Bb4 D4 . D5 A4 . | D4 D5 A4 D4 . D5 A4 . D4 D5 Bb4 D4 . D5 A4 . | D4 D5 A4 D4 . D5 A4 . D4 D5 Bb4 D4 . D5 A4 . | D4 D5 A4 D4 . D5 A4 . D4 D5 Bb4 D4 . D5 A4 . | D4 D5 Bb4 D4 . D5 Bb4 . D4 D5 F4 D4 . D5 Bb4 . | D4 D5 Bb4 D4 . D5 Bb4 . D4 D5 F4 D4 . D5 Bb4 . | C#4 C#5 A4 C#4 . C#5 A4 . E4 C#5 A4 E4 . C#5 A4 . | C#4 C#5 A4 C#4 . C#5 A4 . E4 C#5 A4 E4 . C#5 A4 . |",
+  "bass_a": "D2 . . D2 . . D2 . . D2 . D2 D#2 . D2 . | D2 . . D2 . . D2 . . D2 . D2 D#2 . D2 . | D2 . . D2 . . D2 . . D2 . D2 D#2 . D2 . | D2 . . D2 . . D2 . . D2 . D2 D#2 . D2 . | Bb2 . . Bb2 . . Bb2 . . Bb2 . Bb2 Bb3 . Bb2 . | Bb2 . . Bb2 . . Bb2 . . Bb2 . Bb2 Bb3 . Bb2 . | A2 . . A2 . . A2 . . A2 . A2 Bb2 . A2 . | A2 . . A2 . . A2 . . A2 . A2 Bb2 . A2 . |",
+  "drums_a": "k+c h' h' h s h' h' h' k k h' h s h' h' h | k h' h' h s h' h' h' k k h' h s h' h' h | k h' h' h s h' h' h' k k h' h s h' h' h | k h' h' h s h' h' h' k k h' h s h' h' h | k h' h' h s h' h' h' k k h' h s h' h' h | k h' h' h s h' h' h' k k h' h s h' h' h | k h' h' h s h' h' h' k k h' h s h' h' h | k h' h' h s h' h' h' k k s h' s s t t |",
+  "lead_b": "D5 D5 . D5 F5 - A5 - G#5 A5 . A5 Eb5 - - . | G5 - Eb5 - Bb4 - Eb5 . G5 . Bb5 - - - . . | A5 A5 . A5 F5 - D5 - C#5 D5 . D5 A4 - - . | Bb4 - Eb5 - G5 - Bb5 . Bb5 . G5 - Eb5 - . . | D5 - G5 - Bb5 - A5 Bb5 - - G5 - - - . . | Bb5 - A5 - G5 - F#5 - G5 - - - . . D5 . | E5 - A5 - C#6 - Bb5 A5 - - E5 - - - . . | A5 . A5 A5 . G5 . E5 . C#5 . E5 A5 - C#6 - |",
+  "pad_b": "D3+A3+D4 - - - - - - - - - - . D3+A3+D4 - - . | D#3+Bb3+D#4 - - - - - - - - - - . D#3+Bb3+D#4 - - . | D3+A3+D4 - - - - - - - - - - . D3+A3+D4 - - . | D#3+Bb3+D#4 - - - - - - - - - - . D#3+Bb3+D#4 - - . | G3+D4+G4 - - - - - - - - - - . G3+D4+G4 - - . | G3+D4+G4 - - - - - - - - - - . G3+D4+G4 - - . | A2+E3+A3 - - - - - - - - - - . A2+E3+A3 - - . | A2+E3+A3 - - - - - - - - - - . A2+E3+A3 - - . |",
+  "ost_b": ". . . . . . . . . . . . . . . . | . . . . . . . . . . . . . . . . | . . . . . . . . . . . . . . . . | . . . . . . . . . . . . . . . . | D4 D5 Bb4 D4 . D5 Bb4 . D4 D5 G4 D4 . D5 Bb4 . | D4 D5 Bb4 D4 . D5 Bb4 . D4 D5 G4 D4 . D5 Bb4 . | C#4 C#5 A4 C#4 . C#5 A4 . E4 C#5 A4 E4 . C#5 A4 . | C#4 C#5 A4 C#4 . C#5 A4 . E4 C#5 A4 E4 . C#5 A4 . |",
+  "bass_b": "D2 D2 . D2 D2 . D2 D2 . D2 D2 . D3 . D2 . | D#2 D#2 . D#2 D#2 . D#2 D#2 . D#2 D#2 . D#3 . D#2 . | D2 D2 . D2 D2 . D2 D2 . D2 D2 . D3 . D2 . | D#2 D#2 . D#2 D#2 . D#2 D#2 . D#2 D#2 . D#3 . D#2 . | G2 G2 . G2 G2 . G2 G2 . G2 G2 . G3 . G2 . | G2 G2 . G2 G2 . G2 G2 . G2 G2 . G3 . G2 . | A2 A2 . A2 A2 . A2 A2 . A2 A2 . A3 . A2 . | A2 A2 . A2 A2 . A2 A2 . A2 A2 . A3 . A2 . |",
+  "drums_b": "k+c . h' k . h' h' . s! . h' h' k h' h' . | k . h' k . h' h' . s! . h' k k h' b . | k . h' k . h' h' . s! . h' h' k h' h' . | k . h' k . h' h' . s! . h' k k h' b . | k . h' k . h' h' . s! . h' h' k h' h' . | k . h' k . h' h' . s! . h' k k h' b . | k . h' k . h' h' . s! . h' h' k h' h' . | k . h' k . h' h' . s! . s s m m t t |",
+  "lead_c": "D5 . . . . . D5 D5 . . . . A4 . . . | . . F5 . . . . . D5 D5 D5 . . . G#4 . | D5 . . . . . D5 D5 . . . . Bb4 . . . | . . E5 . . . . . C#5 C#5 C#5 . E5 . A5 . | D5 - F5 - A5 - G#5 A5 - - E5 - - - D5 E5 | F5 - E5 - D5 - C#5 - D5 - - - A5 - D6 - | D6 - - - Bb5 - - - F5 - - - Bb5 - D6 - | C#6 - - - - - A5 - E5 . E5 . C#5 . E5 . |",
+  "pad_c": ". . . . . . . . . . . . . . . . | . . . . . . . . . . . . . . . . | . . . . . . . . . . . . . . . . | . . . . . . . . . . . . . . . . | D3+A3+D4 - - - - - - - - - - - - - . . | D3+A3+D4 - - - - - - - - - - - - - . . | Bb2+F3+Bb3 - - - - - - - - - - - - - . . | A2+E3+A3 - - - - - - - - - - - - - . . |",
+  "ost_c": "D4 D5 A4 D4 . D5 A4 . D4 D5 Bb4 D4 . D5 A4 . | D4 D5 A4 D4 . D5 A4 . D4 D5 Bb4 D4 . D5 A4 . | D4 D5 Bb4 D4 . D5 Bb4 . D4 D5 F4 D4 . D5 Bb4 . | C#4 C#5 A4 C#4 . C#5 A4 . E4 C#5 A4 E4 . C#5 A4 . | D4 D5 A4 D4 . D5 A4 . D4 D5 Bb4 D4 . D5 A4 . | D4 D5 A4 D4 . D5 A4 . D4 D5 Bb4 D4 . D5 A4 . | D4 D5 Bb4 D4 . D5 Bb4 . D4 D5 F4 D4 . D5 Bb4 . | C#4 C#5 A4 C#4 . C#5 A4 . E4 C#5 A4 E4 . C#5 A4 . |",
+  "bass_c": "D2 - - - - - . . D2 . . D2 . . C2 . | D2 - - - - - . . D2 . . D2 . . C2 . | Bb2 - - - - - . . Bb2 . . Bb2 . . G#2 . | A2 - - - - - . . A2 . . A2 . . G2 . | D2 . . D2 . . D2 . . D2 . D2 D#2 . D2 . | D2 . . D2 . . D2 . . D2 . D2 D#2 . D2 . | Bb2 . . Bb2 . . Bb2 . . Bb2 . Bb2 Bb3 . Bb2 . | A2 . . A2 . . A2 . . A2 . A2 Bb2 . A2 . |",
+  "drums_c": "k+c . . . . . h' h' . . b . s . . . | k . . . h' h' . . k . b . s . h' h' | k . . . . . h' h' . . b . s . . . | k . . . h' h' . . k . s . s s s! s! | k+c h' h' h s h' h' h' k k h' h s h' h' h | k h' h' h s h' h' h' k k h' h s h' h' h | k h' h' h s h' h' h' k k h' h s h' h' h | k h' s h' k h' s h' s s m m t t s! s! |"
+ },
+ "sections": {
+  "I": {
+   "bars": 2,
+   "ost": "ost_i",
+   "bass": "bass_i",
+   "drums": "drums_i"
+  },
+  "A": {
+   "bars": 8,
+   "lead": "lead_a",
+   "ost": "ost_a",
+   "bass": "bass_a",
+   "drums": "drums_a"
+  },
+  "B": {
+   "bars": 8,
+   "lead": "lead_b",
+   "pad": "pad_b",
+   "ost": "ost_b",
+   "bass": "bass_b",
+   "drums": "drums_b"
+  },
+  "C": {
+   "bars": 8,
+   "lead": "lead_c",
+   "pad": "pad_c",
+   "ost": "ost_c",
+   "bass": "bass_c",
+   "drums": "drums_c"
+  }
+ },
+ "intro": [
+  "I"
+ ],
+ "loop": [
+  "A",
+  "B",
+  "C"
+ ]
+}

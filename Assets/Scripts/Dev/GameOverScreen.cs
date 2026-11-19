@@ -12,6 +12,7 @@ public class GameOverScreen : MonoBehaviour
 {
     int _focus; // 0＝リトライ、1＝タイトルへ
     float _shownAt = -1f;
+    int _tick; // 感染率のゲージの音（10％ごと）
 
     GameSession Session => GameSession.Instance;
     bool Visible => Session != null && Session.IsGameOver && !Session.IsTransitioning;
@@ -27,17 +28,27 @@ public class GameOverScreen : MonoBehaviour
         {
             _shownAt = Time.unscaledTime;
             _focus = 0;
+            _tick = 0;
+        }
+        int tick = Mathf.Min(10, Mathf.FloorToInt((Time.unscaledTime - _shownAt) / 0.1f));
+        if (tick > _tick)
+        {
+            _tick = tick;
+            GameAudio.Event("gameover_tick", 1f + tick * 0.04f); // ゲージが増えるほど高く
         }
         var kb = Keyboard.current;
         if (kb == null || Time.unscaledTime - _shownAt < 0.4f) return; // 倒れた瞬間の押しっぱなしで決めない
+        int before = _focus;
         if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) _focus = 0;
         if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) _focus = 1;
+        if (_focus != before) GameAudio.Event("ui_move");
         if (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) Choose(_focus);
     }
 
     void Choose(int index)
     {
         if (!Visible) return;
+        GameAudio.Event("ui_decide");
         if (index == 0) Session.FailStage();
         else Session.ReturnToTitle();
     }

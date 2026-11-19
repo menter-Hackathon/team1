@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b642b6c3225ec47e0adb79da0d1278cd, type: 3}
+  m_Name: Illustrator_Star
+  m_EditorClassIdentifier: 
+  _forward: 2
+  _radius: 2
+  _active: 0.12
+  _tip: {fileID: 11400000, guid: 6f704b12be56948ccbedf9f0a2c77c12, type: 2}
+  _tipNoGauge: {fileID: 11400000, guid: fa16949058da6488b99d7566c1b87e24, type: 2}

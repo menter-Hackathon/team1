@@ -41,7 +41,11 @@ public static partial class BossSkillAssets
         return smart != null ? new[] { spotlight, smart, popup } : new[] { spotlight, popup };
     }
 
-    /// <summary>Finder の能力（zip圧縮）の攻撃データ。種類 Custom、クールタイム 3.5秒。散弾1発の値は弾の欄に入れる</summary>
+    /// <summary>
+    /// Finder の能力（zip圧縮）の攻撃データ。種類 Custom、クールタイム 3.5秒。散弾・弾幕の1発の値は弾の欄に入れる。
+    /// 2026-11-19（docs/app-feedback-v2-design.md 4-2）：発射は吸いこんだ数で4段。0個の1発（ゲージ +4）・レーザー（雑魚 3・ゲージ +24）の数値は
+    /// FinderZipAttack の欄（クラスの初めの値）にあり、実行時に攻撃データの写しを作って使う。だから、今あるアセットのままで新しい値になる
+    /// </summary>
     public static AttackData FinderSkill()
     {
         var custom = GetOrCreateCustom<FinderZipAttack>($"{FinderFolder}/Finder_Zip.asset");
@@ -49,7 +53,7 @@ public static partial class BossSkillAssets
         {
             so.FindProperty("_cooldown").floatValue = 3.5f;      // 発射してから
             so.FindProperty("_damage").intValue = 1;             // 散弾1発：雑魚にダメージ 1
-            so.FindProperty("_gaugeGain").intValue = 2;          // 散弾1発：ボスのゲージ +2（空で 3発＝+6、最大 8発＝+16）
+            so.FindProperty("_gaugeGain").intValue = 2;          // 散弾・弾幕1発：ボスのゲージ +2（1個で 4発＝+8、3個で 10発＝+20）
             so.FindProperty("_knockback").vector2Value = new Vector2(3f, 2f);
             so.FindProperty("_hitStun").floatValue = 0.15f;
             so.FindProperty("_speed").floatValue = 12f;          // 毎秒12マス

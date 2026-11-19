@@ -737,3 +737,142 @@ UI 担当の本番の画面ができたら差し替える。ステージ中は�
   - 押すと、そのアプリだけを使った想定（10時間）でランを作り、ステージをそのボスだけにしぼる（能力えらび → そのボス → リザルト）。
   - 確認用のランの間は図鑑に書かない（`AppDex.Suspended`）。ステージのしぼり方は `GameSession.StageFilter`。消すときは、この3つをまとめて消す。
 - **【確認用・仮】P キーで無敵**（`Dev/DebugInvincibility.cs`。エディタと開発用のビルドだけ）：押すたびに入れたり切ったりする。無敵の間はプレイヤーがダメージを受けない（`Health.DebugInvincible`。点滅しない）。封印・スローなどダメージでない効果は受ける。画面の上の真ん中に「無敵（P）」。消すときは、ボスを選ぶ仕組みと一緒に消す。
+
+## 24. スキルの見た目（見ただけでアプリが分かる。2026-11-19 まさぴ〜の依頼。デザインは Fable 5.2、実装は Opus 5.5。feature/app-skill-visuals）
+- **依頼**：チームの別の試作の動画（Office＝棒グラフ・円グラフ・折れ線、Unity＝立方体・球・警告の枠、Steam＝照準・実績解除）のように、スキルを見ただけで「あのアプリ」と分かる見た目にする。当たったときのエフェクトも、そのアプリの UI を参考に。現実に忠実より、ハッタリ。
+- **仕様書**：docs/app-skill-visuals-design.md（細部はすべて【仮】）。見た目だけを変え、当たり判定・秒数・ダメージは変えていない。
+  - まさぴ〜が決めたこと：ヒットストップを入れる。実在の UI の文言のパロディ（Aw, Snap!・虹色の待ちカーソル・[Process completed]・Not Responding）を使う。UI をまねた飾りの数字（x2・バッジの数・120% など）を出す。とどめの隅の通知は題名つき。
+- **仕組み**（`Assets/Scripts/Visual/Skins/`）
+  - 「スキン（どのアプリか）× 枠（どの種類の攻撃か）」で見た目を決める。スキンは Browser・Dev・Office・Creative・Game・Chat・AI・Media・Generic と、Finder・Premiere・Terminal・Zoom。`AppSkin` を継いだクラスを足すだけで使われる（`AppSkins` が集める）。
+  - アプリ → スキン、攻撃データの名前 → 枠は `SkinTables`。ボスはステージのアプリから（`StageDirector`）、プレイヤーは能力ごと（`SkillDefinition.Skin`・攻撃データ）。
+  - 攻撃の部品（弾・指定位置の判定・落下物・ワープの予告・ロックオン）が、予告・本体・着地・消えるときに `SkinDresser.Dress` を呼び、スキンが絵を付ける（付けたら今の絵をかくす）。スキンが無い枠は Generic、それも無ければ今の絵。
+  - 当たったときは `HitFx`：スキンの当たった絵・エラーの絵、かけら、相手の光り方、白い輪、ヒットストップ（`HitStop`。1秒に合計0.2秒まで、時間の速さが1のときだけ）、画面のゆれ、画面のふちの赤、ボスのウィンドウの乱れ。とどめで隅の通知（`CornerToast`）。
+  - 代用ボスは、技の動きは Chrome・VS Code のまま、見た目がアプリの種類ごとに変わる（Slack は吹き出しと通知バッジ、Excel はグラフとダイアログ、Steam は照準とミサイル など）。
+- **主な見た目**：Chrome＝回るタブ・広告3種類・404・Aw, Snap!。VS Code＝エラーの数のバッジ・行番号の帯と黄色い柱・⌘X／⌘V の瞬間移動・Build succeeded。棒グラフ＝120%〜999% と右上がりの矢印。ボム＝BOOM!・HIT!・x2。Zoom＝名札とマイク・退出のボタン。Terminal＝ERR!・[ OK ] の積み上げ・Segmentation fault・[Process completed]。通知の題名は Page restored・Build succeeded・Saved・All read・Achievement unlocked・Exported・Done・Now playing・Trash emptied・Export complete など。
+- **確かめたこと**：Mac 用にビルドしたゲームで、Chrome・VS Code・Excel・Slack・Steam・Figma・ChatGPT・ミュージック・Finder・Premiere Pro・Terminal を1体ずつ戦わせ、全部の能力を当てて撮った（エラー0件）。本物の `app_dex.json` は退避して戻した。ボスごとに正しいスキンが入り、技・能力・当たった絵・とどめの通知が出た。
+  - まだ見ていないこと：手で遊んでの手ざわり（ヒットストップの効き方）、細かい位置・重なり。
+
+## 25. ステージの山と谷（雑魚の時間を単調にしない。2026-11-19 まさぴ〜の依頼。仕様は Fable 5.2、実装は Opus 5.5 の担当1〜3。数・秒数はすべて【仮】）
+- **仕様書**：docs/stage-pacing-design.md。【要相談】①〜⑩は、仕様書のかっこ内の扱いで作った（雑魚の数は増やす、Terminal は短く・ひと休みなし、やり直しは同じ流れ、部屋の形は変えない など）。
+- **この章に書いた範囲**：担当1（流れ）が作った物と、ほかの担当とのつなぎ目。担当2（出来事ともや）・担当3（見返りと雑魚）の中身は、それぞれの報告で足す。
+- **安全のためのスイッチ**：`StagePaceTable.Enabled = false` で、今までの出し方に戻る（`StagePacer` が付かない。ノルマも増えず、`ZakoSpawner` は止まらない。ゲージの明滅も出ない）。
+- **作った物（担当1）**
+  - `Stage/Pacing/StagePacer.cs`：場面を進める係。`StageDirector` があるシーンに、実行時に自分で付く（`SceneManager.sceneLoaded` と、最初のシーン用の `AfterSceneLoad`。シーン・ビルダー・`StageDirector` は変えていない）。テスト用のシーン（`StageDirector` が無い）には付かない。
+  - `Stage/Pacing/StagePaceTable.cs`：数と秒数の表（コードの中。アセットにしない）。
+  - `Stage/Pacing/SpawnPatterns.cs`：出す場所（列・どこか・遠い方の端・はさみうちの端）。`PaceVariants`：担当3 の `ZakoVariants` の番号を名前で読む（無くてもコンパイルが通るように）。
+  - `Stage/Pacing/PaceMarks.cs`：「あと少し」の印。
+  - 直した既存のファイル：`Stage/ZakoSpawner.cs`（10-2 の口の中身）・`Visual/PixelHud.cs`（ゲージの明滅）。
+- **1画面のステージ（代用ボス・Finder・Premiere・Terminal）**：5つの場面を、倒した数で切り替える。
+  - ステージの最初に全部の数を決めて、ノルマに足す（`ZakoSpawner.AddQuota`）。最初の4体と合わせて 16／20／24 体、Terminal は 14 体。出来事が雑魚を出す型なら、担当2 の表の上乗せ（`StageEventTable.ExtraZako`）も最初に足す。ゲージは最初からその数で割るので、戻らないし途中で伸びない。
+  - `ZakoSpawner` は止めて（`Paused`）、この係が `SpawnNow` で出す。場面ごとに予算を持ち、「予算を出し終えて、全員倒したら次の場面へ」。だから場面の変わり目には、画面に雑魚がいない。
+  - ① 入り：最初から置いてある雑魚だけ。② 盛り上がり：2〜3体の組を、プレイヤーから遠い方の端の近くに 0.8マスずつ並べて出す（1.4秒・同時に4）。③ 出来事：担当2 の出来事を呼ぶ（下）。④ ひと休み：3秒、何も出さない（Terminal はなし）。⑤ 最高潮：小さい雑魚の群れを遠い方の端から、2つ目の群れを反対の端から（はさみうち。プレイヤーがその端にいたら遠い方から）、最後に強い雑魚1体（0.25秒おきに1体ずつ・同時に7）。
+  - 空白をなくす：②③⑤で画面の雑魚が0体になったら、間隔を待たずに 0.3秒で次を出す。
+  - 撃つ雑魚は組に3割で混ざり、同時に2体まで。③ の出来事の間は出さない。とぶ雑魚は2ステージ目から ② の最後の組と ⑤ の2つ目の群れに1体ずつ、突っ込む雑魚は3ステージ目と Terminal で ② の最初の組に1体。担当3 のひな形がまだ無いときは、歩く雑魚で代わりに出す。
+  - 表より多く残っていたら、⑤ のあとに組で出し切る。表より少なければ、ノルマで止まる（ゲージが満タンになればボスが出る、は今までどおり）。
+  - 出せない時間が3秒続いたら（雑魚が0体のまま）、今までの出し方に戻す（ボスが出なくなるのを防ぐ。ノルマは同じ）。
+- **横スクロール（Chrome）・ウィンドウ移動（VS Code）**：今の決まり（雑魚を倒さなくてもボス部屋に入れる）は変えていない。【要相談③】は今のまま。
+  - 横スクロール：進み具合（一番右まで進んだ x を、スタートからボス部屋の入口までで割る）で、20％・45％・65％・75％ で場面が変わる。③ は区間を出るか 12秒で終わる。
+  - ウィンドウ移動：部屋1の真ん中まで＝①、部屋1の残り＝②、部屋2＝③（入って 1.5秒後に出来事）、部屋3 の最初の 3秒＝④、残り＝⑤。部屋の真ん中の x はカメラの設定から読む。
+  - 道中は数えないので、組は「前から」（画面の右の端）、⑤ は前から群れ → 1.5秒後に後ろから群れ → 強い雑魚。⑤ のあとは、ボス部屋まで組を前から出す。① の間は置いてある雑魚だけ。ボス部屋の中には出さない（今までどおり）。
+- **「あと少し」**
+  - 残り3体以下：残っている雑魚の頭の上に、小さい白い下向きの三角（ゆっくり上下）。
+  - 右上のゲージが 80％ を越えたか残り3体：ボスの影のアイコンが小さくふるえ、ゲージがゆっくり明滅する（`PixelHud`。ボスが出る前の1画面のステージだけ）。
+  - 最後の1体：倒した瞬間に 0.25秒のスロー（`HitStop.Request(0.25f, true)`）と白い光。紫がボスの位置へ吸いこまれるのは担当2（`Done` を見る）。
+- **ボスの登場（`PacePhase.Done`）**：1画面は雑魚を倒し切ったとき、道中はボス部屋に入ったとき（どちらも `BossEntrance.IsTriggered`）。先に `Done` を出して（ほかの部品が片づける）、出来事を終わらせ、出来事用の `AttackRunner` と出した危ない物・並んでいた雑魚・印を消す。ボスが出る条件とボス戦は変えていない。
+- **つなぎ目（担当2・3 が使う所）**
+  - `StagePacer`：10-2 の名前と形のまま。`Started` は `Start` の中で1回出す（購読した部品の例外は、ほかの部品に広げない）。`PhaseChanged` は場面が変わるたび（最初の `Intro` は出さない）。`Remaining` は1画面だけ（道中は -1）。`Skin`・`Theme`・`Icon` は、`StageDirector` がボスの `AttackRunner` に入れた値をそのまま使う。
+  - 出来事：③ に入ったら `StageEventTable.For` → `Begin(pacer, 出来事用の AttackRunner, 強さ, 雑魚の予算)` → 毎フレーム `Tick` → `End`。`AttackRunner` は `Resources/StagePacing/HazardRunner` から作り、スキン・色・アイコン・狙う相手を入れて渡す（無ければ null）。強さは 1・2・3ステージ目が 1・2・3、Terminal が 2。1画面は 20秒、道中は 12秒で、こちらから止める。出来事の例外は流れを止めない（その出来事を終わらせて、雑魚は ② の出し方で出す）。
+  - 雑魚の予算：`SpawnsOwnZako` が true の出来事は、③ の予算（表の数＋上乗せ）まで `SpawnNow` で出してよい。出来事が先に終わって予算が残ったら、残りはこの係が組で出す。多く出すと、⑤ の最後（強い雑魚）がノルマで出なくなる。
+  - `ZakoSpawner`：`Paused`・`SetPace`・`SetWeights`（足りない番号は0）・`AddQuota`（ノルマの無いステージ・出し切ったあとは何もしない）・`AddTemplate`（シーンの物なら隠す）・`SpawnNow`（床に合わせない。空中なら落ちる。ボスの登場が始まったら null）・`AliveList`（出した雑魚だけ。最初から置いてある雑魚は入らない）・`Template`。読むだけの口として `Quota`・`QuotaUsedUp`・`Wave`・`Area`・`GroundMask`・`MinDistance`・`AvoidBossRoom`・`IsStopped`・`TemplateCount` を足した。
+  - 担当3 の雑魚：`ZakoVariants.Small`・`Elite`・`Flyer`・`Charger` を、出す直前に名前で読む。とぶ雑魚は床から 3マス上に出す。
+- **作らなかった物**
+  - C-2（やり直しのときの短縮）：【要相談④】の「決まるまでは同じ流れ」のまま。
+  - C-3（1画面のステージの、雑魚の時間だけ出る足場）：【要相談⑩】の「部屋の形は変えない」のまま。
+- **確かめたこと**：Unity を動かさずに、`Assets/Scripts` の実行側をコンパイルした（担当1 のファイルのエラー0件）。ステージ2（20体）で、出来事が無いとき・出来事が雑魚を少なく出したとき・一掃で組の途中に全員倒れたときに、出す数がノルマと同じになることを、コードを追って確かめた。
+  - まだ見ていないこと：ゲームを動かして遊ぶこと全部（場面が5つとも通るか、ゲージが戻らないか、ボスの登場のあとに何も残らないか、`Enabled = false` で今までどおりか、6種類のステージでエラーが出ないか）。担当2・3 と合わせて遊ぶこと。ひと休みの長さ・数の多さの手ざわり。
+
+## 26. 見た目を全部 Mac に揃える（2026-11-19 まさぴ〜の依頼。デザインは Fable 5.2、実装は Opus 5.5。feature/app-skill-visuals）
+- **仕様書**：docs/mac-look-design.md（細部は【仮】）。直すのは OS の部品だけ（ウィンドウ・ダイアログ・通知・カーソル・言い方）。アプリの中身（Chrome のタブ、Excel のグラフ、Steam の実績など）とゲームの印（赤い「！」・赤いふち）は残す。見た目だけで、当たり判定・秒数・ダメージは変えていない。
+  - まさぴ〜が決めたこと：メニューの画面も Mac にする。壁紙（デザイン担当の絵）とゲームオーバーの画面は今のまま。ダイアログ・通知の字は英語のまま。HUD とタイトルの PRESS Z は今のまま。
+- **共通の部品** `MacUi`（Assets/Scripts/Visual/Skins/MacUi.cs・MacUi.Place.cs・MacUi.Gui.cs）：信号機（左上の3つの丸）・ウィンドウ（題名はまん中、右上に × を置かない、角の丸み、影）・ダイアログ（アイコンを左、右寄せのボタン、右端が青）・通知・待ちカーソル・進行の輪・キー（⌘⌥⇧）・メニューバー・Dock・矢印のカーソル。ゲームの世界に置く入口と、OnGUI の入口がある。
+- **直した物**（43個のうち 42個）
+  - とどめ・出来事の隅の通知を右下から右上へ（Mac の通知）。
+  - ボスが着ているウィンドウ（`BossWindowArt`）・再起動の赤いふち・テスト用のボスの絵。
+  - Chrome の広告・Office の保存のダイアログ・落ちてくるエラーウィンドウ・Finder のウィンドウ・Premiere の速度のウィンドウ：左上の信号機。閉じるときは赤い丸がへこんで、まん中へ縮む。
+  - 倒れたとき：Not Responding → 強制終了（Force Quit）、Crashed → 「quit unexpectedly.」のダイアログ。
+  - Terminal：コマンドの帯は zsh のウィンドウ、プロンプトは `%`、`[ OK ]` → `[1] + done`、`zsh: segmentation fault` など。再起動の画面は、まん中の印と進みのバー。
+  - ステージの部品：ウィンドウの足場（左に信号機）、降ってくる通知、フォルダの足場（Mac の青。ステージではアプリの色に塗り替わる）。
+  - ステージの間のデスクトップ：Mac のメニューバー（Finder・ファイル・編集…・日付と時刻）、Dock（右にゴミ箱）、黒い矢印のカーソル、開くウィンドウ（題名はアプリ名。20字まで）。
+  - メニューの画面（タイトル・能力えらび・リザルト・図鑑）：左上の信号機・まん中の題名（`~/Desktop/Infected.app`・`Usage Scan`・`Scan Report.txt`・`App Dex` など）。閉じるボタンは左上の赤い丸。キーの操作は変えていない。
+  - 直していない物：VS Code のステージ（ウィンドウ移動）の部屋の右上の ×（ステージの配置の作り直しが要る）。
+- **反映**：gen_sprites.py で作り直した絵（ウィンドウの足場・フォルダ・通知・広告・エラーウィンドウ・テスト用のボスの絵・Mac_Frame・Mac_Lights）と、ArtAssets の取り込み設定（ウィンドウの足場の縁を 8,0,3,0）。「Tools/Team1/グラフィックを適用」をかけた。盾のウィンドウ（テスト用のシーン）は、シーンを作り直すと Mac のふちになる（まだ作り直していない）。
+- **確かめたこと**：Mac 用にビルドしたゲームで、タイトル・図鑑・能力えらび・デスクトップの画面・Slack・Excel・Chrome・Terminal を通して撮った（エラー0件）。本物の `app_dex.json` は退避して戻した。手で遊んでの確認はまだ。
+
+## 27. 「このアプリといえば！」のキットと、5つのアプリの直し（2026-11-19 まさぴ〜の感想と依頼。仕様は Fable 5.2、実装は Opus 5.5 の12人。数値・秒数・強さはすべて【仮】。feature/app-skill-visuals）
+- **まさぴ〜の依頼**：見た目が違うだけで、どのステージもボスも基本のギミックが同じ。「このアプリといえば！」をボスの技・能力・ステージのギミックにしたい（例：Steam は実績解除で強くなる、Unity は 3D の物体がランダムな場所に出る）。汎用のアプリにも、できるだけ多くの種類で。あわせて Chrome・VS Code・Finder・Premiere Pro・Terminal の感想を直す。
+- **仕様書**：docs/app-feedback-v2-design.md（5つのアプリの直し）、docs/app-kits-1-design.md（チャット・仕事・AI）、docs/app-kits-2-design.md（開発・制作・ゲーム・音楽と動画・ブラウザ）。【要相談】は、どれも仕様書のかっこ内の扱いで作った。
+- **キットの形**（共通の土台。Assets/Scripts/Kits/Common/・Editor/Kits/Common/・Editor/AppKits/）
+  - 1アプリ＝1キット：ボスの技（第1形態・第2形態）・能力・ステージの決まり（`StageRule`）・場面③の出来事。アセットは `Editor/Kits/<Id>KitAssets.cs`（`KitAssetBuilder`）が作る。メニュー「Tools/Team1/アプリのキットを用意」（`AppKitsBuilder`）で、Boss_Kit_〇〇・Skill_App_〇〇 を作り、対応アプリの表・能力の表に入れる（先に「ボスの専用の技を用意」も動く）。`Resources/Kits/KitIndex.json`・`KitSkillTexts.json` も書く。
+  - 安全のスイッチ：`AppKits.Enabled = false` で全部止まり、今までどおり（代用ボス・カテゴリの能力・スキンの出来事）。キットごとに `AppKits.Set(label, KitPart.Boss/Skill/Rule, false)`。
+  - 共通の入口：`StatMods`（倍率。結果は `GameBuffs` に入る。幅は自動で収める）、`StageRule`／`StageRuleHost`（ステージの最初から 100％まで。片づけの表）、`StageEvents`、`KitPlayer`（封印・クールタイム・回復・`Guard`＝当たりを1回止める）、`KitBoss`（ひるみ・ゲージを戻す）、`KitBullets`、`KitProp`（叩ける置物）、`WallShot`（高さの決まった横の弾）、`KitPips`／`KitMeter`／`KitToast`、`KitDress`／`KitDressed`（今の部品の絵の差し替え）、`KitBossWarp`、`KitAliases`（別名）。キットの担当が作った共通の部品：`ZoneStrike`（区画）・`DropQuake`（落下＋波）・`Kit3D`（3D の物体）・`KitBlock`（乗れる置く物）・`PathStroke`（道に沿った線）。
+  - 今あるファイルに足した物：Health.Guard、PlayerSkillExecutor（封印・クールタイムの進み方）、BossController（ひるみ）、VirusGauge（受けるゲージの倍率）、AppCatalog・AbilityCatalog（キットの行・スイッチ）、PixelHud（封印の鍵・印・メーター）、雑魚の速さの倍率、BossSelectDebug（キットのアプリを 4×3 の格子で並べる）。
+- **キット（35。うち新しいアプリは33、残りは Chrome・Terminal の能力の分）**
+  - チャット：Slack・LINE・メッセージ・Teams／通話と予定：Discord・カレンダー・メール・Zoom（ボスだけ）／AI：ChatGPT・Claude・Gemini／Office：Excel・PowerPoint・Word・Keynote／Notion・メモ
+  - 3D と動画：Unity・Blender・Minecraft・QuickTime Player／開発とブラウザ：GitHub Desktop・Xcode・Cursor・Safari／ゲームと音楽：Steam・ミュージック・Spotify・Firefox／制作：Figma・Photoshop・Illustrator・Arc
+  - Chrome（能力 恐竜ラン）・Terminal（能力 rm -rf。倒すと手に入る）も、同じ形で能力の表に入れた。
+  - 別名：Outlook→メール、Pages→Word、Numbers→Excel、リマインダー→メモ、Obsidian・Linear→Notion、Google Meet→Teams、Telegram・WhatsApp・Messenger→メッセージ、Perplexity・Copilot→Gemini（`KitAliases.Enabled`）。
+- **5つのアプリの直し**
+  - Chrome：タブは台形（回らない）、広告は6種類＋形4種類をランダム、能力は恐竜ラン、本物の Chrome だけ第2形態にオフライン（`Boss_Chrome_App`。代用ボスは今の Boss_Chrome のまま）、ステージに No internet の区間。
+  - VS Code：ブレークポイントは横一列の行（赤丸は壁ぎわ）、エラーは OUTPUT のエラーログの束、デバッグ実行と差分の足場（`Boss_VSCode_App`）。
+  - Finder：zip圧縮は飲みこんだ数で4段（1発・散弾・弾幕・解凍レーザー）、ステージにゴミ箱。
+  - Premiere Pro：キーフレーム・再生ヘッド（白い柱）・レーザーツールは背景ごと黒く抜ける・能力はリップル削除、ステージはタイムラインの見た目と書き出しのウィンドウ。切り戻し：`PremiereSkillAssets.PremiereUseKeyframe = false`。
+  - Terminal：rm -rf は第1形態が端から交互、第2形態はランダムな3区画。chmod は権限のカード（ジャンプ・近接の印）。倒すと能力 rm -rf が手に入り、図鑑で倒していれば、いちばん短い1枚と入れ替えてカードに出る。
+- **使わなくなったアセット**（消してよい）：Attack_App_PremierePro_Fire・_Thunder・_Dissolve・_IconThrow、Custom_App_PremierePro_IconThrow、Attack_Premiere_IconRain_P1・_P2・_Fire、Custom_Premiere_IconRain_P1・_P2、Attack_Premiere_Playhead_Explosion・_Bolt。
+- **確かめたこと**：Mac 用にビルドしたゲームで、38アプリ（新しいキットのアプリ33と、Chrome・VS Code・Finder・Premiere Pro・Terminal）を1つずつ、雑魚の時間 → 場面③ → ボスの第1形態 → 能力 → 第2形態 → とどめ、まで自動で通して撮った（エラー0件）。本物の `app_dex.json` は退避して戻した（cmp で同じ）。
+  - 撮っている途中で、Arc のボス戦でゲームが固まる不具合が出た（`PathStroke.Dashes` の点線のループが、小数の誤差で抜けられなくなる）。1回ごとに必ず進め、回数に上限を付けて直し、撮り直して通った。
+  - 自動で通した回では、ボスの技 191個のうち 141個しか出なかった（主に第2形態の技）。残りの 50個は、1つずつ強制で出して撮った（全部出た。エラー0件）。これで 191個すべてが、1回は出た。あわせて、各アプリの能力を使い、Terminal は「倒すと手に入る能力」（rm -rf）がボスの設定に入っていて、使えることを確かめた。
+  - 強制で出した回で、Terminal の能力 rm -rf を使うとゲームが固まる不具合が出た（`TerminalPlayerRmWave` の床に字を残すループが、波の進む向きと逆に離れていると抜けられない）。直して撮り直した。
+  - Unity の 3D の物体は、ビルドでも桃色にならずに映った（`Assets/Resources/Kits/Kit3D_Standard.mat`）。
+  - ScriptableObject の技のクラスは、ファイル名とクラス名を揃えた（Minecraft・QuickTime の技を1クラス1ファイルに分けた。揃っていないとアセットのスクリプトが外れる）。
+  - **まだ見ていないこと**：手で遊ぶこと、`AppKits.Enabled = false` で今までどおりに戻ること、50％・100％で倍率・封印・当たりを止める口（Health.Guard）が外れること（動きは通したが、値は確かめていない）、確認用の「ボスを選んで遊ぶ」の格子（撮ったビルドは開発用ではないので出ていない）、それぞれの仕様書の「OK の条件」、予告を見てから避けられるか、ギミックがうるさくないか、能力の強さ。Teams の「参加しました」の札が HUD と少し重なる。Notion などの Office のキットの場面③は、Office のスキンの出来事（#REF!）のまま。
+
+## 28. SE と BGM（2026-11-19 まさぴ〜の依頼「それぞれの技に SE を、ゲームの BGM も。どの画面にどの曲かは任せる。Claude が作っても、フリー素材でもよい」。音の設計と作曲は Fable 5.2 の5人、プログラムは Opus 5.5 の2人。音量・音色はすべて【仮】。feature/app-skill-visuals）
+- **作り方**：フリー素材は使わず、全部 Python（numpy）で一から作った（ファイルごとのダウンロードの確認・ライセンスの表示が要らない。ドット絵に合わせてファミコン風）。本物のアプリの通知音・起動音、実在の曲のメロディはまねしていない（ロゴと同じ扱い。音色の雰囲気だけ）。
+  - 形式の決まり：`Tools/audio/FORMAT.md`（SE のレシピ・曲の楽譜・割り当ての JSON・出来事のキーの表・曲と画面の表）。
+  - 音のもと：`Tools/audio/se/*.json`（SE 255個のレシピ）、`Tools/audio/bgm/*.json`（曲11・ジングル3の楽譜）。
+  - 作る：`python3 Tools/audio/build_audio.py` → `Assets/Resources/Audio/SE/*.wav`（44.1kHz）・`BGM/*.wav`（32kHz。ループは切れ目なし、イントロは `_intro`）。3秒ほどで全部できる。調べる：`python3 Tools/audio/check_audio.py`。試聴：`python3 Tools/audio/make_preview.py` → `Tools/audio/preview.html`（ブラウザで開くと、全部の音を説明・使う所つきで聞ける）。
+  - ノイズの明るさは `synth/core.py` の `NOISE_CLOCK_SCALE`（今は 2.5。レシピのままだと「シュッ」が暗すぎた）。
+  - 曲の楽器のバランスは測って直した（三角波のベースが大きすぎ、和音が聞こえなかった）。
+- **割り当て**（`Assets/Resources/Audio/Maps/*.json`。Unity が全部読む）
+  - 技ごと（`moves`）：ボスの技 194個と能力 42個の全部に「始めたとき」と「出た瞬間」の音。内側で別の技のデータを出す技（30個）にも行を足した。空の行は「わざと鳴らさない」（重なり防止）。表に無い技（雑魚など）は、陣営×種類の音（`fallbacks`）。
+  - 出来事（`events`）45個：メニュー・ジャンプ・ダッシュ・近接・被弾・雑魚・ボスの当たり／登場／第2形態／撃破・予告（赤い線。小さく、0.15秒に1回まで）・盾・タブを閉じる・ポップアップ・置物・波・トースト・ステージクリア・デスクトップの4つの場面・図鑑・ランク・ゲームオーバーのゲージ。
+  - 設計のメモ：`docs/sound/se-common-fix5.md`・`se-kit1.md`・`se-kit2.md`・`bgm-menus.md`・`bgm-stages.md`（音ごとの元ネタ・使う技）。
+- **曲と画面**（Claude が決めた。【提案】）：タイトル `bgm_title`・図鑑 `bgm_dex`・能力えらび `bgm_loadout`・感染したデスクトップ `bgm_desktop`・1画面のステージ `bgm_stage_desktop`・横スクロール（Chrome）`bgm_stage_scroll`・ウィンドウ（VS Code）`bgm_stage_windows`・ミュージックのステージ `bgm_stage_music`（BPM 100。ステージのビートの時計を曲の再生位置に合わせた）・ボス戦 `bgm_boss`（第2形態で 1.06 倍に速く高く）・ラスボス Terminal `bgm_boss_final`・リザルト `bgm_result`。ジングル：ボス登場（2.9秒後にボスの曲へ重ねてつなぐ）・ステージクリア・ゲームオーバー。曲どうしで「ウイルスのモチーフ」（Aマイナーの2小節）を共通に使い、クリア・リザルトではメジャー（治った形）にした。
+- **Unity 側**
+  - `Assets/Scripts/Audio/GameAudio.cs`：自分で立ち上がる（シーンに置かない）。SE は 24 本、同じ音は 0.06秒あけて3つまで、ピッチを ±3% ばらす。曲は2つを入れ替えて交差フェード。音量は PlayerPrefs（`audio.master` 1・`audio.bgm` 0.42・`audio.se` 0.8。曲を 0.55 から下げた：測ると当たりの音・近接の音が曲と同じくらいだった）。`-audiolog` で鳴った音をログに出す。
+  - `GameAudioHooks.cs`：出来事・画面・ステージ・ボスと曲の結びつけ。`AttackRunner` に `AnyStarted`・`AnyReleased`・`AnyFollowUp`（追撃。割り当てがある物だけ鳴らす。ボムの爆発）を足した。Minecraft のボスの TNT・緑のブロックの爆発は、コードから `se_minecraft_boom` を鳴らす。
+  - 取り込みの設定は `Editor/Audio/AudioImportSettings.cs`（SE は PCM で先に読む、曲は Vorbis 0.5。Unity のモノラル化は使わない＝音量のそろえ直しをしない）。
+  - チームの `Assets/Scripts/Managers/SoundManager.cs`（前の作品の名前が残っていて、どこからも使われていない）はさわっていない。【提案】消すか、GameAudio に置きかえたことをチームに伝える。
+- **ギミックの音**（2026-11-19 追加。まさぴ〜の依頼「ボスギミックごとにも SE を」。設計は Fable 5.2 の4人、コードへのつなぎ込みは Opus 5.5 の4人）
+  - アプリごとのギミック（ステージの決まり `StageRule`・場面③の出来事・Chrome／VS Code／Finder／Premiere Pro の仕掛け・Terminal の再起動とカーネルパニック）に、専用の SE を **140個**（38アプリ。1アプリ 2〜6個）。例：Slack の未読が増える（たまるほど高く）・既読・@channel の予告・ボスが速くなる／戻る、Zoom の残り10分・40分で切れる、Minecraft の夕方の予告・夜・朝、Xcode の Building…・Succeeded／Failed、Spotify の広告の予告・広告・Premium。
+  - 形式：`Tools/audio/FORMAT.md` 4章。キーは `gm_<アプリ>_<瞬間>`。レシピは `Tools/audio/se/gimmick_a〜d.json`、割り当ては `Assets/Resources/Audio/Maps/41〜44_gimmick_*.json`（`events`）、どこで鳴らすかの指示書は `Tools/audio/hooks/gimmick_a〜d.tsv`、元ネタは `docs/sound/se-gimmick-a〜d.md`。
+  - コードは、その瞬間に `GameAudio.Event("gm_…")` を1行ずつ（各キットの Rule・Kit のファイル。共通のファイルは `Kit3DFaller.cs` の Unity の物体だけ）。ゲームの動きは変えていない（音の呼び出しと、1回だけ鳴らすための小さい印だけ）。`check_audio.py` の (c2) で、割り当てとコードの呼び出しが 140個ずつ一致することを調べる。
+  - 直した所：LINE の爆発で汎用の警告音が重なる → `Attack_LINE_ReadIgnored` を鳴らさない行に。Discord のボイスチャンネルに入る音は、1秒より長く離れていたときだけ（足場でジャンプするたび鳴るため）。Terminal のカーネルパニックの音が割れそうだったので小さく。
+  - 確かめたこと：Mac 用にビルドしたゲームで、38アプリを雑魚の時間からボスの撃破まで2回通した（2回目は、ステージの物を叩く・ボスの近くで近接を振る・1回だけ当たる・能力を続けて使う、を足した）。エラー0件・図鑑のファイルは同じ。**140個のうち 102個が実際に鳴った。**
+  - 鳴らなかった 38個（コードの場所は読んで確かめた）：拾う物（Cursor の Accept・Spotify の Premium・Firefox のアドオン・Safari の盾が止める）、時間がかかる物（ChatGPT の考え中は18秒ごと・Zoom の残り時間・Xcode の Failed の終わり・QuickTime の 0.5x・Illustrator の縮む／戻る）、当たりが要る物（Keynote の拍手・ミュージックのビートに合わせた近接。浮いているボスに確認用の近接が届かなかった）、ほか（Slack の @channel・99+、LINE の既読・爆発、メールを開く、Zoom の雑魚の時間のタイル、Chrome のオンライン、Premiere のマーカー、Terminal の床が戻る、メモの完了・鍵、Word の補充、カレンダーの出席、Discord のボイスチャンネル、Steam・Firefox のボスの強化の終わり）。手で遊んで確かめる。
+- **大きさ**：`Assets/Resources/Audio` 合わせて約 41MB（SE 395個・曲 17ファイル）。
+- **確かめたこと**：
+  - `check_audio.py`：割り当ての音は全部 WAV がある、一覧の技 263行は全部割り当てがある、出来事 45個も全部ある。
+  - Unity をバッチで動かし、音の取り込みとコンパイルが通った（エラー0件）。Mac 用にビルドしたゲームで、鳴った音を記録しながら（音は消して）次を確かめた。エラーは0件。本物の `app_dex.json` は退避して戻した（cmp で同じ）。確認用のファイル（`Assets/__ProbeTests`）は消した。
+    - 38アプリのボスの技 191個を1つずつ出した：全部の技で、その技の音が鳴った。アプリの能力も 37個（VS Code はアプリの能力が無い）使って、全部鳴った。
+    - 割り当てが無い音・ファイルが無い音は0件。割り当てが無くて種類の音になったのは、雑魚の弾（`Attack_Zako_Shot`）と PowerPoint の内側の技1つだけ。
+    - 曲の流れ（鳴らす指示のログ）：タイトル → 図鑑 → タイトル → 能力えらび → デスクトップ → ステージ → ゲームオーバー → リトライ → ボス登場のジングル → ボス戦（Terminal はラスボスの曲）→ ステージクリアのジングル → リザルト → ランクの音 → タイトル。横スクロール・ウィンドウ・ミュージックのステージの曲も出た。
+    - 本当に流れているか（鳴っている AudioSource を 0.5 秒ごとに記録。Slack と Terminal で）：どの曲も再生位置が進み、音量は 0 より大きい。リザルト・ラスボスの曲はイントロのあと切れ目なくループへ入った。ボス登場のジングルの 2.9 秒目にボスの曲が始まった。第2形態で曲が 1.06 倍まで上がり、次の曲で 1 に戻った。ステージクリアのジングルの間は次の曲を待つ（デスクトップの曲は流さず、そのままリザルトの曲へ）。
+    - キーの入力（スペース・J・K・矢印）で、ジャンプ・近接・ダッシュ・メニューのカーソル・カードの音が鳴った。はじめの能力5つ（ボム・棒グラフ・ブレークポイント・新しいタブ・バケツ塗り）も使って全部鳴り、ボムは爆発（追撃）の音も鳴った。Minecraft のボスの爆発の音も鳴った。
+    - 音量：SE と曲の大きさを数字で比べ、曲の最初の音量を 0.55 → 0.42 に下げた（当たり・近接の音が、曲とほぼ同じ大きさだった）。
+  - **まだ見ていないこと**：
+    - 耳で聞くこと。Claude は音を聞けない（`Tools/audio/preview.html` をブラウザで開くと全部聞ける）。まず聞いてほしい：本物のアプリの音に近いかもしれない `se_discord_mute`・`se_teams_joined`・`se_mail_send_skill`。
+    - 手で遊ぶこと。音の大きさ・うるささ（とくに雑魚の弾 `se_gen_shot_small`。記録した音の 4割近くがこれ）。
+    - 雑魚の時間の出来事（`pace_phase` など）。ミュージックのステージで、ビートと曲がずれないか。
+    - 技の動きに合わせて、音の中に間（ま）を入れた SE が 20個ほどある（`docs/sound/` に一覧）。技の秒数を変えたら、音も作り直す。
+    - 範囲・落下の技の「出た瞬間」の音は、予告が出た時の音（当たる瞬間は `zone_fire`・`faller_land` の音）。くり返しの2回目以降が鳴らない技が少しある（Terminal の文字の雨の2・3波目など）。

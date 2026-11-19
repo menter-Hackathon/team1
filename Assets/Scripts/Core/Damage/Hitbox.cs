@@ -34,6 +34,7 @@ public class Hitbox : MonoBehaviour
 
     readonly Collider2D[] _results = new Collider2D[16];
     readonly HashSet<IDamageable> _alreadyHit = new HashSet<IDamageable>();
+    readonly HashSet<IDamageable> _everHit = new HashSet<IDamageable>(); // この判定が一度でも当てた相手（当たったエフェクトの強さ「小」用）
     readonly HashSet<IDamageable> _hitThisStep = new HashSet<IDamageable>();
     ContactFilter2D _filter;
     Health _ownerHealth; // 持ち主（敵の体当たりなど）。倒れたら攻撃しない
@@ -43,6 +44,38 @@ public class Hitbox : MonoBehaviour
 
     /// <summary>相手にダメージが入ったとき（弾を消す・ヒットSEなどに使う）</summary>
     public event Action<IDamageable, DamageInfo> Hit;
+
+    // ───────── 当たったときの見た目（2026-11-18：スキルの見た目 1-2） ─────────
+    /// <summary>攻撃のスキン（DamageInfo.Skin に入る）。入っていなければ None（近接・体当たり・トゲ）</summary>
+    public SkinId Skin { get; private set; }
+    /// <summary>エラーの絵の種類（DamageInfo.ErrorKind に入る。Terminal の技ごとの字など）</summary>
+    public string ErrorKind { get; private set; }
+    /// <summary>攻撃データ（DamageInfo.Data に入る）</summary>
+    public AttackData Data { get; private set; }
+    /// <summary>アプリの色・アイコン（当たった絵に使う。無ければ null）</summary>
+    public AppTheme SkinTheme { get; private set; }
+    public Sprite SkinIcon { get; private set; }
+    /// <summary>攻撃範囲の真ん中（当たったエフェクトの向きに使う）</summary>
+    public Vector2 AreaCenter => _area != null ? (Vector2)_area.bounds.center : (Vector2)transform.position;
+
+    /// <summary>
+    /// どれかの判定が相手にダメージを入れたとき（判定, 相手, 情報, この判定がこの相手に初めて当てたか）。
+    /// 当たったときのエフェクト（HitFx）が見る。その判定の Hit のあとに呼ばれる
+    /// </summary>
+    public static event Action<Hitbox, IDamageable, DamageInfo, bool> AnyHit;
+
+    /// <summary>当たったときの見た目の情報を入れる（AttackRunner.AddHitbox が入れる。専用の技は、種類だけ上書きしてよい）</summary>
+    public void SetSkin(SkinId skin, string errorKind, AttackData data, AppTheme theme = null, Sprite icon = null)
+    {
+        Skin = skin;
+        ErrorKind = errorKind ?? "";
+        Data = data;
+        SkinTheme = theme;
+        SkinIcon = icon;
+    }
+
+    /// <summary>エラーの絵の種類だけを上書きする</summary>
+    public void SetErrorKind(string errorKind) => ErrorKind = errorKind ?? "";
 
     void Reset()
     {
@@ -117,7 +150,9 @@ public class Hitbox : MonoBehaviour
             if (target.TryTakeDamage(info))
             {
                 if (_hitOncePerActivation) _alreadyHit.Add(target);
+                bool first = _everHit.Add(target);
                 Hit?.Invoke(target, info);
+                AnyHit?.Invoke(this, target, info, first);
             }
         }
     }
@@ -131,13 +166,17 @@ public class Hitbox : MonoBehaviour
         Rigidbody2D rb = _area.attachedRigidbody;
         return new DamageInfo
         {
-            Amount = _damage,
-            GaugeGain = _gaugeGain,
+            // プレイヤーの攻撃は、強さの倍率を掛ける（2026-11-19：アプリのキット。GameBuffs）
+            Amount = _team == Team.Player ? Mathf.Max(_damage > 0 ? 1 : 0, Mathf.RoundToInt(_damage * GameBuffs.PlayerDamage)) : _damage,
+            GaugeGain = _team == Team.Player ? Mathf.Max(_gaugeGain > 0 ? 1 : 0, Mathf.RoundToInt(_gaugeGain * GameBuffs.PlayerGauge)) : _gaugeGain,
             SourceTeam = _team,
             Knockback = new Vector2(_knockback.x * dir, _knockback.y),
             HitStun = _hitStun,
             HitPoint = hurtbox.Collider.ClosestPoint(from),
             Source = rb != null ? rb.gameObject : gameObject,
+            Skin = Skin,
+            ErrorKind = ErrorKind ?? "",
+            Data = Data,
         };
     }
 }

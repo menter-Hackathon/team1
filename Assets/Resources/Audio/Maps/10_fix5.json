@@ -1,0 +1,321 @@
+{
+ "moves": [
+  {
+   "move": "Attack_Chrome_TabShuriken_P1",
+   "start": "se_gen_charge",
+   "release": "se_chrome_tab",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Chrome_TabShuriken_P2",
+   "start": "se_gen_charge",
+   "release": "se_chrome_tab",
+   "vol": 0.55,
+   "pitch": 1.08
+  },
+  {
+   "move": "Attack_Chrome_PopupAppear_P1",
+   "start": "",
+   "release": "se_chrome_popup",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Chrome_PopupAppear_P2",
+   "start": "",
+   "release": "se_chrome_popup",
+   "vol": 0.55,
+   "pitch": 1.1
+  },
+  {
+   "move": "Attack_Chrome_AdPopups_P1",
+   "start": "se_chrome_popup",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Chrome_AdPopups_P2",
+   "start": "se_chrome_popup",
+   "release": "",
+   "vol": 0.55,
+   "pitch": 1.1
+  },
+  {
+   "move": "Attack_Chrome_TabMultiply",
+   "start": "",
+   "release": "se_chrome_tab_multiply",
+   "vol": 0.75,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Chrome_Offline",
+   "start": "se_chrome_offline",
+   "release": "",
+   "vol": 0.9,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_Chrome_DinoRun",
+   "start": "",
+   "release": "se_chrome_dino",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_VSCode_ErrorBullet_P1",
+   "start": "se_vscode_keys",
+   "release": "se_vscode_error_bullet",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_VSCode_ErrorBullet_P2",
+   "start": "se_vscode_keys",
+   "release": "se_vscode_error_bullet",
+   "vol": 0.6,
+   "pitch": 0.94
+  },
+  {
+   "move": "Attack_VSCode_Breakpoint_P1",
+   "start": "",
+   "release": "se_vscode_breakpoint",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_VSCode_Breakpoint_P2",
+   "start": "",
+   "release": "se_vscode_breakpoint",
+   "vol": 0.8,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_VSCode_BreakpointLine_P1",
+   "start": "se_vscode_breakpoint_line",
+   "release": "",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_VSCode_BreakpointLine_P2",
+   "start": "se_vscode_breakpoint_line",
+   "release": "",
+   "vol": 0.85,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_VSCode_ErrorWindowFall",
+   "start": "",
+   "release": "se_vscode_error_window",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_VSCode_Warp",
+   "start": "",
+   "release": "se_vscode_warp",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Finder_Spotlight_P1",
+   "start": "se_finder_type",
+   "release": "se_finder_beam",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Finder_Spotlight_P2",
+   "start": "se_finder_type",
+   "release": "se_finder_beam",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Finder_SmartFolder_P1",
+   "start": "se_finder_folder",
+   "release": "se_finder_tag",
+   "vol": 0.65,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Finder_SmartFolder_P2",
+   "start": "se_finder_folder",
+   "release": "se_finder_tag",
+   "vol": 0.65,
+   "pitch": 1.06
+  },
+  {
+   "move": "Attack_Finder_PopupAppear_P2",
+   "start": "",
+   "release": "se_finder_folder",
+   "vol": 0.6,
+   "pitch": 1.2
+  },
+  {
+   "move": "Attack_App_Finder_Zip",
+   "start": "",
+   "release": "se_finder_zip",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Premiere_Keyframe_P1",
+   "start": "se_premiere_keyframe",
+   "release": "",
+   "vol": 0.75,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Premiere_Keyframe_P2",
+   "start": "se_premiere_keyframe",
+   "release": "",
+   "vol": 0.75,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Premiere_Playhead_P1",
+   "start": "se_premiere_scrub",
+   "release": "",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Premiere_Playhead_P2",
+   "start": "se_premiere_scrub",
+   "release": "",
+   "vol": 0.7,
+   "pitch": 1.1
+  },
+  {
+   "move": "Attack_Premiere_Razor",
+   "start": "se_premiere_razor",
+   "release": "",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Premiere_SpeedDuration",
+   "start": "se_premiere_speed",
+   "release": "",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_PremierePro_RippleDelete",
+   "start": "",
+   "release": "se_premiere_ripple",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Terminal_RmRf_P1",
+   "start": "se_term_type",
+   "release": "se_term_rmrf",
+   "vol": 1.0,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Terminal_RmRf_P2",
+   "start": "se_term_type",
+   "release": "se_term_rmrf",
+   "vol": 1.0,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Terminal_Chmod_P1",
+   "start": "se_term_chmod",
+   "release": "",
+   "vol": 0.9,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Terminal_Chmod_P2",
+   "start": "se_term_chmod",
+   "release": "",
+   "vol": 0.9,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Terminal_DenyPillar_P1",
+   "start": "",
+   "release": "se_term_deny",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Terminal_DenyPillar_P2",
+   "start": "",
+   "release": "se_term_deny",
+   "vol": 0.7,
+   "pitch": 0.92
+  },
+  {
+   "move": "Attack_Terminal_StringRain",
+   "start": "se_term_type_short",
+   "release": "se_term_rain",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Terminal_Fork",
+   "start": "se_term_type_short",
+   "release": "se_term_fork_shot",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_App_Terminal",
+   "start": "",
+   "release": "se_term_rm_player",
+   "vol": 0.8,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_BarGraph",
+   "start": "",
+   "release": "se_abil_bargraph",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_Bomb",
+   "start": "",
+   "release": "se_abil_bomb",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_Breakpoint",
+   "start": "",
+   "release": "se_vscode_breakpoint",
+   "vol": 0.7,
+   "pitch": 1.5
+  },
+  {
+   "move": "Attack_Ability_NewTab",
+   "start": "",
+   "release": "se_abil_newtab",
+   "vol": 0.6,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_PaintBucket",
+   "start": "",
+   "release": "se_abil_paint",
+   "vol": 0.7,
+   "pitch": 1.0
+  },
+  {
+   "move": "Attack_Ability_Bomb_Blast",
+   "start": "",
+   "release": "se_gen_explosion_small",
+   "vol": 0.85,
+   "pitch": 1.0
+  }
+ ],
+ "events": [],
+ "fallbacks": []
+}

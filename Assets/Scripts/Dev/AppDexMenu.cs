@@ -9,7 +9,8 @@ using UnityEngine.InputSystem;
 /// ・まだ正常化していないアプリはグレー、正常化したアプリは色付きで「×回数」
 /// ・上に「色が付いた数 / 全体」とメーター、下の欄に選んだアプリの詳しい表示（回数・初めての日・手に入る能力）
 /// ・ShowButton なら、閉じているときに画面の右上に「ずかん」ボタンを出す（タイトル・リザルトは自分のメニューから Open する）
-/// ・ほかの画面より手前に描き、開いている間は下の画面にクリックを通さない。矢印キーで選び、Esc・X・× で閉じる
+/// ・ほかの画面より手前に描き、開いている間は下の画面にクリックを通さない。矢印キーで選び、Esc・X・左上の赤い丸で閉じる
+/// ・2026-11-19：ウィンドウを Mac の形にした（docs/mac-look-design.md 6章の 2）。並び・中身は前のまま
 /// </summary>
 public class AppDexMenu : MonoBehaviour
 {
@@ -31,9 +32,19 @@ public class AppDexMenu : MonoBehaviour
         _selected = _entries.Count > 0 ? 0 : -1;
         _scroll = Vector2.zero;
         IsOpen = true;
+        if (GameAudio.CurrentBgm != "bgm_dex") _backBgm = GameAudio.CurrentBgm; // 閉じたら前の画面の曲に戻す
+        GameAudio.PlayBgm("bgm_dex");
     }
 
-    public void Close() => IsOpen = false;
+    string _backBgm;
+
+    public void Close()
+    {
+        if (!IsOpen) return;
+        IsOpen = false;
+        GameAudio.Event("ui_cancel");
+        if (!string.IsNullOrEmpty(_backBgm)) GameAudio.PlayBgm(_backBgm);
+    }
 
     void Update()
     {
@@ -46,7 +57,12 @@ public class AppDexMenu : MonoBehaviour
         if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) step = 1;
         if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) step = -_cols;
         if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) step = _cols;
-        if (step != 0) _selected = Mathf.Clamp(_selected + step, 0, _entries.Count - 1);
+        if (step != 0)
+        {
+            int before = _selected;
+            _selected = Mathf.Clamp(_selected + step, 0, _entries.Count - 1);
+            if (_selected != before) GameAudio.Event("ui_move");
+        }
     }
 
     void OnGUI()
@@ -72,11 +88,11 @@ public class AppDexMenu : MonoBehaviour
         float W = PixelGui.Width, H = PixelGui.Height;
         PixelGui.Fill(new Rect(0f, 0f, W, H), new Color(0.12f, 0.03f, 0.19f, 0.55f)); // 後ろを暗い紫に
         var win = new Rect(Mathf.Round((W - 600f) * 0.5f), Mathf.Round(Mathf.Max(8f, (H - 340f) * 0.5f)), 600f, Mathf.Min(340f, H - 16f));
-        Rect inner = PixelGui.Window(win);
-        if (PixelGui.CloseButton(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f))) { Close(); return; }
+        // 2026-11-19：Mac の形。題名はタイトルバーのまん中（前は APP_DEX.EXE を中の左上に）。閉じるのは左上の赤い丸＝前の右上の ×
+        Rect inner = PixelGui.Window(win, "App Dex", PixelGui.LabelPurple);
+        if (PixelGui.WindowClose(win)) { Close(); return; }
 
         float x = inner.x + 12f, y = inner.y + 8f;
-        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "APP_DEX.EXE", 8, PixelGui.LabelPurple);
         PixelGui.Text(new Rect(x, y + 14f, 200f, 20f), "アプリ図鑑", 16, PixelGui.Ink);
         int done = _entries.Count(e => e.IsDefeated);
         PixelGui.TextEn(new Rect(x + 110f, y + 19f, 120f, 10f), $"{done} / {_entries.Count}", 8, PixelGui.LabelPurple);

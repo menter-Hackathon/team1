@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f291baecb112744e48edfa087b880225, type: 3}
+  m_Name: Chrome_AdPopups_P1
+  m_EditorClassIdentifier: 
+  _shapes:
+  - {fileID: 11400000, guid: fb2707a0eb8db44448227ba86ee2d193, type: 2}
+  - {fileID: 11400000, guid: c40b60ffec2844ed9ac386bc5b83166f, type: 2}
+  - {fileID: 11400000, guid: ad4d2ebcc7f4e4b328469eb00a779ecf, type: 2}
+  - {fileID: 11400000, guid: 25354ab324c7143b7b6dc39790fe3161, type: 2}
+  _count: 2
+  _reachSide: 1.5

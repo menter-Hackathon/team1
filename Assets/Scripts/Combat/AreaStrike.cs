@@ -19,6 +19,8 @@ public class AreaStrike : MonoBehaviour
     Hitbox _hitbox;
     SpriteRenderer _visual;
     SpriteRenderer _telegraph;
+    int _index;       // 何個目か（スキンの絵の番号。2026-11-18）
+    Vector2 _size;    // 判定の大きさ（円は x が直径）
 
     public AttackData Data => _data;
     /// <summary>判定を出している間 true</summary>
@@ -28,9 +30,10 @@ public class AreaStrike : MonoBehaviour
 
     /// <summary>
     /// 判定を1つ出す。point は狙った位置（床の上に出すときは、その真下の床に置く）。
-    /// normal は面の向き（弾が当たった位置に出すとき）。delay 秒たってから予告を始める
+    /// normal は面の向き（弾が当たった位置に出すとき）。delay 秒たってから予告を始める。
+    /// index：同時に出す物の何個目か（スキンの絵の番号。2026-11-18）
     /// </summary>
-    public static AreaStrike Spawn(AttackRunner owner, AttackData data, Vector2 point, Vector2 normal, float delay)
+    public static AreaStrike Spawn(AttackRunner owner, AttackData data, Vector2 point, Vector2 normal, float delay, int index = 0)
     {
         Vector2 size = data.AreaSize;
         Vector2 up = Vector2.up;
@@ -82,6 +85,8 @@ public class AreaStrike : MonoBehaviour
         var strike = go.AddComponent<AreaStrike>();
         strike._owner = owner;
         strike._data = data;
+        strike._index = index;
+        strike._size = size;
         Sprite sprite = data.Sprite != null ? data.Sprite : (data.Shape == AreaShape.Circle ? PlaceholderSprites.Circle : PlaceholderSprites.Square);
         Vector2 visualSize = data.Shape == AreaShape.Circle ? new Vector2(size.x, size.x) : size;
         Color color = data.Color;
@@ -117,6 +122,7 @@ public class AreaStrike : MonoBehaviour
         // 予告（点滅させる）
         if (_telegraph != null)
         {
+            NotifySkin(DressPhase.Telegraph, _telegraph, _data.TelegraphTime);
             float end = Time.time + _data.TelegraphTime;
             while (Time.time < end)
             {
@@ -130,6 +136,7 @@ public class AreaStrike : MonoBehaviour
         IsHitActive = true;
         _visual.enabled = true;
         _hitbox.Activate();
+        NotifySkin(DressPhase.Active, _visual, _data.HitWindow);
         float hitEnd = Time.time + _data.HitWindow;
         if (_data.PersistDuration > 0f)
         {
@@ -152,6 +159,14 @@ public class AreaStrike : MonoBehaviour
 
         IsHitActive = false;
         _hitbox.Deactivate();
+        NotifySkin(DressPhase.Vanish, null, 0f);
         Destroy(gameObject);
+    }
+
+    /// <summary>スキンに場面を知らせる（2026-11-18：スキルの見た目 1-1）。付けたら今の絵をかくす</summary>
+    void NotifySkin(DressPhase phase, SpriteRenderer current, float duration)
+    {
+        if (_data == null) return;
+        SkinDresser.Dress(_owner, _data, gameObject, phase, current, _size, _index, transform.up, Mathf.Max(1, _data.AreaCount), duration);
     }
 }

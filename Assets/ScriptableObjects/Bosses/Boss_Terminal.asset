@@ -41,6 +41,6 @@ MonoBehaviour:
   - -7
   - 0
   - 7
-  _reward: {fileID: 0}
+  _reward: {fileID: 11400000, guid: 68fa2123f5f8c402588ae6d91ed7f0f2, type: 2}
   _extensions:
   - {fileID: 11400000, guid: 1d6f2f342323647198073018e2a9c5e3, type: 2}

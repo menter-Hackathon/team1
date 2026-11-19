@@ -2,28 +2,23 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 再生ヘッドレーザーの本体（2026-11-18。docs/app-boss-skills-design.md 3-2）。PremierePlayhead が出し、あとは自分で進む。
-/// タイムラインの帯・マーカー・再生ヘッドを出し、再生ヘッドがマーカーに触れたら、少し待って爆発・落雷（AreaStrike）を出す。
-/// 再生ヘッドの線には当たり判定を付けない。形態変化・正常化で消されたら、その場で全部消える（まだ出ていない爆発・落雷は出ない）。
+/// 再生ヘッドの本体（2026-11-18。docs/app-boss-skills-design.md 3-2）。PremierePlayhead が出し、あとは自分で進む。
+/// タイムラインの帯・マーカー・再生ヘッドを出し、再生ヘッドがマーカーに着いたら、少し待ってディップ トゥ ホワイトの白い柱（AreaStrike）を出す。
+/// 2026-11-19（docs/app-feedback-v2-design.md 5-2）：マーカーは赤い下向きの五角形（ルーラーの上）・真下へ赤い点線・柱の幅のうすい赤の帯。
+/// 炎・雷のアイコン、円の爆発、黄色の予告は出さない。
+/// 再生ヘッドの線には当たり判定を付けない。形態変化・正常化で消されたら、その場で全部消える（まだ出ていない柱は出ない）。
 /// 場に残る技ではない（技はこれが終わるまで待つ）
 /// </summary>
 public class PremierePlayheadEffect : CustomEffect
 {
-    /// <summary>マーカー1つ（アイコンの種類と、置く位置）</summary>
-    public struct Marker
-    {
-        public PremiereIcon Kind;
-        public Vector2 Position;
-    }
-
     class MarkerView
     {
-        public Marker Data;
+        public Vector2 Position;
         public Transform Root;
-        public SpriteRenderer Flash;
+        public SpriteRenderer Mark;
         public float AppearAt;
-        public int LastPass = -1;                       // 最後に触れた往復の回（同じ回で2回発動しない）
-        public readonly List<float> Pending = new List<float>(); // 発動する時刻
+        public int LastPass = -1;                       // 最後に触れた往復の回（同じ回で2回起きない）
+        public readonly List<float> Pending = new List<float>(); // 起きる時刻
         public float FlashUntil = float.NegativeInfinity;
     }
 
@@ -31,9 +26,7 @@ public class PremierePlayheadEffect : CustomEffect
     const float StripHeight = 0.5f;               // 帯の高さ
     const float LineWidth = 2f * PremiereArt.Pixel;
     const float TailWidth = 4f * PremiereArt.Pixel;
-    const float MarkerLineWidth = 1f * PremiereArt.Pixel;
-    const float RangeAlpha = 0.22f;
-    const int RangeOrder = 6, MarkerLineOrder = 24, MarkerOrder = 25, FlashOrder = 26;
+    const int MarkerOrder = 8; // 帯 6・点線 7（キャラクターより後ろ）。五角形だけ帯の上（TickOrder + 1）
     const int StripOrder = 27, TickOrder = 28, TailOrder = 29, LineOrder = 30, KnobOrder = 31;
 
     AttackRunner _owner;
@@ -54,11 +47,14 @@ public class PremierePlayheadEffect : CustomEffect
     readonly List<SpriteRenderer> _stripParts = new List<SpriteRenderer>();
     Transform _head;
     SpriteRenderer _tail;
+    // 2026-11-18：スキルの見た目（docs/app-skill-visuals-design.md 12-2）【仮】
+    Transform _timecode;                                     // 帯の右の端の時計（00:00:SS:FF）
+    readonly SpriteRenderer[] _digits = new SpriteRenderer[8];
 
-    /// <summary>走り終え、最後の爆発・落雷まで出し終えたら true（このあとすぐ消える）</summary>
+    /// <summary>走り終え、最後の白い柱まで出し終えたら true（このあとすぐ消える）</summary>
     public bool Finished { get; private set; }
 
-    public static PremierePlayheadEffect Spawn(AttackRunner owner, PremierePlayhead config, List<Marker> markers)
+    public static PremierePlayheadEffect Spawn(AttackRunner owner, PremierePlayhead config, List<Vector2> markers)
     {
         Rect arena = BattleArena.GetBounds();
         GameObject go = owner.CreateSpawnedObject("PremierePlayhead", arena.center);
@@ -75,9 +71,10 @@ public class PremierePlayheadEffect : CustomEffect
         e._lastX = arena.xMin;
         e.BuildStrip();
         e.BuildHead();
+        e.BuildTimecode();
         // 左から順に置く（再生ヘッドは左から来るので、どのマーカーも発動の 1秒以上前に見える）
-        var ordered = new List<Marker>(markers);
-        ordered.Sort((a, b) => a.Position.x.CompareTo(b.Position.x));
+        var ordered = new List<Vector2>(markers);
+        ordered.Sort((a, b) => a.x.CompareTo(b.x));
         float interval = ordered.Count > 0 ? config.PlaceTime / ordered.Count : 0f;
         for (int i = 0; i < ordered.Count; i++) e.BuildMarker(ordered[i], e._start + config.StripTime + i * interval);
         e.Tick(Time.time);
@@ -93,13 +90,22 @@ public class PremierePlayheadEffect : CustomEffect
         // 帯：横に広がって出る
         float stripK = _config.StripTime > 0f ? Mathf.Clamp01((now - _start) / _config.StripTime) : 1f;
         _strip.localScale = new Vector3(Mathf.Max(0.001f, stripK), 1f, 1f);
+        UpdateTimecode(now, stripK);
 
-        // マーカー：時間が来たら出す。光っている間は白く点滅
+        // マーカー：時間が来たら出す。着いたら白く光る（点滅）
         foreach (var m in _markers)
         {
             bool shown = now >= m.AppearAt;
             if (m.Root.gameObject.activeSelf != shown) m.Root.gameObject.SetActive(shown);
-            if (m.Flash != null) m.Flash.enabled = shown && now < m.FlashUntil && Mathf.FloorToInt(now / 0.05f) % 2 == 0;
+            if (m.Mark != null)
+            {
+                bool flash = shown && now < m.FlashUntil && Mathf.FloorToInt(now / 0.05f) % 2 == 0;
+                m.Mark.color = flash ? Color.white : PremiereTimelineArt.EnemyRed;
+                // 打たれた瞬間：150% → 100%
+                float pop = Mathf.Clamp01((now - m.AppearAt) / 0.1f);
+                float s = shown ? Mathf.Lerp(1.5f, 1f, pop) : 1f;
+                m.Mark.transform.localScale = new Vector3(s, s, 1f);
+            }
         }
 
         // 再生ヘッド
@@ -160,13 +166,7 @@ public class PremierePlayheadEffect : CustomEffect
         }
     }
 
-    float HitTime()
-    {
-        float t = 0f;
-        if (_config.Explosion != null) t = Mathf.Max(t, _config.Explosion.HitWindow);
-        if (_config.Bolt != null) t = Mathf.Max(t, _config.Bolt.HitWindow);
-        return t;
-    }
+    float HitTime() => _config.Dip != null ? _config.Dip.HitWindow : 0.3f;
 
     /// <summary>from から to へ動いた間に、マーカーの x を通ったら、発動を予約する（同じ回では1回だけ）</summary>
     void CheckCross(float from, float to, int pass, float now)
@@ -175,7 +175,7 @@ public class PremierePlayheadEffect : CustomEffect
         foreach (var m in _markers)
         {
             if (m.LastPass == pass) continue;
-            float mx = m.Data.Position.x;
+            float mx = m.Position.x;
             if (mx < lo || mx > hi) continue;
             m.LastPass = pass;
             m.Pending.Add(now + _config.TriggerDelay);
@@ -183,11 +183,61 @@ public class PremierePlayheadEffect : CustomEffect
         }
     }
 
+    /// <summary>帯の右の端の時計（白い数字 8つ。00:00:秒:コマ）</summary>
+    void BuildTimecode()
+    {
+        _timecode = PremiereArt.Child(transform, "Timecode", Vector2.zero);
+        float w = (8 * 4 + 3 * 2 + 2) * PremiereArt.Pixel;
+        _timecode.position = new Vector3(_arena.xMax - w * 0.5f - 3f * PremiereArt.Pixel, _stripTop - StripHeight * 0.5f, 0f);
+        PremiereArt.Box(_timecode, Vector2.zero, new Vector2(w, 9f * PremiereArt.Pixel), PremiereArt.TimelineBg, TickOrder, "Bg");
+        float x = -w * 0.5f + 2.5f * PremiereArt.Pixel;
+        for (int i = 0; i < 8; i++)
+        {
+            _digits[i] = RuntimeSprites.Show(_timecode, GenericFrameBits.DigitSprite("0"), new Vector2(x, 0f), TickOrder + 1, 1f, "Digit");
+            x += 4f * PremiereArt.Pixel;
+            if (i % 2 == 1 && i < 7)
+            {
+                PremiereArt.Box(_timecode, new Vector2(x - 1.5f * PremiereArt.Pixel, 1f * PremiereArt.Pixel), Vector2.one * PremiereArt.Pixel, Color.white, TickOrder + 1, "Colon");
+                PremiereArt.Box(_timecode, new Vector2(x - 1.5f * PremiereArt.Pixel, -1f * PremiereArt.Pixel), Vector2.one * PremiereArt.Pixel, Color.white, TickOrder + 1, "Colon");
+                x += 2f * PremiereArt.Pixel;
+            }
+        }
+        _timecode.gameObject.SetActive(false);
+    }
+
+    void UpdateTimecode(float now, float stripK)
+    {
+        if (_timecode == null) return;
+        bool show = stripK >= 1f;
+        if (_timecode.gameObject.activeSelf != show) _timecode.gameObject.SetActive(show);
+        if (!show) return;
+        float t = Mathf.Max(0f, now - _runStart);
+        int frames = Mathf.FloorToInt(t * 24f);
+        int ff = frames % 24, ss = (frames / 24) % 60, mm = (frames / (24 * 60)) % 60;
+        int[] v = { 0, 0, mm / 10, mm % 10, ss / 10, ss % 10, ff / 10, ff % 10 };
+        for (int i = 0; i < 8; i++) _digits[i].sprite = GenericFrameBits.DigitSprite(v[i].ToString());
+    }
+
     void Fire(MarkerView m, float now)
     {
         if (_owner == null) return;
-        if (m.Data.Kind == PremiereIcon.Fire) PremiereFx.Explosion(_owner, _config.Explosion, m.Data.Position);
-        else PremiereFx.Bolt(_owner, _config.Bolt, m.Data.Position);
+        SpawnDip(_owner, _config.Dip, m.Position.x);
+    }
+
+    /// <summary>
+    /// ディップ トゥ ホワイトの白い柱を1本出す（x の真下の床から天井まで）。攻撃データは Area・箱・床の上に置く・予告 0。
+    /// エラーの絵の種類は "Dip"（PremiereSkin がメディアオフラインを出す。前の落雷のアセットでも雷の絵にならないように）
+    /// </summary>
+    public static AreaStrike SpawnDip(AttackRunner owner, AttackData data, float x)
+    {
+        if (owner == null || data == null) return null;
+        Rect arena = BattleArena.GetBounds();
+        AreaStrike strike = AreaStrike.Spawn(owner, data, new Vector2(x, arena.yMin + 0.5f), Vector2.up, 0f);
+        if (strike == null) return null;
+        Hitbox hb = strike.GetComponent<Hitbox>();
+        if (hb != null) hb.SetErrorKind("Dip");
+        PremiereDip.Attach(strike.transform, data.AreaSize.x, data.AreaSize.y, Mathf.Max(0.2f, data.HitWindow));
+        return strike;
     }
 
     // ───────── 見た目を作る ─────────
@@ -225,39 +275,15 @@ public class PremierePlayheadEffect : CustomEffect
         _head.gameObject.SetActive(false);
     }
 
-    /// <summary>マーカー：アイコン・帯へ伸びる細い線・起きる範囲（うすい円か柱）・発動前に光る白い四角</summary>
-    void BuildMarker(Marker data, float appearAt)
+    /// <summary>マーカー：ルーラー（帯）の上の赤い五角形・真下へ床まで赤い点線・柱の幅のうすい赤の帯（置いた瞬間から見せる）</summary>
+    void BuildMarker(Vector2 position, float appearAt)
     {
-        var m = new MarkerView { Data = data, AppearAt = appearAt };
-        m.Root = PremiereArt.Child(transform, $"Marker_{data.Kind}", Vector2.zero);
-        m.Root.position = data.Position;
-        Color color = PremiereArt.IconColor(data.Kind);
-
-        // 起きる範囲（置いた瞬間から見せる）
-        if (data.Kind == PremiereIcon.Fire)
-        {
-            float d = _config.Explosion != null ? _config.Explosion.AreaSize.x : 3f;
-            AttackRunner.AddVisual(m.Root, PlaceholderSprites.Circle, PremiereArt.WithAlpha(color, RangeAlpha), new Vector2(d, d), RangeOrder, "Range");
-        }
-        else
-        {
-            float w = _config.Bolt != null ? _config.Bolt.AreaSize.x : 1.5f;
-            var range = PremiereArt.Box(m.Root, Vector2.zero, new Vector2(w, _arena.height), PremiereArt.WithAlpha(color, RangeAlpha), RangeOrder, "Range");
-            range.transform.position = new Vector3(data.Position.x, _arena.center.y, 0f);
-        }
-
-        // 帯へ伸びる線（タイムラインのここで起きる、の印）
-        float lineBottom = data.Position.y + 0.5f;
-        float lineLen = _stripBottom - lineBottom;
-        if (lineLen > 0.01f)
-        {
-            var line = PremiereArt.Box(m.Root, Vector2.zero, new Vector2(MarkerLineWidth, lineLen), color, MarkerLineOrder, "Link");
-            line.transform.position = new Vector3(data.Position.x, lineBottom + lineLen * 0.5f, 0f);
-        }
-
-        RuntimeSprites.Show(m.Root, PremiereArt.Icon(data.Kind), Vector2.zero, MarkerOrder, 1f, "Icon");
-        m.Flash = PremiereArt.Box(m.Root, Vector2.zero, Vector2.one, new Color(1f, 1f, 1f, 0.85f), FlashOrder, "Flash");
-        m.Flash.enabled = false;
+        var m = new MarkerView { Position = position, AppearAt = appearAt };
+        float rulerY = _stripBottom + 0.5f * PremiereArt.Pixel;
+        m.Root = PremiereTimelineArt.BuildMarker(transform, position.x, rulerY, _arena.yMin, _stripBottom, _config.DipWidth, MarkerOrder);
+        Transform mark = m.Root.Find("Marker");
+        m.Mark = mark != null ? mark.GetComponent<SpriteRenderer>() : null;
+        if (m.Mark != null) m.Mark.sortingOrder = TickOrder + 1; // 帯の上に見える
         m.Root.gameObject.SetActive(false);
         _markers.Add(m);
     }

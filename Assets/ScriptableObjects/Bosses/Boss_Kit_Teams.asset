@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Kit_Teams
+  m_EditorClassIdentifier: 
+  _displayName: Teams
+  _icon: {fileID: 21300000, guid: cff00d750c9014cf4961165058c7867a, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: 6a5ace48f9acc404eb7681d1d22e94fe, type: 2}
+    - {fileID: 11400000, guid: ff165cc3b006c4367a12fad37f60e1fb, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 0652a2388f3814dfea6de56b5b70a229, type: 2}
+    - {fileID: 11400000, guid: 5266194a076ce4e9890ab43b84aa00da, type: 2}
+    - {fileID: 11400000, guid: e8ca598909f7e425ab2d292edb8e7eb5, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 2
+  _movement: 1
+  _warpAttack: {fileID: 0}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 0}
+  _extensions: []

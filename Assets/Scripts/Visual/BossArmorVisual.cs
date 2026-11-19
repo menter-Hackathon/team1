@@ -31,6 +31,18 @@ public class BossArmorVisual : MonoBehaviour
 
     VirusGauge _gauge;
     int _stage;
+    float _glitchUntil;      // ウィンドウの乱れ（2026-11-18：当たったエフェクト 1-3）
+    SpriteRenderer _glitch;  // 乱れの絵（まん中の帯を横にずらして重ねる）
+    readonly System.Collections.Generic.Dictionary<Sprite, Sprite> _midCache = new System.Collections.Generic.Dictionary<Sprite, Sprite>();
+
+    /// <summary>着ているウィンドウの絵（当たったときに白くする所。HitFx・FlashOverlay が使う）</summary>
+    public SpriteRenderer Window => _window;
+
+    /// <summary>
+    /// ウィンドウの乱れ（重い・とどめ。1-3）：ウィンドウの絵を横に3つに切って、まん中だけ 2ドット横へずらす（seconds 秒）。
+    /// 元の絵はさわらず、まん中の帯を重ねる
+    /// </summary>
+    public void Glitch(float seconds) => _glitchUntil = Mathf.Max(_glitchUntil, Time.time + seconds);
     float _flashUntil;
     float _nextBlink;
     float _blinkUntil;
@@ -101,7 +113,12 @@ public class BossArmorVisual : MonoBehaviour
         _stage = Mathf.Max(_stage, stage);
     }
 
-    void OnGained(DamageInfo _) => _flashUntil = Time.time + 0.08f;
+    // 2026-11-18：当たったときの光り方は HitFx（ウィンドウだけ白く重ねる。煙と顔は白くしない 1-3）に任せた。
+    // 白く重ねる絵が作れないときだけ、今までの光り方（ウィンドウを少し暗く）に戻す
+    void OnGained(DamageInfo _)
+    {
+        if (!FlashOverlay.Available) _flashUntil = Time.time + 0.08f;
+    }
 
     void OnEjected()
     {
@@ -150,8 +167,10 @@ public class BossArmorVisual : MonoBehaviour
             Apply(_window, alpha > 0.01f, w);
             _window.transform.localPosition = _windowHome;
             if (_windowStages != null && _windowStages.Length > 0) _window.sprite = _windowStages[Mathf.Clamp(_stage, 0, _windowStages.Length - 1)];
+            UpdateGlitch(now, alpha);
             return;
         }
+        UpdateGlitch(now, 0f);
 
         // ゲージ100%：きれいになったウィンドウが、きらめきながら上へ消える
         float t = _releasedAt >= 0f ? (now - _releasedAt) / Mathf.Max(0.01f, _releaseTime) : 1f;
@@ -169,6 +188,51 @@ public class BossArmorVisual : MonoBehaviour
             Vfx.Sparkle(p + offset);
             _sparkles++;
         }
+    }
+
+    /// <summary>乱れの絵（まん中の帯を 2ドット横へずらして、ウィンドウの手前に重ねる）</summary>
+    void UpdateGlitch(float now, float alpha)
+    {
+        bool on = now < _glitchUntil && alpha > 0.01f && _window.enabled && _window.sprite != null;
+        if (!on)
+        {
+            if (_glitch != null) _glitch.enabled = false;
+            return;
+        }
+        if (_glitch == null)
+        {
+            var go = new GameObject("WindowGlitch");
+            go.layer = _window.gameObject.layer;
+            go.transform.SetParent(_window.transform, false);
+            _glitch = go.AddComponent<SpriteRenderer>();
+        }
+        Sprite mid = MiddleBand(_window.sprite);
+        _glitch.enabled = mid != null;
+        if (mid == null) return;
+        _glitch.sprite = mid;
+        _glitch.flipX = _window.flipX;
+        _glitch.sortingLayerID = _window.sortingLayerID;
+        _glitch.sortingOrder = _window.sortingOrder;
+        _glitch.color = new Color(1f, 1f, 1f, alpha);
+        float px = 2f / Mathf.Max(1f, _window.sprite.pixelsPerUnit);
+        _glitch.transform.localPosition = new Vector3(Mathf.FloorToInt(now / 0.02f) % 2 == 0 ? px : -px, 0f, -0.015f);
+    }
+
+    /// <summary>ウィンドウの絵の、まん中の 1/3 の帯（同じテクスチャの一部。読み出しできない絵でも作れる）</summary>
+    Sprite MiddleBand(Sprite src)
+    {
+        if (src == null) return null;
+        if (_midCache.TryGetValue(src, out Sprite cached) && cached != null) return cached;
+        Rect r = src.rect;
+        float h3 = Mathf.Floor(r.height / 3f);
+        if (h3 < 1f) return null;
+        var band = new Rect(r.x, r.y + h3, r.width, r.height - h3 * 2f);
+        Vector2 pivot = new Vector2(src.pivot.x / band.width, (src.pivot.y - h3) / band.height);
+        Sprite made = Sprite.Create(src.texture, band, pivot, src.pixelsPerUnit, 0, SpriteMeshType.FullRect);
+        made.name = src.name + "_GlitchBand";
+        made.hideFlags = HideFlags.DontSave;
+        _midCache[src] = made;
+        return made;
     }
 
     static void Apply(SpriteRenderer r, bool show, Color c)

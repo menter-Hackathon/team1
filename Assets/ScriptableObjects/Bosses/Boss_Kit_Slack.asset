@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Kit_Slack
+  m_EditorClassIdentifier: 
+  _displayName: Slack
+  _icon: {fileID: 21300000, guid: cff00d750c9014cf4961165058c7867a, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: 097a474bfc32a45ae9cbd44209dfa1cd, type: 2}
+    - {fileID: 11400000, guid: 2c265c4409e224486b381d88e64dc8be, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 98f5fb2b5e52841bd8937a2425bec3aa, type: 2}
+    - {fileID: 11400000, guid: 7121f377cba8e4d59b9a5870c05054f7, type: 2}
+    - {fileID: 11400000, guid: 5f110aaeb603249a28fe8f0f2645567d, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 2
+  _movement: 1
+  _warpAttack: {fileID: 0}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 0}
+  _extensions: []
