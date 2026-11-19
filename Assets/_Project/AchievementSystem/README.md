@@ -29,7 +29,7 @@ AchievementSystem/
 |---|---|
 | id | 実績ID。アイコンのファイル名と対応 |
 | category | PCの使い方 / プレイ / アプリ図鑑 |
-| name, description | 表示名と条件の説明 |
+| name, description | 表示名と条件の説明（デトックスは週ごとに判定し、達成できなければ次の週にやり直し） |
 | rank | Bronze / Silver / Gold（一覧の枠の色にだけ使う。報酬はなし） |
 | game_effect | ゲームへの影響（新入りのみ） |
 | trigger | LaunchScan（起動時）/ InPlay（プレイ中）/ OnPurify（正常化したとき） |
@@ -39,4 +39,5 @@ AchievementSystem/
 ## app_categories.csv
 
 - category が「エンタメ」「SNS」のアプリだけがデトックスの対象、「作業」が週末エンジニアの対象
-- match_key は空欄。スクリーンタイムで取れるアプリ名（例：「Visual Studio Code」「Discord - 一緒にしゃべっ…」の正式名）を入れて照合に使う
+- match_key：スクリーンタイムで取れるアプリ名（例：「Microsoft Excel」「ターミナル」）。複数は「|」で区切る。空欄ならアプリ名で照合する（「Discord - 一緒にしゃべっ…」のような「名前 -」で始まる名前にも当たる）
+- スキルが実装されているアプリ（ScriptableObjects/Skills の Skill_App_*）は、すべて表に入れてある。照合名は能力の表（AbilityCatalog）の AppNames と同じ
