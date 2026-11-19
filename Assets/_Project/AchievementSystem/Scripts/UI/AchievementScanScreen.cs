@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 namespace Team1.Achievements
 {
     /// <summary>
-    /// 起動時スキャン画面：前回の起動から解除した実績を、アイコン・名前・ランク・具体的な理由つきで並べる。
+    /// 起動時スキャン画面：前回の起動から解除した実績を、アイコン・名前・褒める一言・達成したアプリで並べる（「前回から8件達成！」）。
     /// 最後に「もうすぐ解除」の実績を1件、進み具合のバーつきで出す。解除が0件なら出さない（AchievementService が呼ばない）。
     /// 3件ずつのページ。Enter / Z で次へ（最後のページで閉じる）、Esc で閉じる。
     /// </summary>
@@ -81,7 +81,7 @@ namespace Team1.Achievements
             if (action == MacDesktopGui.WindowAction.Close || action == MacDesktopGui.WindowAction.Minimize) { Close(); PixelGui.End(); return; }
 
             float x = inner.x + 2f, y = inner.y, w = inner.width - 4f;
-            PixelGui.Text(new Rect(x, y, w, 18f), $"前回の起動から {_items.Count}件 の実績を解除しました", 12, MacDesktopGui.Ink);
+            PixelGui.Text(new Rect(x, y, w, 18f), $"前回から{_items.Count}件達成！", 12, MacDesktopGui.Ink);
             y += 22f;
             for (int i = _page * PerPage; i < Mathf.Min(_items.Count, (_page + 1) * PerPage); i++)
             {
@@ -113,9 +113,12 @@ namespace Team1.Achievements
             MacDesktopGui.Card(r, false);
             AchievementSpec spec = u.Spec;
             AchievementGui.Icon(new Rect(r.x + 5f, r.y + 5f, 36f, 36f), _service.Definition(spec.Id), spec.Rank, true, _service.Frame(spec.Rank));
-            PixelGui.TextFit(new Rect(r.x + 48f, r.y + 4f, r.width - 140f, 16f), spec.Name, 12, MacDesktopGui.Ink);
-            PixelGui.Text(new Rect(r.xMax - 90f, r.y + 4f, 84f, 16f), AchievementLabels.Rank(spec.Rank), 12, AchievementGui.RankColor(spec.Rank), TextAnchor.MiddleRight);
-            PixelGui.TextFit(new Rect(r.x + 48f, r.y + 23f, r.width - 54f, 16f), u.Reason ?? spec.Description, 12, PixelGui.SubText);
+            // 実績一覧と同じく、名前・褒める一言・達成したアプリだけ（長い理由の文とランクの文字は出さない）
+            string app = string.IsNullOrEmpty(u.App) ? null : $"{u.App}で達成！";
+            float appW = app != null ? Mathf.Min(170f, PixelGui.Measure(app, PixelGui.Style(false, 12)) + 4f) : 0f;
+            PixelGui.TextFit(new Rect(r.x + 48f, r.y + 4f, r.width - 60f - appW, 16f), spec.Name, 12, PixelGui.SubText);
+            if (app != null) PixelGui.TextFit(new Rect(r.xMax - 6f - appW, r.y + 4f, appW, 16f), app, 12, MacDesktopGui.Blue, TextAnchor.MiddleRight);
+            PixelGui.TextFit(new Rect(r.x + 48f, r.y + 23f, r.width - 54f, 16f), string.IsNullOrEmpty(spec.Praise) ? spec.Name : spec.Praise, 12, MacDesktopGui.Ink);
         }
 
         void DrawAlmost(Rect r, AchievementSpec spec)
