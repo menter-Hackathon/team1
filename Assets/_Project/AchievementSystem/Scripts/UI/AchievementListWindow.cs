@@ -155,8 +155,16 @@ namespace Team1.Achievements
             // 褒める1行と、達成したアプリだけ
             string praise = string.IsNullOrEmpty(spec.Praise) ? spec.Name : spec.Praise;
             PixelGui.TextFit(new Rect(r.x, r.y + 58f, r.width, 16f), praise, 12, isUnlocked ? MacDesktopGui.Ink : MacDesktopGui.Muted);
-            if (isUnlocked && !string.IsNullOrEmpty(record.app))
-                PixelGui.TextFit(new Rect(r.x, r.y + 78f, r.width, 16f), $"{record.app} で達成", 12, MacDesktopGui.Blue);
+            if (isUnlocked)
+                PixelGui.TextFit(new Rect(r.x, r.y + 78f, r.width, 16f), AchievedLine(record), 12, MacDesktopGui.Blue);
+        }
+
+        /// <summary>「11/19　Unityで達成！」。アプリが分からない実績は「11/19　達成！」</summary>
+        static string AchievedLine(AchievementRecord record)
+        {
+            System.DateTime? at = record.UnlockedAt;
+            string date = at.HasValue ? $"{at.Value.Month}/{at.Value.Day}　" : "";
+            return string.IsNullOrEmpty(record.app) ? $"{date}達成！" : $"{date}{record.app}で達成！";
         }
     }
 }
