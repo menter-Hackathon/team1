@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Steam
+  m_EditorClassIdentifier: 
+  _displayName: Steam
+  _icon: {fileID: -3176703109058337814, guid: 9660e7b6335404cc3b9cf833f353edb0, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: 9b6d0b1a4da854cb99d93bdef83f65d9, type: 2}
+    - {fileID: 11400000, guid: 678e6c9983eb244f99f23cfa82df8607, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 0
+    Sequential: 0
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 9b6d0b1a4da854cb99d93bdef83f65d9, type: 2}
+    - {fileID: 11400000, guid: 678e6c9983eb244f99f23cfa82df8607, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 0
+    Sequential: 0
+  _movement: 0
+  _warpAttack: {fileID: 0}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 11400000, guid: ba2228fa3d4bc47d28763faae5da8c79, type: 2}
+  _normalIcon: {fileID: -3176703109058337814, guid: 9660e7b6335404cc3b9cf833f353edb0, type: 3}
+  _passive: {fileID: 11400000, guid: a4489043a5e474d24883f48109d50b39, type: 2}

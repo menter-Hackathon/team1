@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Office
+  m_EditorClassIdentifier: 
+  _displayName: Office
+  _icon: {fileID: 3697920097261007272, guid: b886934c74f554939a30678f2843ce74, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: fb5bd0828d19c4398b4dc29f555f77cc, type: 2}
+    - {fileID: 11400000, guid: 7c9ce590549b7445799dfebc75b5db11, type: 2}
+    - {fileID: 11400000, guid: 9ea484e1ed059423e9baeb204849bc22, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 0
+    Sequential: 1
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: fb5bd0828d19c4398b4dc29f555f77cc, type: 2}
+    - {fileID: 11400000, guid: 7c9ce590549b7445799dfebc75b5db11, type: 2}
+    - {fileID: 11400000, guid: 9ea484e1ed059423e9baeb204849bc22, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 0
+    Sequential: 1
+  _movement: 0
+  _warpAttack: {fileID: 0}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 11400000, guid: 33cbf97f8dc254498889bcfb8d5b77e6, type: 2}
+  _normalIcon: {fileID: 3697920097261007272, guid: b886934c74f554939a30678f2843ce74, type: 3}
+  _passive: {fileID: 0}
