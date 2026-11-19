@@ -5,7 +5,8 @@ using UnityEngine;
 /// 物理で動く物（Unity スキルの Cube・Sphere・Capsule）。AttackRunner が AttackData（種類＝PhysicsObject）から作る。
 /// 流れ：（予告の点滅：ボス版だけ）→ 出る絵（Unity_Spawn）の「本体を出すコマ」で本体が現れる → 物理で落ちる・転がる・倒れる → 寿命で消える。
 /// ・本体は Rigidbody2D（Dynamic）と Box／Circle／Capsule のコライダー。レイヤーは地形（Ground）なので、プレイヤーも雑魚も上に乗れる
-/// ・相手に当たるのは、一定以上の速さで落ちているときだけ（床に置いてあるだけの物は当たらない）。1回落ちるごとに同じ相手には1回
+/// ・相手に当たるのは、一定以上の速さで落ちているときだけ（床に置いてあるだけの物は当たらない）。1回落ちるごとに同じ相手には1回。
+///   「触れたら当たる」がオンのとき（プレイヤー版）は、置いてある物や転がっている物に触れても当たる（同じ相手には一定の間をあけて）
 /// ・相手に当たったとき、または一定以上の速さでぶつかって止まったとき、着地の砂煙（Unity_Impact）を出す
 /// ・同時に置いておける数を超えたら、AttackRunner が古い物から Despawn する
 /// </summary>
@@ -26,6 +27,7 @@ public class PhysicsPrimitive : MonoBehaviour
     bool _flipX;
     float _lastFastFall = float.NegativeInfinity;
     float _lastImpact = float.NegativeInfinity;
+    float _contactResetAt;
 
     public AttackData Data => _data;
     /// <summary>何番目の形か（0＝Cube、1＝Sphere、2＝Capsule）</summary>
@@ -215,6 +217,16 @@ public class PhysicsPrimitive : MonoBehaviour
     {
         if (!IsReleased || IsGone) return;
         float now = Time.time;
+        if (_data.DamageOnContact)
+        {
+            // 触れたら当たる：ずっと当たる状態にして、一定の間ごとに「当てた相手」を数え直す
+            if (!_hitbox.IsActive || now >= _contactResetAt)
+            {
+                _hitbox.Activate();
+                _contactResetAt = now + _data.ContactRehitInterval;
+            }
+            return;
+        }
         if (-_rb.velocity.y >= _data.DamageFallSpeed) _lastFastFall = now;
         bool dangerous = now - _lastFastFall <= HitGrace;
         if (dangerous && !_hitbox.IsActive) _hitbox.Activate(); // 落ち始めるたびに「当てた相手」を数え直す

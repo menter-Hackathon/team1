@@ -329,7 +329,8 @@ public static class OfficeUnitySteamBuilder
             I(so, "_spawnCount", 1);
             F(so, "_telegraphTime", 0f);
             Physics(so, Prims(""), maxAlive: 3, lifetime: 8f,
-                Frames(U + "Unity_Spawn.png"), Frames(U + "Unity_Impact.png"), null);
+                Frames(U + "Unity_Spawn.png"), Frames(U + "Unity_Impact.png"), null,
+                damageOnContact: true); // プレイヤー版：押し潰したとき以外も、触れた敵に当たる（2026-11-19）
         });
         void UnityBoss(SerializedObject so, int count)
         {
@@ -340,7 +341,8 @@ public static class OfficeUnitySteamBuilder
             F(so, "_minDistanceFromTarget", 2.5f);
             F(so, "_telegraphTime", 0.7f); // 予告を 0.7 秒
             Physics(so, Prims("_Virus"), maxAlive: 6, lifetime: 6f,
-                Frames(U + "Unity_Spawn_Virus.png"), Frames(U + "Unity_Impact_Virus.png"), Frames(U + "Unity_SpawnWarning_Virus.png"));
+                Frames(U + "Unity_Spawn_Virus.png"), Frames(U + "Unity_Impact_Virus.png"), Frames(U + "Unity_SpawnWarning_Virus.png"),
+                damageOnContact: false); // ボス版：押し潰したときだけ
             B(so, "_warningGizmo", true); // 予告は Unity の移動ツールの矢印（2026-11-19）
         }
         a.UnityBossSpawnP1 = Attack("Unity/Attack_UnityBoss_Spawn_P1", so => UnityBoss(so, 2));
@@ -503,7 +505,7 @@ public static class OfficeUnitySteamBuilder
         Anim(so, frames, 0, 14f, false);
     }
 
-    static void Physics(SerializedObject so, PrimitiveEntry[] prims, int maxAlive, float lifetime, Sprite[] spawn, Sprite[] impact, Sprite[] warning)
+    static void Physics(SerializedObject so, PrimitiveEntry[] prims, int maxAlive, float lifetime, Sprite[] spawn, Sprite[] impact, Sprite[] warning, bool damageOnContact)
     {
         var arr = so.FindProperty("_primitives");
         arr.arraySize = prims.Length;
@@ -517,6 +519,7 @@ public static class OfficeUnitySteamBuilder
         I(so, "_maxAlive", maxAlive);
         F(so, "_objectLifetime", lifetime);
         F(so, "_damageFallSpeed", 4f);
+        B(so, "_damageOnContact", damageOnContact);
         F(so, "_impactSpeed", 5f);
         SetSprites(so, "_spawnFrames", spawn);
         F(so, "_spawnFrameRate", 14f);

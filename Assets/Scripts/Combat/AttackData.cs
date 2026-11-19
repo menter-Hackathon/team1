@@ -159,6 +159,10 @@ public class AttackData : ScriptableObject
     [SerializeField, Min(0.1f)] float _objectLifetime = 8f;
     [Tooltip("この速さ（マス/秒）以上で落ちているときだけ、相手に当たる。床に置いてあるだけの物は当たらない")]
     [SerializeField, Min(0f)] float _damageFallSpeed = 4f;
+    [Tooltip("オン：落ちていなくても、触れた相手に当たる（押し潰したとき以外も。プレイヤー版。2026-11-19）。オフ：上の速さ以上で落ちているときだけ（ボス版）")]
+    [SerializeField] bool _damageOnContact;
+    [Tooltip("触れて当たるとき、同じ相手にもう一度当たるまでの秒数")]
+    [SerializeField, Min(0.05f)] float _contactRehitInterval = 0.6f;
     [Tooltip("この速さ（マス/秒）以上でぶつかって止まったら、着地の砂煙を出す")]
     [SerializeField, Min(0f)] float _impactSpeed = 5f;
     [Tooltip("置き方が AroundTarget のとき、狙う相手の頭からどれだけ上に出すか（マス）")]
@@ -268,6 +272,8 @@ public class AttackData : ScriptableObject
     public int MaxAlive => _maxAlive;
     public float ObjectLifetime => _objectLifetime;
     public float DamageFallSpeed => _damageFallSpeed;
+    public bool DamageOnContact => _damageOnContact;
+    public float ContactRehitInterval => _contactRehitInterval;
     public float ImpactSpeed => _impactSpeed;
     public float DropHeight => _dropHeight;
     public Sprite[] SpawnFrames => _spawnFrames;
