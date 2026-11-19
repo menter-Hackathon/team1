@@ -1,0 +1,21 @@
+﻿app_name,category,detox_target,match_key,note
+YouTube,エンタメ,TRUE,,
+Netflix,エンタメ,TRUE,,
+Prime Video,エンタメ,TRUE,,
+Spotify,作業,FALSE,,作業中のBGMも含むので、対象にするか要検討
+Steam,エンタメ,TRUE,,
+X,SNS,TRUE,,
+Instagram,SNS,TRUE,,
+TikTok,SNS,TRUE,,
+Discord,SNS,TRUE,,
+LINE,SNS,TRUE,,連絡用途もあるので要検討
+Slack,作業,FALSE,,
+Microsoft Teams,作業,FALSE,,
+Zoom,作業,FALSE,,
+Visual Studio Code,作業,FALSE,,
+Unity,作業,FALSE,,
+Excel / Word / PowerPoint,作業,FALSE,,Office系としてまとめる
+Figma,作業,FALSE,,
+Notion,作業,FALSE,,
+Chrome,作業,FALSE,,ブラウザは中身がわからないので対象外
+Safari,作業,FALSE,,ブラウザは中身がわからないので対象外
