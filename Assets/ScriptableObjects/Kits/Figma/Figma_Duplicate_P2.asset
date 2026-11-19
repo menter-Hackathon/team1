@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60e25be979827471f95c805b4099e0dd, type: 3}
+  m_Name: Figma_Duplicate_P2
+  m_EditorClassIdentifier: 
+  _telegraph: 0.8
+  _splitInterval: 0.5
+  _splits: 2
+  _fan1: 20
+  _fan2: 40

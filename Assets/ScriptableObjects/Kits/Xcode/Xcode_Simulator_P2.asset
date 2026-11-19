@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 039a55008d8674414b0522a4e705d439, type: 3}
+  m_Name: Xcode_Simulator_P2
+  m_EditorClassIdentifier: 
+  _bullet: {fileID: 11400000, guid: c8b575ac6b798448a997a1d2256df216, type: 2}
+  _phones: 3
+  _shots: 2
+  _telegraph: 0.8
+  _aimTime: 0.8
+  _minDistance: 3
+  _size: {x: 2, y: 4}

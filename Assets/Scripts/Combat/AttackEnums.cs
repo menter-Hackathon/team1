@@ -83,6 +83,17 @@ public enum SummonType
     Chaser = 1,
     /// <summary>敵の雑魚（プレハブ）を出す（2026-11-19：チャットのボスのチャットbot）。出したらすぐ次の行動へ</summary>
     Minion = 2,
+    /// ロックオン（2026-11-18：Zoom の能力「ギャラリービュー」）。画面に映っている相手に印を付けてから、それぞれへレーザーを撃つ。
+    /// 画面に相手がいないときは使えない（クールタイムも始まらない）
+    /// </summary>
+    LockOn = 5,
+    /// <summary>
+    /// 専用の技（2026-11-18：Finder・Premiere Pro・Terminal の技、zip圧縮など）。中身は AttackData の「専用の技」（CustomAttack）が持つ。
+    /// docs/app-boss-skills-design.md
+    /// </summary>
+    Custom = 6,
+    /// <summary>物理で動く物（Unity の Cube／Sphere／Capsule）。落ちる速さが一定以上のときだけ当たる。足場になる</summary>
+    PhysicsObject = 5,
 }
 
 /// <summary>弾の狙い方</summary>
@@ -103,6 +114,8 @@ public enum AreaAnchor
     Forward = 1,
     /// <summary>弾が地形に当たった位置（弾の追撃として出すとき）</summary>
     HitPoint = 2,
+    /// <summary>持ち主の前方Nマスで、高さは狙う相手に合わせる（ボスの折れ線グラフ）</summary>
+    ForwardAtTargetHeight = 3,
 }
 
 /// <summary>判定の形</summary>
@@ -110,6 +123,8 @@ public enum AreaShape
 {
     Box = 0,
     Circle = 1,
+    /// <summary>折れ線（EdgeCollider2D）。点は AttackData の「折れ線の点」</summary>
+    Polyline = 2,
 }
 
 /// <summary>落下物・設置物の置き方</summary>
@@ -124,6 +139,16 @@ public enum SpawnPlacement
     /// 1つ目は狙う相手の体に重なる位置、残りは狙う相手から一定以上離れた空中のランダムな位置
     /// </summary>
     AppearAroundTarget = 2,
+    /// <summary>持ち主の前方やや上に出す（弾を出す位置のずれ）。プレイヤーの Unity スキル</summary>
+    ForwardAbove = 3,
+}
+
+/// <summary>物理オブジェクトの形（コライダーの種類）</summary>
+public enum PrimitiveShape
+{
+    Box = 0,
+    Circle = 1,
+    Capsule = 2,
 }
 
 /// <summary>瞬間移動の行き先</summary>

@@ -1,0 +1,33 @@
+{
+  "id": "Claude",
+  "desc": "あたたかい白の会話。まん中の列、やわらかいオレンジの印、下に入力の箱",
+  "base": "#d3ccbd",
+  "elements": [
+    {"type": "rect", "x": 10, "y": 0, "w": 50, "h": 180, "color": "#c2baa9"},
+    {"type": "line", "x1": 60, "y1": 0, "x2": 60, "y2": 180, "color": "#b5ad9c"},
+    {"type": "icon", "name": "menu", "x": 14, "y": 26, "size": 7, "color": "#7d7565"},
+    {"type": "text", "x": 14, "y": 38, "text": "+ NEW CHAT", "color": "#b06c50", "scale": 1},
+    {"type": "text", "x": 14, "y": 47, "text": "CHATS", "color": "#7d7565", "scale": 1},
+    {"type": "text", "x": 14, "y": 56, "text": "PROJECTS", "color": "#7d7565", "scale": 1},
+    {"type": "text", "x": 14, "y": 70, "text": "RECENTS", "color": "#9a9282", "scale": 1},
+    {"type": "bars", "x": 14, "y": 79, "w": 42, "rows": 8, "row_h": 9, "bar_h": 2, "color": "#a39b8a", "seed": 31, "min": 0.5, "indent": 0},
+    {"type": "circle", "cx": 17, "cy": 163, "r": 3, "color": "#9a9282", "fill": true},
+    {"type": "bars", "x": 23, "y": 162, "w": 24, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#8a8272", "seed": 2, "min": 0.9, "indent": 0},
+    {"type": "bars", "x": 160, "y": 10, "w": 50, "rows": 1, "row_h": 7, "bar_h": 2, "color": "#a39b8a", "seed": 3, "min": 0.9, "indent": 0},
+    {"type": "text", "x": 214, "y": 8, "text": ">", "color": "#a39b8a", "scale": 1},
+    {"type": "icon", "name": "sun", "x": 128, "y": 40, "size": 9, "color": "#c98466"},
+    {"type": "text", "x": 142, "y": 41, "text": "GOOD EVENING", "color": "#8a7f6c", "scale": 2}
+  ],
+  "stage": {
+    "hide_folders": true,
+    "platforms": [
+      {"id": "answer1", "x": 86, "y": 127, "w": 52, "h": 13, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 52, "h": 13, "color": "#8f8672", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 50, "h": 11, "color": "#ebe6da", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 48, "h": 1, "color": "#f6f2e9"}, {"type": "rect", "x": 5, "y": 4, "w": 40, "h": 2, "color": "#9a917e"}, {"type": "rect", "x": 5, "y": 8, "w": 32, "h": 2, "color": "#c0b8a6"}], "behavior": {"type": "static"}},
+      {"id": "user1", "x": 194, "y": 127, "w": 54, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 54, "h": 11, "color": "#8f8672", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 52, "h": 9, "color": "#d9d2c2", "r": 2}, {"type": "rect", "x": 2, "y": 1, "w": 50, "h": 1, "color": "#e6e0d2"}, {"type": "rect", "x": 6, "y": 5, "w": 42, "h": 2, "color": "#9a917e"}], "behavior": {"type": "static"}},
+      {"id": "thinking", "x": 136, "y": 100, "w": 52, "h": 12, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 52, "h": 12, "color": "#b9785c", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 50, "h": 10, "color": "#e4dccb", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 48, "h": 1, "color": "#f1eadc"}, {"type": "icon", "name": "sun", "x": 4, "y": 3, "size": 5, "color": "#c98466"}, {"type": "text", "x": 12, "y": 4, "text": "THINKING", "color": "#a8795f", "scale": 1}], "behavior": {"type": "blink", "on": 5, "off": 2.5, "warn": 1.2, "offset": 0}},
+      {"id": "answer2", "x": 70, "y": 100, "w": 40, "h": 13, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 40, "h": 13, "color": "#8f8672", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 38, "h": 11, "color": "#ebe6da", "r": 1}, {"type": "rect", "x": 2, "y": 1, "w": 36, "h": 1, "color": "#f6f2e9"}, {"type": "rect", "x": 5, "y": 4, "w": 25, "h": 2, "color": "#9a917e"}, {"type": "rect", "x": 5, "y": 8, "w": 23, "h": 2, "color": "#c0b8a6"}], "behavior": {"type": "static"}},
+      {"id": "artifact", "x": 244, "y": 96, "w": 54, "h": 22, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 54, "h": 22, "color": "#8f8672", "r": 2}, {"type": "rrect", "x": 1, "y": 1, "w": 52, "h": 20, "color": "#efeadf", "r": 1}, {"type": "rect", "x": 1, "y": 1, "w": 52, "h": 6, "color": "#d6cdb9"}, {"type": "text", "x": 4, "y": 2, "text": "ARTIFACT", "color": "#857c69", "scale": 1}, {"type": "rect", "x": 5, "y": 10, "w": 30, "h": 2, "color": "#b9a58c"}, {"type": "rect", "x": 9, "y": 14, "w": 36, "h": 2, "color": "#c0b8a6"}, {"type": "rect", "x": 9, "y": 18, "w": 22, "h": 2, "color": "#c0b8a6"}], "behavior": {"type": "static"}},
+      {"id": "input", "x": 104, "y": 152, "w": 116, "h": 14, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 116, "h": 14, "color": "#8f8672", "r": 4}, {"type": "rrect", "x": 1, "y": 1, "w": 114, "h": 12, "color": "#f0ebe0", "r": 3}, {"type": "rect", "x": 2, "y": 1, "w": 112, "h": 1, "color": "#faf7f0"}, {"type": "icon", "name": "plus", "x": 5, "y": 4, "size": 5, "color": "#8a8272"}, {"type": "text", "x": 14, "y": 5, "text": "REPLY...", "color": "#a39b8a", "scale": 1}], "behavior": {"type": "static"}},
+      {"id": "retry", "x": 226, "y": 154, "w": 27, "h": 11, "skin": [{"type": "rrect", "x": 0, "y": 0, "w": 27, "h": 11, "color": "#8f5038", "r": 3}, {"type": "rrect", "x": 1, "y": 1, "w": 25, "h": 9, "color": "#c9795c", "r": 2}, {"type": "rect", "x": 3, "y": 1, "w": 21, "h": 1, "color": "#fff3ea66"}, {"type": "text", "x": 4, "y": 3, "text": "RETRY", "color": "#fff3ea", "scale": 1}], "behavior": {"type": "button", "effect": "refill", "cooldown": 20}}
+    ]
+  }
+}

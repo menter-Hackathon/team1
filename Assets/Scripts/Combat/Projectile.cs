@@ -18,14 +18,18 @@ public class Projectile : MonoBehaviour
     float _dieAt;
     float _castRadius;
     bool _dead;
+    bool _landed;     // 着地をスキンに知らせたか（1回だけ）
+    int _index;       // 何発目か（スキンの絵の番号）
     readonly RaycastHit2D[] _hits = new RaycastHit2D[4];
 
     public AttackData Data => _data;
     public Vector2 Velocity => _velocity;
     public AttackRunner Owner => _owner;
+    /// <summary>地形（床・壁）に当たったとき（弾, 当たった位置）。見た目用（2026-11-18：文字列の雨の字がはねる）</summary>
+    public event System.Action<Projectile, Vector2> HitTerrain;
 
-    /// <summary>弾を1発作る</summary>
-    public static Projectile Spawn(AttackRunner owner, AttackData data, Vector2 position, Vector2 direction)
+    /// <summary>弾を1発作る。index：何発目か（連射・扇の番号。スキンの絵に使う。2026-11-18）</summary>
+    public static Projectile Spawn(AttackRunner owner, AttackData data, Vector2 position, Vector2 direction, int index = 0)
     {
         GameObject go = owner.CreateSpawnedObject($"Projectile_{data.name}", position);
 
@@ -38,7 +42,7 @@ public class Projectile : MonoBehaviour
         col.isTrigger = true;
         col.size = data.HitSize;
 
-        AttackRunner.AddVisual(go.transform, data.Sprite, data.Color, data.HitSize);
+        SpriteRenderer visual = AttackRunner.AddVisual(go.transform, data.Sprite, data.Color, data.HitSize);
 
         var p = go.AddComponent<Projectile>();
         p._owner = owner;
@@ -51,7 +55,19 @@ public class Projectile : MonoBehaviour
         p._hitbox.Hit += p.OnHit;
         p._hitbox.Activate();
         p.FaceVelocity();
+        p._index = index;
+        // スキンの絵（撃った瞬間＝本体）。付けたら今の絵をかくす（2026-11-18：スキルの見た目）
+        SkinDresser.Dress(owner, data, go, DressPhase.Active, visual, data.HitSize, index, direction.normalized,
+            Mathf.Max(1, data.ProjectileCount) * Mathf.Max(1, data.RepeatCount), data.Lifetime);
         return p;
+    }
+
+    /// <summary>スキンに場面を知らせる（着地・消える）</summary>
+    void NotifySkin(DressPhase phase)
+    {
+        if (_data == null) return;
+        Vector2 dir = _velocity.sqrMagnitude > 0.0001f ? _velocity.normalized : Vector2.zero;
+        SkinDresser.Dress(_owner, _data, gameObject, phase, null, _data.HitSize, _index, dir);
     }
 
     void OnDestroy()
@@ -99,12 +115,28 @@ public class Projectile : MonoBehaviour
 
             if (hitTerrain)
             {
+                if (!_landed && HitTerrain != null)
+                {
+                    try { HitTerrain(this, hit.point); }
+                    catch (System.Exception e) { Debug.LogWarning($"弾の HitTerrain で例外：{e}"); } // 見た目の例外で、弾の動きを止めない
+                }
                 if (_data.OnTerrainHit != null) _owner.SpawnFollowUp(_data.OnTerrainHit, hit.point, hit.normal);
                 if (_data.DestroyOnTerrain)
                 {
                     _rb.position = hit.centroid;
+                    transform.position = hit.centroid; // スキンの着地の絵を、当たった所に出す
+                    if (!_landed)
+                    {
+                        _landed = true;
+                        NotifySkin(DressPhase.Landed);
+                    }
                     Die();
                     return;
+                }
+                if (!_landed)
+                {
+                    _landed = true;
+                    NotifySkin(DressPhase.Landed);
                 }
             }
         }
@@ -157,6 +189,7 @@ public class Projectile : MonoBehaviour
         if (_dead) return;
         _dead = true;
         if (_hitbox != null) _hitbox.Deactivate();
+        NotifySkin(DressPhase.Vanish); // スキンの消える絵（例外はスキンの入口で止める）
         Destroy(gameObject);
     }
 }

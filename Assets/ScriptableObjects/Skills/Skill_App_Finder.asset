@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dd5947c20f542efa401be9630a1460c, type: 3}
   m_Name: Skill_App_Finder
   m_EditorClassIdentifier: 
-  _displayName: "Finder\uFF08\u4EEE\uFF09"
+  _displayName: "zip\u5727\u7E2E"
   _icon: {fileID: 0}
   _category: 0
-  _attack: {fileID: 11400000, guid: e46afe35d410a40c19ec8d3c86a3bb23, type: 2}
+  _attack: {fileID: 11400000, guid: 3acafe3b413da4c29bd401c22521b573, type: 2}
   _theme: {fileID: 0}
+  _skin: 0

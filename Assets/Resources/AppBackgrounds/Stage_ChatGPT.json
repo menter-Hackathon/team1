@@ -1,0 +1,103 @@
+{
+ "label": "ChatGPT",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "answer1",
+   "x": -3.2,
+   "y": 2.6,
+   "w": 3.4667,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/ChatGPT__answer1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "user1",
+   "x": 4.0667,
+   "y": 2.6667,
+   "w": 3.6,
+   "h": 0.7333,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/ChatGPT__user1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "stream",
+   "x": 0.2,
+   "y": 4.0,
+   "w": 3.3333,
+   "h": 0.8667,
+   "top": 4.4333,
+   "sprite": "AppBackgrounds/Parts/ChatGPT__stream",
+   "behavior": "scroll",
+   "params": {
+    "type": "scroll",
+    "speed": 0.3333333333333333,
+    "range": 2.0,
+    "dir": "up",
+    "offset": 0
+   }
+  },
+  {
+   "id": "answer2",
+   "x": -4.5333,
+   "y": 4.5333,
+   "w": 2.6667,
+   "h": 0.8667,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/ChatGPT__answer2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "user2",
+   "x": 7.4667,
+   "y": 4.6,
+   "w": 3.4667,
+   "h": 0.7333,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/ChatGPT__user2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "input",
+   "x": 0.0,
+   "y": 0.9,
+   "w": 8.0,
+   "h": 0.9333,
+   "top": 1.3667,
+   "sprite": "AppBackgrounds/Parts/ChatGPT__input",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "stop",
+   "x": 5.1667,
+   "y": 0.8667,
+   "w": 1.5333,
+   "h": 0.7333,
+   "top": 1.2333,
+   "sprite": "AppBackgrounds/Parts/ChatGPT__stop",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "clear_bullets",
+    "cooldown": 12
+   }
+  }
+ ]
+}

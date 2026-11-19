@@ -20,4 +20,10 @@ public struct DamageInfo
     public Vector2 HitPoint;
     /// <summary>攻撃した本人（弾なら撃った人）。無い場合は null</summary>
     public GameObject Source;
+    /// <summary>攻撃のスキン（どのアプリの見た目か。2026-11-18：当たったときのエフェクト）。入っていなければ None</summary>
+    public SkinId Skin;
+    /// <summary>エラーの絵の種類（短い名前。空でよい。Terminal の技ごとの字など）</summary>
+    public string ErrorKind;
+    /// <summary>攻撃データ（当たった絵を、能力・技ごとに変えるとき用。無い場合は null）</summary>
+    public AttackData Data;
 }

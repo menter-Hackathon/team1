@@ -1,0 +1,99 @@
+{
+ "label": "Calendar",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "ev_mon",
+   "x": -3.5333,
+   "y": 2.5667,
+   "w": 4.4,
+   "h": 0.9333,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Calendar__ev_mon",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "ev_thu",
+   "x": 3.2,
+   "y": 2.5667,
+   "w": 4.4,
+   "h": 0.9333,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Calendar__ev_thu",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "ev_wed",
+   "x": -0.2,
+   "y": 4.3667,
+   "w": 2.1333,
+   "h": 1.2,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Calendar__ev_wed",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "ev_sat",
+   "x": 6.6,
+   "y": 4.3667,
+   "w": 2.1333,
+   "h": 1.2,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Calendar__ev_sat",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "ev_tue",
+   "x": -2.4667,
+   "y": 6.3,
+   "w": 2.1333,
+   "h": 1.0667,
+   "top": 6.8333,
+   "sprite": "AppBackgrounds/Parts/Calendar__ev_tue",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "ev_sun",
+   "x": 8.8,
+   "y": 2.5667,
+   "w": 2.0,
+   "h": 0.9333,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Calendar__ev_sun",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "today",
+   "x": 9.0,
+   "y": 1.1,
+   "w": 1.2,
+   "h": 0.8,
+   "top": 1.5,
+   "sprite": "AppBackgrounds/Parts/Calendar__today",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "clear_bullets",
+    "cooldown": 20
+   }
+  }
+ ]
+}

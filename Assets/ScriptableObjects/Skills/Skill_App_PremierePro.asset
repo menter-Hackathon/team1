@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dd5947c20f542efa401be9630a1460c, type: 3}
   m_Name: Skill_App_PremierePro
   m_EditorClassIdentifier: 
-  _displayName: "Premiere Pro\uFF08\u4EEE\uFF09"
+  _displayName: "\u30EA\u30C3\u30D7\u30EB\u524A\u9664"
   _icon: {fileID: 0}
   _category: 7
-  _attack: {fileID: 11400000, guid: e938530aecb934cf88df5a51f1b2870e, type: 2}
+  _attack: {fileID: 11400000, guid: 3ccb668e80c7745d1b2653a1a4214925, type: 2}
   _theme: {fileID: 0}
+  _skin: 0

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71aef87f2e9514941b00d437f0509343, type: 3}
+  m_Name: Spotify_Queue_P2
+  m_EditorClassIdentifier: 
+  _lane: {fileID: 11400000, guid: 9caa1124dce4a4a7c87ca6c93dd3cd98, type: 2}
+  _aimed: {fileID: 11400000, guid: f4a8ccfdcaf2240b3a77900d225ab892, type: 2}
+  _count: 5
+  _shuffleTime: 0.5
+  _showTime: 1
+  _interval: 0.5
+  _telegraph: 0.8

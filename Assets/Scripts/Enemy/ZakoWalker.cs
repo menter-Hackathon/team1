@@ -141,7 +141,7 @@ public class ZakoWalker : MonoBehaviour
     void Turn()
     {
         Direction = -Direction;
-        _velocity.x = Direction * _speed;
+        _velocity.x = Direction * _speed * GameBuffs.ZakoSpeed;
     }
 
     /// <summary>進む方向の足元の少し先に床があるか</summary>

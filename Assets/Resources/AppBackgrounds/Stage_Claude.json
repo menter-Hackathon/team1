@@ -1,0 +1,103 @@
+{
+ "label": "Claude",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "answer1",
+   "x": -3.2,
+   "y": 2.6,
+   "w": 3.4667,
+   "h": 0.8667,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Claude__answer1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "user1",
+   "x": 4.0667,
+   "y": 2.6667,
+   "w": 3.6,
+   "h": 0.7333,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Claude__user1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "thinking",
+   "x": 0.1333,
+   "y": 4.4333,
+   "w": 3.4667,
+   "h": 0.8,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Claude__thinking",
+   "behavior": "blink",
+   "params": {
+    "type": "blink",
+    "on": 5,
+    "off": 2.5,
+    "warn": 1.2,
+    "offset": 0
+   }
+  },
+  {
+   "id": "answer2",
+   "x": -4.6667,
+   "y": 4.4,
+   "w": 2.6667,
+   "h": 0.8667,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Claude__answer2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "artifact",
+   "x": 7.4,
+   "y": 4.3667,
+   "w": 3.6,
+   "h": 1.4667,
+   "top": 5.1,
+   "sprite": "AppBackgrounds/Parts/Claude__artifact",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "input",
+   "x": 0.1333,
+   "y": 0.9,
+   "w": 7.7333,
+   "h": 0.9333,
+   "top": 1.3667,
+   "sprite": "AppBackgrounds/Parts/Claude__input",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "retry",
+   "x": 5.3,
+   "y": 0.8667,
+   "w": 1.8,
+   "h": 0.7333,
+   "top": 1.2333,
+   "sprite": "AppBackgrounds/Parts/Claude__retry",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "refill",
+    "cooldown": 20
+   }
+  }
+ ]
+}

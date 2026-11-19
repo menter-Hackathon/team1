@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3450ed6f2cf594e938db33df0fe81969, type: 3}
+  m_Name: Custom_App_Chrome_DinoRun
+  m_EditorClassIdentifier: 
+  _speed: 11
+  _distance: 12
+  _size: {x: 1.2, y: 1.3}
+  _jumpLook: 3
+  _jumpTrigger: 1.5
+  _jumpHeight: 3.5
+  _jumpTime: 0.6

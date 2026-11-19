@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Kit_Notion
+  m_EditorClassIdentifier: 
+  _displayName: Notion
+  _icon: {fileID: 21300000, guid: 2e8cceb07611046c6bd5ef954c59b758, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: 54fc861660f5a44bcbb9a2dd4efffa7f, type: 2}
+    - {fileID: 11400000, guid: 059eac60e2c5f4c89bb24e5b78e7f6be, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 07a43e18f936848dabd9ed2d5b9b64ee, type: 2}
+    - {fileID: 11400000, guid: 8dcada86a18ee4e08b6191e9c19dbc24, type: 2}
+    - {fileID: 11400000, guid: fc4b75e2f85e94693b1dc0961689c91a, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 2
+  _movement: 2
+  _warpAttack: {fileID: 11400000, guid: 602ed07e5f4924eb981368a23e76a0c1, type: 2}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 0}
+  _extensions: []

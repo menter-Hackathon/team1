@@ -55,7 +55,9 @@ public static class ArtAssets
         R("Generated/Stage/Tile_Floor.png", pivot: new Vector2(0.5f, 1f), border: new Vector4(0, 0, 0, 3), readable: true),
         R("Generated/Stage/Tile_Wall.png", border: new Vector4(3, 0, 3, 0), readable: true),
         R("Generated/Stage/Platform_Folder.png", pivot: new Vector2(0.5f, 5f / 6f), border: new Vector4(9, 0, 3, 0), readable: true),
-        R("Generated/Stage/Platform_Window.png", pivot: new Vector2(0.5f, 1f), border: new Vector4(3, 0, 3, 0), readable: true),
+        R("Generated/Stage/Platform_Window.png", pivot: new Vector2(0.5f, 1f), border: new Vector4(8, 0, 3, 0), readable: true), // 2026-11-19：左の信号機の点（Mac）を伸ばさない
+        R("Generated/Stage/Mac_Frame.png", border: new Vector4(3, 3, 3, 9)),   // 2026-11-19：Mac のウィンドウのふち（盾のウィンドウ）
+        R("Generated/Stage/Mac_Lights.png"),                                   // 2026-11-19：信号機の3つの丸
         R("Generated/Stage/Room_Editor.png"),
         R("Generated/Stage/Room_TitleBar.png", border: new Vector4(1, 0, 1, 0), readable: true),
         R("Generated/Hazards/Hazard_Notification.png"),
@@ -184,6 +186,7 @@ public static class ArtAssets
         R("Generated/UI/Status_Cooldown.png"),
         R("Generated/UI/Status_Jump.png"),
         R("Generated/UI/Icon_Packet.png"),
+        R("Generated/UI/Icon_GalleryView.png"),
     };
 
     [MenuItem("Tools/Team1/グラフィックを適用")]
@@ -509,6 +512,8 @@ public static class ArtAssets
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_Packet.asset", "Generated/UI/Icon_Packet.png");
         SetRef<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "_theme", GetOrCreateTheme("Theme_AI", AiTheme));
         SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_AiAssistant.asset", "Generated/UI/Icon_AiAssistant.png");
+        // アプリ専用の能力（2026-11-18）：Zoom のギャラリービュー
+        SetIcon<SkillDefinition>("Assets/ScriptableObjects/Skills/Skill_App_Zoom.asset", "Generated/UI/Icon_GalleryView.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_Chrome.asset", "Generated/Bosses/Icon_Browser.png");
         SetIcon<BossProfile>("Assets/ScriptableObjects/Bosses/Boss_VSCode.asset", "Generated/Bosses/Icon_Editor.png");
     }

@@ -1,0 +1,567 @@
+{
+ "id": "Gemini",
+ "desc": "青〜紫のきらめきの会話。左に細いサイドバー、下に丸い入力の箱",
+ "base": "#c5c9d6",
+ "elements": [
+  {
+   "type": "rect",
+   "x": 10,
+   "y": 0,
+   "w": 46,
+   "h": 180,
+   "color": "#b3b8ca"
+  },
+  {
+   "type": "icon",
+   "name": "menu",
+   "x": 14,
+   "y": 26,
+   "size": 7,
+   "color": "#6c7290"
+  },
+  {
+   "type": "text",
+   "x": 14,
+   "y": 38,
+   "text": "+ NEW",
+   "color": "#5f6a9c",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 14,
+   "y": 50,
+   "text": "SAVED",
+   "color": "#7b819c",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 14,
+   "y": 64,
+   "text": "RECENT",
+   "color": "#8d93ab",
+   "scale": 1
+  },
+  {
+   "type": "bars",
+   "x": 14,
+   "y": 73,
+   "w": 38,
+   "rows": 8,
+   "row_h": 9,
+   "bar_h": 2,
+   "color": "#9aa0b8",
+   "seed": 41,
+   "min": 0.5,
+   "indent": 0
+  },
+  {
+   "type": "icon",
+   "name": "gear",
+   "x": 14,
+   "y": 159,
+   "size": 7,
+   "color": "#7b819c"
+  },
+  {
+   "type": "text",
+   "x": 156,
+   "y": 9,
+   "text": "PRO",
+   "color": "#6c7290",
+   "scale": 1
+  },
+  {
+   "type": "text",
+   "x": 172,
+   "y": 9,
+   "text": ">",
+   "color": "#8d93ab",
+   "scale": 1
+  },
+  {
+   "type": "icon",
+   "name": "star",
+   "x": 112,
+   "y": 42,
+   "size": 9,
+   "color": "#6f8fe0"
+  },
+  {
+   "type": "text",
+   "x": 126,
+   "y": 43,
+   "text": "HEL",
+   "color": "#6f8fe0",
+   "scale": 2
+  },
+  {
+   "type": "text",
+   "x": 150,
+   "y": 43,
+   "text": "LO",
+   "color": "#9a80d8",
+   "scale": 2
+  },
+  {
+   "type": "text",
+   "x": 166,
+   "y": 43,
+   "text": ",",
+   "color": "#b884c8",
+   "scale": 2
+  },
+  {
+   "type": "text",
+   "x": 178,
+   "y": 43,
+   "text": "YOU",
+   "color": "#c88aae",
+   "scale": 2
+  },
+  {
+   "type": "text",
+   "x": 126,
+   "y": 58,
+   "text": "WHERE SHOULD WE START?",
+   "color": "#a9aec2",
+   "scale": 1
+  },
+  {
+   "type": "noise",
+   "x": 70,
+   "y": 34,
+   "w": 236,
+   "h": 100,
+   "color": "#dfe3f2",
+   "density": 0.004,
+   "seed": 7
+  }
+ ],
+ "stage": {
+  "hide_folders": true,
+  "platforms": [
+   {
+    "id": "chip1",
+    "x": 88,
+    "y": 127,
+    "w": 46,
+    "h": 12,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 46,
+      "h": 12,
+      "color": "#7b819c",
+      "r": 3
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 44,
+      "h": 10,
+      "color": "#e4e7f0",
+      "r": 2
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 42,
+      "h": 1,
+      "color": "#f3f4f9"
+     },
+     {
+      "type": "icon",
+      "name": "star",
+      "x": 4,
+      "y": 3,
+      "size": 5,
+      "color": "#6f8fe0"
+     },
+     {
+      "type": "rect",
+      "x": 12,
+      "y": 5,
+      "w": 28,
+      "h": 2,
+      "color": "#8d93ab"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "chip2",
+    "x": 192,
+    "y": 127,
+    "w": 46,
+    "h": 12,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 46,
+      "h": 12,
+      "color": "#7b819c",
+      "r": 3
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 44,
+      "h": 10,
+      "color": "#e4e7f0",
+      "r": 2
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 42,
+      "h": 1,
+      "color": "#f3f4f9"
+     },
+     {
+      "type": "icon",
+      "name": "star",
+      "x": 4,
+      "y": 3,
+      "size": 5,
+      "color": "#9a80d8"
+     },
+     {
+      "type": "rect",
+      "x": 12,
+      "y": 5,
+      "w": 28,
+      "h": 2,
+      "color": "#8d93ab"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "reply1",
+    "x": 72,
+    "y": 98,
+    "w": 40,
+    "h": 13,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 13,
+      "color": "#7b819c",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 38,
+      "h": 11,
+      "color": "#e4e7f0",
+      "r": 1
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 36,
+      "h": 1,
+      "color": "#f3f4f9"
+     },
+     {
+      "type": "gradient",
+      "x": 1,
+      "y": 1,
+      "w": 38,
+      "h": 1,
+      "c1": "#6f8fe0",
+      "c2": "#9a80d8",
+      "dir": "h",
+      "steps": 6
+     },
+     {
+      "type": "rect",
+      "x": 5,
+      "y": 5,
+      "w": 26,
+      "h": 2,
+      "color": "#8d93ab"
+     },
+     {
+      "type": "rect",
+      "x": 5,
+      "y": 9,
+      "w": 18,
+      "h": 2,
+      "color": "#b4b9cb"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "reply2",
+    "x": 132,
+    "y": 98,
+    "w": 42,
+    "h": 13,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 42,
+      "h": 13,
+      "color": "#7b819c",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 40,
+      "h": 11,
+      "color": "#e4e7f0",
+      "r": 1
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 38,
+      "h": 1,
+      "color": "#f3f4f9"
+     },
+     {
+      "type": "gradient",
+      "x": 1,
+      "y": 1,
+      "w": 40,
+      "h": 1,
+      "c1": "#6f8fe0",
+      "c2": "#c88aae",
+      "dir": "h",
+      "steps": 6
+     },
+     {
+      "type": "rect",
+      "x": 5,
+      "y": 5,
+      "w": 28,
+      "h": 2,
+      "color": "#8d93ab"
+     },
+     {
+      "type": "rect",
+      "x": 5,
+      "y": 9,
+      "w": 20,
+      "h": 2,
+      "color": "#b4b9cb"
+     }
+    ],
+    "behavior": {
+     "type": "move",
+     "dx": 50,
+     "dy": 0,
+     "period": 7,
+     "offset": 0
+    }
+   },
+   {
+    "id": "reply3",
+    "x": 250,
+    "y": 98,
+    "w": 46,
+    "h": 13,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 46,
+      "h": 13,
+      "color": "#7b819c",
+      "r": 2
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 44,
+      "h": 11,
+      "color": "#e4e7f0",
+      "r": 1
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 42,
+      "h": 1,
+      "color": "#f3f4f9"
+     },
+     {
+      "type": "gradient",
+      "x": 1,
+      "y": 1,
+      "w": 44,
+      "h": 1,
+      "c1": "#9a80d8",
+      "c2": "#c88aae",
+      "dir": "h",
+      "steps": 6
+     },
+     {
+      "type": "rect",
+      "x": 5,
+      "y": 5,
+      "w": 32,
+      "h": 2,
+      "color": "#8d93ab"
+     },
+     {
+      "type": "rect",
+      "x": 5,
+      "y": 9,
+      "w": 24,
+      "h": 2,
+      "color": "#b4b9cb"
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "input",
+    "x": 100,
+    "y": 152,
+    "w": 120,
+    "h": 14,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 120,
+      "h": 14,
+      "color": "#7b819c",
+      "r": 4
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 118,
+      "h": 12,
+      "color": "#eceef5",
+      "r": 3
+     },
+     {
+      "type": "rect",
+      "x": 2,
+      "y": 1,
+      "w": 116,
+      "h": 1,
+      "color": "#f8f9fc"
+     },
+     {
+      "type": "gradient",
+      "x": 4,
+      "y": 0,
+      "w": 112,
+      "h": 1,
+      "c1": "#6f8fe0",
+      "c2": "#c88aae",
+      "dir": "h",
+      "steps": 8
+     },
+     {
+      "type": "text",
+      "x": 6,
+      "y": 5,
+      "text": "ENTER A PROMPT",
+      "color": "#9aa0b8",
+      "scale": 1
+     }
+    ],
+    "behavior": {
+     "type": "static"
+    }
+   },
+   {
+    "id": "spark",
+    "x": 226,
+    "y": 154,
+    "w": 23,
+    "h": 11,
+    "skin": [
+     {
+      "type": "rrect",
+      "x": 0,
+      "y": 0,
+      "w": 23,
+      "h": 11,
+      "color": "#4c5296",
+      "r": 3
+     },
+     {
+      "type": "rrect",
+      "x": 1,
+      "y": 1,
+      "w": 21,
+      "h": 9,
+      "color": "#7d86dc",
+      "r": 2
+     },
+     {
+      "type": "rect",
+      "x": 3,
+      "y": 1,
+      "w": 17,
+      "h": 1,
+      "color": "#f4f2ff66"
+     },
+     {
+      "type": "icon",
+      "name": "star",
+      "x": 3,
+      "y": 3,
+      "size": 5,
+      "color": "#f4f2ff"
+     },
+     {
+      "type": "text",
+      "x": 11,
+      "y": 3,
+      "text": "GO",
+      "color": "#f4f2ff",
+      "scale": 1
+     }
+    ],
+    "behavior": {
+     "type": "button",
+     "effect": "stun_boss",
+     "cooldown": 15
+    }
+   }
+  ]
+ }
+}

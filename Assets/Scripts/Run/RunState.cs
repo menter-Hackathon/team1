@@ -14,16 +14,38 @@ public class StagePlan
     public BossProfile Profile;
     /// <summary>手に入る能力。無ければ null</summary>
     public SkillDefinition Reward;
-    /// <summary>代用ボス（対応表に無いアプリ）の見た目（アイコン・色）。対応表のボスは null</summary>
+    /// <summary>
+    /// アイコンから作る見た目（アイコン・色）。代用ボス（対応表に無いアプリ）・ラスボス・「アイコンから見た目を作る」の行（Office・Unity・Steam）で入る。
+    /// ほかの対応表のボスは null
+    /// </summary>
     public AppVisual Visual;
     /// <summary>アプリのアイコン（16 ドット）。ランを作るときに1回だけ用意する（画面の描画中にアイコンを読みに行かないため）</summary>
     public Sprite Icon16;
     /// <summary>ラスボス（Terminal。毎回、最後のステージ。2026-11-18）</summary>
     public bool IsFinal;
-    public bool IsStandIn => Visual != null;
+    public bool IsStandIn => Visual != null && !IsFinal && (App == null || !App.IconLook);
+    /// <summary>ステージの色：表の色。空なら、アイコンの色（2026-11-19）</summary>
+    public AppTheme Theme => App != null && App.Theme != null ? App.Theme : Visual?.Theme;
 
     public double UsageHours => UsageSeconds / 3600.0;
     public string DisplayName => App != null ? App.DisplayName : "?";
+}
+
+/// <summary>
+/// あるアプリのボスの決め方の結果（2026-11-19：RunPlanner.ResolveBoss。ランと図鑑で同じ決め方を使う）
+/// </summary>
+public class BossLook
+{
+    /// <summary>対応表の行（代用ボスは、その場で作った行）</summary>
+    public AppEntry App;
+    /// <summary>アイコンから作る見た目（代用ボス・ラスボス。着るウィンドウはアイコンから作る）。対応表のボスは null（プレハブの絵のまま）</summary>
+    public AppVisual Visual;
+    public bool IsFinal;
+
+    public BossController Prefab => App != null ? App.BossPrefab : null;
+    /// <summary>技を読むプロフィール（本物のアプリだけの設定があればそれ。CreatePlan と同じ）</summary>
+    public BossProfile Profile => App == null ? null : App.OwnProfile != null ? App.OwnProfile : App.Profile;
+    public AppTheme Theme => App != null ? App.Theme : null;
 }
 
 /// <summary>正常化したアプリの記録（リザルト用）</summary>
@@ -145,7 +167,7 @@ public static class RunPlanner
         var apps = catalog.Apps.ToList();
         foreach (var pair in seconds.OrderBy(p => p.Value).ThenBy(p => apps.IndexOf(p.Key)))
         {
-            plans.Add(CreatePlan(catalog, pair.Key, pair.Value));
+            plans.Add(CreatePlan(catalog, pair.Key, pair.Value, null, IconLookOf(pair.Key, null)));
         }
         return plans;
     }
@@ -155,8 +177,10 @@ public static class RunPlanner
         float t = catalog.StrengthFromSeconds(usageSeconds);
 
         // 複製しない（能力ごとのレベル・クールタイムを、同じ能力として数えるため）
-        SkillDefinition reward = rewardOverride != null ? rewardOverride : app.Profile.Reward;
-        BossProfile profile = app.Profile.CreateScaledCopy(app.GaugeMax.Lerp(t), app.Phase2Wait.Lerp(t), reward);
+        // 本物のアプリだけの設定があれば、それを使う（2026-11-19：Chrome・VS Code の専用の技。代用ボスは OwnProfile が空）
+        BossProfile baseProfile = app.OwnProfile != null ? app.OwnProfile : app.Profile;
+        SkillDefinition reward = rewardOverride != null ? rewardOverride : baseProfile.Reward;
+        BossProfile profile = baseProfile.CreateScaledCopy(app.GaugeMax.Lerp(t), app.Phase2Wait.Lerp(t), reward);
         if (visual != null) profile.SetLook(app.DisplayName, visual.Icon12);
 
         return new StagePlan
@@ -185,7 +209,7 @@ public static class RunPlanner
     {
         var plans = new List<StagePlan>();
         if (catalog == null || usages == null) return plans;
-        var templates = catalog.Apps.Where(a => a != null && a.BossPrefab != null && a.Profile != null).ToList();
+        var templates = catalog.Apps.Where(a => a != null && a.BossPrefab != null && a.Profile != null && !a.ExcludeFromStandIn).ToList();
         if (templates.Count == 0) return plans;
         var top = BossPool(catalog, abilities, usages, poolSize);
 
@@ -200,7 +224,7 @@ public static class RunPlanner
             if (p.entry != null)
             {
                 SkillDefinition own = abilities != null ? abilities.FindAppSkill(p.row)?.Skill : null; // 対応表のアプリでも、専用の能力があればそれ
-                plans.Add(CreatePlan(catalog, p.entry, p.seconds, own));
+                plans.Add(CreatePlan(catalog, p.entry, p.seconds, own, IconLookOf(p.entry, p.row)));
                 continue;
             }
             AppUsageRow row = p.row;
@@ -237,8 +261,66 @@ public static class RunPlanner
                 Phase2Wait = template.Phase2Wait,
             };
             plans.Add(CreatePlan(catalog, standIn, p.seconds, reward, visual));
+            BossLook look = StandIn(catalog, abilities, row, templates);
+            SkillDefinition reward = abilities != null ? abilities.SkillFor(row) : null;
+            if (reward == null) reward = AppVisuals.Generate(row, abilities, null);
+            plans.Add(CreatePlan(catalog, look.App, p.seconds, reward, look.Visual));
         }
         return plans;
+    }
+
+    /// <summary>
+    /// アプリの行 → そのアプリのボス（プレハブ・プロフィール・見た目）。ランと同じ決め方（2026-11-19：図鑑の詳しい画面から呼ぶ。
+    /// docs/ui-text-and-dex-design.md 3-4）。ラスボス（Terminal）→ 対応表のアプリ（Chrome・VS Code）→ 代用ボス の順。作れなければ null
+    /// </summary>
+    public static BossLook ResolveBoss(AppCatalog catalog, AbilityCatalog abilities, AppUsageRow row)
+    {
+        if (catalog == null) return null;
+        if (catalog.IsFinalBossApp(row.BundleId, row.Name)) return FinalBossLook(catalog);
+        AppEntry entry = catalog.Find(row.BundleId) ?? catalog.FindByName(row.Name);
+        if (entry != null && entry.BossPrefab != null && entry.Profile != null) return new BossLook { App = entry };
+        var templates = catalog.Apps.Where(a => a != null && a.BossPrefab != null && a.Profile != null).ToList();
+        return templates.Count > 0 ? StandIn(catalog, abilities, row, templates) : null;
+    }
+
+    /// <summary>
+    /// 代用ボス（対応表に無いアプリ）の行を作る（PlanRandom と ResolveBoss が使う）：見た目はアイコンから、
+    /// 技はカテゴリの近いボス（ブラウザ → Chrome、開発 → VS Code、ほかは名前で決める）。このアプリ専用のボスの設定があれば、技と強さはそれ。
+    /// templates：プレハブとプロフィールのある対応表の行（1つ以上）
+    /// </summary>
+    static BossLook StandIn(AppCatalog catalog, AbilityCatalog abilities, AppUsageRow row, List<AppEntry> templates)
+    {
+        AbilityCategoryEntry category = abilities != null ? abilities.Find(row) : null;
+        AppEntry template = templates.FirstOrDefault(a => category != null && a.Category == category.Category)
+            ?? templates[(int)(PixelIcon.Hash(row.Name) % (uint)templates.Count)];
+        // このアプリ専用のボスの設定（Finder・Premiere Pro）があれば、技と強さだけそれにする（2026-11-18）
+        AppBossEntry ownBoss = catalog.FindAppBoss(row);
+        if (ownBoss != null && ownBoss.BossPrefab != null) template = templates.FirstOrDefault(a => a.BossPrefab == ownBoss.BossPrefab) ?? template;
+        AppVisual visual = AppVisuals.Get(row);
+        var standIn = new AppEntry
+        {
+            DisplayName = row.Name,
+            BundleIdPrefixes = string.IsNullOrEmpty(row.BundleId) ? System.Array.Empty<string>() : new[] { row.BundleId }, // 図鑑のアイコン用
+            Category = category != null ? category.Category : SkillCategory.Unknown,
+            BossPrefab = ownBoss != null && ownBoss.BossPrefab != null ? ownBoss.BossPrefab : template.BossPrefab,
+            Profile = ownBoss != null ? ownBoss.Profile : template.Profile,
+            SpawnPosition = template.SpawnPosition,
+            StageScene = catalog.StandInStageScene,
+            Theme = visual != null ? visual.Theme : template.Theme,
+            GaugeMax = ownBoss != null ? ownBoss.GaugeMax : template.GaugeMax,
+            Phase2Wait = ownBoss != null ? ownBoss.Phase2Wait : template.Phase2Wait,
+        };
+        return new BossLook { App = standIn, Visual = visual };
+    }
+
+    /// <summary>ラスボス（Terminal）の見た目：代用ボスと同じく、本物のアイコンから作る。ステージの色は表のテーマ。表に無ければ null</summary>
+    public static BossLook FinalBossLook(AppCatalog catalog)
+    {
+        AppEntry boss = catalog != null ? catalog.FinalBoss : null;
+        if (boss == null) return null;
+        string bundle = boss.BundleIdPrefixes?.FirstOrDefault(b => !string.IsNullOrEmpty(b)) ?? "";
+        AppVisual visual = AppVisuals.Get(new AppUsageRow { Name = boss.DisplayName, BundleId = bundle, Seconds = 1 });
+        return new BossLook { App = boss, Visual = visual, IsFinal = true };
     }
 
     /// <summary>
@@ -247,11 +329,9 @@ public static class RunPlanner
     /// </summary>
     public static StagePlan CreateFinalPlan(AppCatalog catalog)
     {
-        AppEntry boss = catalog != null ? catalog.FinalBoss : null;
-        if (boss == null) return null;
-        string bundle = boss.BundleIdPrefixes?.FirstOrDefault(b => !string.IsNullOrEmpty(b)) ?? "";
-        AppVisual visual = AppVisuals.Get(new AppUsageRow { Name = boss.DisplayName, BundleId = bundle, Seconds = 1 });
-        StagePlan plan = CreatePlan(catalog, boss, catalog.FullStrengthHours * 3600.0, null, visual);
+        BossLook look = FinalBossLook(catalog);
+        if (look == null) return null;
+        StagePlan plan = CreatePlan(catalog, look.App, catalog.FullStrengthHours * 3600.0, null, look.Visual);
         plan.IsFinal = true;
         return plan;
     }

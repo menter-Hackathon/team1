@@ -1,0 +1,90 @@
+{
+ "label": "Keynote",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "textbox1",
+   "x": -3.2667,
+   "y": 2.6333,
+   "w": 3.3333,
+   "h": 0.8,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Keynote__textbox1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "textbox2",
+   "x": 3.8,
+   "y": 2.6333,
+   "w": 3.3333,
+   "h": 0.8,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Keynote__textbox2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "titlebox",
+   "x": -2.3333,
+   "y": 4.6333,
+   "w": 4.4,
+   "h": 0.8,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/Keynote__titlebox",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": 3.066666666666667,
+    "dy": 0.0,
+    "period": 7,
+    "offset": 0
+   }
+  },
+  {
+   "id": "thumb4",
+   "x": -8.2667,
+   "y": 3.0333,
+   "w": 2.1333,
+   "h": 1.3333,
+   "top": 3.7,
+   "sprite": "AppBackgrounds/Parts/Keynote__thumb4",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "format",
+   "x": 8.3333,
+   "y": 4.6,
+   "w": 2.8,
+   "h": 0.7333,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Keynote__format",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "play",
+   "x": 0.1,
+   "y": 1.1333,
+   "w": 2.0667,
+   "h": 0.7333,
+   "top": 1.5,
+   "sprite": "AppBackgrounds/Parts/Keynote__play",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "stun_boss",
+    "cooldown": 15
+   }
+  }
+ ]
+}

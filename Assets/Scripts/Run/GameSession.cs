@@ -123,6 +123,9 @@ public class GameSession : MonoBehaviour
     /// <summary>確認用：ボスを選ぶ乱数の種（0＝毎回ちがう）</summary>
     public int RandomSeed { get => _randomSeed; set => _randomSeed = value; }
 
+    /// <summary>【確認用】ランを作るとき、ステージをしぼる（null なら何もしない）。遊ぶボスを選ぶ確認用の画面（BossSelectDebug）が使う</summary>
+    public Func<List<StagePlan>, List<StagePlan>> StageFilter { get; set; }
+
     /// <summary>無ければ作る（ステージのシーンを直接再生したときの開発用）</summary>
     public static GameSession EnsureExists(AppCatalog catalog, AbilityCatalog abilities = null)
     {
@@ -219,6 +222,17 @@ public class GameSession : MonoBehaviour
             if (final != null) plans.Add(final);
         }
 
+        // 【確認用】遊ぶボスを選ぶとき：ステージをしぼる（2026-11-18。BossSelectDebug）
+        if (StageFilter != null)
+        {
+            plans = StageFilter(plans) ?? plans;
+            if (plans.Count == 0)
+            {
+                error = "選んだボスのステージが作れません";
+                return false;
+            }
+        }
+
         Run = new RunState(plans);
         Run.Candidates = candidates;
         // アプリ図鑑：ボスの候補（上位10アプリ）を載せる（最初はグレー。2026-11-17）
@@ -306,6 +320,7 @@ public class GameSession : MonoBehaviour
         Run.Cleared.Add(new ClearRecord { Stage = stage, Reward = reward });
         // アプリ図鑑：正常化したアプリに色を付ける。初めてなら、リザルトで光らせる
         if (AppDex.RecordDefeat(stage.App.DisplayName, FirstBundle(stage.App), reward)) Run.NewDex.Add(AppDex.KeyOf(stage.App.DisplayName));
+        GameAudio.StageCleared();
         StageCleared?.Invoke(stage, reward);
 
         Run.CurrentIndex++;
@@ -328,6 +343,7 @@ public class GameSession : MonoBehaviour
         IsGameOver = true;
         Run.LastFailed = Run.Current;
         Time.timeScale = 0f;
+        GameAudio.GameOver();
         GameOver?.Invoke(Run.Current);
     }
 

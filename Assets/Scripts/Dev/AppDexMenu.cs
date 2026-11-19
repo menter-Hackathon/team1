@@ -3,14 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// 【仮】アプリ図鑑の画面（OnGUI。2026-11-17 まさぴ〜決定。2026-11-18 画面のイメージの色と部品に合わせた）。UI 担当の本番画面ができたら差し替える。
-/// ・ボスの候補（上位10アプリ）に入ったアプリを、ドット絵のアイコン（24 ドットを2倍）で並べる
-/// ・まだ正常化していないアプリはグレー、正常化したアプリは色付きで「×回数」
-/// ・上に「色が付いた数 / 全体」とメーター、下の欄に選んだアプリの詳しい表示（回数・初めての日・手に入る能力）
-/// ・ShowButton なら、閉じているときに画面の右上に「ずかん」ボタンを出す（タイトル・リザルトは自分のメニューから Open する）
-/// ・ほかの画面より手前に描き、開いている間は下の画面にクリックを通さない。矢印キーで選び、Esc・X・× で閉じる
-/// </summary>
+/// <summary>Finder風のアプリ図鑑。検索・正常化フィルター・ウィンドウ操作に対応する。</summary>
 public class AppDexMenu : MonoBehaviour
 {
     [Tooltip("閉じているときに、画面の右上に「図鑑」ボタンを出す")]
@@ -18,130 +11,199 @@ public class AppDexMenu : MonoBehaviour
 
     List<AppDexEntry> _entries = new List<AppDexEntry>();
     int _selected = -1;
+    int _detail = -1;       // 詳しい画面で開いているアプリの番号（-1＝一覧）
     Vector2 _scroll;
     int _cols = 6;
+    readonly MacDesktopGui.WindowState _window = new MacDesktopGui.WindowState(false);
+    readonly List<AppDexEntry> _visible = new List<AppDexEntry>();
+    public enum Filter { All, Restored, Infected }
+    Filter _filter;
+    string _search="";
+    bool _searchFocused, _clearFocus, _revealSelection;
+    int _dismissedFrame = -1;
 
-    public bool IsOpen { get; private set; }
+    public MacDesktopGui.WindowState Window => _window;
+    public bool IsMinimized => _window.IsMinimized;
+    public bool BlocksParentInput => IsOpen || _dismissedFrame==Time.frameCount;
+    public bool HandleMinimizedExternally { get; set; }
+
+    public bool IsOpen => _window.IsVisible;
     public bool ShowButton { get => _showButton; set => _showButton = value; }
+    /// <summary>詳しい画面を開いているか</summary>
+    public bool IsDetailOpen => IsOpen && _detail >= 0;
 
     public void Open()
     {
+        if(_window.IsMinimized) { _window.Open(); return; }
         _entries = AppDex.Entries.ToList();
         AppVisuals.Prepare(_entries.Select(e => e.Row)); // アイコンをまとめて読む（まだのアプリだけ）
-        _selected = _entries.Count > 0 ? 0 : -1;
-        _scroll = Vector2.zero;
-        IsOpen = true;
+        ApplyFilter();
+        _window.Open();
     }
 
-    public void Close() => IsOpen = false;
+    public void Close()
+    {
+        _window.Close(); _searchFocused=false; _clearFocus=true; _dismissedFrame=Time.frameCount;
+    }
+
+    void ApplyFilter()
+    {
+        _visible.Clear();
+        foreach(var entry in _entries)
+        {
+            if(MatchesEntry(entry,_filter,_search)) _visible.Add(entry);
+        }
+        _selected=_visible.Count>0?0:-1; _scroll=Vector2.zero; _revealSelection=true;
+    }
+
+    public static bool MatchesEntry(AppDexEntry entry,Filter filter,string query)
+    {
+        if(entry==null) return false;
+        if(filter==Filter.Restored&&!entry.IsDefeated||filter==Filter.Infected&&entry.IsDefeated) return false;
+        return string.IsNullOrWhiteSpace(query)||(entry.name??"").IndexOf(query.Trim(),System.StringComparison.OrdinalIgnoreCase)>=0;
+    }
 
     void Update()
     {
         var kb = Keyboard.current;
         if (!IsOpen || kb == null) return;
-        if (kb.escapeKey.wasPressedThisFrame || kb.xKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame) Close();
-        if (_entries.Count == 0) return;
+        if(MacDesktopGui.WindowShortcuts(_window))
+        {
+            if(!IsOpen) { _searchFocused=false; _clearFocus=true; _dismissedFrame=Time.frameCount; }
+            return;
+        }
+        if(kb.escapeKey.wasPressedThisFrame||(!_searchFocused&&(kb.xKey.wasPressedThisFrame||kb.backspaceKey.wasPressedThisFrame))) { Close(); return; }
+        if(_searchFocused||_visible.Count==0) return;
         int step = 0;
-        if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) step = -1;
-        if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) step = 1;
+        if (left) step = -1;
+        if (right) step = 1;
         if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) step = -_cols;
         if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) step = _cols;
-        if (step != 0) _selected = Mathf.Clamp(_selected + step, 0, _entries.Count - 1);
+        if(step!=0) { _selected=Mathf.Clamp(_selected+step,0,_visible.Count-1); _revealSelection=true; }
     }
 
     void OnGUI()
     {
-        GUI.depth = -50; // タイトル・リザルトの画面より手前
-        if (GameSession.Instance != null && GameSession.Instance.IsTransitioning) return;
+        if(GameSession.Instance!=null&&GameSession.Instance.IsTransitioning) return;
+        int depth=GUI.depth; GUI.depth=-50;
         PixelGui.Begin(false);
-        if (!IsOpen)
+        if(_clearFocus) { GUI.FocusControl(null); _clearFocus=false; }
+        if(!IsOpen)
         {
-            if (_showButton && PixelGui.SecondaryButton(new Rect(PixelGui.Width - 86f, 8f, 76f, 24f), "ずかん")) Open();
-            PixelGui.End();
-            return;
+            _window.Apply(MacDesktopGui.CenteredWindow(PixelGui.Width,PixelGui.Height,600,318,false),PixelGui.Width,PixelGui.Height,false);
+            if(_showButton&&MacDesktopGui.Button(new Rect(PixelGui.Width-86,8,76,24),"図鑑")) Open();
+            if(IsMinimized&&!HandleMinimizedExternally)
+            {
+                Rect bar=new Rect(PixelGui.Width-158,PixelGui.Height-46,148,38);
+                MacDesktopGui.DockPlate(bar);
+                MacDesktopGui.MiniWindowIcon(new Rect(bar.x+5,bar.y+3,30,30));
+                PixelGui.Text(new Rect(bar.x+41,bar.y+9,100,18),"アプリ図鑑",12,MacDesktopGui.Ink);
+                if(GUI.Button(bar,GUIContent.none,GUIStyle.none)) _window.Open();
+            }
+            PixelGui.End(); GUI.depth=depth; return;
         }
         DrawDex();
-        PixelGui.End();
-        // 開いている間は、下の画面にクリックやキーを通さない
-        EventType t = Event.current.type;
-        if (t == EventType.MouseDown || t == EventType.MouseUp || t == EventType.MouseDrag || t == EventType.ScrollWheel || t == EventType.KeyDown) Event.current.Use();
+        PixelGui.End(); GUI.depth=depth;
+        EventType t=Event.current.type;
+        if(IsOpen&&(t==EventType.MouseDown||t==EventType.MouseUp||t==EventType.MouseDrag||t==EventType.ScrollWheel||t==EventType.KeyDown)) Event.current.Use();
     }
 
     void DrawDex()
     {
-        float W = PixelGui.Width, H = PixelGui.Height;
-        PixelGui.Fill(new Rect(0f, 0f, W, H), new Color(0.12f, 0.03f, 0.19f, 0.55f)); // 後ろを暗い紫に
-        var win = new Rect(Mathf.Round((W - 600f) * 0.5f), Mathf.Round(Mathf.Max(8f, (H - 340f) * 0.5f)), 600f, Mathf.Min(340f, H - 16f));
-        Rect inner = PixelGui.Window(win);
-        if (PixelGui.CloseButton(new Rect(win.xMax - 30f, win.y - 6f, 44f, 44f))) { Close(); return; }
+        float w=PixelGui.Width,h=PixelGui.Height;
+        MacDesktopGui.MenuBar(w,"アプリ図鑑");
+        Rect home=MacDesktopGui.CenteredWindow(w,h,600,318,false);
+        Rect win=_window.Apply(home,w,h);
+        Rect inner=MacDesktopGui.Window(win,"アプリ図鑑",out var action);
+        if(action==MacDesktopGui.WindowAction.Close) { Close(); return; }
+        _window.Handle(action);
+        if(!IsOpen) { _dismissedFrame=Time.frameCount; return; }
 
-        float x = inner.x + 12f, y = inner.y + 8f;
-        PixelGui.TextEn(new Rect(x, y, 200f, 10f), "APP_DEX.EXE", 8, PixelGui.LabelPurple);
-        PixelGui.Text(new Rect(x, y + 14f, 200f, 20f), "アプリ図鑑", 16, PixelGui.Ink);
-        int done = _entries.Count(e => e.IsDefeated);
-        PixelGui.TextEn(new Rect(x + 110f, y + 19f, 120f, 10f), $"{done} / {_entries.Count}", 8, PixelGui.LabelPurple);
-        PixelGui.Meter(new Rect(x + 180f, y + 20f, 120f, 6f), Mathf.Max(1, _entries.Count), _entries.Count > 0 ? done / (float)_entries.Count : 0f, PixelGui.Orange, PixelGui.Muted);
-
-        if (_entries.Count == 0)
+        Rect sidebar=new Rect(inner.x-11,inner.y-8,104,inner.height+19);
+        PixelGui.Fill(sidebar,new Color32(232,237,245,255));
+        PixelGui.Text(new Rect(sidebar.x+10,sidebar.y+10,90,18),"よく使う項目",12,MacDesktopGui.Muted);
+        string[] filters={"すべて","正常化済","未正常化"};
+        for(int i=0;i<filters.Length;i++)
         {
-            PixelGui.Text(new Rect(inner.x, inner.y + 90f, inner.width, 40f), "まだアプリがありません\nスキャンか訓練モードで遊ぶと、ボスの候補のアプリが載ります", 12, PixelGui.SubText, TextAnchor.MiddleCenter, true);
+            Rect row=new Rect(sidebar.x+6,sidebar.y+36+i*29,92,25);
+            if((int)_filter==i) MacDesktopGui.Rounded(row,MacDesktopGui.Blue,4);
+            PixelGui.Fill(new Rect(row.x+8,row.y+9,7,7),i==1?new Color32(40,180,104,255):i==2?PixelGui.Lilac:MacDesktopGui.Blue);
+            PixelGui.Text(new Rect(row.x+22,row.y+2,row.width-25,20),filters[i],12,(int)_filter==i?Color.white:MacDesktopGui.Ink);
+            if(GUI.Button(row,GUIContent.none,GUIStyle.none))
+            {
+                _filter=(Filter)i; ApplyFilter(); _searchFocused=false; GUI.FocusControl(null);
+            }
+        }
+        PixelGui.Text(new Rect(sidebar.x+10,sidebar.yMax-26,90,18),$"{_entries.Count} 項目",12,MacDesktopGui.Muted);
+
+        float x=inner.x+106,y=inner.y,contentW=inner.width-106;
+        PixelGui.Text(new Rect(x,y,contentW-150,21),"アプリケーション",16,MacDesktopGui.Ink);
+        Rect search=new Rect(inner.xMax-140,y,140,23);
+        MacDesktopGui.Rounded(search,MacDesktopGui.BorderColor,5);
+        MacDesktopGui.Rounded(PixelGui.Inset(search,1),Color.white,4);
+        GUI.SetNextControlName("MacDexSearch");
+        GUIStyle input=new GUIStyle(PixelGui.Style(false,12)); input.normal.textColor=PixelGui.ToGui(MacDesktopGui.Ink);
+        string query=GUI.TextField(new Rect(search.x+8,search.y+1,search.width-16,21),_search,input);
+        _searchFocused=GUI.GetNameOfFocusedControl()=="MacDexSearch";
+        if(query!=_search) { _search=query; ApplyFilter(); }
+        if(string.IsNullOrEmpty(_search)&&!_searchFocused) PixelGui.Text(new Rect(search.x+8,search.y+2,100,18),"検索",12,MacDesktopGui.Muted);
+        int done=_entries.Count(e=>e.IsDefeated);
+        PixelGui.Text(new Rect(x,y+25,125,16),$"正常化 {done} / {_entries.Count}",12,MacDesktopGui.Blue);
+        PixelGui.Meter(new Rect(x+130,y+31,110,4),Mathf.Max(1,_entries.Count),_entries.Count>0?done/(float)_entries.Count:0f,MacDesktopGui.Blue,PixelGui.Muted);
+        if(_visible.Count==0)
+        {
+            PixelGui.Text(new Rect(x,y+65,contentW,65),_entries.Count==0?
+                "まだアプリがありません\nスキャンか訓練モードで遊ぶと、ここにアプリが並びます。":"一致するアプリがありません",12,MacDesktopGui.Muted,TextAnchor.MiddleCenter,true);
             return;
         }
 
-        // アイコンの一覧（多ければ縦にスクロール）
-        const float cellW = 80f, cellH = 76f;
-        float detailH = 58f;
-        var gridArea = new Rect(x, y + 40f, inner.width - 24f, inner.yMax - (y + 40f) - detailH - 14f);
-        _cols = Mathf.Max(1, Mathf.FloorToInt((gridArea.width - 12f) / cellW));
-        int rows = Mathf.CeilToInt(_entries.Count / (float)_cols);
-        var content = new Rect(0f, 0f, gridArea.width - 16f, rows * cellH);
-        // 選んだアプリが見えるようにスクロールする
-        float selTop = (_selected / _cols) * cellH;
-        if (selTop < _scroll.y) _scroll.y = selTop;
-        if (selTop + cellH > _scroll.y + gridArea.height) _scroll.y = selTop + cellH - gridArea.height;
-        _scroll = GUI.BeginScrollView(gridArea, _scroll, content);
-        for (int i = 0; i < _entries.Count; i++)
+        const float cellW=84,cellH=76,detailH=58;
+        Rect grid=new Rect(x,y+44,contentW,inner.yMax-(y+44)-detailH-8);
+        _cols=Mathf.Max(1,Mathf.FloorToInt((grid.width-12)/cellW));
+        int rows=Mathf.CeilToInt(_visible.Count/(float)_cols);
+        Rect content=new Rect(0,0,grid.width-16,rows*cellH);
+        if(_revealSelection)
         {
-            AppDexEntry e = _entries[i];
-            var cell = new Rect((i % _cols) * cellW, (i / _cols) * cellH, cellW, cellH);
-            var iconRect = new Rect(cell.x + (cellW - 48f) * 0.5f, cell.y + 6f, 48f, 48f);
-            var plate = new Rect(iconRect.x - 4f, iconRect.y - 4f, 56f, 56f);
-            if (i == _selected) { PixelGui.Fill(plate, PixelGui.DarkRed); PixelGui.Fill(PixelGui.Inset(plate, 1f), PixelGui.Orange); PixelGui.Fill(PixelGui.Inset(plate, 3f), PixelGui.White); }
-            else { PixelGui.Fill(plate, PixelGui.Frame); PixelGui.Fill(PixelGui.Inset(plate, 2f), e.IsDefeated ? PixelGui.White : PixelGui.Card); }
-            PixelGui.DrawSprite(iconRect, IconOf(e, 24));
-            if (e.IsDefeated)
+            float top=(_selected/_cols)*cellH;
+            if(top<_scroll.y) _scroll.y=top;
+            if(top+cellH>_scroll.y+grid.height) _scroll.y=top+cellH-grid.height;
+            _revealSelection=false;
+        }
+        _scroll=GUI.BeginScrollView(grid,_scroll,content);
+        for(int i=0;i<_visible.Count;i++)
+        {
+            AppDexEntry entry=_visible[i];
+            Rect cell=new Rect(i%_cols*cellW,i/_cols*cellH,cellW,cellH);
+            Rect icon=new Rect(cell.x+18,cell.y+6,48,48);
+            Rect plate=new Rect(icon.x-4,icon.y-4,56,56);
+            MacDesktopGui.Card(plate,i==_selected);
+            PixelGui.DrawSprite(icon,IconOf(entry,24));
+            if(entry.IsDefeated)
             {
-                var badge = new Rect(plate.xMax - 20f, plate.y - 4f, 24f, 12f);
-                PixelGui.Fill(badge, PixelGui.Orange);
-                PixelGui.TextEn(new Rect(badge.x, badge.y + 2f, badge.width, 8f), $"x{Mathf.Min(99, e.defeats)}", 8, PixelGui.White, TextAnchor.MiddleCenter);
+                Rect badge=new Rect(plate.xMax-20,plate.y-3,24,13);
+                MacDesktopGui.Rounded(badge,MacDesktopGui.Blue,3);
+                PixelGui.TextEn(new Rect(badge.x,badge.y+2,badge.width,9),$"x{Mathf.Min(99,entry.defeats)}",8,Color.white,TextAnchor.MiddleCenter);
             }
-            PixelGui.TextFit(new Rect(cell.x + 2f, plate.yMax + 2f, cellW - 4f, 14f), e.name, 12, e.IsDefeated ? PixelGui.Ink : PixelGui.SubText, TextAnchor.MiddleCenter);
-            if (GUI.Button(cell, GUIContent.none, GUIStyle.none)) _selected = i;
+            PixelGui.TextFit(new Rect(cell.x+2,plate.yMax+2,cellW-4,14),entry.name,12,MacDesktopGui.Ink,TextAnchor.MiddleCenter);
+            if(GUI.Button(cell,GUIContent.none,GUIStyle.none)) { _selected=i; _searchFocused=false; GUI.FocusControl(null); }
         }
         GUI.EndScrollView();
-
-        // 選んだアプリの詳しい表示
-        if (_selected < 0 || _selected >= _entries.Count) return;
-        AppDexEntry s = _entries[_selected];
-        var detail = new Rect(x, inner.yMax - detailH - 6f, inner.width - 24f, detailH);
-        PixelGui.WhiteBox(detail);
-        PixelGui.DrawSprite(new Rect(detail.x + 6f, detail.y + 5f, 48f, 48f), IconOf(s, 24));
-        PixelGui.TextFit(new Rect(detail.x + 62f, detail.y + 8f, detail.width * 0.5f - 62f, 18f), s.name, 16, PixelGui.Ink);
-        string line = s.IsDefeated ? $"正常化 {s.defeats}回　はじめて {ShortDate(s.firstDefeated)}" : "まだ正常化していない";
-        PixelGui.Text(new Rect(detail.x + 62f, detail.y + 32f, detail.width * 0.5f - 62f, 16f), line, 12, PixelGui.SubText);
-        float sx = detail.x + detail.width * 0.55f;
-        PixelGui.Text(new Rect(sx, detail.y + 8f, 120f, 14f), "固有能力", 12, PixelGui.LabelPurple);
-        if (s.IsDefeated)
+        if(_selected<0||_selected>=_visible.Count) return;
+        AppDexEntry s=_visible[_selected];
+        Rect detail=new Rect(x,inner.yMax-detailH,contentW,detailH);
+        MacDesktopGui.Card(detail,false);
+        PixelGui.DrawSprite(new Rect(detail.x+6,detail.y+5,48,48),IconOf(s,24));
+        PixelGui.TextFit(new Rect(detail.x+62,detail.y+7,detail.width*0.5f-64,18),s.name,16,MacDesktopGui.Ink);
+        string line=s.IsDefeated?$"正常化 {s.defeats}回　初回 {ShortDate(s.firstDefeated)}":"まだ正常化していない";
+        PixelGui.TextFit(new Rect(detail.x+62,detail.y+32,detail.width*0.5f-64,16),line,12,MacDesktopGui.Muted);
+        float sx=detail.x+detail.width*0.55f;
+        PixelGui.Text(new Rect(sx,detail.y+7,120,14),"固有能力",12,MacDesktopGui.Blue);
+        if(s.IsDefeated)
         {
-            var box = new Rect(sx, detail.y + 26f, 24f, 24f);
-            PixelGui.Fill(box, PixelGui.SlotBg);
-            PixelGui.DrawSprite(new Rect(box.x + 4f, box.y + 4f, 16f, 16f), SkillIconOf(s));
-            PixelGui.TextFit(new Rect(sx + 30f, detail.y + 28f, detail.xMax - sx - 36f, 18f), string.IsNullOrEmpty(s.skill) ? "-" : s.skill, 16, PixelGui.Ink);
+            PixelGui.DrawSprite(new Rect(sx,detail.y+28,16,16),SkillIconOf(s));
+            PixelGui.TextFit(new Rect(sx+22,detail.y+27,detail.xMax-sx-28,18),string.IsNullOrEmpty(s.skill)?"-":s.skill,16,MacDesktopGui.Ink);
         }
-        else
-        {
-            PixelGui.Text(new Rect(sx, detail.y + 28f, detail.xMax - sx - 6f, 18f), "？？？", 16, PixelGui.SubText);
-        }
+        else PixelGui.Text(new Rect(sx,detail.y+27,detail.xMax-sx-6,18),"？？？",16,MacDesktopGui.Muted);
     }
 
     /// <summary>アプリのアイコン（正常化していなければグレー）</summary>

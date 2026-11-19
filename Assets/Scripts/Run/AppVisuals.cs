@@ -102,7 +102,8 @@ public static class AppVisuals
         int index = (int)(hash % (uint)n);
         for (int i = 0; i < n && usedTemplates != null && usedTemplates.Contains(index); i++) index = (index + 1) % n;
         float variation = ((hash >> 12) % 1000) / 999f;
-        SkillDefinition skill = AbilityForge.Create(catalog, index, variation, v.Icon16, v.Theme);
+        // 見た目のスキンは、アプリの名前から決める（Slack なら Chat。2026-11-18：スキルの見た目 1-1）
+        SkillDefinition skill = AbilityForge.Create(catalog, index, variation, v.Icon16, v.Theme, SkinTables.ForApp(row.Name, row.BundleId));
         if (skill == null) return null;
         v.Generated = skill;
         v.TemplateIndex = index;
@@ -114,8 +115,8 @@ public static class AppVisuals
 /// <summary>ひな形から能力を作る（AppVisuals から使う。確認用に、ひな形と違いを指定して直接作ることもできる）</summary>
 public static class AbilityForge
 {
-    /// <summary>ひな形 index を、違い variation（0〜1）で作り、theme の色に塗り替える</summary>
-    public static SkillDefinition Create(AbilityCatalog catalog, int index, float variation, Sprite icon, AppTheme theme)
+    /// <summary>ひな形 index を、違い variation（0〜1）で作り、theme の色に塗り替える。skin：見た目のスキン（2026-11-18。None なら Generic 扱い）</summary>
+    public static SkillDefinition Create(AbilityCatalog catalog, int index, float variation, Sprite icon, AppTheme theme, SkinId skin = SkinId.None)
     {
         if (catalog == null || index < 0 || index >= catalog.Templates.Length) return null;
         AbilityTemplate t = catalog.Templates[index];
@@ -128,7 +129,7 @@ public static class AbilityForge
         Vector2 range = catalog.CooldownRange;
         float cooldown = Mathf.Clamp(ExpectedGauge(attack) / catalog.GaugePerSecond, range.x, range.y);
         attack = attack.CreateScaledCopy(AttackStat.Cooldown, cooldown);
-        return SkillDefinition.CreateRuntime(t.Name, icon, SkillCategory.Unknown, attack, theme);
+        return SkillDefinition.CreateRuntime(t.Name, icon, SkillCategory.Unknown, attack, theme, skin != SkinId.None ? skin : SkinId.Generic);
     }
 
     /// <summary>1回使ったときに増えるゲージの目安（全部当たったとき。弾が複数なら7割、残る判定は当たり直す回数）</summary>

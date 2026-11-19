@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bb4ce9aba74b4e77a5e9957ee2a2f6b, type: 3}
+  m_Name: Line_StampBarrage_P1
+  m_EditorClassIdentifier: 
+  _drop: {fileID: 11400000, guid: 18d57d3c22b4f4b0fb335bd0ddf6813b, type: 2}
+  _count: 3
+  _interval: 0.35

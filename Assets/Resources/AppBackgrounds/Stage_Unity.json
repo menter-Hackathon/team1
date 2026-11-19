@@ -1,0 +1,77 @@
+{
+ "label": "Unity",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "obj_cube",
+   "x": -3.4,
+   "y": 2.7333,
+   "w": 2.8,
+   "h": 0.6,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Unity__obj_cube",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "obj_quad",
+   "x": 3.6,
+   "y": 2.7333,
+   "w": 2.8,
+   "h": 0.6,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/Unity__obj_quad",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "gizmo",
+   "x": -0.2667,
+   "y": 4.8,
+   "w": 2.6667,
+   "h": 0.6,
+   "top": 5.1,
+   "sprite": "AppBackgrounds/Parts/Unity__gizmo",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": 2.4,
+    "dy": 0.0,
+    "period": 7,
+    "offset": 0
+   }
+  },
+  {
+   "id": "row",
+   "x": -8.1333,
+   "y": 4.5333,
+   "w": 3.4667,
+   "h": 0.6,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/Unity__row",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "pause",
+   "x": 5.8667,
+   "y": 3.8667,
+   "w": 1.0667,
+   "h": 0.8667,
+   "top": 4.3,
+   "sprite": "AppBackgrounds/Parts/Unity__pause",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "stun_boss",
+    "cooldown": 22
+   }
+  }
+ ]
+}

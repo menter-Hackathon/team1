@@ -1,0 +1,40 @@
+{
+  "events": [
+    {"key": "gm_unity_object_warn", "se": "se_gm_unity_object_warn", "vol": 0.55, "pitch": 1.0},
+    {"key": "gm_unity_object_drop", "se": "se_gm_unity_object_drop", "vol": 0.45, "pitch": 1.0},
+
+    {"key": "gm_blender_frame", "se": "se_gm_blender_frame", "vol": 0.35, "pitch": 1.0},
+    {"key": "gm_blender_cube", "se": "se_gm_blender_cube", "vol": 0.5, "pitch": 1.0},
+    {"key": "gm_blender_delete", "se": "se_gm_blender_delete", "vol": 0.75, "pitch": 1.0},
+
+    {"key": "gm_minecraft_dusk", "se": "se_gm_minecraft_dusk", "vol": 0.6, "pitch": 1.0},
+    {"key": "gm_minecraft_night", "se": "se_gm_minecraft_night", "vol": 0.85, "pitch": 1.0},
+    {"key": "gm_minecraft_dawn", "se": "se_gm_minecraft_dawn", "vol": 0.65, "pitch": 1.0},
+
+    {"key": "gm_quicktime_blink", "se": "se_gm_quicktime_blink", "vol": 0.5, "pitch": 1.0},
+    {"key": "gm_quicktime_fast", "se": "se_gm_quicktime_fast", "vol": 0.85, "pitch": 1.0},
+    {"key": "gm_quicktime_slow", "se": "se_gm_quicktime_slow", "vol": 0.75, "pitch": 1.0},
+    {"key": "gm_quicktime_normal", "se": "se_gm_quicktime_normal", "vol": 0.55, "pitch": 1.0},
+    {"key": "gm_quicktime_tag", "se": "se_gm_quicktime_tag", "vol": 0.25, "pitch": 1.0},
+
+    {"key": "gm_github_merge_warn", "se": "se_gm_github_merge_warn", "vol": 0.75, "pitch": 1.0},
+    {"key": "gm_github_merge_fire", "se": "se_gm_github_merge_fire", "vol": 0.95, "pitch": 1.0},
+    {"key": "gm_github_commit", "se": "se_gm_github_commit", "vol": 0.25, "pitch": 1.0},
+
+    {"key": "gm_xcode_building", "se": "se_gm_xcode_building", "vol": 0.6, "pitch": 1.0},
+    {"key": "gm_xcode_count", "se": "se_gm_xcode_count", "vol": 0.4, "pitch": 1.0},
+    {"key": "gm_xcode_succeeded", "se": "se_gm_xcode_succeeded", "vol": 0.8, "pitch": 1.0},
+    {"key": "gm_xcode_failed", "se": "se_gm_xcode_failed", "vol": 0.85, "pitch": 1.0},
+    {"key": "gm_xcode_failed_end", "se": "se_gm_xcode_failed_end", "vol": 0.45, "pitch": 1.0},
+
+    {"key": "gm_cursor_tab_appear", "se": "se_gm_cursor_tab_appear", "vol": 0.6, "pitch": 1.0},
+    {"key": "gm_cursor_tab_hurry", "se": "se_gm_cursor_tab_hurry", "vol": 0.4, "pitch": 1.0},
+    {"key": "gm_cursor_accept", "se": "se_gm_cursor_accept", "vol": 0.8, "pitch": 1.0},
+    {"key": "gm_cursor_boss_take", "se": "se_gm_cursor_boss_take", "vol": 0.75, "pitch": 1.0},
+    {"key": "gm_cursor_boss_accept", "se": "se_gm_cursor_boss_accept", "vol": 0.85, "pitch": 1.0},
+
+    {"key": "gm_safari_count", "se": "se_gm_safari_count", "vol": 0.35, "pitch": 1.0},
+    {"key": "gm_safari_shield_on", "se": "se_gm_safari_shield_on", "vol": 0.75, "pitch": 1.0},
+    {"key": "gm_safari_shield_block", "se": "se_gm_safari_shield_block", "vol": 0.85, "pitch": 1.0}
+  ]
+}

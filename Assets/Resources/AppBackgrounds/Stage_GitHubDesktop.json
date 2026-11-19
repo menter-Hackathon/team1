@@ -1,0 +1,88 @@
+{
+ "label": "GitHubDesktop",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "add_l",
+   "x": -3.4,
+   "y": 2.7333,
+   "w": 3.0667,
+   "h": 0.6,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/GitHubDesktop__add_l",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "add_r",
+   "x": 3.6667,
+   "y": 2.7333,
+   "w": 3.0667,
+   "h": 0.6,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/GitHubDesktop__add_r",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "del",
+   "x": 0.0,
+   "y": 4.8,
+   "w": 2.9333,
+   "h": 0.6,
+   "top": 5.1,
+   "sprite": "AppBackgrounds/Parts/GitHubDesktop__del",
+   "behavior": "fall",
+   "params": {
+    "type": "fall",
+    "delay": 0.7,
+    "respawn": 4
+   }
+  },
+  {
+   "id": "file",
+   "x": -7.6667,
+   "y": 4.5333,
+   "w": 4.1333,
+   "h": 0.6,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/GitHubDesktop__file",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "hunk",
+   "x": 8.0667,
+   "y": 4.5333,
+   "w": 3.0667,
+   "h": 0.6,
+   "top": 4.8333,
+   "sprite": "AppBackgrounds/Parts/GitHubDesktop__hunk",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "push",
+   "x": 7.7333,
+   "y": 1.1667,
+   "w": 3.7333,
+   "h": 0.8,
+   "top": 1.5667,
+   "sprite": "AppBackgrounds/Parts/GitHubDesktop__push",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "clear_bullets",
+    "cooldown": 18
+   }
+  }
+ ]
+}

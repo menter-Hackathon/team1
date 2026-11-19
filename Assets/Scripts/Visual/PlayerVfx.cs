@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// プレイヤーの見た目の演出（動きの判定には関わらない）。
-/// ・近接：振った瞬間に斬撃のコマを最初から流す。当たった場所に火花
+/// ・近接：振った瞬間に斬撃のコマを最初から流す（当たった絵は HitFx。2026-11-18）
 /// ・ダッシュ：残像を残す
 /// ・新しいタブ（瞬間移動）：消えた場所と出た場所に、小さなウィンドウが開く（タイトルバーはその能力のアプリの色）
 /// </summary>
@@ -75,10 +75,13 @@ public class PlayerVfx : MonoBehaviour
         if (_slash != null) _slash.Restart();
     }
 
-    void OnMeleeHit(IDamageable target, DamageInfo info) => Vfx.HitSpark(info.HitPoint);
+    // 2026-11-18：近接の当たった絵は HitFx（白い4方向の星・黄色のかけら・ウイルスの黒いドット。スキルの見た目 1-4）が出す。ここでは出さない（二重にしない）
+    void OnMeleeHit(IDamageable target, DamageInfo info) { }
 
     void OnWarped(AttackData data, Vector2 from, Vector2 to)
     {
+        // スキンのワープの枠が絵を付けたら（新しいタブ：閉じる → 読み込みの線 → 開く。2026-11-18）、今の小さいウィンドウは出さない
+        if (_runner != null && _runner.WarpDressed) return;
         // ウィンドウのタイトルバーは、その能力のアプリの色
         AppTheme theme = ThemeOf(data);
         Vfx.TabOpen(from + new Vector2(0f, 0.5f), theme);

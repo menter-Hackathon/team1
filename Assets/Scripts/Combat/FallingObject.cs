@@ -31,6 +31,13 @@ public class FallingObject : MonoBehaviour
     bool _appeared;
     float _hitEnd;
     SpriteRenderer _frame; // 出現型の予告（出る場所の薄い枠）
+    bool _topRow;          // 上の列（並んでから落ちる。タブ増殖）
+    bool _toldTelegraph;   // スキンに予告を知らせたか（2026-11-18：スキルの見た目）
+    bool _vanished;        // スキンに消えるを知らせたか
+    int _index;            // 何個目か（スキンの絵の番号）
+    int _count = 1;        // 同時に出す数
+
+    static bool _dismissHooked;
 
     public AttackData Data => _data;
     /// <summary>見た目の絵</summary>
@@ -57,9 +64,9 @@ public class FallingObject : MonoBehaviour
     /// 出現型の落下物を1つ作る（ポップアップ出現）。center は出る位置（中心）。
     /// 今から appearAt（Time.time）まで出る場所に薄い枠を出し、appearAt にその場へパッと現れる
     /// </summary>
-    public static FallingObject SpawnInPlace(AttackRunner owner, AttackData data, Vector2 center, float appearAt)
+    public static FallingObject SpawnInPlace(AttackRunner owner, AttackData data, Vector2 center, float appearAt, int index = 0)
     {
-        FallingObject f = Spawn(owner, data, center, appearAt, appearAt, false);
+        FallingObject f = Spawn(owner, data, center, appearAt, appearAt, false, false, index);
         f._appearInPlace = true;
         f.gameObject.name = $"Appear_{data.name}";
         var frame = new GameObject("Frame");
@@ -67,6 +74,9 @@ public class FallingObject : MonoBehaviour
         frame.transform.SetParent(f.transform, false);
         Sprite frameSprite = GameArt.Instance != null && GameArt.Instance.TelegraphFrame != null ? GameArt.Instance.TelegraphFrame : PlaceholderSprites.Frame;
         f._frame = AttackRunner.AddVisual(frame.transform, frameSprite, FrameColor, data.ObjectSize, 18, "Frame");
+        // スキンの予告の絵（点線の枠）。付けたら枠をかくす
+        f._toldTelegraph = true;
+        f.NotifySkin(DressPhase.Telegraph, f._frame, Mathf.Max(0f, appearAt - Time.time));
         return f;
     }
 
@@ -75,7 +85,7 @@ public class FallingObject : MonoBehaviour
     /// showShadow なら、落ちる場所の床に今から影を出す。
     /// 【仮】dismissable なら、落ち始めるまでの間、クリックで消せる（タブ増殖のタブ。DismissableTab）
     /// </summary>
-    public static FallingObject Spawn(AttackRunner owner, AttackData data, Vector2 hangPosition, float appearAt, float fallAt, bool showShadow, bool dismissable = false)
+    public static FallingObject Spawn(AttackRunner owner, AttackData data, Vector2 hangPosition, float appearAt, float fallAt, bool showShadow, bool dismissable = false, int index = 0)
     {
         GameObject go = owner.CreateSpawnedObject($"Falling_{data.name}", hangPosition);
         var rb = go.AddComponent<Rigidbody2D>();
@@ -98,7 +108,7 @@ public class FallingObject : MonoBehaviour
         f._visual.enabled = false;
         f._hitbox = owner.AddHitbox(go, data, hit);
 
-        owner.TryFindGround(hangPosition.x, hangPosition.y, out f._groundY);
+        owner.TryFindGround(hangPosition.x, hangPosition.y, out f._groundY, steadyOnly: true); // 動く・消えるアプリの足場の上には着地しない（2026-11-19）
 
         if (data.BecomesPlatform)
         {
@@ -121,8 +131,51 @@ public class FallingObject : MonoBehaviour
             Sprite shadowSprite = GameArt.Instance != null && GameArt.Instance.Shadow != null ? GameArt.Instance.Shadow : PlaceholderSprites.Circle;
             f._shadow = AttackRunner.AddVisual(s.transform, shadowSprite, ShadowColor, new Vector2(size.x, 0.35f), 16, "Ellipse");
         }
-        if (dismissable) go.AddComponent<DismissableTab>();
+        if (dismissable)
+        {
+            go.AddComponent<DismissableTab>();
+            // クリックで消したときも、スキンに「消える」を知らせる（タブが横に閉じる絵など）
+            if (!_dismissHooked)
+            {
+                _dismissHooked = true;
+                DismissableTab.Dismissed += tab =>
+                {
+                    if (tab != null && tab.TryGetComponent(out FallingObject fo)) fo.NotifyVanish();
+                };
+            }
+        }
+        f._index = index;
+        f._count = Mathf.Max(1, data.SpawnCount);
+        f._topRow = !showShadow && data.Placement == SpawnPlacement.TopRow;
+        // 影を出す落下物：作った瞬間が予告（影）。上の列は、並んだ瞬間（FixedUpdate）に知らせる
+        if (showShadow)
+        {
+            f._toldTelegraph = true;
+            f.NotifySkin(DressPhase.Telegraph, f._shadow, Mathf.Max(0f, fallAt - Time.time));
+        }
         return f;
+    }
+
+    /// <summary>スキンに場面を知らせる（2026-11-18：スキルの見た目 1-1）。付けたら今の絵をかくす</summary>
+    void NotifySkin(DressPhase phase, SpriteRenderer current, float duration)
+    {
+        if (_data == null) return;
+        SkinDresser.Dress(_owner, _data, gameObject, phase, current, _data.ObjectSize, _index, Vector2.down, _count, duration);
+    }
+
+    /// <summary>消える直前に1回だけ、スキンに知らせる</summary>
+    void NotifyVanish()
+    {
+        if (_vanished) return;
+        _vanished = true;
+        NotifySkin(DressPhase.Vanish, null, 0f);
+    }
+
+    /// <summary>スキンに知らせてから消す</summary>
+    void Remove()
+    {
+        NotifyVanish();
+        Destroy(gameObject);
     }
 
     void FixedUpdate()
@@ -132,7 +185,7 @@ public class FallingObject : MonoBehaviour
 
         if (HasLanded)
         {
-            if (now >= _removeAt) Destroy(gameObject);
+            if (now >= _removeAt) Remove();
             else if (_platform != null && _removeAt - now < 1f)
             {
                 _visual.enabled = Mathf.FloorToInt(now / 0.1f) % 2 == 0; // 消える1秒前から点滅
@@ -147,11 +200,19 @@ public class FallingObject : MonoBehaviour
         }
 
         if (!_visual.enabled && now >= _appearAt) _visual.enabled = true;
+        // 上の列：並んだ瞬間が予告（落ちるまで並んでいる）
+        if (_topRow && !_toldTelegraph && _visual.enabled && now < _fallAt)
+        {
+            _toldTelegraph = true;
+            NotifySkin(DressPhase.Telegraph, _visual, Mathf.Max(0f, _fallAt - now));
+        }
         if (!IsFalling && now >= _fallAt)
         {
             IsFalling = true;
             _visual.enabled = true;
             _hitbox.Activate();
+            float fallTime = Mathf.Max(0f, (_rb.position.y - _data.ObjectSize.y * 0.5f - _groundY) / Mathf.Max(0.1f, _data.FallSpeed));
+            NotifySkin(DressPhase.Active, _visual, fallTime);
         }
         if (!IsFalling) return;
 
@@ -180,12 +241,14 @@ public class FallingObject : MonoBehaviour
             }
             _appeared = true;
             AppearedTime = now;
+            GameAudio.Event("popup_open");
             if (_frame != null) Destroy(_frame.transform.parent.gameObject);
             _visual.enabled = true;
             _hitbox.Activate();
             if (_platform != null) _platform.enabled = true; // 現れた瞬間から足場
             _hitEnd = now + _data.ActiveTime;
             _removeAt = now + _data.LandRemainTime;
+            NotifySkin(DressPhase.Active, _visual, _data.ActiveTime);
         }
         if (now < _hitEnd) return;
 
@@ -193,7 +256,12 @@ public class FallingObject : MonoBehaviour
         HasLanded = true;
         LandedTime = now;
         _hitbox.Deactivate();
-        if (_data.LandRemainTime <= 0f) Destroy(gameObject);
+        if (_data.LandRemainTime <= 0f)
+        {
+            Remove();
+            return;
+        }
+        NotifySkin(DressPhase.Landed, _visual, Mathf.Max(0f, _removeAt - now)); // 出現型の「着地」＝もう危なくない足場になった
     }
 
     void Land(float now)
@@ -203,10 +271,11 @@ public class FallingObject : MonoBehaviour
         LandedTime = now;
         _hitbox.Deactivate(); // 判定は落下中だけ
         if (_shadow != null) Destroy(_shadow.gameObject);
+        NotifySkin(DressPhase.Landed, _visual, Mathf.Max(0f, _data.LandRemainTime));
 
         if (_data.LandRemainTime <= 0f)
         {
-            Destroy(gameObject);
+            Remove();
             return;
         }
         if (_platform != null) _platform.enabled = true;

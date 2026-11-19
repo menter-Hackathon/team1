@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3234b6902e5484c419f1cfda59de80ab, type: 3}
+  m_Name: Firefox_TailFlame_P2
+  m_EditorClassIdentifier: 
+  _flame: {fileID: 11400000, guid: 450937a1794cf4f099d94f4ea94bf902, type: 2}
+  _count: 5
+  _telegraph: 0.8
+  _stagger: 0.15
+  _spacing: 2.6

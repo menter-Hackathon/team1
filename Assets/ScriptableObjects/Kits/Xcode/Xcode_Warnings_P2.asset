@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 100d87e6842ec450fa6e1473a6badbae, type: 3}
+  m_Name: Xcode_Warnings_P2
+  m_EditorClassIdentifier: 
+  _waves: 3
+  _interval: 1.9
+  _telegraph: 1
+  _gapWidth: 2.5
+  _near: 4.5
+  _column: 1
+  _fallSpeed: 18

@@ -60,7 +60,10 @@ public static class PlayerTestSceneBuilder
         CreateBlock("OneWay_2", new Vector2(4f, 5f), new Vector2(3f, 0.3f), oneWay, ArtLib.BlockKind.Platform, terrain);
 
         // --- プレイヤー（原点＝足元） ---
-        var abilities = new[] { attacks.SkillNewTab, attacks.SkillBreakpoint };
+        var galleryView = AssetDatabase.LoadAssetAtPath<SkillDefinition>(AbilitiesBuilder.GalleryViewPath); // G キーの先頭（2026-11-18）
+        var abilities = galleryView != null
+            ? new[] { galleryView, attacks.SkillNewTab, attacks.SkillBreakpoint }
+            : new[] { attacks.SkillNewTab, attacks.SkillBreakpoint };
         var player = CreatePlayer(square, new Vector3(-3f, 0.5f, 0f), attacks.PlayerMelee, abilities);
 
         // 拾える能力（ボスの代わり）。スタート地点のすぐ左に置く

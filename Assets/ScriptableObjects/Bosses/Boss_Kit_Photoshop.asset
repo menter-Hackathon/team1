@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fbd76cbf8b249e6bfdde943020a9061, type: 3}
+  m_Name: Boss_Kit_Photoshop
+  m_EditorClassIdentifier: 
+  _displayName: Photoshop
+  _icon: {fileID: 21300000, guid: cff00d750c9014cf4961165058c7867a, type: 3}
+  _gaugeMax: 100
+  _phase2Threshold: 0.5
+  _transitionTime: 1.5
+  _startDelay: 1
+  _phase1:
+    Moves:
+    - {fileID: 11400000, guid: 444b6acf57568434cbf88c4e502fde58, type: 2}
+    - {fileID: 11400000, guid: 7da6f51a74f1345d9b5d9b2626ac012c, type: 2}
+    WaitAfterAttack: 1.2
+    AttacksPerMove: 2
+  _phase2:
+    Moves:
+    - {fileID: 11400000, guid: 51d6a1559403d4e67a1a5c8ac8ed7bfe, type: 2}
+    - {fileID: 11400000, guid: 7bb0f23115565493e80be0a2e153c56e, type: 2}
+    - {fileID: 11400000, guid: b527a359f3b4646daa35bd74c2aa2f3c, type: 2}
+    WaitAfterAttack: 0.8
+    AttacksPerMove: 2
+  _movement: 1
+  _warpAttack: {fileID: 0}
+  _hoverSpeed: 3
+  _hoverPointsX:
+  - -7
+  - 0
+  - 7
+  _reward: {fileID: 0}
+  _extensions: []

@@ -1,0 +1,90 @@
+{
+ "label": "Excel",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "cells1",
+   "x": -2.6333,
+   "y": 2.5333,
+   "w": 4.3333,
+   "h": 0.7333,
+   "top": 2.9,
+   "sprite": "AppBackgrounds/Parts/Excel__cells1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "cells2",
+   "x": 3.7667,
+   "y": 2.5333,
+   "w": 4.3333,
+   "h": 0.7333,
+   "top": 2.9,
+   "sprite": "AppBackgrounds/Parts/Excel__cells2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "merged",
+   "x": -4.7667,
+   "y": 4.5333,
+   "w": 4.3333,
+   "h": 0.7333,
+   "top": 4.9,
+   "sprite": "AppBackgrounds/Parts/Excel__merged",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "bar1",
+   "x": 3.2,
+   "y": 4.1667,
+   "w": 1.0667,
+   "h": 1.6,
+   "top": 4.9667,
+   "sprite": "AppBackgrounds/Parts/Excel__bar1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "bar2",
+   "x": 6.4,
+   "y": 3.9667,
+   "w": 1.0667,
+   "h": 1.2,
+   "top": 4.5667,
+   "sprite": "AppBackgrounds/Parts/Excel__bar2",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": 0.0,
+    "dy": 1.6,
+    "period": 6,
+    "offset": 0
+   }
+  },
+  {
+   "id": "sum",
+   "x": 0.2333,
+   "y": 1.2,
+   "w": 1.8,
+   "h": 0.7333,
+   "top": 1.5667,
+   "sprite": "AppBackgrounds/Parts/Excel__sum",
+   "behavior": "button",
+   "params": {
+    "type": "button",
+    "effect": "refill",
+    "cooldown": 20
+   }
+  }
+ ]
+}

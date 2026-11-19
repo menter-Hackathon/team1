@@ -18,9 +18,14 @@ public static class ThemeRecolor
     static readonly Color32 G68 = new Color32(0x68, 0x68, 0x68, 0xff);
     static readonly Color32 G51 = new Color32(0x51, 0x51, 0x51, 0xff);
     static readonly Color32 G4A = new Color32(0x4a, 0x4a, 0x4a, 0xff);
+    // フォルダの足場（Platform_Folder.png）の3色。2026-11-19：Mac の青いフォルダにした（docs/mac-look-design.md 28）
+    static readonly Color32 FolderBody = new Color32(0x5a, 0xb0, 0xf0, 0xff);
+    static readonly Color32 FolderShade = new Color32(0x2f, 0x7f, 0xc4, 0xff);
+    static readonly Color32 FolderTabBase = new Color32(0x8f, 0xcb, 0xf7, 0xff);
+    // 前のクリーム色のフォルダ（絵を取り込み直す前でも塗り替えられるように、残しておく）
     static readonly Color32 Cream = new Color32(0xf5, 0xf1, 0x98, 0xff);
     static readonly Color32 Olive = new Color32(0xb3, 0xb0, 0x6f, 0xff);
-    static readonly Color32 FolderTabBase = new Color32(0xf6, 0xf2, 0x9a, 0xff);
+    static readonly Color32 CreamTab = new Color32(0xf6, 0xf2, 0x9a, 0xff);
     static readonly Color32 TabTitle = Sky1; // 新しいタブのウィンドウのタイトルバー
     static readonly Color32 TitleShade = new Color32(0x2a, 0x6f, 0xb0, 0xff); // 部屋のタイトルバーの影
 
@@ -177,7 +182,7 @@ public static class ThemeRecolor
                     { Key(G4A), Mix(theme.Wall, Color.black, 0.12f) },
                 });
                 break;
-            case Kind.TitleBar: // ウィンドウの足場・部屋のタイトルバー：空色をアプリの代表の色に
+            case Kind.TitleBar: // ウィンドウの足場（タイトルバーの下の 2ドットの帯。2026-11-19）・部屋のタイトルバー：空色をアプリの代表の色に
                 Map(px, new Dictionary<uint, Color32>
                 {
                     { Key(Sky1), theme.Main },
@@ -187,9 +192,12 @@ public static class ThemeRecolor
             case Kind.Folder:
                 Map(px, new Dictionary<uint, Color32>
                 {
+                    { Key(FolderBody), theme.Folder },
+                    { Key(FolderShade), theme.FolderShade },
+                    { Key(FolderTabBase), theme.FolderTab },
                     { Key(Cream), theme.Folder },
                     { Key(Olive), theme.FolderShade },
-                    { Key(FolderTabBase), theme.FolderTab },
+                    { Key(CreamTab), theme.FolderTab },
                 });
                 break;
         }

@@ -41,6 +41,11 @@ public static class AppDex
 
     static Data _data;
 
+    /// <summary>
+    /// 【確認用】true の間は、図鑑に何も書かない（2026-11-18：遊ぶボスを選ぶ確認用のラン。本物の app_dex.json を変えないため）
+    /// </summary>
+    public static bool Suspended { get; set; }
+
     static string FilePath => Path.Combine(Application.persistentDataPath, "app_dex.json");
 
     public static IReadOnlyList<AppDexEntry> Entries => Load().entries;
@@ -59,6 +64,7 @@ public static class AppDex
     /// <summary>ボスの候補（上位10アプリ）を載せる。まだ載っていないアプリだけ足す</summary>
     public static void RecordSeen(IEnumerable<(string name, string bundleId)> apps)
     {
+        if (Suspended) return;
         Data data = Load();
         bool changed = false;
         foreach (var (name, bundleId) in apps)
@@ -80,7 +86,7 @@ public static class AppDex
     /// <summary>正常化した。初めての正常化なら true（リザルトで光らせる）</summary>
     public static bool RecordDefeat(string name, string bundleId, SkillDefinition reward)
     {
-        if (string.IsNullOrWhiteSpace(name)) return false;
+        if (Suspended || string.IsNullOrWhiteSpace(name)) return false;
         RecordSeen(new[] { (name, bundleId) });
         AppDexEntry e = Find(name);
         bool first = e.defeats == 0;

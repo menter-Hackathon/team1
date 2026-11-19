@@ -1,0 +1,337 @@
+{
+    "kits": [
+        {
+            "label": "Arc",
+            "names": [
+                "Arc"
+            ],
+            "bundles": [
+                "company.thebrowser.Browser"
+            ]
+        },
+        {
+            "label": "Blender",
+            "names": [
+                "Blender"
+            ],
+            "bundles": [
+                "org.blenderfoundation."
+            ]
+        },
+        {
+            "label": "Calendar",
+            "names": [
+                "Calendar",
+                "カレンダー"
+            ],
+            "bundles": [
+                "com.apple.iCal"
+            ]
+        },
+        {
+            "label": "ChatGPT",
+            "names": [
+                "ChatGPT"
+            ],
+            "bundles": [
+                "com.openai.chat"
+            ]
+        },
+        {
+            "label": "Chrome",
+            "names": [
+                "Google Chrome",
+                "Chrome"
+            ],
+            "bundles": [
+                "com.google.Chrome"
+            ]
+        },
+        {
+            "label": "Claude",
+            "names": [
+                "Claude"
+            ],
+            "bundles": [
+                "com.anthropic.claudefordesktop"
+            ]
+        },
+        {
+            "label": "Cursor",
+            "names": [
+                "Cursor"
+            ],
+            "bundles": [
+                "com.todesktop.230313mzl4w4u92"
+            ]
+        },
+        {
+            "label": "Discord",
+            "names": [
+                "Discord"
+            ],
+            "bundles": [
+                "com.hnc.Discord"
+            ]
+        },
+        {
+            "label": "Excel",
+            "names": [
+                "Excel",
+                "Microsoft Excel"
+            ],
+            "bundles": [
+                "com.microsoft.Excel"
+            ]
+        },
+        {
+            "label": "Figma",
+            "names": [
+                "Figma"
+            ],
+            "bundles": [
+                "com.figma.Desktop"
+            ]
+        },
+        {
+            "label": "Firefox",
+            "names": [
+                "Firefox",
+                "Firefox Developer Edition",
+                "Firefox Nightly"
+            ],
+            "bundles": [
+                "org.mozilla.firefox"
+            ]
+        },
+        {
+            "label": "Gemini",
+            "names": [
+                "Gemini"
+            ],
+            "bundles": []
+        },
+        {
+            "label": "GitHubDesktop",
+            "names": [
+                "GitHub Desktop"
+            ],
+            "bundles": [
+                "com.github.GitHubClient"
+            ]
+        },
+        {
+            "label": "Illustrator",
+            "names": [
+                "Illustrator",
+                "Adobe Illustrator"
+            ],
+            "bundles": [
+                "com.adobe.illustrator"
+            ]
+        },
+        {
+            "label": "Keynote",
+            "names": [
+                "Keynote"
+            ],
+            "bundles": [
+                "com.apple.iWork.Keynote"
+            ]
+        },
+        {
+            "label": "LINE",
+            "names": [
+                "LINE"
+            ],
+            "bundles": [
+                "jp.naver.line.mac"
+            ]
+        },
+        {
+            "label": "Mail",
+            "names": [
+                "Mail",
+                "メール"
+            ],
+            "bundles": [
+                "com.apple.mail"
+            ]
+        },
+        {
+            "label": "Messages",
+            "names": [
+                "Messages",
+                "メッセージ"
+            ],
+            "bundles": [
+                "com.apple.MobileSMS"
+            ]
+        },
+        {
+            "label": "Minecraft",
+            "names": [
+                "Minecraft",
+                "Minecraft Launcher"
+            ],
+            "bundles": [
+                "com.mojang."
+            ]
+        },
+        {
+            "label": "Music",
+            "names": [
+                "Music",
+                "ミュージック",
+                "Apple Music"
+            ],
+            "bundles": [
+                "com.apple.Music"
+            ]
+        },
+        {
+            "label": "Notes",
+            "names": [
+                "Notes",
+                "メモ"
+            ],
+            "bundles": [
+                "com.apple.Notes"
+            ]
+        },
+        {
+            "label": "Notion",
+            "names": [
+                "Notion"
+            ],
+            "bundles": [
+                "notion.id"
+            ]
+        },
+        {
+            "label": "Photoshop",
+            "names": [
+                "Photoshop",
+                "Adobe Photoshop"
+            ],
+            "bundles": [
+                "com.adobe.Photoshop"
+            ]
+        },
+        {
+            "label": "PowerPoint",
+            "names": [
+                "PowerPoint",
+                "Microsoft PowerPoint"
+            ],
+            "bundles": [
+                "com.microsoft.Powerpoint"
+            ]
+        },
+        {
+            "label": "QuickTime",
+            "names": [
+                "QuickTime Player",
+                "QuickTime"
+            ],
+            "bundles": [
+                "com.apple.QuickTimePlayerX"
+            ]
+        },
+        {
+            "label": "Safari",
+            "names": [
+                "Safari"
+            ],
+            "bundles": [
+                "com.apple.Safari"
+            ]
+        },
+        {
+            "label": "Slack",
+            "names": [
+                "Slack"
+            ],
+            "bundles": [
+                "com.tinyspeck.slackmacgap"
+            ]
+        },
+        {
+            "label": "Spotify",
+            "names": [
+                "Spotify"
+            ],
+            "bundles": [
+                "com.spotify.client"
+            ]
+        },
+        {
+            "label": "Steam",
+            "names": [
+                "Steam"
+            ],
+            "bundles": [
+                "com.valvesoftware.steam"
+            ]
+        },
+        {
+            "label": "Teams",
+            "names": [
+                "Microsoft Teams",
+                "Teams"
+            ],
+            "bundles": [
+                "com.microsoft.teams"
+            ]
+        },
+        {
+            "label": "Terminal",
+            "names": [
+                "Terminal",
+                "ターミナル"
+            ],
+            "bundles": [
+                "com.apple.Terminal"
+            ]
+        },
+        {
+            "label": "Unity",
+            "names": [
+                "Unity",
+                "Unity Hub"
+            ],
+            "bundles": [
+                "com.unity3d."
+            ]
+        },
+        {
+            "label": "Word",
+            "names": [
+                "Word",
+                "Microsoft Word"
+            ],
+            "bundles": [
+                "com.microsoft.Word"
+            ]
+        },
+        {
+            "label": "Xcode",
+            "names": [
+                "Xcode"
+            ],
+            "bundles": [
+                "com.apple.dt.Xcode"
+            ]
+        },
+        {
+            "label": "Zoom",
+            "names": [
+                "Zoom",
+                "zoom.us"
+            ],
+            "bundles": [
+                "us.zoom.xos"
+            ]
+        }
+    ]
+}

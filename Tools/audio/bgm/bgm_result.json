@@ -1,0 +1,102 @@
+{
+ "id": "bgm_result",
+ "desc": "リザルト（ランの結果）。イントロは「治った！」のファンファーレ（治ったモチーフ＝Aメジャー）、ループはほっとした明るい曲。Aメジャー",
+ "bpm": 120,
+ "steps_per_beat": 4,
+ "beats_per_bar": 4,
+ "swing": 0.0,
+ "instruments": {
+  "lead": {
+   "wave": "pulse",
+   "duty": 0.25,
+   "env": {
+    "a": 0.005,
+    "d": 0.12,
+    "s": 0.55,
+    "r": 0.06
+   },
+   "vol": 0.3,
+   "vib": [
+    0.15,
+    5.5,
+    0.15
+   ],
+   "echo": [
+    3,
+    0.3,
+    0.22
+   ]
+  },
+  "harm": {
+   "wave": "pulse",
+   "duty": 0.125,
+   "env": {
+    "a": 0.002,
+    "d": 0.06,
+    "s": 0.3,
+    "r": 0.03
+   },
+   "vol": 0.3,
+   "arp_rate": 0.045
+  },
+  "bass": {
+   "wave": "triangle",
+   "env": {
+    "a": 0.002,
+    "d": 0.05,
+    "s": 0.9,
+    "r": 0.03
+   },
+   "vol": 0.324
+  },
+  "drums": {
+   "kit": "chip",
+   "vol": 0.506
+  }
+ },
+ "patterns": {
+  "lead_i": "A4! - C#5 - E5 - D#5 E5 - - B4 - - - . . | C#5 - B4 - A4 - G#4 - A4 - - - . . E5 . | F#5 - A5 - D6 - C#6 D6 - - A5 - - - . . | B5 - - - G#5 - B5 - E6 - - - - - . . |",
+  "harm_i": "A3+C#4+E4 - . A3+C#4+E4 - . A3+C#4+E4 - . . A3+C#4+E4 - A3+C#4+E4 - . . | A3+C#4+E4 - . A3+C#4+E4 - . A3+C#4+E4 - . . A3+C#4+E4 - A3+C#4+E4 - . . | A3+D4+F#4 - . A3+D4+F#4 - . A3+D4+F#4 - . . A3+D4+F#4 - A3+D4+F#4 - . . | G#3+B3+E4 - . G#3+B3+E4 - . G#3+B3+E4 - . . G#3+B3+E4 - G#3+B3+E4 - . . |",
+  "bass_i": "A2 . A2 . A2 . A3 . A2 . A2 . E3 . A3 . | A2 . A2 . A2 . A3 . A2 . A2 . E3 . A3 . | D3 . D3 . D3 . D3 . D3 . D3 . A2 . D3 . | E2 . E2 . E2 . E3 . E2 . E2 . B2 . E3 . |",
+  "drum_i": "k+c . . h s . h . k . k h s . h . | k . h h s . h . k . k h s . s . | k+c . . h s . h . k . k h s . h . | k . s . k . s s k s s s t t m m |",
+  "lead_a": "E5 - - - C#5 - E5 - A5 - - - G#5 - E5 - | F#5 - - - - - . . C#5 - E5 - F#5 - A5 - | F#5 - - - D5 - F#5 - A5 - - - F#5 - D5 - | E5 - - - - - - - . . B4 - E5 - G#5 - | A5 - - - E5 - C#5 - A4 - C#5 - E5 - D#5 E5 | C#5 - - - - - A4 - F#5 - - - E5 - C#5 - | D5 - - - B4 - D5 - F#5 - - - E5 - D5 - | B4 - - - - - - - . . . . E5 . G#5 . |",
+  "lead_b": "A5 - - - F#5 - - - D5 - - - F#5 - A5 - | E5 - - - C#5 - - - A4 - - - C#5 - E5 - | D5 - - - B4 - - - F#5 - - - D5 - B4 - | E5 - - - - - - - . . . . G#4 - B4 - | A4 - D5 - F#5 - - - A5 - - - F#5 - - - | G#4 - C#5 - E5 - - - G#5 - - - E5 - - - | F#4 - B4 - D5 - - - F#5 - - - D5 - B4 - | C#5 - B4 - A4 - G#4 - B4 - - - . . . . |",
+  "harm_a": "A3+C#4+E4 - - . . . A3+C#4+E4 - - . . . A3+C#4+E4 - . . | A3+C#4+F#4 - - . . . A3+C#4+F#4 - - . . . A3+C#4+F#4 - . . | A3+D4+F#4 - - . . . A3+D4+F#4 - - . . . A3+D4+F#4 - . . | G#3+B3+E4 - - . . . G#3+B3+E4 - - . . . G#3+B3+E4 - . . | A3+C#4+E4 - - . . . A3+C#4+E4 - - . . . A3+C#4+E4 - . . | A3+C#4+F#4 - - . . . A3+C#4+F#4 - - . . . A3+C#4+F#4 - . . | B3+D4+F#4 - - . . . B3+D4+F#4 - - . . . B3+D4+F#4 - . . | G#3+B3+E4 - - . . . G#3+B3+E4 - - . . . G#3+B3+E4 - . . |",
+  "harm_b": "A3+D4+F#4 - - - - - - - A3+D4+F#4 - - - - - . . | A3+C#4+E4 - - - - - - - A3+C#4+E4 - - - - - . . | B3+D4+F#4 - - - - - - - B3+D4+F#4 - - - - - . . | G#3+B3+E4 - - - - - - - G#3+B3+E4 - - - - - . . | A3+D4+F#4 - - - - - - - A3+D4+F#4 - - - - - . . | G#3+C#4+E4 - - - - - - - G#3+C#4+E4 - - - - - . . | B3+D4+F#4 - - - - - - - B3+D4+F#4 - - - - - . . | G#3+B3+E4 - - - - - - - G#3+B3+E4 - - - - - . . |",
+  "bass_a": "A2 - - . A2 . E3 . A2 - - . E3 . A3 . | F#2 - - . F#2 . C#3 . F#2 - - . C#3 . F#3 . | D3 - - . D3 . A2 . D3 - - . A2 . D3 . | E2 - - . E2 . B2 . E2 - - . B2 . E3 . | A2 - - . A2 . E3 . A2 - - . E3 . A3 . | F#2 - - . F#2 . C#3 . F#2 - - . C#3 . F#3 . | B2 - - . B2 . F#3 . B2 - - . F#3 . B3 . | E2 - - . E2 . B2 . E2 - - . B2 . E3 . |",
+  "bass_b": "D3 - - - - . D3 . A2 - - . D3 . A2 . | A2 - - - - . A2 . E3 - - . A3 . E3 . | B2 - - - - . B2 . F#3 - - . B3 . F#3 . | E2 - - - - . E2 . B2 - - . E3 . B2 . | D3 - - - - . D3 . A2 - - . D3 . A2 . | C#3 - - - - . C#3 . G#2 - - . C#3 . G#2 . | B2 - - - - . B2 . F#3 - - . B3 . F#3 . | E2 - - - - . E2 . B2 - - . E3 . B2 . |",
+  "drum_a": "k+c . h . s . h . k k h . s . h . | k . h . s . h . k k h . s . h o | k . h . s . h . k k h . s . h . | k . h . s . h . k k h . s . h o | k . h . s . h . k k h . s . h . | k . h . s . h . k k h . s . h o | k . h . s . h . k k h . s . h . | k . h . s . h . k . h . s . s s |",
+  "drum_b": "k . h . s . h h k . h k s . h . | k . h . s . h h k . h k s . h o | k . h . s . h h k . h k s . h . | k . h . s . h h k . h k s . h o | k . h . s . h h k . h k s . h . | k . h . s . h h k . h k s . h o | k . h . s . h h k . h k s . h . | k . h . s . h . k . s . t . m . |"
+ },
+ "sections": {
+  "I": {
+   "bars": 4,
+   "lead": "lead_i",
+   "harm": "harm_i",
+   "bass": "bass_i",
+   "drums": "drum_i"
+  },
+  "A": {
+   "bars": 8,
+   "lead": "lead_a",
+   "harm": "harm_a",
+   "bass": "bass_a",
+   "drums": "drum_a"
+  },
+  "B": {
+   "bars": 8,
+   "lead": "lead_b",
+   "harm": "harm_b",
+   "bass": "bass_b",
+   "drums": "drum_b"
+  }
+ },
+ "intro": [
+  "I"
+ ],
+ "loop": [
+  "A",
+  "B"
+ ],
+ "jingle": false
+}
