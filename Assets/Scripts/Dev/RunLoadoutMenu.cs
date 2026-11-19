@@ -84,7 +84,7 @@ public class RunLoadoutMenu : MonoBehaviour
         PixelGui.Begin(false);
         float w=PixelGui.Width,h=PixelGui.Height;
         MacDesktopGui.MenuBar(w,"Virus Desktop");
-        Rect win=MacDesktopGui.CenteredWindow(w,h,584,306,false);
+        Rect win=MacDesktopGui.CenteredWindow(w,h,584,252);
         bool front=(_dex==null||!_dex.IsOpen)&&(_files==null||!_files.BlocksParentInput);
         win=_window.Apply(win,w,h,front);
         bool folderEnabled=GUI.enabled;
@@ -115,13 +115,9 @@ public class RunLoadoutMenu : MonoBehaviour
         _window.Handle(action);
         if(!_window.IsVisible) { GUI.enabled=mainEnabled; PixelGui.End(); return; }
         float x=inner.x,y=inner.y;
-        PixelGui.Text(new Rect(x,y,inner.width,20),$"よく使うアプリ TOP{Mathf.Min(3,Cards.Count)} から、相棒を1つ選ぼう",16,MacDesktopGui.Ink);
-        PixelGui.Text(new Rect(x,y+23,inner.width,16),Session.IsSampleRun?
-            "訓練モード：サンプルのアプリから、最初に使う能力を選びます。":
-            "選んだ相棒の能力を最初から装備して、デスクトップの駆除へ。",12,MacDesktopGui.Muted);
         int count=Mathf.Min(Cards.Count,3);
         float gap=10f,cardW=Mathf.Floor((inner.width-gap*(count-1))/Mathf.Max(1,count));
-        float cardY=y+44f,cardH=176f;
+        float cardY=y+4f,cardH=154f;
         double maxSeconds=1;
         for(int i=0;i<count;i++) maxSeconds=System.Math.Max(maxSeconds,Cards[i].Seconds);
         for(int i=0;i<count;i++)
@@ -132,17 +128,14 @@ public class RunLoadoutMenu : MonoBehaviour
         }
         float footer=inner.yMax-26;
         if(MacDesktopGui.Button(new Rect(x,footer,76,26),"もどる")) Back();
-        PixelGui.Text(new Rect(x+88,footer+4,180,18),"← → 選択　Enter 決定",12,MacDesktopGui.Muted);
-        if(MacDesktopGui.Button(new Rect(x+280,footer,80,26),"図鑑")&&_dex!=null) _dex.Open();
-        string appName=CanConfirm?(Cards[_selected].IsFiller?Cards[_selected].Skill.DisplayName:Cards[_selected].AppName):"";
-        string label=$"{PixelGui.Fit(appName,PixelGui.Style(false,12),110)} と出撃";
+        if(MacDesktopGui.Button(new Rect(x+88,footer,80,26),"図鑑")&&_dex!=null) _dex.Open();
         bool was=GUI.enabled; GUI.enabled=was&&CanConfirm;
-        if(MacDesktopGui.Button(new Rect(inner.xMax-180,footer,180,26),label,true)) Confirm();
+        if(MacDesktopGui.Button(new Rect(inner.xMax-180,footer,180,26),"出撃 ▶",true)) Confirm();
         GUI.enabled=mainEnabled;
         PixelGui.End();
     }
 
-    // カードの中の並び（docs/ui-text-and-dex-design.md 1-5 の図。r.y からのずれ）
+    // 順位・アプリ・使用時間・能力名・短い1行に絞り、選択は青い枠で示す。
     void DrawCard(Rect r, int index, AbilityCandidate c, bool selected, double maxSeconds)
     {
         MacDesktopGui.Card(r, selected);
@@ -150,7 +143,6 @@ public class RunLoadoutMenu : MonoBehaviour
         float y = r.y + 8f;
         Color accent = selected ? MacDesktopGui.Blue : MacDesktopGui.Muted;
         PixelGui.TextEn(new Rect(x, y + 2f, 60f, 10f), index < Ranks.Length ? Ranks[index] : $"{index + 1}TH", 8, accent);
-        if(selected) PixelGui.Text(new Rect(r.xMax-65,y,55,16),"選択中",12,MacDesktopGui.Blue,TextAnchor.MiddleRight);
 
         // アプリ（アイコン 16 ドットを2倍）・名前・使用時間（0.5 時間単位）
         float ay = r.y + 28f;
@@ -166,26 +158,14 @@ public class RunLoadoutMenu : MonoBehaviour
             PixelGui.Text(new Rect(x, ay + 6f, w, 18f), "おまけ", 16, PixelGui.SubText);
         }
 
-        // 固有能力
-        y += 50f;
+        y = r.y + 82f;
         PixelGui.DottedLine(x, y, w, PixelGui.Muted);
-        y += 6f;
-        PixelGui.Text(new Rect(x, y, w, 14f), "固有能力", 12, MacDesktopGui.Blue);
+        y += 10f;
         if (c.Skill != null)
         {
-            PixelGui.DrawSprite(new Rect(x, y + 16f, 16f, 16f), c.Skill.Icon != null ? c.Skill.Icon : c.AppIcon); // アイコンが空の能力は、アプリのアイコンで
-            PixelGui.TextFit(new Rect(x + 20f, y + 15f, w - 20f, 18f), c.Skill.DisplayName, 16, PixelGui.Ink);
-            PixelGui.Text(new Rect(x, y + 36f, w, 30f), SkillTexts.Description(c.Skill), 12, PixelGui.BodyText, TextAnchor.UpperLeft, true);
-            float tx = x;
-            foreach(string tag in SkillTexts.Tags(c.Skill))
-            {
-                float tw=Mathf.Ceil(PixelGui.Measure(tag,PixelGui.Style(false,12)))+12;
-                if(tx+tw>r.xMax-8) break;
-                Rect badge=new Rect(tx,r.yMax-23,tw,16);
-                MacDesktopGui.Rounded(badge,new Color32(231,240,253,255),3);
-                PixelGui.Text(badge,tag,12,MacDesktopGui.Blue,TextAnchor.MiddleCenter);
-                tx+=tw+4;
-            }
+            PixelGui.DrawSprite(new Rect(x, y, 16f, 16f), c.Skill.Icon != null ? c.Skill.Icon : c.AppIcon);
+            PixelGui.TextFit(new Rect(x + 20f, y - 1f, w - 20f, 18f), c.Skill.DisplayName, 16, PixelGui.Ink);
+            PixelGui.TextFit(new Rect(x, y + 30f, w, 18f), SkillBriefs.Line(c.Skill), 12, PixelGui.BodyText);
         }
     }
 
