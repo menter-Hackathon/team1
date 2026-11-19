@@ -17,11 +17,19 @@ public static class AbilitiesBuilder
 {
     public const string CatalogPath = "Assets/ScriptableObjects/Run/AbilityCatalog.asset";
 
-    /// <summary>カテゴリの能力5つ</summary>
+    /// <summary>Zoom の能力「ギャラリービュー」のアセット（2026-11-18）</summary>
+    public const string GalleryViewPath = "Assets/ScriptableObjects/Skills/Skill_App_Zoom.asset";
+
+    /// <summary>カテゴリの能力5つ（と、テスト用シーンの G キーで渡すギャラリービュー）</summary>
     public struct Skills
     {
         public SkillDefinition NewTab, Breakpoint, BarGraph, PaintBucket, Bomb;
+        public SkillDefinition GalleryView;
         public SkillDefinition[] All => new[] { NewTab, Breakpoint, BarGraph, PaintBucket, Bomb };
+        /// <summary>テスト用シーンの G キーで渡す順（ギャラリービューを先頭に。2026-11-18：手で試すため）</summary>
+        public SkillDefinition[] ForDebugKey => GalleryView != null
+            ? new[] { GalleryView, NewTab, Breakpoint, BarGraph, PaintBucket, Bomb }
+            : All;
     }
 
     /// <summary>能力5つと、能力えらびの表を用意する（無ければ作る）</summary>
@@ -222,6 +230,7 @@ public static class AbilitiesBuilder
             ("ノヴァ", nova, AttackStat.AreaScale, 0.9f, 1.2f),
         });
         EnsureAppSkills();
+        skills.GalleryView = AssetDatabase.LoadAssetAtPath<SkillDefinition>(GalleryViewPath);
         AssetDatabase.SaveAssets();
         return skills;
     }
@@ -231,7 +240,8 @@ public static class AbilitiesBuilder
 
     /// <summary>
     /// アプリ専用の能力（2026-11-18 まさぴ〜決定：Zoom・Finder・Premiere Pro）を用意する。中身はチームで決めるので、今は【仮】：
-    /// ・能力のアセット Skill_App_〇〇（名前は「〇〇（仮）」、アイコンは空＝アプリのアイコンで代わりに出す）
+    /// ・能力のアセット Skill_App_〇〇（名前は「〇〇（仮）」、アイコンは空＝アプリのアイコンで代わりに出す）。
+    ///   Zoom は 2026-11-18 にチームの案「ギャラリービュー」にした（SetupGalleryView）
     /// ・攻撃データ Attack_App_〇〇（今ある能力の攻撃の複製。このアプリだけの物なので、書き換えてもほかの能力は変わらない）
     /// ・能力えらびの表の「アプリ専用の能力」の欄（空のときだけ入れる。手で直した値は残す）と、除外の表から Finder を外す
     /// すでにあるアセットは作り直さない。
@@ -240,7 +250,8 @@ public static class AbilitiesBuilder
     {
         var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
         if (catalog == null) return;
-        SkillDefinition zoom = GetOrCreateAppSkill("Zoom", "Zoom（仮）", SkillCategory.SocialChat, "Gen/Attack_Gen_Spread");
+        SkillDefinition zoom = GetOrCreateAppSkill("Zoom", GalleryViewName, SkillCategory.SocialChat, "Gen/Attack_Gen_Spread");
+        SetupGalleryView(zoom);
         SkillDefinition finder = GetOrCreateAppSkill("Finder", "Finder（仮）", SkillCategory.Unknown, "Gen/Attack_Gen_Nova");
         SkillDefinition premiere = GetOrCreateAppSkill("PremierePro", "Premiere Pro（仮）", SkillCategory.Creative, "Attack_Ability_BarGraph");
         PlayerTestSceneBuilder.SetProps(catalog, so =>
@@ -257,6 +268,45 @@ public static class AbilitiesBuilder
             RemoveString(so.FindProperty("_excludedBundleIds"), "com.apple.finder");
         });
         EditorUtility.SetDirty(catalog);
+    }
+
+    const string GalleryViewName = "ギャラリービュー";
+
+    /// <summary>
+    /// Zoom の能力「ギャラリービュー」（2026-11-18。チームの案：広範囲ロックオンレーザー・クールタイム長め）。
+    /// 攻撃データがまだロックオンでなければ（最初の【仮】の複製のままなら）、ロックオンの値を入れる。値はすべて【仮】。
+    /// 一度ロックオンにしたあとは、手で直した値を残す。アイコンは「グラフィックを適用」で入れる（Icon_GalleryView）
+    /// </summary>
+    static void SetupGalleryView(SkillDefinition skill)
+    {
+        if (skill == null || skill.Attack == null) return;
+        if (skill.DisplayName == "Zoom（仮）")
+        {
+            PlayerTestSceneBuilder.SetProps(skill, so => so.FindProperty("_displayName").stringValue = GalleryViewName);
+            EditorUtility.SetDirty(skill);
+        }
+        AttackData attack = skill.Attack;
+        if (attack.Kind == AttackKind.LockOn) return;
+        PlayerTestSceneBuilder.SetProps(attack, so =>
+        {
+            so.FindProperty("_kind").intValue = (int)AttackKind.LockOn;
+            so.FindProperty("_windup").floatValue = 0f;
+            so.FindProperty("_cooldown").floatValue = 8f;            // 長め（ほかの能力は 2.5〜5秒）
+            so.FindProperty("_damage").intValue = 1;                 // 雑魚は1発で倒れる
+            so.FindProperty("_gaugeGain").intValue = 3;              // 1本あたり。ボスだけなら 9本×3＝27
+            so.FindProperty("_knockback").vector2Value = new Vector2(2f, 2f);
+            so.FindProperty("_hitStun").floatValue = 0.15f;
+            so.FindProperty("_repeatCount").intValue = 1;
+            so.FindProperty("_repeatInterval").floatValue = 0.05f;   // レーザー1本ごとの間隔
+            so.FindProperty("_activeTime").floatValue = 0.25f;       // レーザーが見えている時間
+            so.FindProperty("_telegraphTime").floatValue = 0.45f;    // 枠を付けてから撃ち始めるまで
+            so.FindProperty("_sprite").objectReferenceValue = null;
+            so.FindProperty("_color").colorValue = new Color(0.18f, 0.55f, 1f, 1f); // レーザーの色（Zoom の青）
+            so.FindProperty("_spawnOffset").vector2Value = new Vector2(0.1f, 0.55f);
+            so.FindProperty("_lockOnCount").intValue = 9;            // 3×3 のギャラリー
+            so.FindProperty("_lockOnMarkColor").colorValue = new Color(0.14f, 0.85f, 0.35f, 1f);
+        });
+        EditorUtility.SetDirty(attack);
     }
 
     static SkillDefinition GetOrCreateAppSkill(string key, string displayName, SkillCategory category, string sourceAttack)
