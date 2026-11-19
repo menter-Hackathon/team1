@@ -71,6 +71,7 @@ public class RunResultScreen : MonoBehaviour
 
     void Update()
     {
+        if (GameSession.Instance != null && GameSession.Instance.IsGameOver) return;
         if (_dex != null && _dex.BlocksParentInput) return;
         if (!_window.IsVisible) return;
         var kb = Keyboard.current;
@@ -95,7 +96,7 @@ public class RunResultScreen : MonoBehaviour
     void OnGUI()
     {
         GameSession session = GameSession.Instance;
-        if (session == null || session.IsTransitioning) return;
+        if (session == null || session.IsTransitioning || session.IsGameOver) return;
         // 図鑑が前面の間は背後のレポートを描かず、入力も渡さない。
         // 別 MonoBehaviour の OnGUI の描画順に依存して覆い隠すのを防ぐ。
         if (_dex != null && _dex.BlocksParentInput) return;
