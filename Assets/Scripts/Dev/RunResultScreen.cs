@@ -88,7 +88,7 @@ public class RunResultScreen : MonoBehaviour
                 if (reward == null) continue;
                 var box = new Rect(ix, table.y + 4f + rowH * 4f + 4f, 20f, 20f);
                 PixelGui.Fill(box, PixelGui.SlotBg);
-                PixelGui.DrawSprite(PixelGui.Inset(box, 2f), reward.Icon);
+                PixelGui.DrawSprite(PixelGui.Inset(box, 2f), reward.Icon != null ? reward.Icon : run.Cleared[i].Stage.Icon16); // アイコンが空の能力は、アプリのアイコンで
                 ix -= 24f;
             }
         }

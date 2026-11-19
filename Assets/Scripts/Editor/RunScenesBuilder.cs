@@ -77,6 +77,7 @@ public static class RunScenesBuilder
         string windowsPath = StageLayoutsBuilder.BuildWindows(SceneFolder, catalog);
         string resultPath = BuildResult();
         RegisterBuildScenes(titlePath, loadoutPath, stagePath, scrollPath, windowsPath, resultPath);
+        FinalBossBuilder.BuildFinalBoss(); // ラスボス Terminal（無ければ作る。2026-11-18）
 
         AssetDatabase.SaveAssets();
         Debug.Log($"ランのシーンを作成しました: {titlePath}, {loadoutPath}, {stagePath}, {scrollPath}, {windowsPath}, {resultPath}");

@@ -18,6 +18,8 @@ public class StagePlan
     public AppVisual Visual;
     /// <summary>アプリのアイコン（16 ドット）。ランを作るときに1回だけ用意する（画面の描画中にアイコンを読みに行かないため）</summary>
     public Sprite Icon16;
+    /// <summary>ラスボス（Terminal。毎回、最後のステージ。2026-11-18）</summary>
+    public bool IsFinal;
     public bool IsStandIn => Visual != null;
 
     public double UsageHours => UsageSeconds / 3600.0;
@@ -172,8 +174,9 @@ public static class RunPlanner
     /// スクリーンタイムの上位 poolSize 個のアプリから、ランダムに stageCount 個を選んで、それぞれのステージのボスにする（2026-11-17 まさぴ〜決定）。
     /// ・対応表のアプリ（Chrome・VS Code）は、そのアプリのボス
     /// ・対応表に無いアプリは代用ボス：見た目はアイコンから、技はカテゴリの近いボス（ブラウザ → Chrome、開発 → VS Code、ほかは名前で決める）。
-    ///   ステージは1画面（AppCatalog の「代用ボスのステージ」）。倒すと、そのアプリの能力（カテゴリの能力か、その場で作った能力）が手に入る
-    /// ・カードにもボスにもしないアプリ（Finder・設定・iPhone のアプリなど）は選ばない
+    ///   ステージは1画面（AppCatalog の「代用ボスのステージ」）。倒すと、そのアプリの能力が手に入る
+    ///   （アプリ専用の能力 → カテゴリの能力 → その場で作った能力の順。2026-11-18：Zoom・Finder・Premiere Pro は専用の能力）
+    /// ・カードにもボスにもしないアプリ（設定・iPhone のアプリなど）と、ラスボスのアプリ（Terminal）は選ばない
     /// ・並びは使用時間の短い順（一番使ったアプリが最後）
     /// </summary>
     public static List<StagePlan> PlanRandom(AppCatalog catalog, AbilityCatalog abilities, IEnumerable<AppUsage> usages, System.Random rng,
@@ -195,7 +198,8 @@ public static class RunPlanner
         {
             if (p.entry != null)
             {
-                plans.Add(CreatePlan(catalog, p.entry, p.seconds));
+                SkillDefinition own = abilities != null ? abilities.FindAppSkill(p.row)?.Skill : null; // 対応表のアプリでも、専用の能力があればそれ
+                plans.Add(CreatePlan(catalog, p.entry, p.seconds, own));
                 continue;
             }
             AppUsageRow row = p.row;
@@ -204,7 +208,8 @@ public static class RunPlanner
             AppEntry template = templates.FirstOrDefault(a => category != null && a.Category == category.Category)
                 ?? templates[(int)(PixelIcon.Hash(row.Name) % (uint)templates.Count)];
             AppVisual visual = AppVisuals.Get(row);
-            SkillDefinition reward = category != null ? category.Skill : AppVisuals.Generate(row, abilities, null);
+            SkillDefinition reward = abilities != null ? abilities.SkillFor(row) : null;
+            if (reward == null) reward = AppVisuals.Generate(row, abilities, null);
             var standIn = new AppEntry
             {
                 DisplayName = row.Name,
@@ -224,7 +229,22 @@ public static class RunPlanner
     }
 
     /// <summary>
-    /// ボスの候補：使用時間の上位 poolSize 個のアプリ（除外を除く）。同じアプリはまとめる（対応表のアプリは表の行で、ほかは名前で）。
+    /// ラスボスのステージ（2026-11-18：Terminal。毎回、最後に足す）。強さはいつも最大、手に入る能力は無し（プロフィールの能力）。
+    /// 見た目は代用ボスと同じ作り方：本物のアイコンから、ゲージの横のアイコンと着ているウィンドウを作る。ステージの色は表のテーマ
+    /// </summary>
+    public static StagePlan CreateFinalPlan(AppCatalog catalog)
+    {
+        AppEntry boss = catalog != null ? catalog.FinalBoss : null;
+        if (boss == null) return null;
+        string bundle = boss.BundleIdPrefixes?.FirstOrDefault(b => !string.IsNullOrEmpty(b)) ?? "";
+        AppVisual visual = AppVisuals.Get(new AppUsageRow { Name = boss.DisplayName, BundleId = bundle, Seconds = 1 });
+        StagePlan plan = CreatePlan(catalog, boss, catalog.FullStrengthHours * 3600.0, null, visual);
+        plan.IsFinal = true;
+        return plan;
+    }
+
+    /// <summary>
+    /// ボスの候補：使用時間の上位 poolSize 個のアプリ（除外とラスボスのアプリを除く）。同じアプリはまとめる（対応表のアプリは表の行で、ほかは名前で）。
     /// アプリ図鑑にも、この候補を載せる
     /// </summary>
     public static List<(AppEntry entry, AppUsageRow row, double seconds)> BossPool(AppCatalog catalog, AbilityCatalog abilities, IEnumerable<AppUsage> usages, int poolSize = 10)
@@ -236,6 +256,7 @@ public static class RunPlanner
             if (u.UsageSeconds <= 0) continue;
             var row = new AppUsageRow { Name = u.DisplayName, BundleId = u.Id, Seconds = u.UsageSeconds };
             if (abilities != null && abilities.IsExcluded(row)) continue;
+            if (catalog.IsFinalBossApp(u.Id, u.DisplayName)) continue; // ラスボス（Terminal）は毎回最後に出るので、候補にしない
             AppEntry entry = catalog.Find(u.Id) ?? catalog.FindByName(u.DisplayName);
             if (entry != null && (entry.BossPrefab == null || entry.Profile == null)) entry = null;
             int i = pool.FindIndex(p => entry != null ? p.entry == entry

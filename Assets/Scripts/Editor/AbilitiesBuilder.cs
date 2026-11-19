@@ -221,8 +221,85 @@ public static class AbilitiesBuilder
             ("トラップ弾", trap, AttackStat.None, 1f, 1f),
             ("ノヴァ", nova, AttackStat.AreaScale, 0.9f, 1.2f),
         });
+        EnsureAppSkills();
         AssetDatabase.SaveAssets();
         return skills;
+    }
+
+    const string AppSkillAttackFolder = "Assets/ScriptableObjects/Attacks/Player/App";
+    const string SkillFolder = "Assets/ScriptableObjects/Skills";
+
+    /// <summary>
+    /// アプリ専用の能力（2026-11-18 まさぴ〜決定：Zoom・Finder・Premiere Pro）を用意する。中身はチームで決めるので、今は【仮】：
+    /// ・能力のアセット Skill_App_〇〇（名前は「〇〇（仮）」、アイコンは空＝アプリのアイコンで代わりに出す）
+    /// ・攻撃データ Attack_App_〇〇（今ある能力の攻撃の複製。このアプリだけの物なので、書き換えてもほかの能力は変わらない）
+    /// ・能力えらびの表の「アプリ専用の能力」の欄（空のときだけ入れる。手で直した値は残す）と、除外の表から Finder を外す
+    /// すでにあるアセットは作り直さない。
+    /// </summary>
+    public static void EnsureAppSkills()
+    {
+        var catalog = AssetDatabase.LoadAssetAtPath<AbilityCatalog>(CatalogPath);
+        if (catalog == null) return;
+        SkillDefinition zoom = GetOrCreateAppSkill("Zoom", "Zoom（仮）", SkillCategory.SocialChat, "Gen/Attack_Gen_Spread");
+        SkillDefinition finder = GetOrCreateAppSkill("Finder", "Finder（仮）", SkillCategory.Unknown, "Gen/Attack_Gen_Nova");
+        SkillDefinition premiere = GetOrCreateAppSkill("PremierePro", "Premiere Pro（仮）", SkillCategory.Creative, "Attack_Ability_BarGraph");
+        PlayerTestSceneBuilder.SetProps(catalog, so =>
+        {
+            var arr = so.FindProperty("_appSkills");
+            if (arr.arraySize == 0)
+            {
+                arr.arraySize = 3;
+                AppSkill(arr.GetArrayElementAtIndex(0), "Zoom", zoom, new[] { "Zoom", "zoom.us", "Zoom Workplace" }, new[] { "us.zoom.xos" });
+                AppSkill(arr.GetArrayElementAtIndex(1), "Finder", finder, new[] { "Finder" }, new[] { "com.apple.finder" });
+                AppSkill(arr.GetArrayElementAtIndex(2), "Premiere Pro", premiere, new[] { "Premiere Pro", "Adobe Premiere Pro" }, new[] { "com.adobe.PremierePro" });
+            }
+            RemoveString(so.FindProperty("_excludedNames"), "Finder");
+            RemoveString(so.FindProperty("_excludedBundleIds"), "com.apple.finder");
+        });
+        EditorUtility.SetDirty(catalog);
+    }
+
+    static SkillDefinition GetOrCreateAppSkill(string key, string displayName, SkillCategory category, string sourceAttack)
+    {
+        string attackPath = $"{AppSkillAttackFolder}/Attack_App_{key}.asset";
+        var attack = AssetDatabase.LoadAssetAtPath<AttackData>(attackPath);
+        if (attack == null)
+        {
+            PlayerTestSceneBuilder.EnsureFolder(AppSkillAttackFolder);
+            AssetDatabase.CopyAsset($"Assets/ScriptableObjects/Attacks/Player/{sourceAttack}.asset", attackPath);
+            attack = AssetDatabase.LoadAssetAtPath<AttackData>(attackPath);
+        }
+        string skillPath = $"{SkillFolder}/Skill_App_{key}.asset";
+        var skill = AssetDatabase.LoadAssetAtPath<SkillDefinition>(skillPath);
+        if (skill != null) return skill;
+        PlayerTestSceneBuilder.EnsureFolder(SkillFolder);
+        skill = ScriptableObject.CreateInstance<SkillDefinition>();
+        AssetDatabase.CreateAsset(skill, skillPath);
+        PlayerTestSceneBuilder.SetProps(skill, so =>
+        {
+            so.FindProperty("_displayName").stringValue = displayName;
+            so.FindProperty("_icon").objectReferenceValue = null; // 空＝アプリのアイコンで代わりに出す（絵ができたら入れる）
+            so.FindProperty("_category").intValue = (int)category;
+            so.FindProperty("_attack").objectReferenceValue = attack;
+        });
+        EditorUtility.SetDirty(skill);
+        return skill;
+    }
+
+    static void AppSkill(SerializedProperty e, string label, SkillDefinition skill, string[] names, string[] bundles)
+    {
+        e.FindPropertyRelative("Label").stringValue = label;
+        e.FindPropertyRelative("Skill").objectReferenceValue = skill;
+        Strings(e.FindPropertyRelative("AppNames"), names);
+        Strings(e.FindPropertyRelative("BundleIdPrefixes"), bundles);
+    }
+
+    static void RemoveString(SerializedProperty arr, string value)
+    {
+        for (int i = arr.arraySize - 1; i >= 0; i--)
+        {
+            if (string.Equals(arr.GetArrayElementAtIndex(i).stringValue, value, System.StringComparison.OrdinalIgnoreCase)) arr.DeleteArrayElementAtIndex(i);
+        }
     }
 
     /// <summary>表のひな形の欄が空なら入れる（すでに入っていれば、手で直した値を残す）</summary>

@@ -84,10 +84,27 @@ public class AppCatalog : ScriptableObject
     [SerializeField] AppEntry[] _apps;
     [Tooltip("代用ボス（表に無いアプリのボス）のステージのシーン（2026-11-17）")]
     [SerializeField] string _standInStageScene = "Stage_Desktop";
+    [Header("ラスボス（2026-11-18 まさぴ〜決定：Terminal）")]
+    [Tooltip("毎回、最後のステージに出るボス（使用時間に関係なく出る。ランダムの候補からは外す）。プレハブかプロフィールが空なら出さない。強さはいつも最大")]
+    [SerializeField] AppEntry _finalBoss;
 
     public float FullStrengthHours => _fullStrengthHours;
     public AppEntry[] Apps => _apps ?? Array.Empty<AppEntry>();
     public string StandInStageScene => _standInStageScene;
+    /// <summary>ラスボス（プレハブとプロフィールが入っているときだけ）。無ければ null</summary>
+    public AppEntry FinalBoss => _finalBoss != null && _finalBoss.BossPrefab != null && _finalBoss.Profile != null ? _finalBoss : null;
+
+    /// <summary>ラスボスのアプリか（バンドルID・表示名・スクリーンタイムでの別名）。ランダムのボスの候補から外すのに使う</summary>
+    public bool IsFinalBossApp(string bundleId, string name)
+    {
+        AppEntry f = FinalBoss;
+        if (f == null) return false;
+        if (f.Matches(bundleId)) return true;
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        string n = name.Trim();
+        return string.Equals(n, f.DisplayName, StringComparison.OrdinalIgnoreCase) ||
+               (f.ScreenTimeNames != null && Array.Exists(f.ScreenTimeNames, x => string.Equals(n, x, StringComparison.OrdinalIgnoreCase)));
+    }
 
     /// <summary>名前に当たる対応アプリ（表示名・スクリーンタイムでの別名。「名前 - 説明」の形も当たる）。無ければ null</summary>
     public AppEntry FindByName(string name)

@@ -460,6 +460,20 @@ public static class ArtAssets
     }
 
     /// <summary>アプリの色のアセットを作る。すでにあれば、それを使う（色は上書きしない。直すときはアセットを直接直す）</summary>
+    /// <summary>ラスボス（Terminal）の色：黒い画面と緑の文字（2026-11-18。【仮】）</summary>
+    public static AppTheme GetOrCreateTerminalTheme() => GetOrCreateTheme("Theme_Terminal", TerminalTheme);
+
+    static void TerminalTheme(SerializedObject so)
+    {
+        Col(so, "_sky", "0b0f0c"); Col(so, "_cloud", "16261a");
+        Colors(so, "_hills", "020d05", "04200c", "0a4a1c", "128a34", "33ff66");
+        Col(so, "_floor", "262626"); Col(so, "_floorTop", "33ff66");
+        Col(so, "_wall", "121212"); Col(so, "_wallHighlight", "262626");
+        Col(so, "_folder", "128a34"); Col(so, "_folderShade", "0a4a1c"); Col(so, "_folderTab", "33ff66");
+        Col(so, "_main", "33ff66");
+        Colors(so, "_accents", "33ff66", "128a34");
+    }
+
     static AppTheme GetOrCreateTheme(string file, Action<SerializedObject> init)
     {
         string path = $"{ThemeFolder}/{file}.asset";

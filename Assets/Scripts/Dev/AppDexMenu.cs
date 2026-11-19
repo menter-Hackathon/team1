@@ -153,12 +153,15 @@ public class AppDexMenu : MonoBehaviour
         return e.IsDefeated ? icon : PixelIcon.Grayscale(icon);
     }
 
-    /// <summary>手に入る能力のアイコン（カテゴリの能力ならそのアイコン、その場で作った能力ならアプリのアイコン）</summary>
+    /// <summary>
+    /// 手に入る能力のアイコン（アプリ専用の能力 → カテゴリの能力の順にそのアイコン。
+    /// その場で作った能力と、アイコンがまだ空のアプリ専用の能力は、アプリのアイコン）
+    /// </summary>
     static Sprite SkillIconOf(AppDexEntry e)
     {
         AbilityCatalog abilities = GameSession.Instance != null ? GameSession.Instance.Abilities : null;
-        AbilityCategoryEntry category = abilities != null ? abilities.Find(e.Row) : null;
-        if (category != null && category.Skill != null && category.Skill.Icon != null) return category.Skill.Icon;
+        SkillDefinition skill = abilities != null ? abilities.SkillFor(e.Row) : null;
+        if (skill != null && skill.Icon != null) return skill.Icon;
         return AppVisuals.Get(e.Row)?.Icon16;
     }
 

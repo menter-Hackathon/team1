@@ -56,3 +56,26 @@ MonoBehaviour:
     AbilityValue:
       Min: 10
       Max: 16
+  _standInStageScene: Stage_Desktop
+  _finalBoss:
+    DisplayName: Terminal
+    BundleIdPrefixes:
+    - com.apple.Terminal
+    ScreenTimeNames:
+    - "\u30BF\u30FC\u30DF\u30CA\u30EB"
+    Category: 3
+    BossPrefab: {fileID: 5378414307527060572, guid: 0534178d4536046fc96cab5034b3c7af, type: 3}
+    Profile: {fileID: 11400000, guid: 928fafaebb4a7404d95b95baf6af6e4d, type: 2}
+    SpawnPosition: {x: 7, y: 1.5}
+    StageScene: Stage_Desktop
+    Theme: {fileID: 11400000, guid: e11a08db5fa3d4e939fbb2778d9bcec6, type: 2}
+    GaugeMax:
+      Min: 140
+      Max: 160
+    Phase2Wait:
+      Min: 0.6
+      Max: 0.5
+    AbilityStat: 0
+    AbilityValue:
+      Min: 0
+      Max: 0
