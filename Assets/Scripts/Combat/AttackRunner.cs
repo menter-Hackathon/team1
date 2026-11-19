@@ -426,7 +426,7 @@ public class AttackRunner : MonoBehaviour
         Released?.Invoke(data);
 
         // 本体が出るまで待つ（ボスはそのあと次の行動へ）
-        float wait = data.TelegraphTime * (data.WarningFrames != null && data.WarningFrames.Length > 0 ? 1f : 0f) + data.SpawnReleaseDelay;
+        float wait = (data.HasSpawnWarning ? data.TelegraphTime : 0f) + data.SpawnReleaseDelay;
         if (wait > 0f) yield return new WaitForSeconds(wait);
     }
 

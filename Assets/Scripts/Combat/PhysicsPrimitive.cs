@@ -170,16 +170,23 @@ public class PhysicsPrimitive : MonoBehaviour
 
     IEnumerator Run()
     {
-        // 予告（ボス版：その位置に Unity_SpawnWarning_Virus を点滅させる）
-        Sprite[] warning = _data.WarningFrames;
-        if (warning != null && warning.Length > 0 && warning[0] != null && _data.TelegraphTime > 0f)
+        // 予告（ボス版：その位置に Unity の移動ツールの矢印か、Unity_SpawnWarning_Virus を点滅させる）
+        if (_data.HasSpawnWarning)
         {
-            var wgo = new GameObject("Warning");
-            wgo.layer = gameObject.layer;
-            wgo.transform.SetParent(transform, false);
-            var wsr = wgo.AddComponent<SpriteRenderer>();
-            wsr.sortingOrder = 17;
-            wgo.AddComponent<SpriteFrameAnimation>().Setup(wsr, warning, _data.WarningFrameRate, true, false);
+            GameObject wgo;
+            if (_data.WarningGizmo)
+            {
+                wgo = MoveGizmo.Create(transform, _data.WarningGizmoSize, 17).gameObject;
+            }
+            else
+            {
+                wgo = new GameObject("Warning");
+                wgo.layer = gameObject.layer;
+                wgo.transform.SetParent(transform, false);
+                var wsr = wgo.AddComponent<SpriteRenderer>();
+                wsr.sortingOrder = 17;
+                wgo.AddComponent<SpriteFrameAnimation>().Setup(wsr, _data.WarningFrames, _data.WarningFrameRate, true, false);
+            }
             yield return new WaitForSeconds(_data.TelegraphTime);
             Destroy(wgo);
         }

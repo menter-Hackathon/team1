@@ -338,18 +338,19 @@ public static class OfficeUnitySteamBuilder
             I(so, "_spawnCount", count);
             F(so, "_dropHeight", 3.5f);
             F(so, "_minDistanceFromTarget", 2.5f);
-            F(so, "_telegraphTime", 0.7f); // 予告を 0.7 秒点滅
+            F(so, "_telegraphTime", 0.7f); // 予告を 0.7 秒
             Physics(so, Prims("_Virus"), maxAlive: 6, lifetime: 6f,
                 Frames(U + "Unity_Spawn_Virus.png"), Frames(U + "Unity_Impact_Virus.png"), Frames(U + "Unity_SpawnWarning_Virus.png"));
+            B(so, "_warningGizmo", true); // 予告は Unity の移動ツールの矢印（2026-11-19）
         }
         a.UnityBossSpawnP1 = Attack("Unity/Attack_UnityBoss_Spawn_P1", so => UnityBoss(so, 2));
         a.UnityBossSpawnP2 = Attack("Unity/Attack_UnityBoss_Spawn_P2", so => UnityBoss(so, 3));
         // 3D の見た目のマテリアル（2026-11-18 追加。すでにあるアセットでも、空なら入れる）
         Material normalMat = PrimitiveMaterial("Unity_Primitive_Default", null);
-        Material virusMat = PrimitiveMaterial("Unity_Primitive_Virus", new Color(0.62f, 0.3f, 0.95f));
+        // ボス版も、Create したときのままの白（2026-11-19：紫をやめた）
         FillMaterial(a.UnitySpawn, normalMat);
-        FillMaterial(a.UnityBossSpawnP1, virusMat);
-        FillMaterial(a.UnityBossSpawnP2, virusMat);
+        FillMaterial(a.UnityBossSpawnP1, normalMat);
+        FillMaterial(a.UnityBossSpawnP2, normalMat);
 
         // ───── Steam（ボスの攻撃【仮】。依頼書に攻撃の指定が無いので、素材で作った） ─────
         a.SteamBossTrophy = Attack("Steam/Attack_SteamBoss_Trophy", so =>

@@ -174,6 +174,10 @@ public class AttackData : ScriptableObject
     [Tooltip("出る前の予告（Unity_SpawnWarning_Virus）。予告時間（上の欄）のあいだ繰り返す。空なら予告なし")]
     [SerializeField] Sprite[] _warningFrames;
     [SerializeField, Min(0.1f)] float _warningFrameRate = 8f;
+    [Tooltip("オン：予告を、Unity の移動ツールの3本の矢印（赤 X・緑 Y・青 Z）にする（上の予告の絵の代わり。ドットではない。2026-11-19）")]
+    [SerializeField] bool _warningGizmo;
+    [Tooltip("移動ツールの矢印の長さ（マス）")]
+    [SerializeField, Min(0.1f)] float _warningGizmoSize = 1.3f;
 
     // ───────── Warp ─────────
     [Header("Warp のとき")]
@@ -273,6 +277,10 @@ public class AttackData : ScriptableObject
     public float ImpactFrameRate => _impactFrameRate;
     public Sprite[] WarningFrames => _warningFrames;
     public float WarningFrameRate => _warningFrameRate;
+    public bool WarningGizmo => _warningGizmo;
+    public float WarningGizmoSize => _warningGizmoSize;
+    /// <summary>出る前に予告するか（予告の絵か、移動ツールの矢印があり、予告時間がある）</summary>
+    public bool HasSpawnWarning => _telegraphTime > 0f && (_warningGizmo || (_warningFrames != null && _warningFrames.Length > 0 && _warningFrames[0] != null));
 
     /// <summary>出る絵で、本体が現れるまでの秒数</summary>
     public float SpawnReleaseDelay => _spawnFrames != null && _spawnFrames.Length > 0 ? Mathf.Min(_spawnReleaseFrame, _spawnFrames.Length - 1) / _spawnFrameRate : 0f;
