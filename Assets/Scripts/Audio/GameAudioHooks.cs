@@ -63,7 +63,13 @@ public partial class GameAudio
                 Event("player_die");
                 StopBgm(1.2f); // このあとゲームオーバーのジングル（テストシーンでは、やり直しで曲が戻る）
             }
-            else Event("enemy_die");
+            else
+            {
+                KillChain chain = KillChain.Current;
+                int count = chain != null && KillChain.RewardsOpen && RewardKit.IsZako(h) && chain.TimeLeft01 > 0f
+                    ? chain.Count : 0;
+                Event("enemy_die", Mathf.Pow(2f, Mathf.Min(count, 4) * 2f / 12f));
+            }
         }
         catch (Exception e) { LogOnce("OnAnyDied", e); }
     }
