@@ -26,6 +26,7 @@ public class RunLoadoutMenu : MonoBehaviour
 
     void Start()
     {
+        GameAudio.PlayBgm("bgm_loadout"); // 能力えらびの曲（2026-11-20：画面を Mac 仕様にしたときに消えていたので戻した）
         MacDesktopWallpaper.Ensure(this);
         _files=GetComponent<MacDesktopFiles>();
         if(_files==null) _files=gameObject.AddComponent<MacDesktopFiles>();
@@ -166,8 +167,8 @@ public class RunLoadoutMenu : MonoBehaviour
             PixelGui.Text(new Rect(x, ay + 6f, w, 18f), "おまけ", 16, PixelGui.SubText);
         }
 
-        // 固有能力
-        y += 50f;
+        // 固有能力（2026-11-20：使用時間のバー（r.y+66）と見出しが重ならないように、少し下げた）
+        y += 62f;
         PixelGui.DottedLine(x, y, w, PixelGui.Muted);
         y += 6f;
         PixelGui.Text(new Rect(x, y, w, 14f), "固有能力", 12, MacDesktopGui.Blue);
@@ -175,17 +176,16 @@ public class RunLoadoutMenu : MonoBehaviour
         {
             PixelGui.DrawSprite(new Rect(x, y + 16f, 16f, 16f), c.Skill.Icon != null ? c.Skill.Icon : c.AppIcon); // アイコンが空の能力は、アプリのアイコンで
             PixelGui.TextFit(new Rect(x + 20f, y + 15f, w - 20f, 18f), c.Skill.DisplayName, 16, PixelGui.Ink);
-            PixelGui.Text(new Rect(x, y + 36f, w, 30f), SkillTexts.Description(c.Skill), 12, PixelGui.BodyText, TextAnchor.UpperLeft, true);
-            float tx = x;
-            foreach(string tag in SkillTexts.Tags(c.Skill))
-            {
-                float tw=Mathf.Ceil(PixelGui.Measure(tag,PixelGui.Style(false,12)))+12;
-                if(tx+tw>r.xMax-8) break;
-                Rect badge=new Rect(tx,r.yMax-23,tw,16);
-                MacDesktopGui.Rounded(badge,new Color32(231,240,253,255),3);
-                PixelGui.Text(badge,tag,12,MacDesktopGui.Blue,TextAnchor.MiddleCenter);
-                tx+=tw+4;
-            }
+            // 説明は短い1行（SkillBriefs）。表に無い能力（あとから入った能力など）は、今の説明の最初の文を2行まで
+            // （その能力は届く所の図が無いので、下の空きに入る）。下に届く所の図と絵のタグ
+            if (SkillBriefs.Has(c.Skill.DisplayName))
+                PixelGui.TextFit(new Rect(x, y + 36f, w, 14f), SkillBriefs.Line(c.Skill.DisplayName, c.Skill), 12, PixelGui.BodyText);
+            else
+                PixelGui.Text(new Rect(x, y + 36f, w, 30f), SkillBriefs.Line(c.Skill.DisplayName, c.Skill), 12, PixelGui.BodyText, TextAnchor.UpperLeft, true);
+            // 届く所の図と、絵のタグ（範囲・貫通など。SkillBriefs。2026-11-20：画面を Mac 仕様にしたときに文字のタグに戻っていたので、絵のタグに戻した）
+            string skillName = c.Skill.DisplayName;
+            PixelGui.ReachMap(x, r.yMax - 43f, SkillBriefs.Reach(skillName));
+            PixelGui.PictoTags(x, r.yMax - 21f, SkillBriefs.Pictos(skillName, c.Skill), w);
         }
     }
 
