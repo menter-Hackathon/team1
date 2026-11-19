@@ -71,6 +71,17 @@ public class PlayerController : MonoBehaviour
     int _dashDirection = 1;
 
     public Vector2 Velocity => _velocity;
+    float _moveBoostUntil;
+    float _moveBoostMultiplier = 1f;
+    public float MoveSpeedMultiplier => Time.time < _moveBoostUntil ? _moveBoostMultiplier : 1f;
+
+    public void GrantMoveSpeedBoost(float multiplier, float seconds)
+    {
+        _moveBoostMultiplier = Mathf.Max(1f, multiplier);
+        _moveBoostUntil = Time.time + Mathf.Max(0f, seconds);
+    }
+
+    public void ClearMoveSpeedBoost() => _moveBoostUntil = 0f;
     public bool IsGrounded => _body.IsGrounded;
     /// <summary>右向きなら 1、左向きなら -1。攻撃の向きなどに使う</summary>
     public int FacingDirection { get; private set; } = 1;
@@ -162,7 +173,7 @@ public class PlayerController : MonoBehaviour
 
         // --- 横移動 ---
         float inputX = controllable ? _input.Move.x : 0f;
-        float targetX = inputX * _moveSpeed;
+        float targetX = inputX * _moveSpeed * MoveSpeedMultiplier * StatModifiers.SpeedOf(this); // StatModifiers：バフ（Steam の実績解除）
         bool hasInput = Mathf.Abs(targetX) > 0.01f;
         float accel;
         if (stunned) accel = _knockbackDeceleration; // のけぞり中は弱い減速で吹き飛ばす

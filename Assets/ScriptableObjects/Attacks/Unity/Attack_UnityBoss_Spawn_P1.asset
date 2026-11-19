@@ -1,0 +1,125 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32015ae998734b8a83700e2a1c61f820, type: 3}
+  m_Name: Attack_UnityBoss_Spawn_P1
+  m_EditorClassIdentifier: 
+  _kind: 5
+  _windup: 0.2
+  _activeTime: 0.3
+  _cooldown: 0
+  _damage: 1
+  _gaugeGain: 0
+  _knockback: {x: 6, y: 5}
+  _hitStun: 0.25
+  _repeatCount: 1
+  _repeatInterval: 0
+  _sprite: {fileID: 1390133411713325351, guid: b5e8ee6ab507b4cdb855903f9b827397, type: 3}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _frames: []
+  _framesPerRow: 0
+  _frameRate: 12
+  _loopFrames: 0
+  _hitDelay: 0
+  _holdFrame: -1
+  _windupFrames: []
+  _windupFrameRate: 12
+  _projectileCount: 1
+  _spreadAngle: 0
+  _speed: 7
+  _gravity: 0
+  _lifetime: 3
+  _hitSize: {x: 0.5, y: 0.5}
+  _aim: 0
+  _launchAngle: 0
+  _spawnOffset: {x: 0, y: 0}
+  _destroyOnTerrain: 1
+  _destroyOnHit: 1
+  _onTerrainHit: {fileID: 0}
+  _followUpOnHit: 0
+  _anchor: 0
+  _forwardDistance: 4
+  _snapToGround: 1
+  _alignToSurface: 1
+  _shape: 0
+  _areaSize: {x: 1.5, y: 12}
+  _areaCount: 1
+  _areaSpacing: 4
+  _areaStagger: 0
+  _areaForwardOrder: 0
+  _polylinePoints: []
+  _polylineRadius: 0.12
+  _telegraphTime: 0.7
+  _persistDuration: 0
+  _tickInterval: 0.5
+  _placement: 0
+  _spawnCount: 2
+  _minDistanceFromTarget: 2.5
+  _objectSize: {x: 3, y: 2}
+  _fallSpeed: 12
+  _landRemainTime: 0
+  _becomesPlatform: 0
+  _placeInterval: 0.3
+  _placeSpacing: 3
+  _dropHoldTime: 0.5
+  _dropInterval: 0.25
+  _appearTopRange: {x: 2.5, y: 6}
+  _reachHeight: 3
+  _primitives:
+  - Sprite: {fileID: 1390133411713325351, guid: b5e8ee6ab507b4cdb855903f9b827397, type: 3}
+    Shape: 0
+    Size: {x: 1.35, y: 1.35}
+  - Sprite: {fileID: 7443924064087411491, guid: 3e7f20df2a2574b149de361ebee6a3d7, type: 3}
+    Shape: 1
+    Size: {x: 1.35, y: 1.35}
+  - Sprite: {fileID: 6034309895114573978, guid: f5402d0a3daac4e22a6dd8608e03c136, type: 3}
+    Shape: 2
+    Size: {x: 0.75, y: 1.45}
+  _meshLook: 1
+  _primitiveMaterial: {fileID: 2100000, guid: b47ce29a35339472e9b6d1fc59515c1b, type: 2}
+  _maxAlive: 6
+  _objectLifetime: 6
+  _damageFallSpeed: 4
+  _impactSpeed: 5
+  _dropHeight: 3.5
+  _spawnFrames:
+  - {fileID: -4412665883550169699, guid: 64914bdc25d65474bb07f595a693df9a, type: 3}
+  - {fileID: 283127170557903760, guid: 64914bdc25d65474bb07f595a693df9a, type: 3}
+  - {fileID: 1098518804038559296, guid: 64914bdc25d65474bb07f595a693df9a, type: 3}
+  - {fileID: -2559373125433685022, guid: 64914bdc25d65474bb07f595a693df9a, type: 3}
+  - {fileID: 527080412532460867, guid: 64914bdc25d65474bb07f595a693df9a, type: 3}
+  - {fileID: -1487821985869679316, guid: 64914bdc25d65474bb07f595a693df9a, type: 3}
+  - {fileID: 1587562030588773462, guid: 64914bdc25d65474bb07f595a693df9a, type: 3}
+  _spawnFrameRate: 14
+  _spawnReleaseFrame: 1
+  _impactFrames:
+  - {fileID: 3165621004825247727, guid: 59130142a84b44793977058c33ca69cc, type: 3}
+  - {fileID: 621958838890225563, guid: 59130142a84b44793977058c33ca69cc, type: 3}
+  - {fileID: 7622536955357775405, guid: 59130142a84b44793977058c33ca69cc, type: 3}
+  - {fileID: 5917677895835817310, guid: 59130142a84b44793977058c33ca69cc, type: 3}
+  - {fileID: -5813287946314445163, guid: 59130142a84b44793977058c33ca69cc, type: 3}
+  - {fileID: 6670967328238599185, guid: 59130142a84b44793977058c33ca69cc, type: 3}
+  _impactFrameRate: 14
+  _warningFrames:
+  - {fileID: -5924413297741669209, guid: d7827ba7fe3474a819c852beefaca2d2, type: 3}
+  - {fileID: -2802208856459463985, guid: d7827ba7fe3474a819c852beefaca2d2, type: 3}
+  - {fileID: -3926807480617014514, guid: d7827ba7fe3474a819c852beefaca2d2, type: 3}
+  - {fileID: 7551834156255655461, guid: d7827ba7fe3474a819c852beefaca2d2, type: 3}
+  _warningFrameRate: 8
+  _warningGizmo: 1
+  _warningGizmoSize: 1.3
+  _warpDestination: 0
+  _warpDistance: 6
+  _vanishTime: 0
+  _appearDelay: 0
+  _appearTelegraph: 0
+  _appearTime: 0
+  _disableContactUntilAppeared: 1

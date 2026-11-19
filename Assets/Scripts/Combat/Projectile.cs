@@ -25,7 +25,7 @@ public class Projectile : MonoBehaviour
     public AttackRunner Owner => _owner;
 
     /// <summary>弾を1発作る</summary>
-    public static Projectile Spawn(AttackRunner owner, AttackData data, Vector2 position, Vector2 direction)
+    public static Projectile Spawn(AttackRunner owner, AttackData data, Vector2 position, Vector2 direction, int index = 0)
     {
         GameObject go = owner.CreateSpawnedObject($"Projectile_{data.name}", position);
 
@@ -38,7 +38,21 @@ public class Projectile : MonoBehaviour
         col.isTrigger = true;
         col.size = data.HitSize;
 
-        AttackRunner.AddVisual(go.transform, data.Sprite, data.Color, data.HitSize);
+        if (data.HasFrames)
+        {
+            // コマ送りの弾（円グラフの PieSlice）：元の大きさで回して見せる。index 番目の弾は index 行目の色
+            var vgo = new GameObject("Visual");
+            vgo.layer = go.layer;
+            vgo.transform.SetParent(go.transform, false);
+            var sr = vgo.AddComponent<SpriteRenderer>();
+            sr.color = data.Color;
+            sr.sortingOrder = 20;
+            vgo.AddComponent<SpriteFrameAnimation>().Setup(sr, data.GetFrameRow(index), data.FrameRate, data.LoopFrames, false);
+        }
+        else
+        {
+            AttackRunner.AddVisual(go.transform, data.Sprite, data.Color, data.HitSize);
+        }
 
         var p = go.AddComponent<Projectile>();
         p._owner = owner;

@@ -14,13 +14,18 @@ public class StagePlan
     public BossProfile Profile;
     /// <summary>手に入る能力。無ければ null</summary>
     public SkillDefinition Reward;
-    /// <summary>代用ボス（対応表に無いアプリ）の見た目（アイコン・色）。対応表のボスは null</summary>
+    /// <summary>
+    /// アイコンから作る見た目（アイコン・色）。代用ボス（対応表に無いアプリ）・ラスボス・「アイコンから見た目を作る」の行（Office・Unity・Steam）で入る。
+    /// ほかの対応表のボスは null
+    /// </summary>
     public AppVisual Visual;
     /// <summary>アプリのアイコン（16 ドット）。ランを作るときに1回だけ用意する（画面の描画中にアイコンを読みに行かないため）</summary>
     public Sprite Icon16;
     /// <summary>ラスボス（Terminal。毎回、最後のステージ。2026-11-18）</summary>
     public bool IsFinal;
-    public bool IsStandIn => Visual != null;
+    public bool IsStandIn => Visual != null && !IsFinal && (App == null || !App.IconLook);
+    /// <summary>ステージの色：表の色。空なら、アイコンの色（2026-11-19）</summary>
+    public AppTheme Theme => App != null && App.Theme != null ? App.Theme : Visual?.Theme;
 
     public double UsageHours => UsageSeconds / 3600.0;
     public string DisplayName => App != null ? App.DisplayName : "?";
@@ -145,7 +150,7 @@ public static class RunPlanner
         var apps = catalog.Apps.ToList();
         foreach (var pair in seconds.OrderBy(p => p.Value).ThenBy(p => apps.IndexOf(p.Key)))
         {
-            plans.Add(CreatePlan(catalog, pair.Key, pair.Value));
+            plans.Add(CreatePlan(catalog, pair.Key, pair.Value, null, IconLookOf(pair.Key, null)));
         }
         return plans;
     }
@@ -184,7 +189,7 @@ public static class RunPlanner
     {
         var plans = new List<StagePlan>();
         if (catalog == null || usages == null) return plans;
-        var templates = catalog.Apps.Where(a => a != null && a.BossPrefab != null && a.Profile != null).ToList();
+        var templates = catalog.Apps.Where(a => a != null && a.BossPrefab != null && a.Profile != null && !a.ExcludeFromStandIn).ToList();
         if (templates.Count == 0) return plans;
         var top = BossPool(catalog, abilities, usages, poolSize);
 
@@ -199,7 +204,7 @@ public static class RunPlanner
             if (p.entry != null)
             {
                 SkillDefinition own = abilities != null ? abilities.FindAppSkill(p.row)?.Skill : null; // 対応表のアプリでも、専用の能力があればそれ
-                plans.Add(CreatePlan(catalog, p.entry, p.seconds, own));
+                plans.Add(CreatePlan(catalog, p.entry, p.seconds, own, IconLookOf(p.entry, p.row)));
                 continue;
             }
             AppUsageRow row = p.row;
@@ -226,6 +231,22 @@ public static class RunPlanner
             plans.Add(CreatePlan(catalog, standIn, p.seconds, reward, visual));
         }
         return plans;
+    }
+
+    /// <summary>
+    /// 「アイコンから見た目を作る」の行（Office・Unity・Steam。2026-11-19）なら、本物のアイコンから作った見た目。ほかは null。
+    /// row：スクリーンタイムの行（そのアプリのアイコンを使う。Excel・Word・PowerPoint で別のアイコンになる）。無ければ表の名前とバンドルID
+    /// </summary>
+    public static AppVisual IconLookOf(AppEntry entry, AppUsageRow? row)
+    {
+        if (entry == null || !entry.IconLook) return null;
+        AppUsageRow r = row ?? new AppUsageRow
+        {
+            Name = entry.DisplayName,
+            BundleId = entry.BundleIdPrefixes?.FirstOrDefault(b => !string.IsNullOrEmpty(b)) ?? "",
+            Seconds = 1,
+        };
+        return AppVisuals.Get(r);
     }
 
     /// <summary>

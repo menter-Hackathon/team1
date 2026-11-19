@@ -29,6 +29,8 @@ public class VirusGauge : MonoBehaviour, IDamageable
     public event Action<DamageInfo> Gained;
     /// <summary>最大値になったとき（1回だけ）</summary>
     public event Action Filled;
+    /// <summary>どれかのボスのゲージが、攻撃で増えたとき（ゲージ, 攻撃の中身）。実績（Steam）の「ボスに初めてダメージ」用</summary>
+    public static event Action<VirusGauge, DamageInfo> AnyGained;
 
     public bool TryTakeDamage(in DamageInfo info)
     {
@@ -36,6 +38,7 @@ public class VirusGauge : MonoBehaviour, IDamageable
         if (info.SourceTeam == _team || info.GaugeGain <= 0) return false;
         Add(info.GaugeGain);
         Gained?.Invoke(info);
+        AnyGained?.Invoke(this, info);
         return true;
     }
 

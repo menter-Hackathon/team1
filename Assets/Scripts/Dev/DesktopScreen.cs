@@ -385,7 +385,7 @@ public class DesktopScreen : MonoBehaviour
         var r = new Rect(
             Mathf.Round(Mathf.Lerp(from.x, to.x, p)), Mathf.Round(Mathf.Lerp(from.y, to.y, p)),
             Mathf.Round(Mathf.Lerp(from.width, to.width, p)), Mathf.Round(Mathf.Lerp(from.height, to.height, p)));
-        AppTheme theme = stage != null ? stage.App.Theme : null;
+        AppTheme theme = stage?.Theme;
         Color bar = theme != null ? theme.Main : PixelGui.Magenta;
         Color body = theme != null ? theme.Sky : PixelGui.Panel;
         PixelGui.Fill(r, PixelGui.FrameDark);

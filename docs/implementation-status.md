@@ -705,3 +705,23 @@ UI 担当の本番の画面ができたら差し替える。ステージ中は�
   - 印を付けている間に1体を倒しても、エラーは出なかった。
   - ボスだけが映っているときに撃つと、9本ともボスに当たり、ゲージが 27 増えた。
   - まだ見ていないこと：手で遊ぶこと、HUD・能力えらびのカードでのアイコンの出方（OnGUI は撮れていない）、横に進むステージ（Chrome）とウィンドウのステージ（VS Code）で撃つこと。
+---
+
+## 22. Office・Unity・Steam のスキルとアプリボス（2026-11-18。feature/office-unity-steam-skills。**テスト**）
+
+- 決めたこと（2026-11-18 相談）
+  - 共有の仕組みの拡張は OK（SkillDefinition の順番の攻撃・常に効く効果、AttackKind／AreaShape の追加、バフの倍率、BossProfile の順番）。
+  - 雑魚も Unity のオブジェクトに乗れる（オブジェクトは Ground レイヤー）。
+  - ボスはアプリ単位で対応アプリ表に登録する（Excel・Word・PowerPoint → Office、Unity・Unity Hub → Unity、Steam → Steam。ステージは1画面）。カテゴリの能力（棒グラフ【仮】・ボム【仮】）はそのまま。
+  - 正常化は今までの流れ（ゲージ100% → 追い出し → とどめ）。追い出しのときに Purify を再生し、とどめでスキルを渡す。
+- 素材：`Assets/_Project/Art/VirusGameArt/VirusGameArt`。PPU 54（プレイヤーの元素材と同じ）。`Tools/Team1/Office・Unity・Steam の素材を取り込む`。
+- 作り方：`Tools/Team1/Office・Unity・Steam テストシーンを作成`（素材の取り込み・アセット・プレハブ・対応アプリ表への登録・`Scenes/Test/OfficeUnitySteamTest`）。
+- キー（テストシーン）：1/2/3 プレイヤー版、T/F1 Office ボス版、Y/F2 Unity ボス版、U/F3 Steam ボス版の実績、I/F4 プレイヤーの実績、B ボス切替、O Office の見た目（Excel → Word → PowerPoint）、N ゲージ+10、P ゲージ満タン、Z 雑魚、R やり直し。
+- ボスの見た目（2026-11-19 変更）：ほかのボスと同じ B「ウイルスがアプリを着ている」。着ているウィンドウとゲージの横のアイコンは、代用ボス・Terminal と同じく Mac の本物のアイコンから作る（`AppBossLook`）。
+  - ラン：対応アプリ表の「アイコンから見た目を作る」（`AppEntry.IconLook`）がオンの行は、スクリーンタイムのそのアプリのアイコンを使う（Excel・Word・PowerPoint で別のウィンドウ）。ステージの色は表の色、空ならアイコンの色（`StagePlan.Theme`）。
+  - 素材の AppBoss（Idle/Attack/Hit/Purify）と `AppBossAnimator` は今は使っていない。
+- 実際のゲーム（2026-11-19）：能力えらびの表の「アプリ専用の能力」に Office（Excel・Word・PowerPoint）・Unity（Unity・Unity Hub）・Steam を入れた。スクリーンタイムにこれらのアプリがあると、カードもボスの報酬もこの能力になる（Office カテゴリの棒グラフ【仮】は、ほかの Office 系アプリ用に残る）。
+- Unity のオブジェクト（2026-11-19 変更）：見た目はプレイヤー版・ボス版とも Create したままの白。ボス版の予告は Unity の移動ツールの3本の矢印（`MoveGizmo`、ドットではない）。
+  - 当たり方：プレイヤー版は触れた敵に当たる（押し潰したとき以外も。同じ敵には 0.6 秒ごと）。ボス版は押し潰したとき（速く落ちているとき）だけ。攻撃データの「触れたら当たる」で切り替える。
+- 【仮】ダメージ・ゲージの量（ゲージは「クールタイム × 毎秒4」の目安）、Steam ボスの攻撃（トロフィー弾3発・足元のバースト。依頼書に指定が無い）。
+- テスト：`Assets/Tests/Editor/OfficeUnitySteamLogicTests.cs`（EditMode）。

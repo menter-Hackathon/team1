@@ -160,6 +160,29 @@ MonoBehaviour:
     - Adobe Premiere Pro
     BundleIdPrefixes:
     - com.adobe.PremierePro
+  - Label: Office
+    Skill: {fileID: 11400000, guid: 33cbf97f8dc254498889bcfb8d5b77e6, type: 2}
+    AppNames:
+    - Excel
+    - Word
+    - PowerPoint
+    BundleIdPrefixes:
+    - com.microsoft.Excel
+    - com.microsoft.Word
+    - com.microsoft.Powerpoint
+  - Label: Unity
+    Skill: {fileID: 11400000, guid: fd9ed260d001f43b9b524b6a8e4287e9, type: 2}
+    AppNames:
+    - Unity
+    - Unity Hub
+    BundleIdPrefixes:
+    - com.unity3d.
+  - Label: Steam
+    Skill: {fileID: 11400000, guid: ba2228fa3d4bc47d28763faae5da8c79, type: 2}
+    AppNames:
+    - Steam
+    BundleIdPrefixes:
+    - com.valvesoftware.steam
   _templates:
   - Name: "\u30D4\u30E9\u30FC"
     Attack: {fileID: 11400000, guid: 9eb594a4112d143cf9c37b3bdd2c56d7, type: 2}
