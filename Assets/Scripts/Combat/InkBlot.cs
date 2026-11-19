@@ -81,7 +81,11 @@ public class InkBlot : MonoBehaviour
             dg.transform.localScale = Vector3.one * ink._dangerScale;
             ink._danger.color = new Color(1f, 0.15f, 0.15f, 0f);
         }
-        else ink._hitbox.Activate();
+        else
+        {
+            ink._hitbox.Activate();
+            GameAudio.Event("gm_ps_ink");
+        }
         ink._nextTick = Time.time + data.TickInterval;
         art.transform.localScale = Vector3.one * 0.3f * ink._baseScale; // 大きさのアニメーションは絵だけ（判定の大きさは変えない）
         return ink;
@@ -162,6 +166,7 @@ public class InkBlot : MonoBehaviour
         {
             _fired = true;
             _hitbox.Activate();
+            GameAudio.Event("gm_ps_ink_boss");
         }
         float k = Mathf.Clamp01((age - tele) / Mathf.Max(0.05f, _data.ActiveTime));
         float burst = Mathf.Clamp01(k / 0.35f); // 判定時間の最初の3割ほどで広がりきる

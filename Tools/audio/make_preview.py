@@ -26,6 +26,7 @@ GROUPS = [
     ("gimmick_b.json", "ギミック：AI・Office・メモ"),
     ("gimmick_c.json", "ギミック：3D・動画・開発・ブラウザ"),
     ("gimmick_d.json", "ギミック：ゲーム・音楽・制作・Arc"),
+    ("biggon.json", "AI チャット・チャット・Photoshop・ブラウザの技（能力とボス。2026-11-20）"),
 ]
 
 BGM_PLACE = {

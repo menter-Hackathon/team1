@@ -220,6 +220,7 @@ public class AiChatBossVisual : MonoBehaviour, IBossAppLook
 
     void OnError(float duration)
     {
+        GameAudio.Event("gm_aichat_error");
         _errorStart = Time.time;
         _errorUntil = Time.time + duration;
         _thinkStart = -1f;

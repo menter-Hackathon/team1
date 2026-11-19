@@ -155,6 +155,7 @@ public class NotificationAlarm : MonoBehaviour
     void Ring()
     {
         _shakeUntil = Time.time + BellShakeTime;
+        GameAudio.Event("gm_chat_bell_ring", 1f + 0.1f * Mathf.Max(0, _rings - 1));
         Sprite[] mist = RedMist();
         foreach (var b in _bells)
         {
@@ -213,6 +214,7 @@ public class NotificationAlarm : MonoBehaviour
             }
             if (!touched) continue;
             Vfx.Sparkle(b.Body.transform.position);
+            GameAudio.Event("gm_chat_bell_get");
             Destroy(b.Body.gameObject);
             _bells.RemoveAt(i);
             changed = true;
@@ -236,6 +238,7 @@ public class NotificationAlarm : MonoBehaviour
     /// <summary>全部回収した：危険エリアが消えて終わる</summary>
     IEnumerator Clear()
     {
+        GameAudio.Event("gm_chat_alarm_clear");
         float start = Time.time;
         Color from = _overlay.color;
         while (Time.time - start < 0.4f)
@@ -254,6 +257,7 @@ public class NotificationAlarm : MonoBehaviour
     {
         _shakeUntil = Time.time + ImpactTime;
         _hitbox.Activate();
+        GameAudio.Event("gm_chat_alarm_blast");
         float start = Time.time;
         while (Time.time - start < ImpactTime)
         {

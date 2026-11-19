@@ -412,6 +412,27 @@ public partial class GameAudio : MonoBehaviour
     /// <summary>赤い予告（線・枠）が出た。たくさん出るので、0.15秒に1回まで</summary>
     public static void Telegraph() => Event("telegraph");
 
+    /// <summary>
+    /// 出来事のキーに割り当てた SE の音（AudioClip）と大きさ・高さを返す（2026-11-20：鳴らし続ける音 SeLoop 用）。
+    /// 割り当てが無い・空文字・ファイルが無ければ false。鳴らしすぎ対策・ピッチのばらつきは入れない（呼んだ側が鳴らす）
+    /// </summary>
+    public static bool TryGetEventClip(string key, out AudioClip clip, out float vol, out float pitch)
+    {
+        clip = null;
+        vol = pitch = 1f;
+        if (string.IsNullOrEmpty(key)) return false;
+        try
+        {
+            GameAudio a = Ensure();
+            if (a == null || !a._events.TryGetValue(key, out EventRow row) || string.IsNullOrEmpty(row.se)) return false;
+            clip = a.Clip(SeFolder, row.se);
+            vol = RowVol(row.vol);
+            pitch = RowPitch(row.pitch);
+            return clip != null;
+        }
+        catch (Exception e) { LogOnce("TryGetEventClip " + key, e); return false; }
+    }
+
     void PlayEventNow(string key, float pitchMul)
     {
         float now = Time.unscaledTime;

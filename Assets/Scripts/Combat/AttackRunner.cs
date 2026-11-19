@@ -865,12 +865,12 @@ public class AttackRunner : MonoBehaviour
                     MarqueeSelect m = MarqueeSelect.Spawn(this, OriginPoint, PickMarqueeRect());
                     while (m != null && !m.IsDone) yield return null;
                     if (m != null) SpawnMinion(data, m.SpawnPoint);
-                    Released?.Invoke(data);
+                    RaiseReleased(data);
                     continue;
                 }
                 float spread = n > 1 ? (i / (float)(n - 1) - 0.5f) * Mathf.Min(4f, 1.2f * (n - 1)) : 0f;
                 SpawnMinion(data, OriginPoint + new Vector2(spread, -0.4f));
-                Released?.Invoke(data);
+                RaiseReleased(data);
                 if (i < n - 1) yield return new WaitForSeconds(0.15f);
             }
             yield break;
@@ -884,14 +884,14 @@ public class AttackRunner : MonoBehaviour
                 float width = Mathf.Min(5f, 0.6f * (n - 1));
                 float spread = n > 1 ? (i / (float)(n - 1) - 0.5f) * width : 0f;
                 ChaserBot.Spawn(this, data, OriginPoint + new Vector2(spread, -0.6f));
-                Released?.Invoke(data);
+                RaiseReleased(data);
                 if (i < n - 1) yield return new WaitForSeconds(0.1f);
             }
             yield break;
         }
 
         AssistantDrone drone = AssistantDrone.Spawn(this, data);
-        Released?.Invoke(data);
+        RaiseReleased(data);
         while (drone != null) yield return null;
     }
 
@@ -903,14 +903,12 @@ public class AttackRunner : MonoBehaviour
     /// </summary>
     IEnumerator ChatRoutine(AttackData data)
     {
-        ChatVolley volley = ChatVolley.Start(this, data);
-        Released?.Invoke(data);
+        ChatVolley volley = ChatVolley.Start(this, data); // 出た瞬間の知らせ（音）は、メッセージを1つ足すたびに ChatVolley が出す
         // 繰り返す回数が2以上なら、自分で続けて送る（チャットのボスの連投。プレイヤーは1回ずつボタンで足す）
         for (int r = 1; r < data.RepeatCount && volley != null && volley.IsOpen; r++)
         {
             if (data.RepeatInterval > 0f) yield return new WaitForSeconds(data.RepeatInterval);
             if (!ChatVolley.TryAppend(this, data)) break;
-            Released?.Invoke(data);
         }
         while (volley != null && volley.IsOpen) yield return null;
     }
@@ -929,7 +927,7 @@ public class AttackRunner : MonoBehaviour
             yield return MoveToFarEdge(data, warpable);
         }
         BrushSwing swing = BrushSwing.Spawn(this, data);
-        Released?.Invoke(data);
+        RaiseReleased(data);
         while (swing != null && !swing.IsDone) yield return null;
         if (moved && warpable != null) warpable.SetContactEnabled(true);
     }
@@ -962,7 +960,7 @@ public class AttackRunner : MonoBehaviour
     IEnumerator PacketRoutine(AttackData data)
     {
         PacketVolley volley = PacketVolley.Spawn(this, data);
-        Released?.Invoke(data);
+        RaiseReleased(data);
         while (volley != null && !volley.IsFired) yield return null;
     }
 
@@ -996,7 +994,7 @@ public class AttackRunner : MonoBehaviour
             }
             placed.Add(best);
             BombSiteWindow.Spawn(this, data, best);
-            Released?.Invoke(data);
+            RaiseReleased(data);
             if (i < data.SpawnCount - 1) yield return new WaitForSeconds(0.15f);
         }
         yield return new WaitForSeconds(0.3f);
@@ -1008,7 +1006,7 @@ public class AttackRunner : MonoBehaviour
     IEnumerator FilterRoutine(AttackData data)
     {
         ScreenFilter filter = ScreenFilter.Spawn(this, data);
-        Released?.Invoke(data);
+        RaiseReleased(data);
         while (filter != null && !filter.IsCastDone) yield return null;
     }
 
@@ -1018,7 +1016,7 @@ public class AttackRunner : MonoBehaviour
     IEnumerator AlarmRoutine(AttackData data)
     {
         NotificationAlarm alarm = NotificationAlarm.Spawn(this, data);
-        Released?.Invoke(data);
+        RaiseReleased(data);
         while (alarm != null && !alarm.IsDone) yield return null;
     }
 
@@ -1137,7 +1135,7 @@ public class AttackRunner : MonoBehaviour
         {
             var origin = new Vector2(arena.xMin, BeamCenterY(data, arena));
             BeamStrike.Spawn(this, data, origin, Vector2.right, arena.width);
-            Released?.Invoke(data);
+            RaiseReleased(data);
             return;
         }
 
@@ -1155,7 +1153,7 @@ public class AttackRunner : MonoBehaviour
             Vector2 dir = Quaternion.Euler(0f, 0f, angle) * baseDir;
             BeamStrike.Spawn(this, data, from, dir, RayLengthInRect(from, dir, arena));
         }
-        Released?.Invoke(data);
+        RaiseReleased(data);
     }
 
     /// <summary>from から dir の向きに進んで、部屋の端に着くまでの長さ（レーザーは地形を通り抜け、部屋の端で止まる）</summary>

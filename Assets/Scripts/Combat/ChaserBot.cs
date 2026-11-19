@@ -78,6 +78,7 @@ public class ChaserBot : MonoBehaviour, IDamageable
         {
             _armed = true;
             _contact.Activate();
+            GameAudio.Event("gm_aichat_bot_launch");
             // プレイヤーへまっすぐ飛び出す（そのあとは、ゆるく曲がるだけ）
             if (_owner != null && _owner.TargetPoint is Vector2 aim)
             {
