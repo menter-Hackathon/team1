@@ -2,7 +2,7 @@
 PC_MORNING_1,PCの使い方,朝型 I,朝型の日（5時台〜8時台の合計が10分以上の日）が1日ある,Bronze,,LaunchScan,MorningDays,1,Ach_PC_MORNING_1.png,Ach_PC_MORNING_1_Locked.png
 PC_MORNING_2,PCの使い方,朝型 II,朝型の日が合計7日になった,Silver,,LaunchScan,MorningDays,7,Ach_PC_MORNING_2.png,Ach_PC_MORNING_2_Locked.png
 PC_MORNING_3,PCの使い方,朝型 III,朝型の日が合計30日になった,Gold,,LaunchScan,MorningDays,30,Ach_PC_MORNING_3.png,Ach_PC_MORNING_3_Locked.png
-PC_DETOX,PCの使い方,デトックス,エンタメ・SNSのアプリのうち、使用時間が先週より20%以上減ったものがある（作業用アプリは対象外）,Bronze,,LaunchScan,DetoxReduction,0.2,Ach_PC_DETOX.png,Ach_PC_DETOX_Locked.png
+PC_DETOX,PCの使い方,デトックス,エンタメ・SNSのアプリのうち、1週間（月〜日）の使用時間が前の週より20%以上減ったものがある（週ごとに判定し、達成できなければ次の週にやり直し。作業用アプリは対象外）,Bronze,,LaunchScan,DetoxReduction,0.2,Ach_PC_DETOX.png,Ach_PC_DETOX_Locked.png
 PC_NEWCOMER,PCの使い方,新入り,今週使ったアプリの中に、それより前の記録に一度も出てこないアプリがある,Bronze,そのアプリが新しい敵として登場する,LaunchScan,NewApp,1,Ach_PC_NEWCOMER.png,Ach_PC_NEWCOMER_Locked.png
 PC_MULTITASK,PCの使い方,マルチタスカー,1日に10種類以上のアプリを使った,Silver,,LaunchScan,AppsPerDay,10,Ach_PC_MULTITASK.png,Ach_PC_MULTITASK_Locked.png
 PC_STREAK_7,PCの使い方,皆勤賞,7日連続でPCを使った,Silver,,LaunchScan,StreakDays,7,Ach_PC_STREAK_7.png,Ach_PC_STREAK_7_Locked.png

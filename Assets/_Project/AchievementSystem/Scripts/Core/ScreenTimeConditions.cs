@@ -43,7 +43,12 @@ namespace Team1.Achievements
         }
     }
 
-    /// <summary>エンタメ・SNSのアプリのどれかが、先週より target（割合）以上減った</summary>
+    /// <summary>
+    /// エンタメ・SNSのアプリのどれかが、1週間（月曜〜日曜）の使用時間で、前の週より target（割合）以上減った。
+    /// ・判定は週が終わってから（週の途中は、使う時間が増えるかもしれないので解除しない）
+    /// ・その週で達成できなければ、次の週にやり直し（record.lastCountedDay＝最後に判定し終えた週の月曜。同じ週は二度判定しない）
+    /// ・週の途中の進み具合は「先週の同じ曜日まで」と比べたペース（表示だけ）
+    /// </summary>
     [Serializable]
     public class DetoxReductionCondition : IAchievementCondition
     {
@@ -52,30 +57,54 @@ namespace Team1.Achievements
             var st = ctx.ScreenTime;
             if (st == null) return ConditionResult.Skip("スクリーンタイムが取れていない");
             DateTime thisWeek = WeekMath.WeekStart(ctx.Now);
-            DateTime lastWeek = thisWeek.AddDays(-7);
-            if (st.CoverageStart > lastWeek) return ConditionResult.Skip("先週のデータが無い");
+            // 読める範囲で、まるごと入っている最初の週
+            DateTime firstWeek = WeekMath.WeekStart(st.CoverageStart);
+            if (firstWeek < st.CoverageStart) firstWeek = firstWeek.AddDays(7);
+            if (firstWeek >= thisWeek) return ConditionResult.Skip("先週のデータが無い");
 
+            // 終わった週を、前の週と比べる（前回判定した週の次から）
+            DateTime? judged = record.LastCountedDay;
+            DateTime week = judged.HasValue ? judged.Value.AddDays(7) : firstWeek.AddDays(7);
+            if (week < firstWeek.AddDays(7)) week = firstWeek.AddDays(7);
+            for (; week.AddDays(7) <= thisWeek; week = week.AddDays(7))
+            {
+                var (app, category, reduction) = BestReduction(st, ctx.Categories, week.AddDays(-7), week, week, week.AddDays(7));
+                record.LastCountedDay = week;
+                if (app != null && reduction >= target - 1e-9)
+                {
+                    int percent = (int)Math.Floor(reduction * 100 + 1e-6);
+                    record.detail = app;
+                    return ConditionResult.Unlock(reduction,
+                        $"{app}（{AppCategoryMap.Label(category)}）の使用時間が前の週より{percent}%減った（{WeekMath.Label(week)}〜{WeekMath.Label(week.AddDays(6))}）");
+                }
+            }
+
+            // 今週の途中：先週の同じ曜日までと比べたペース
+            int days = (ctx.Now.Date - thisWeek).Days + 1;
+            DateTime lastWeek = thisWeek.AddDays(-7);
+            if (lastWeek < firstWeek) return ConditionResult.Progress(0);
+            var pace = BestReduction(st, ctx.Categories, lastWeek, lastWeek.AddDays(days), thisWeek, ctx.Now.Date.AddDays(1));
+            return ConditionResult.Progress(pace.App == null ? 0 : Math.Max(0, pace.Reduction));
+        }
+
+        /// <summary>エンタメ・SNSのアプリで、いちばん減った割合（前の期間に使っていたアプリだけ。先週の使用時間に下限は設けない）</summary>
+        static (string App, AppUsageCategory Category, double Reduction) BestReduction(ScreenTimeSnapshot st, IAppCategoryResolver categories,
+            DateTime beforeFrom, DateTime beforeTo, DateTime afterFrom, DateTime afterTo)
+        {
             string bestApp = null;
             AppUsageCategory bestCategory = AppUsageCategory.Other;
             double best = double.NegativeInfinity;
-            foreach (string app in st.AppsBetween(lastWeek, thisWeek))
+            foreach (string app in st.AppsBetween(beforeFrom, beforeTo).OrderBy(a => a, StringComparer.OrdinalIgnoreCase))
             {
-                var category = ctx.Categories.Resolve(app);
+                var category = categories.Resolve(app);
                 if (!AppCategoryMap.IsDetoxTarget(category)) continue; // 作業・その他は対象外
-                int before = st.SecondsOf(app, lastWeek, thisWeek);
+                int before = st.SecondsOf(app, beforeFrom, beforeTo);
                 if (before <= 0) continue;
-                int now = st.SecondsOf(app, thisWeek, ctx.Now.Date.AddDays(1));
-                double reduction = 1.0 - (double)now / before;
+                int after = st.SecondsOf(app, afterFrom, afterTo);
+                double reduction = 1.0 - (double)after / before;
                 if (reduction > best) { best = reduction; bestApp = app; bestCategory = category; }
             }
-            if (bestApp == null) return ConditionResult.Progress(0);
-            if (best >= target - 1e-9)
-            {
-                int percent = (int)Math.Floor(best * 100 + 1e-6);
-                record.detail = bestApp;
-                return ConditionResult.Unlock(best, $"{bestApp}（{AppCategoryMap.Label(bestCategory)}）の使用時間が先週より{percent}%減った");
-            }
-            return ConditionResult.Progress(Math.Max(0, best));
+            return (bestApp, bestCategory, best);
         }
     }
 

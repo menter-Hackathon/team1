@@ -47,7 +47,7 @@ namespace Team1.Achievements
         public static string DataSource(IAchievementCondition c) => c switch
         {
             MorningDaysCondition m => $"スクリーンタイム：1時間ごとの使用時間（{m.fromHour}時台〜{m.toHourExclusive - 1}時台の合計）",
-            DetoxReductionCondition _ => "スクリーンタイム：アプリごとの使用時間（先週と今週。月曜始まり）＋アプリのカテゴリ",
+            DetoxReductionCondition _ => "スクリーンタイム：アプリごとの1週間（月〜日）の使用時間を前の週と比べる＋アプリのカテゴリ。週が終わってから判定し、達成できなければ次の週にやり直し",
             NewAppCondition _ => "スクリーンタイム：今週使ったアプリと、読める範囲の過去の週",
             AppsPerDayCondition _ => "スクリーンタイム：日ごとに使ったアプリの数",
             StreakDaysCondition _ => "スクリーンタイム：日ごとの使用の有無",

@@ -141,7 +141,7 @@ namespace Team1.Achievements
             switch (preset)
             {
                 case 0:
-                    // 31 日分、毎朝 6 時台に 15 分・毎日使う。先週は YouTube を 10 時間、今週は 2 時間。土曜に VS Code を 90 分。今週だけ Figma。ある1日に 12 種類
+                    // 31 日分、毎朝 6 時台に 15 分・毎日使う。土曜に VS Code を 90 分。今週だけ Figma。ある1日に 12 種類
                     for (int i = 31; i >= 1; i--)
                     {
                         DateTime d = today.AddDays(-i);
@@ -149,8 +149,9 @@ namespace Team1.Achievements
                         st.AddSession("Safari", d.AddHours(6), 900);
                         st.AddSession("Slack", d.AddHours(13), 1800);
                     }
-                    for (int i = 0; i < 5; i++) st.AddSession("YouTube", lastWeek.AddDays(i).AddHours(21), 7200);
-                    st.AddSession("YouTube", thisWeek.AddHours(21), 7200);
+                    // デトックス：先々週は YouTube を 10 時間、先週（終わった週）は 2 時間
+                    for (int i = 0; i < 5; i++) st.AddSession("YouTube", lastWeek.AddDays(-7 + i).AddHours(21), 7200);
+                    st.AddSession("YouTube", lastWeek.AddHours(21), 7200);
                     DateTime sat = lastWeek.AddDays(5);
                     st.AddSession("Visual Studio Code", sat.AddHours(10), 5400);
                     DateTime busy = today.AddDays(-1);

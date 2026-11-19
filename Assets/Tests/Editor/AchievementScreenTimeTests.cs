@@ -135,51 +135,102 @@ namespace Team1.Achievements.Tests
 
         // ───────── デトックス ─────────
 
-        static ScreenTimeSnapshot DetoxData(string app, int lastWeekSeconds, int thisWeekSeconds)
+        // 判定する週＝先週（Mon-7〜Sun）。比べる前の週＝Mon-14〜。今週は木曜の夜に起動
+        static readonly DateTime DetoxNow = Mon.AddDays(3).AddHours(20);
+
+        static ScreenTimeSnapshot DetoxData(string app, int weekBeforeSeconds, int lastWeekSeconds)
         {
-            var lastWeekStart = WeekMath.WeekStart(Mon).AddDays(-7);
-            return new ScreenTimeSnapshot(Mon.AddDays(3).AddHours(20), lastWeekStart)
-                .AddSession(app, lastWeekStart.AddDays(2).AddHours(20), lastWeekSeconds)
-                .AddSession(app, Mon.AddDays(1).AddHours(20), thisWeekSeconds);
+            var lastWeekStart = Mon.AddDays(-7);
+            var weekBefore = Mon.AddDays(-14);
+            return new ScreenTimeSnapshot(DetoxNow, weekBefore)
+                .AddSession(app, weekBefore.AddDays(2).AddHours(20), weekBeforeSeconds)
+                .AddSession(app, lastWeekStart.AddDays(4).AddHours(20), lastWeekSeconds);
         }
 
         [Test]
         public void Detox_Exactly20Percent_Unlocks()
         {
             var engine = Engine(Spec("D", AchievementTrigger.LaunchScan, new DetoxReductionCondition(), 0.2));
-            var unlocks = Scan(engine, DetoxData("YouTube", 3000, 2400), Mon.AddDays(3).AddHours(20));
+            var unlocks = Scan(engine, DetoxData("YouTube", 3000, 2400), DetoxNow);
             Assert.AreEqual(1, unlocks.Count);
             StringAssert.Contains("YouTube（エンタメ）", unlocks[0].Reason);
             StringAssert.Contains("20%", unlocks[0].Reason);
         }
 
         [Test]
-        public void Detox_19Percent_DoesNotUnlock()
+        public void Detox_19Percent_DoesNotUnlock_AndWeekIsJudged()
         {
             var engine = Engine(Spec("D", AchievementTrigger.LaunchScan, new DetoxReductionCondition(), 0.2));
-            Assert.AreEqual(0, Scan(engine, DetoxData("YouTube", 3000, 2430), Mon.AddDays(3).AddHours(20)).Count);
-            Assert.AreEqual(0.19, engine.Record("D").progress, 1e-6);
+            Assert.AreEqual(0, Scan(engine, DetoxData("YouTube", 3000, 2430), DetoxNow).Count);
+            Assert.AreEqual(Mon.AddDays(-7), engine.Record("D").LastCountedDay); // 先週は判定し終えた（次は今週が終わってから）
+        }
+
+        [Test]
+        public void Detox_InProgressWeek_DoesNotUnlock_EvenOnMonday()
+        {
+            // 先週は YouTube を見ていて、今週（月曜の朝）はまだ見ていない：週が終わるまで解除しない
+            var engine = Engine(Spec("D", AchievementTrigger.LaunchScan, new DetoxReductionCondition(), 0.2));
+            var st = new ScreenTimeSnapshot(Mon.AddHours(9), Mon.AddDays(-7)).AddSession("YouTube", Mon.AddDays(-7).AddHours(20), 3600);
+            Assert.AreEqual(0, Scan(engine, st, Mon.AddHours(9)).Count);
+            Assert.Greater(engine.Record("D").progress, 0); // ペースとしては減っている
+        }
+
+        [Test]
+        public void Detox_FailedWeekStartsOver_NextWeekCanUnlock()
+        {
+            var engine = Engine(Spec("D", AchievementTrigger.LaunchScan, new DetoxReductionCondition(), 0.2));
+            var a = Mon.AddDays(-21); var b = Mon.AddDays(-14); var c = Mon.AddDays(-7);
+            // 週B は週A より 10% 減：達成できず
+            var firstNow = c.AddDays(3).AddHours(20);
+            var st1 = new ScreenTimeSnapshot(firstNow, a)
+                .AddSession("YouTube", a.AddHours(20), 3000)
+                .AddSession("YouTube", b.AddHours(20), 2700);
+            Assert.AreEqual(0, Scan(engine, st1, firstNow).Count);
+            Assert.AreEqual(b, engine.Record("D").LastCountedDay);
+            // 週C は週B より 25% 減：やり直した週で達成
+            var st2 = new ScreenTimeSnapshot(DetoxNow, a)
+                .AddSession("YouTube", a.AddHours(20), 3000)
+                .AddSession("YouTube", b.AddHours(20), 2700)
+                .AddSession("YouTube", c.AddHours(20), 2025);
+            var unlocks = Scan(engine, st2, DetoxNow);
+            Assert.AreEqual(1, unlocks.Count);
+            StringAssert.Contains("25%", unlocks[0].Reason);
+        }
+
+        [Test]
+        public void Detox_JudgedWeekIsNotJudgedAgain()
+        {
+            // 週B（10%減）を判定した後で、週A と週C を比べ直したりしない：週C は週B と比べる（2700→2500 は 7%）
+            var engine = Engine(Spec("D", AchievementTrigger.LaunchScan, new DetoxReductionCondition(), 0.2));
+            var a = Mon.AddDays(-21); var b = Mon.AddDays(-14); var c = Mon.AddDays(-7);
+            var st = new ScreenTimeSnapshot(DetoxNow, a)
+                .AddSession("YouTube", a.AddHours(20), 3000)
+                .AddSession("YouTube", b.AddHours(20), 2700)
+                .AddSession("YouTube", c.AddHours(20), 2500);
+            Assert.AreEqual(0, Scan(engine, st, DetoxNow).Count);
+            Assert.AreEqual(0, Scan(engine, st, DetoxNow.AddHours(1)).Count);
+            Assert.AreEqual(c, engine.Record("D").LastCountedDay);
         }
 
         [Test]
         public void Detox_WorkAppIsNotTarget()
         {
             var engine = Engine(Spec("D", AchievementTrigger.LaunchScan, new DetoxReductionCondition(), 0.2));
-            Assert.AreEqual(0, Scan(engine, DetoxData("Visual Studio Code", 36000, 0), Mon.AddDays(3).AddHours(20)).Count);
+            Assert.AreEqual(0, Scan(engine, DetoxData("Visual Studio Code", 36000, 0), DetoxNow).Count);
         }
 
         [Test]
         public void Detox_AppNotInTableIsNotTarget()
         {
             var engine = Engine(Spec("D", AchievementTrigger.LaunchScan, new DetoxReductionCondition(), 0.2));
-            Assert.AreEqual(0, Scan(engine, DetoxData("Calculator", 36000, 0), Mon.AddDays(3).AddHours(20)).Count);
+            Assert.AreEqual(0, Scan(engine, DetoxData("Calculator", 36000, 0), DetoxNow).Count);
         }
 
         [Test]
         public void Detox_SnsWithSubtitleMatchesTable()
         {
             var engine = Engine(Spec("D", AchievementTrigger.LaunchScan, new DetoxReductionCondition(), 0.2));
-            var unlocks = Scan(engine, DetoxData("Discord - 一緒にしゃべっ…", 6000, 1200), Mon.AddDays(3).AddHours(20));
+            var unlocks = Scan(engine, DetoxData("Discord - 一緒にしゃべっ…", 6000, 1200), DetoxNow);
             Assert.AreEqual(1, unlocks.Count);
             StringAssert.Contains("（SNS）", unlocks[0].Reason);
             StringAssert.Contains("80%", unlocks[0].Reason);
