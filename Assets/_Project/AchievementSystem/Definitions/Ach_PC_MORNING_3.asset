@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PC_MORNING_3
+  m_EditorClassIdentifier: 
+  _id: PC_MORNING_3
+  _displayName: "\u671D\u578B III"
+  _description: "\u671D\u578B\u306E\u65E5\u304C\u5408\u8A0830\u65E5\u306B\u306A\u3063\u305F"
+  _category: 0
+  _rank: 2
+  _trigger: 0
+  _conditionType: MorningDays
+  _target: 30
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: 9ee9c5f0dd145486a96a54d0c21a267c, type: 3}
+  _iconLocked: {fileID: 21300000, guid: 830b84692a20d4eb08149f6ec8c75d65, type: 3}
+  _condition:
+    rid: 5073824396624265218
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265218
+      type: {class: MorningDaysCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data:
+        fromHour: 5
+        toHourExclusive: 9
+        minSeconds: 600

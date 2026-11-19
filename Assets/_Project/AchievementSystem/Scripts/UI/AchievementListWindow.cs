@@ -10,12 +10,12 @@ namespace Team1.Achievements
     /// ・上：解除数／全体数と達成率のバー
     /// ・左：カテゴリ（すべて／PCの使い方／プレイ／アプリ図鑑）と各カテゴリの解除数
     /// ・中央：アイコンのグリッド（解除済みはランク枠＋通常アイコン、未解除は灰色の背景＋_Locked アイコン。途中まで進んだ実績にはバー）
-    /// ・右：選んだ実績の詳細（ランク、名前、条件、進み具合、判定に使うデータ）
+    /// ・右：選んだ実績の名前、褒める1行（CSV の praise）、達成したアプリだけ（条件・進み具合・判定のデータ・達成日は出さない）
     /// キー：矢印で選ぶ、Q / E でカテゴリ、Esc・X で閉じる。
     /// </summary>
     public sealed class AchievementListWindow : MonoBehaviour
     {
-        const float WinW = 600f, WinH = 318f, SideW = 104f, DetailW = 196f, Cell = 48f, Cols = 5;
+        const float WinW = 600f, WinH = 318f, SideW = 136f, DetailW = 176f, Cell = 48f, Cols = 5;
 
         static readonly AchievementCategory?[] Filters = { null, AchievementCategory.PcUsage, AchievementCategory.Play, AchievementCategory.Dex };
 
@@ -147,46 +147,16 @@ namespace Team1.Achievements
 
         void DrawDetail(Rect r, AchievementSpec spec)
         {
-            var engine = Service.Engine;
-            AchievementRecord record = engine.Save.Find(spec.Id);
+            AchievementRecord record = Service.Engine.Save.Find(spec.Id);
             bool isUnlocked = record != null && record.unlocked;
             AchievementGui.Icon(new Rect(r.x, r.y + 2f, 44f, 44f), Service.Definition(spec.Id), spec.Rank, isUnlocked, Service.Frame(spec.Rank));
-            PixelGui.Text(new Rect(r.x + 52f, r.y + 2f, r.width - 52f, 16f), AchievementLabels.Rank(spec.Rank), 12, AchievementGui.RankColor(spec.Rank));
-            PixelGui.TextFit(new Rect(r.x + 52f, r.y + 18f, r.width - 52f, 16f), spec.Name, 12, MacDesktopGui.Ink);
-            PixelGui.Text(new Rect(r.x + 52f, r.y + 34f, r.width - 52f, 14f), isUnlocked ? "解除済み" : "未解除", 12, isUnlocked ? MacDesktopGui.Blue : MacDesktopGui.Muted);
+            PixelGui.TextFit(new Rect(r.x + 52f, r.y + 16f, r.width - 52f, 16f), spec.Name, 12, isUnlocked ? MacDesktopGui.Ink : MacDesktopGui.Muted);
 
-            float y = r.y + 54f;
-            y = Section(r, y, "条件", spec.Description);
-            if (!isUnlocked)
-            {
-                string progress = AchievementGui.ProgressText(spec, record);
-                PixelGui.Text(new Rect(r.x, y, 60f, 14f), "進み具合", 12, MacDesktopGui.Muted);
-                PixelGui.Text(new Rect(r.x + 60f, y, r.width - 60f, 14f), progress, 12, MacDesktopGui.Ink, TextAnchor.MiddleRight);
-                AchievementGui.Bar(new Rect(r.x, y + 17f, r.width, 4f), (float)engine.Ratio(spec), AchievementGui.BarFill);
-                y += 28f;
-            }
-            y = Section(r, y, "判定に使うデータ", AchievementConditions.DataSource(spec.Condition));
-            if (isUnlocked)
-            {
-                string when = record.UnlockedAt.HasValue ? record.UnlockedAt.Value.ToString("yyyy/MM/dd") : "";
-                Section(r, y, $"解除 {when}", string.IsNullOrEmpty(record.reason) ? "-" : record.reason);
-            }
-            else if (!string.IsNullOrEmpty(spec.GameEffect))
-            {
-                Section(r, y, "ゲームへの影響", spec.GameEffect);
-            }
-        }
-
-        static float Section(Rect r, float y, string label, string body)
-        {
-            if (y > r.yMax - 16f) return y;
-            PixelGui.Text(new Rect(r.x, y, r.width, 14f), label, 12, MacDesktopGui.Muted);
-            y += 15f;
-            GUIStyle style = PixelGui.Style(false, 12, TextAnchor.UpperLeft, true);
-            float h = Mathf.Ceil(style.CalcHeight(new GUIContent(body ?? ""), r.width));
-            h = Mathf.Min(h, Mathf.Max(0f, r.yMax - y));
-            PixelGui.Text(new Rect(r.x, y, r.width, h), body ?? "", 12, MacDesktopGui.Ink, TextAnchor.UpperLeft, true);
-            return y + h + 6f;
+            // 褒める1行と、達成したアプリだけ
+            string praise = string.IsNullOrEmpty(spec.Praise) ? spec.Name : spec.Praise;
+            PixelGui.TextFit(new Rect(r.x, r.y + 58f, r.width, 16f), praise, 12, isUnlocked ? MacDesktopGui.Ink : MacDesktopGui.Muted);
+            if (isUnlocked && !string.IsNullOrEmpty(record.app))
+                PixelGui.TextFit(new Rect(r.x, r.y + 78f, r.width, 16f), $"{record.app} で達成", 12, MacDesktopGui.Blue);
         }
     }
 }

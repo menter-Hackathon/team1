@@ -1,0 +1,237 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 039c9aa1861f44e088cdba8983bac956, type: 3}
+  m_Name: AppCategoryTable
+  m_EditorClassIdentifier: 
+  _rows:
+  - appName: YouTube
+    category: 1
+    detoxTarget: 1
+    matchKey: 
+    note: 
+  - appName: Netflix
+    category: 1
+    detoxTarget: 1
+    matchKey: 
+    note: 
+  - appName: Prime Video
+    category: 1
+    detoxTarget: 1
+    matchKey: 
+    note: 
+  - appName: Spotify
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u4F5C\u696D\u4E2D\u306EBGM\u3082\u542B\u3080\u306E\u3067\u3001\u5BFE\u8C61\u306B\u3059\u308B\u304B\u8981\u691C\u8A0E"
+  - appName: Steam
+    category: 1
+    detoxTarget: 1
+    matchKey: 
+    note: 
+  - appName: X
+    category: 2
+    detoxTarget: 1
+    matchKey: 
+    note: 
+  - appName: Instagram
+    category: 2
+    detoxTarget: 1
+    matchKey: 
+    note: 
+  - appName: TikTok
+    category: 2
+    detoxTarget: 1
+    matchKey: 
+    note: 
+  - appName: Discord
+    category: 2
+    detoxTarget: 1
+    matchKey: 
+    note: 
+  - appName: LINE
+    category: 2
+    detoxTarget: 1
+    matchKey: 
+    note: "\u9023\u7D61\u7528\u9014\u3082\u3042\u308B\u306E\u3067\u8981\u691C\u8A0E"
+  - appName: Slack
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: 
+  - appName: Microsoft Teams
+    category: 3
+    detoxTarget: 0
+    matchKey: Microsoft Teams|Teams
+    note: 
+  - appName: Zoom
+    category: 3
+    detoxTarget: 0
+    matchKey: Zoom|zoom.us|Zoom Workplace
+    note: 
+  - appName: Visual Studio Code
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: 
+  - appName: Unity
+    category: 3
+    detoxTarget: 0
+    matchKey: Unity|Unity Editor|Unity Hub
+    note: 
+  - appName: Excel
+    category: 3
+    detoxTarget: 0
+    matchKey: Excel|Microsoft Excel
+    note: "Office\u7CFB\uFF08\u5143\u306F\u300CExcel / Word / PowerPoint\u300D\u306E1\u884C\u3002\u30B9\u30AF\u30EA\u30FC\u30F3\u30BF\u30A4\u30E0\u306E\u540D\u524D\u3067\u7167\u5408\u3059\u308B\u305F\u3081\u5206\u3051\u305F\uFF09"
+  - appName: Word
+    category: 3
+    detoxTarget: 0
+    matchKey: Word|Microsoft Word
+    note: "Office\u7CFB"
+  - appName: PowerPoint
+    category: 3
+    detoxTarget: 0
+    matchKey: PowerPoint|Microsoft PowerPoint
+    note: "Office\u7CFB"
+  - appName: Figma
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: 
+  - appName: Notion
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: 
+  - appName: Chrome
+    category: 3
+    detoxTarget: 0
+    matchKey: Google Chrome|Chrome
+    note: "\u30D6\u30E9\u30A6\u30B6\u306F\u4E2D\u8EAB\u304C\u308F\u304B\u3089\u306A\u3044\u306E\u3067\u5BFE\u8C61\u5916"
+  - appName: Safari
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30D6\u30E9\u30A6\u30B6\u306F\u4E2D\u8EAB\u304C\u308F\u304B\u3089\u306A\u3044\u306E\u3067\u5BFE\u8C61\u5916"
+  - appName: Arc
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30D6\u30E9\u30A6\u30B6\u306F\u4E2D\u8EAB\u304C\u308F\u304B\u3089\u306A\u3044\u306E\u3067\u5BFE\u8C61\u5916\uFF08\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0\uFF09"
+  - appName: Firefox
+    category: 3
+    detoxTarget: 0
+    matchKey: Firefox|Firefox Developer Edition|Firefox Nightly
+    note: "\u30D6\u30E9\u30A6\u30B6\u306F\u4E2D\u8EAB\u304C\u308F\u304B\u3089\u306A\u3044\u306E\u3067\u5BFE\u8C61\u5916\uFF08\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0\uFF09"
+  - appName: ChatGPT
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Claude
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Gemini
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Cursor
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Xcode
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: GitHub Desktop
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Terminal
+    category: 3
+    detoxTarget: 0
+    matchKey: "Terminal|\u30BF\u30FC\u30DF\u30CA\u30EB"
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Blender
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Photoshop
+    category: 3
+    detoxTarget: 0
+    matchKey: Photoshop|Adobe Photoshop
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Illustrator
+    category: 3
+    detoxTarget: 0
+    matchKey: Illustrator|Adobe Illustrator
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Premiere Pro
+    category: 3
+    detoxTarget: 0
+    matchKey: Premiere Pro|Adobe Premiere Pro
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Keynote
+    category: 3
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Calendar
+    category: 3
+    detoxTarget: 0
+    matchKey: "Calendar|\u30AB\u30EC\u30F3\u30C0\u30FC"
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Mail
+    category: 3
+    detoxTarget: 0
+    matchKey: "Mail|\u30E1\u30FC\u30EB"
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Notes
+    category: 3
+    detoxTarget: 0
+    matchKey: "Notes|\u30E1\u30E2"
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Messages
+    category: 2
+    detoxTarget: 1
+    matchKey: "Messages|\u30E1\u30C3\u30BB\u30FC\u30B8"
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0\u3002\u9023\u7D61\u7528\u9014\u3082\u3042\u308B\u306E\u3067\u8981\u691C\u8A0E\uFF08LINE
+      \u3068\u540C\u3058\uFF09"
+  - appName: Minecraft
+    category: 1
+    detoxTarget: 1
+    matchKey: Minecraft|Minecraft Launcher
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0"
+  - appName: Music
+    category: 3
+    detoxTarget: 0
+    matchKey: "Music|\u30DF\u30E5\u30FC\u30B8\u30C3\u30AF"
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0\u3002Spotify
+      \u3068\u540C\u3058\u6271\u3044\uFF08\u4F5C\u696D\u4E2D\u306EBGM\u3082\u542B\u3080\u306E\u3067\u8981\u691C\u8A0E\uFF09"
+  - appName: QuickTime Player
+    category: 1
+    detoxTarget: 1
+    matchKey: QuickTime Player|QuickTime
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0\u3002\u52D5\u753B\u306E\u518D\u751F\u3002\u753B\u9762\u53CE\u9332\u306B\u3082\u4F7F\u3046\u306E\u3067\u8981\u691C\u8A0E"
+  - appName: Finder
+    category: 0
+    detoxTarget: 0
+    matchKey: 
+    note: "\u30B9\u30AD\u30EB\u5B9F\u88C5\u6E08\u307F\u306E\u30A2\u30D7\u30EA\u3068\u3057\u3066\u8FFD\u52A0\u3002\u30D5\u30A1\u30A4\u30EB\u64CD\u4F5C\u306A\u306E\u3067\u3069\u3061\u3089\u306E\u5BFE\u8C61\u306B\u3082\u3057\u306A\u3044"

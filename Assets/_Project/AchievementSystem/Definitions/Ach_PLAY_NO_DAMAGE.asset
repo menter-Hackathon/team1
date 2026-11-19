@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PLAY_NO_DAMAGE
+  m_EditorClassIdentifier: 
+  _id: PLAY_NO_DAMAGE
+  _displayName: "\u30CE\u30FC\u30C0\u30E1\u30FC\u30B8"
+  _description: "\u30C0\u30E1\u30FC\u30B8\u3092\u53D7\u3051\u305A\u306BWave\u3092\u30AF\u30EA\u30A2\u3057\u305F"
+  _category: 1
+  _rank: 1
+  _trigger: 1
+  _conditionType: NoDamageWave
+  _target: 1
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: 26cfb156e688041b092056c9d40602ab, type: 3}
+  _iconLocked: {fileID: 21300000, guid: 290b4d5b0a86044c786aabb2046bf9ca, type: 3}
+  _condition:
+    rid: 5073824396624265223
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265223
+      type: {class: NoDamageWaveCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data: 

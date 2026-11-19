@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PC_WEEKEND
+  m_EditorClassIdentifier: 
+  _id: PC_WEEKEND
+  _displayName: "\u9031\u672B\u30A8\u30F3\u30B8\u30CB\u30A2"
+  _description: "\u571F\u65E5\u306B\u4F5C\u696D\u30AB\u30C6\u30B4\u30EA\u306E\u30A2\u30D7\u30EA\u30921\u6642\u9593\u4EE5\u4E0A\u4F7F\u3063\u305F"
+  _category: 0
+  _rank: 0
+  _trigger: 0
+  _conditionType: WeekendWorkMinutes
+  _target: 60
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: d7d480e6d849c40d08bd721cb2d1e7b8, type: 3}
+  _iconLocked: {fileID: 21300000, guid: c350600159e444bc3a9b343e281cfa4e, type: 3}
+  _condition:
+    rid: 5073824396624265217
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265217
+      type: {class: WeekendWorkMinutesCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data: 

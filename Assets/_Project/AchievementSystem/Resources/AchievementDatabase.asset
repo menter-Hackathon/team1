@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef187a78748d940c3a6f071720889a00, type: 3}
+  m_Name: AchievementDatabase
+  m_EditorClassIdentifier: 
+  _definitions:
+  - {fileID: 11400000, guid: b3439897c9ba84b3080e1c3ba3ff900f, type: 2}
+  - {fileID: 11400000, guid: 83ec569700f2d4462baa0733ae5890e1, type: 2}
+  - {fileID: 11400000, guid: 3b25b6b916b9a454396f99ca88299ca4, type: 2}
+  - {fileID: 11400000, guid: c270749fd92304b5aa8fa5f922c47456, type: 2}
+  - {fileID: 11400000, guid: 44643efc4c0b74a2ba618229084aa7f1, type: 2}
+  - {fileID: 11400000, guid: 5a4b109b0301e4844b44b696b5b6a6ae, type: 2}
+  - {fileID: 11400000, guid: 955a0d1bb61db40c4af6ab041e16f162, type: 2}
+  - {fileID: 11400000, guid: 215cf2bcd534a4302877b43273016a69, type: 2}
+  - {fileID: 11400000, guid: b27bdc4f8950d4870a56ecf81984c1fc, type: 2}
+  - {fileID: 11400000, guid: 4d4cca889ed994f2ba0cc764e0537bf1, type: 2}
+  - {fileID: 11400000, guid: ff2708cb714154870a02a52c2072c088, type: 2}
+  - {fileID: 11400000, guid: 15ac726729476411296b2de071c932fa, type: 2}
+  - {fileID: 11400000, guid: 0ff33d9bdbbfd4a5a8bba520bc15f7cf, type: 2}
+  - {fileID: 11400000, guid: ade633cde0ed34e3cb12b860fccb08df, type: 2}
+  - {fileID: 11400000, guid: d449b4ca10da74729957f7b52ce0d320, type: 2}
+  - {fileID: 11400000, guid: e69bf069239ba446992812c6afd421d7, type: 2}
+  - {fileID: 11400000, guid: 3869100e932f1448a8cb522c9771523c, type: 2}
+  _categories: {fileID: 11400000, guid: 0506c7858aa5e492889eee92b9f99959, type: 2}
+  _frameBronze: {fileID: 21300000, guid: ead8197e491f64d74b5bffc6c63350dd, type: 3}
+  _frameSilver: {fileID: 21300000, guid: 69621a95cf40a49f99c4b0a92d80b2b8, type: 3}
+  _frameGold: {fileID: 21300000, guid: 3bed7690631174adbbe104dea27a524b, type: 3}
+  _popupSeconds: 3
+  _topAppCount: 10

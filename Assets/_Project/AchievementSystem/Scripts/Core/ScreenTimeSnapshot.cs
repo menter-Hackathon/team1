@@ -43,6 +43,22 @@ namespace Team1.Achievements
             return sum;
         }
 
+        /// <summary>その時間帯にいちばん使ったアプリ（内訳が無い日・使っていなければ null）</summary>
+        public string TopAppInHours(int fromHour, int toHourExclusive)
+        {
+            if (!HasHourly) return null;
+            int from = Math.Max(0, fromHour), to = Math.Min(24, toHourExclusive);
+            string best = null;
+            int bestSeconds = 0;
+            foreach (var a in _apps.Values.OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                int sum = 0;
+                for (int h = from; h < to; h++) sum += a.Hours[h];
+                if (sum > bestSeconds) { bestSeconds = sum; best = a.Name; }
+            }
+            return best;
+        }
+
         public IEnumerable<(string App, int Seconds)> Entries => _apps.Values.Where(a => a.Total > 0).Select(a => (a.Name, a.Total));
 
         AppDay Get(string app)

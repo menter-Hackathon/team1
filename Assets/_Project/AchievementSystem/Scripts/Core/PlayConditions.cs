@@ -14,7 +14,7 @@ namespace Team1.Achievements
             var p = ctx.Play;
             if (p == null || p.Kind != PlayEventKind.StageCleared) return ConditionResult.Skip();
             int wave = p.StageIndex + 1;
-            if (wave >= target) return ConditionResult.Unlock(wave, $"Wave {wave}（{p.AppName}）をクリアした");
+            if (wave >= target) return ConditionResult.Unlock(wave, $"Wave {wave}（{p.AppName}）をクリアした", p.AppName);
             return ConditionResult.Progress(Math.Max(record.progress, wave));
         }
     }
@@ -28,7 +28,7 @@ namespace Team1.Achievements
             var p = ctx.Play;
             if (p == null || p.Kind != PlayEventKind.StageCleared || p.IsFinalBoss) return ConditionResult.Skip();
             record.count++;
-            if (record.count >= target) return ConditionResult.Unlock(record.count, $"{p.AppName}のボスを正常化した");
+            if (record.count >= target) return ConditionResult.Unlock(record.count, $"{p.AppName}のボスを正常化した", p.AppName);
             return ConditionResult.Progress(record.count);
         }
     }
@@ -41,7 +41,7 @@ namespace Team1.Achievements
         {
             var p = ctx.Play;
             if (p == null || p.Kind != PlayEventKind.StageCleared) return ConditionResult.Skip();
-            if (!p.TookDamage) return ConditionResult.Unlock(1, $"Wave {p.StageIndex + 1}（{p.AppName}）をノーダメージでクリアした");
+            if (!p.TookDamage) return ConditionResult.Unlock(1, $"Wave {p.StageIndex + 1}（{p.AppName}）をノーダメージでクリアした", p.AppName);
             return ConditionResult.Progress(0);
         }
     }
@@ -55,7 +55,7 @@ namespace Team1.Achievements
             var p = ctx.Play;
             if (p == null || p.Kind != PlayEventKind.StageCleared) return ConditionResult.Skip();
             if (p.EquippedSkills >= target)
-                return ConditionResult.Unlock(p.EquippedSkills, $"スキルを{p.EquippedSkills}つ装備して Wave {p.StageIndex + 1}（{p.AppName}）をクリアした");
+                return ConditionResult.Unlock(p.EquippedSkills, $"スキルを{p.EquippedSkills}つ装備して Wave {p.StageIndex + 1}（{p.AppName}）をクリアした", p.AppName);
             return ConditionResult.Progress(Math.Max(record.progress, p.EquippedSkills));
         }
     }
@@ -70,7 +70,7 @@ namespace Team1.Achievements
             if (p == null || p.Kind != PlayEventKind.RunCompleted || ctx.Save == null) return ConditionResult.Skip();
             int clears = ctx.Save.PartnerClears(p.Partner);
             var best = ctx.Save.BestPartner();
-            if (clears >= target) return ConditionResult.Unlock(clears, $"相棒「{p.Partner}」と{clears}回クリアした");
+            if (clears >= target) return ConditionResult.Unlock(clears, $"相棒「{p.Partner}」と{clears}回クリアした", p.Partner);
             return ConditionResult.Progress(best.Clears);
         }
     }
@@ -83,7 +83,7 @@ namespace Team1.Achievements
         {
             var p = ctx.Play;
             if (p == null || p.Kind != PlayEventKind.StageCleared || !p.IsFinalBoss) return ConditionResult.Skip();
-            return ConditionResult.Unlock(1, $"最終ウイルスボス（{p.AppName}）を倒した");
+            return ConditionResult.Unlock(1, $"最終ウイルスボス（{p.AppName}）を倒した", p.AppName);
         }
     }
 
@@ -99,7 +99,7 @@ namespace Team1.Achievements
             if (n >= target)
                 return ConditionResult.Unlock(n, string.IsNullOrEmpty(log.LastPurified)
                     ? $"{n}種類のアプリを正常化した"
-                    : $"{log.LastPurified}を正常化して、{n}種類になった");
+                    : $"{log.LastPurified}を正常化して、{n}種類になった", log.LastPurified);
             return ConditionResult.Progress(n);
         }
     }
@@ -120,7 +120,7 @@ namespace Team1.Achievements
             int done = tops.Count(a => log.PurifiedApps.Any(p => AppCategoryMap.SameApp(a, p)));
             record.detail = $"{done}/{tops.Count}";
             double ratio = (double)done / tops.Count;
-            if (done == tops.Count) return ConditionResult.Unlock(target, $"使用時間TOP10の{tops.Count}アプリをすべて正常化した");
+            if (done == tops.Count) return ConditionResult.Unlock(target, $"使用時間TOP10の{tops.Count}アプリをすべて正常化した", log.LastPurified);
             return ConditionResult.Progress(ratio * target);
         }
     }

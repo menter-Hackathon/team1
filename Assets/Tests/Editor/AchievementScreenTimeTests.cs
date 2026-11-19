@@ -431,6 +431,37 @@ namespace Team1.Achievements.Tests
             Assert.AreEqual("B", engine.AlmostThere().Id);
         }
 
+        // ───────── 達成したアプリ ─────────
+
+        [Test]
+        public void Unlock_RecordsAchievingApp()
+        {
+            var engine = Engine(
+                Spec("M", AchievementTrigger.LaunchScan, new MorningDaysCondition(), 1),
+                Spec("D", AchievementTrigger.LaunchScan, new DetoxReductionCondition(), 0.2));
+            // 朝はメールを 8 分・Safari を 4 分：いちばん使ったメールで達成
+            var st = DetoxData("YouTube", 3000, 1000)
+                .AddSession("メール", Mon.AddHours(6), 480)
+                .AddSession("Safari", Mon.AddHours(7), 240);
+            var unlocks = Scan(engine, st, DetoxNow);
+            Assert.AreEqual(2, unlocks.Count);
+            Assert.AreEqual("メール", engine.Record("M").app);
+            Assert.AreEqual("YouTube", engine.Record("D").app);
+            Assert.AreEqual("YouTube", unlocks.First(u => u.Spec.Id == "D").App);
+        }
+
+        [Test]
+        public void Unlock_PlayRecordsStageApp_ForcedHasNone()
+        {
+            var engine = Engine(
+                Spec("WAVE", AchievementTrigger.InPlay, new WaveClearedCondition(), 1),
+                Spec("FINAL", AchievementTrigger.InPlay, new FinalBossDefeatedCondition(), 1));
+            engine.Evaluate(AchievementTrigger.InPlay, new AchievementContext { Play = new PlayEvent { Kind = PlayEventKind.StageCleared, AppName = "Slack" } });
+            Assert.AreEqual("Slack", engine.Record("WAVE").app);
+            engine.ForceUnlock("FINAL", Mon);
+            Assert.AreEqual("", engine.Record("FINAL").app);
+        }
+
         [Test]
         public void Csv_ParsesBomQuotesAndKeys()
         {

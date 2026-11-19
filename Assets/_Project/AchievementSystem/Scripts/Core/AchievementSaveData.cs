@@ -23,6 +23,8 @@ namespace Team1.Achievements
         public int count;
         /// <summary>補足（新入りで見つかったアプリの名前など）</summary>
         public string detail = "";
+        /// <summary>達成したアプリ（一覧に出す）。無ければ空</summary>
+        public string app = "";
 
         public DateTime? LastCountedDay
         {

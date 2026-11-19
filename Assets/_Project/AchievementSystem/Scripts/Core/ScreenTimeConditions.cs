@@ -20,6 +20,7 @@ namespace Team1.Achievements
             DateTime? last = record.LastCountedDay;
             DateTime? lastMorning = null;
             int lastMorningSeconds = 0;
+            string lastMorningApp = null;
             foreach (var day in st.Days)
             {
                 if (last.HasValue && day.Date <= last.Value) continue; // 数えた日は二重に数えない
@@ -32,13 +33,14 @@ namespace Team1.Achievements
                     record.count++;
                     lastMorning = day.Date;
                     lastMorningSeconds = seconds;
+                    lastMorningApp = day.TopAppInHours(fromHour, toHourExclusive);
                 }
                 record.LastCountedDay = day.Date;
             }
             if (record.count >= target)
                 return ConditionResult.Unlock(record.count, lastMorning.HasValue
                     ? $"{WeekMath.Label(lastMorning.Value)}は{fromHour}時台〜{toHourExclusive - 1}時台に{lastMorningSeconds / 60}分使った（朝型の日 {record.count}日目）"
-                    : $"朝型の日が{record.count}日になった");
+                    : $"朝型の日が{record.count}日になった", lastMorningApp);
             return ConditionResult.Progress(record.count);
         }
     }
@@ -75,7 +77,7 @@ namespace Team1.Achievements
                     int percent = (int)Math.Floor(reduction * 100 + 1e-6);
                     record.detail = app;
                     return ConditionResult.Unlock(reduction,
-                        $"{app}（{AppCategoryMap.Label(category)}）の使用時間が前の週より{percent}%減った（{WeekMath.Label(week)}〜{WeekMath.Label(week.AddDays(6))}）");
+                        $"{app}（{AppCategoryMap.Label(category)}）の使用時間が前の週より{percent}%減った（{WeekMath.Label(week)}〜{WeekMath.Label(week.AddDays(6))}）", app);
                 }
             }
 
@@ -128,7 +130,7 @@ namespace Team1.Achievements
                 .FirstOrDefault();
             if (found == null) return ConditionResult.Progress(0);
             record.detail = found; // 解除のきっかけになったアプリ（敵の候補への組み込みは今回はしない）
-            return ConditionResult.Unlock(1, $"「{found}」が今週はじめて記録に出てきた");
+            return ConditionResult.Unlock(1, $"「{found}」が今週はじめて記録に出てきた", found);
         }
     }
 
@@ -216,7 +218,7 @@ namespace Team1.Achievements
                 if (seconds >= target * 60)
                 {
                     string top = string.Join("・", work.Take(2).Select(e => e.App));
-                    return ConditionResult.Unlock(Math.Floor(minutes), $"{WeekMath.Label(day.Date)}に作業アプリ（{top}）を{seconds / 60}分使った");
+                    return ConditionResult.Unlock(Math.Floor(minutes), $"{WeekMath.Label(day.Date)}に作業アプリ（{top}）を{seconds / 60}分使った", work[0].App);
                 }
                 bestMinutes = Math.Max(bestMinutes, Math.Floor(minutes));
             }

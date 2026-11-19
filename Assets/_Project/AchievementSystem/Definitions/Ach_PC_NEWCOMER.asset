@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PC_NEWCOMER
+  m_EditorClassIdentifier: 
+  _id: PC_NEWCOMER
+  _displayName: "\u65B0\u5165\u308A"
+  _description: "\u4ECA\u9031\u4F7F\u3063\u305F\u30A2\u30D7\u30EA\u306E\u4E2D\u306B\u3001\u305D\u308C\u3088\u308A\u524D\u306E\u8A18\u9332\u306B\u4E00\u5EA6\u3082\u51FA\u3066\u3053\u306A\u3044\u30A2\u30D7\u30EA\u304C\u3042\u308B"
+  _category: 0
+  _rank: 0
+  _trigger: 0
+  _conditionType: NewApp
+  _target: 1
+  _gameEffect: "\u305D\u306E\u30A2\u30D7\u30EA\u304C\u65B0\u3057\u3044\u6575\u3068\u3057\u3066\u767B\u5834\u3059\u308B"
+  _icon: {fileID: 21300000, guid: 7c16b01ff5e2a4da99c503ac8fe8f138, type: 3}
+  _iconLocked: {fileID: 21300000, guid: 36a22f8ccd0c2427cafd3d29cb46c1a6, type: 3}
+  _condition:
+    rid: 5073824396624265216
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265216
+      type: {class: NewAppCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data: 

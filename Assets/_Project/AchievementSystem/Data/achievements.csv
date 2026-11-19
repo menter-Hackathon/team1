@@ -1,18 +1,18 @@
-﻿id,category,name,description,rank,game_effect,trigger,condition_type,target,icon,icon_locked
-PC_MORNING_1,PCの使い方,朝型 I,朝型の日（5時台〜8時台の合計が10分以上の日）が1日ある,Bronze,,LaunchScan,MorningDays,1,Ach_PC_MORNING_1.png,Ach_PC_MORNING_1_Locked.png
-PC_MORNING_2,PCの使い方,朝型 II,朝型の日が合計7日になった,Silver,,LaunchScan,MorningDays,7,Ach_PC_MORNING_2.png,Ach_PC_MORNING_2_Locked.png
-PC_MORNING_3,PCの使い方,朝型 III,朝型の日が合計30日になった,Gold,,LaunchScan,MorningDays,30,Ach_PC_MORNING_3.png,Ach_PC_MORNING_3_Locked.png
-PC_DETOX,PCの使い方,デトックス,エンタメ・SNSのアプリのうち、1週間（月〜日）の使用時間が前の週より20%以上減ったものがある（週ごとに判定し、達成できなければ次の週にやり直し。作業用アプリは対象外）,Bronze,,LaunchScan,DetoxReduction,0.2,Ach_PC_DETOX.png,Ach_PC_DETOX_Locked.png
-PC_NEWCOMER,PCの使い方,新入り,今週使ったアプリの中に、それより前の記録に一度も出てこないアプリがある,Bronze,そのアプリが新しい敵として登場する,LaunchScan,NewApp,1,Ach_PC_NEWCOMER.png,Ach_PC_NEWCOMER_Locked.png
-PC_MULTITASK,PCの使い方,マルチタスカー,1日に10種類以上のアプリを使った,Silver,,LaunchScan,AppsPerDay,10,Ach_PC_MULTITASK.png,Ach_PC_MULTITASK_Locked.png
-PC_STREAK_7,PCの使い方,皆勤賞,7日連続でPCを使った,Silver,,LaunchScan,StreakDays,7,Ach_PC_STREAK_7.png,Ach_PC_STREAK_7_Locked.png
-PC_WEEKEND,PCの使い方,週末エンジニア,土日に作業カテゴリのアプリを1時間以上使った,Bronze,,LaunchScan,WeekendWorkMinutes,60,Ach_PC_WEEKEND.png,Ach_PC_WEEKEND_Locked.png
-PLAY_FIRST_WAVE,プレイ,初陣,Wave 1をクリアした,Bronze,,InPlay,WaveCleared,1,Ach_PLAY_FIRST_WAVE.png,Ach_PLAY_FIRST_WAVE_Locked.png
-PLAY_FIRST_PURIFY,プレイ,はじめての正常化,アプリボスをはじめて正常化した,Bronze,,InPlay,AppBossPurified,1,Ach_PLAY_FIRST_PURIFY.png,Ach_PLAY_FIRST_PURIFY_Locked.png
-PLAY_NO_DAMAGE,プレイ,ノーダメージ,ダメージを受けずにWaveをクリアした,Silver,,InPlay,NoDamageWave,1,Ach_PLAY_NO_DAMAGE.png,Ach_PLAY_NO_DAMAGE_Locked.png
-PLAY_FULL_SKILLS,プレイ,フル装備,スキルを3つ装備した状態でWaveをクリアした,Bronze,,InPlay,WaveClearedWithSkills,3,Ach_PLAY_FULL_SKILLS.png,Ach_PLAY_FULL_SKILLS_Locked.png
-PLAY_PARTNER_3,プレイ,名コンビ,同じ相棒で3回クリアした,Silver,,InPlay,ClearsWithSamePartner,3,Ach_PLAY_PARTNER_3.png,Ach_PLAY_PARTNER_3_Locked.png
-PLAY_CLEAR,プレイ,完全駆除,最終ウイルスボスを倒した,Gold,,InPlay,FinalBossDefeated,1,Ach_PLAY_CLEAR.png,Ach_PLAY_CLEAR_Locked.png
-DEX_3,アプリ図鑑,図鑑デビュー,3種類のアプリを正常化した,Bronze,,OnPurify,PurifiedAppCount,3,Ach_DEX_3.png,Ach_DEX_3_Locked.png
-DEX_10,アプリ図鑑,アプリ博士,10種類のアプリを正常化した,Silver,,OnPurify,PurifiedAppCount,10,Ach_DEX_10.png,Ach_DEX_10_Locked.png
-DEX_TOP10,アプリ図鑑,コンプリート,使用時間TOP10のアプリをすべて正常化した（相棒にしたアプリを除く）,Gold,,OnPurify,PurifiedTop10,1,Ach_DEX_TOP10.png,Ach_DEX_TOP10_Locked.png
+﻿id,category,name,description,praise,rank,game_effect,trigger,condition_type,target,icon,icon_locked
+PC_MORNING_1,PCの使い方,朝型 I,朝型の日（5時台〜8時台の合計が10分以上の日）が1日ある,朝にPCに触れた！,Bronze,,LaunchScan,MorningDays,1,Ach_PC_MORNING_1.png,Ach_PC_MORNING_1_Locked.png
+PC_MORNING_2,PCの使い方,朝型 II,朝型の日が合計7日になった,朝にPCによく触れた！,Silver,,LaunchScan,MorningDays,7,Ach_PC_MORNING_2.png,Ach_PC_MORNING_2_Locked.png
+PC_MORNING_3,PCの使い方,朝型 III,朝型の日が合計30日になった,朝にPCにたくさん触れた！,Gold,,LaunchScan,MorningDays,30,Ach_PC_MORNING_3.png,Ach_PC_MORNING_3_Locked.png
+PC_DETOX,PCの使い方,デトックス,エンタメ・SNSのアプリのうち、1週間（月〜日）の使用時間が前の週より20%以上減ったものがある（週ごとに判定し、達成できなければ次の週にやり直し。作業用アプリは対象外）,見すぎをガマンできた！,Bronze,,LaunchScan,DetoxReduction,0.2,Ach_PC_DETOX.png,Ach_PC_DETOX_Locked.png
+PC_NEWCOMER,PCの使い方,新入り,今週使ったアプリの中に、それより前の記録に一度も出てこないアプリがある,新しいアプリに挑戦した！,Bronze,そのアプリが新しい敵として登場する,LaunchScan,NewApp,1,Ach_PC_NEWCOMER.png,Ach_PC_NEWCOMER_Locked.png
+PC_MULTITASK,PCの使い方,マルチタスカー,1日に10種類以上のアプリを使った,アプリを使いこなした！,Silver,,LaunchScan,AppsPerDay,10,Ach_PC_MULTITASK.png,Ach_PC_MULTITASK_Locked.png
+PC_STREAK_7,PCの使い方,皆勤賞,7日連続でPCを使った,1週間毎日PCに触れた！,Silver,,LaunchScan,StreakDays,7,Ach_PC_STREAK_7.png,Ach_PC_STREAK_7_Locked.png
+PC_WEEKEND,PCの使い方,週末エンジニア,土日に作業カテゴリのアプリを1時間以上使った,週末もしっかり作業した！,Bronze,,LaunchScan,WeekendWorkMinutes,60,Ach_PC_WEEKEND.png,Ach_PC_WEEKEND_Locked.png
+PLAY_FIRST_WAVE,プレイ,初陣,Wave 1をクリアした,最初のステージを突破！,Bronze,,InPlay,WaveCleared,1,Ach_PLAY_FIRST_WAVE.png,Ach_PLAY_FIRST_WAVE_Locked.png
+PLAY_FIRST_PURIFY,プレイ,はじめての正常化,アプリボスをはじめて正常化した,はじめてアプリを救った！,Bronze,,InPlay,AppBossPurified,1,Ach_PLAY_FIRST_PURIFY.png,Ach_PLAY_FIRST_PURIFY_Locked.png
+PLAY_NO_DAMAGE,プレイ,ノーダメージ,ダメージを受けずにWaveをクリアした,無傷でステージを突破！,Silver,,InPlay,NoDamageWave,1,Ach_PLAY_NO_DAMAGE.png,Ach_PLAY_NO_DAMAGE_Locked.png
+PLAY_FULL_SKILLS,プレイ,フル装備,スキルを3つ装備した状態でWaveをクリアした,スキル全開で戦った！,Bronze,,InPlay,WaveClearedWithSkills,3,Ach_PLAY_FULL_SKILLS.png,Ach_PLAY_FULL_SKILLS_Locked.png
+PLAY_PARTNER_3,プレイ,名コンビ,同じ相棒で3回クリアした,相棒と息ぴったり！,Silver,,InPlay,ClearsWithSamePartner,3,Ach_PLAY_PARTNER_3.png,Ach_PLAY_PARTNER_3_Locked.png
+PLAY_CLEAR,プレイ,完全駆除,最終ウイルスボスを倒した,ウイルスを完全に駆除した！,Gold,,InPlay,FinalBossDefeated,1,Ach_PLAY_CLEAR.png,Ach_PLAY_CLEAR_Locked.png
+DEX_3,アプリ図鑑,図鑑デビュー,3種類のアプリを正常化した,図鑑がにぎやかになった！,Bronze,,OnPurify,PurifiedAppCount,3,Ach_DEX_3.png,Ach_DEX_3_Locked.png
+DEX_10,アプリ図鑑,アプリ博士,10種類のアプリを正常化した,アプリ博士になった！,Silver,,OnPurify,PurifiedAppCount,10,Ach_DEX_10.png,Ach_DEX_10_Locked.png
+DEX_TOP10,アプリ図鑑,コンプリート,使用時間TOP10のアプリをすべて正常化した（相棒にしたアプリを除く）,よく使うアプリを全部救った！,Gold,,OnPurify,PurifiedTop10,1,Ach_DEX_TOP10.png,Ach_DEX_TOP10_Locked.png

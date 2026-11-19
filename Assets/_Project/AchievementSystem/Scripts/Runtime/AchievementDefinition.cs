@@ -13,6 +13,8 @@ namespace Team1.Achievements
         [SerializeField] string _id = "";
         [SerializeField] string _displayName = "";
         [SerializeField, TextArea(2, 4)] string _description = "";
+        [Tooltip("一覧に出す、褒める1行（「朝にPCに触れた！」）")]
+        [SerializeField] string _praise = "";
         [SerializeField] AchievementCategory _category;
         [SerializeField] AchievementRank _rank;
         [SerializeField] AchievementTrigger _trigger;
@@ -29,6 +31,7 @@ namespace Team1.Achievements
         public string Id => _id;
         public string DisplayName => _displayName;
         public string Description => _description;
+        public string Praise => _praise;
         public AchievementCategory Category => _category;
         public AchievementRank Rank => _rank;
         public AchievementTrigger Trigger => _trigger;
@@ -42,6 +45,7 @@ namespace Team1.Achievements
             Id = _id,
             Name = _displayName,
             Description = _description,
+            Praise = _praise,
             Category = _category,
             Rank = _rank,
             Trigger = _trigger,
@@ -52,12 +56,13 @@ namespace Team1.Achievements
 
 #if UNITY_EDITOR
         /// <summary>CSV から作るとき（エディタだけ）。条件は種類が変わったときだけ作り直す（Inspector で変えた値を残す）</summary>
-        public void EditorSetup(string id, string displayName, string description, AchievementCategory category, AchievementRank rank,
+        public void EditorSetup(string id, string displayName, string description, string praise, AchievementCategory category, AchievementRank rank,
             AchievementTrigger trigger, string conditionType, double target, string gameEffect, Sprite icon, Sprite iconLocked)
         {
             _id = id;
             _displayName = displayName;
             _description = description;
+            _praise = praise;
             _category = category;
             _rank = rank;
             _trigger = trigger;

@@ -104,8 +104,8 @@ namespace Team1.Achievements
                 if (r.IsSkipped) continue;
                 record.progress = Math.Min(r.Current, spec.Target);
                 if (!r.IsUnlocked) continue;
-                Unlock(record, spec, r.Reason, ctx.Now);
-                unlocked.Add(new AchievementUnlock { Spec = spec, Reason = r.Reason, UnlockedAt = ctx.Now });
+                Unlock(record, spec, r.Reason, r.App, ctx.Now);
+                unlocked.Add(new AchievementUnlock { Spec = spec, Reason = r.Reason, App = r.App, UnlockedAt = ctx.Now });
             }
             if (trigger == AchievementTrigger.LaunchScan) Save.LastScanAt = ctx.Now;
             return unlocked;
@@ -118,13 +118,14 @@ namespace Team1.Achievements
             if (spec == null) return null;
             var record = Save.GetOrCreate(id);
             if (record.unlocked) return null;
-            Unlock(record, spec, reason, now);
+            Unlock(record, spec, reason, null, now);
             return new AchievementUnlock { Spec = spec, Reason = reason, UnlockedAt = now, Forced = true };
         }
 
-        static void Unlock(AchievementRecord record, AchievementSpec spec, string reason, DateTime now)
+        static void Unlock(AchievementRecord record, AchievementSpec spec, string reason, string app, DateTime now)
         {
             record.unlocked = true;
+            record.app = app ?? "";
             record.unlockedAt = now.ToString("o", CultureInfo.InvariantCulture);
             record.reason = reason ?? "";
             record.progress = spec.Target;

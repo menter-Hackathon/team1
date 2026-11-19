@@ -66,7 +66,7 @@ namespace Team1.Achievements.EditorTools
                     target = 1;
                 }
                 var def = LoadOrCreate<AchievementDefinition>($"{DefinitionDir}/Ach_{id}.asset");
-                def.EditorSetup(id, csv.Get(row, "name"), csv.Get(row, "description"), category, rank, trigger, type, target,
+                def.EditorSetup(id, csv.Get(row, "name"), csv.Get(row, "description"), csv.Get(row, "praise"), category, rank, trigger, type, target,
                     csv.Get(row, "game_effect"),
                     Sprite($"{Root}/Icons/{csv.Get(row, "icon")}", warnings),
                     Sprite($"{Root}/Locked/{csv.Get(row, "icon_locked")}", warnings));

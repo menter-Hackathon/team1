@@ -29,6 +29,7 @@ AchievementSystem/
 |---|---|
 | id | 実績ID。アイコンのファイル名と対応 |
 | category | PCの使い方 / プレイ / アプリ図鑑 |
+| praise | 実績一覧に出す、褒める1行（短く。一覧には、これと達成したアプリだけを出す） |
 | name, description | 表示名と条件の説明（デトックスは週ごとに判定し、達成できなければ次の週にやり直し） |
 | rank | Bronze / Silver / Gold（一覧の枠の色にだけ使う。報酬はなし） |
 | game_effect | ゲームへの影響（新入りのみ） |
