@@ -8,7 +8,7 @@ using UnityEngine.InputSystem.Controls;
 /// ・ゲームにもどる／音量（全体・BGM・効果音。PlayerPrefs に残る）／キー設定（KeyBindings）／タイトルにもどる（確認つき。ランの中だけ）
 /// ・操作：↑↓ 選ぶ、←→ 音量を変える、Enter・Z・Space・A で決める、Esc・Backspace・B でもどる（最初のページなら閉じる）、START で閉じる。マウスでも押せる
 /// 見た目はタイトル・能力えらびと同じ Mac 風のウィンドウ（MacDesktopGui）
-/// ・タイトルの歯車から OpenSettings で「設定」として開ける（ゲームは止めない。音量・キー設定・閉じる）。2026-11-20
+/// ・タイトルの窓の「設定」・コントロールセンター（MacControlCenter）から OpenSettings で「設定」として開ける（ゲームは止めない。音量・キー設定・閉じる）。2026-11-20
 /// </summary>
 public class PauseMenu : MonoBehaviour
 {
@@ -22,14 +22,14 @@ public class PauseMenu : MonoBehaviour
     /// <summary>ほかの画面がキー入力を受け付けないとき true（開いている間と、閉じたのと同じフレーム）</summary>
     public static bool BlocksInput => _i != null && (_i._paused || _i._closedFrame == Time.frameCount);
 
-    /// <summary>設定として開く（タイトルの歯車。ゲームの時間・入力・音は止めない）</summary>
-    public static void OpenSettings()
+    /// <summary>設定として開く（タイトルの窓の「設定」・コントロールセンター。ゲームの時間・入力・音は止めない）。keys：キー設定のページから開く（2026-11-20）</summary>
+    public static void OpenSettings(bool keys = false)
     {
         Boot();
         if (_i == null || _i._paused) return;
         _i._paused = true;
         _i._settingsOnly = true;
-        _i._page = Page.Main;
+        _i._page = keys ? Page.Keys : Page.Main;
         _i._focus = 0;
         _i._capturing = null;
         _i._openedFrame = Time.frameCount;
