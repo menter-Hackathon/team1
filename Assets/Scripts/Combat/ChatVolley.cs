@@ -81,6 +81,7 @@ public class ChatVolley : MonoBehaviour
         Vector2 at = AnchorPoint();
         var msg = ChatMessage.Create(_owner, _data, sprite, _sent, at);
         _sent++;
+        if (_owner != null) _owner.NotifyReleased(_data); // 1つ足すたびに「出た瞬間」の音（技ごとの割り当て。2026-11-20）
         _messages.Add(msg);
         _fireAt = Time.time + _data.ChatFireDelay; // 足すたびに数え直す
         Layout(true);
@@ -146,6 +147,7 @@ public class ChatVolley : MonoBehaviour
     {
         if (_fired) return;
         _fired = true;
+        GameAudio.Event(_owner != null && _owner.Team == Team.Player ? "gm_chat_send" : "gm_chat_send_boss");
         if (!_closed) Close();
         // 向いている方へ。狙い方が「相手」で、狙う相手がいれば（チャットのボス）、まとまったまま相手の方へ飛ぶ
         var dir = new Vector2(Facing, 0f);

@@ -6,7 +6,7 @@ using UnityEngine;
 /// ・ラン状態の「今のステージ」を見て、そのアプリのボスをプレハブから作る（使用時間で強さを変えた設定を渡す）
 /// ・ボスは雑魚を全員倒すと出てくる（BossEntrance）
 /// ・ボスが正常化したら、少し待って次へ（GameSession.CompleteStage）
-/// ・ライフが0になったら、少し待ってゲームオーバーの画面（GameSession.ShowGameOver。そこからリトライ）
+/// ・ライフが0になったら、すぐゲームオーバーの画面（GameSession.ShowGameOver。そこからリトライ）
 /// ・プレイヤーの能力は、ラン状態の所持スキルにつなぐ（ステージをまたいで残る）
 /// ・ステージの色を、そのアプリの色（AppTheme）に塗り替える（同じ GameObject の StageTheme）
 /// ステージのシーンを直接再生したときは、サンプルデータでランを作って始める（開発用）。
@@ -22,8 +22,6 @@ public class StageDirector : MonoBehaviour
     [SerializeField] PlayerSkills _player;
     [Tooltip("正常化してから次のステージへ進むまでの秒数")]
     [SerializeField, Min(0f)] float _clearDelay = 2.5f;
-    [Tooltip("ライフが0になってから、やり直すまでの秒数")]
-    [SerializeField, Min(0f)] float _retryDelay = 1.5f;
     [Tooltip("この距離以内でボス由来の感染ノイズが最大になる（ワールド単位）")]
     [SerializeField, Min(0f)] float _noiseNearDistance = 3f;
     [Tooltip("この距離からボス由来の感染ノイズが強まり始める（ワールド単位）")]
@@ -128,19 +126,20 @@ public class StageDirector : MonoBehaviour
     {
         if (_ending) return;
         _ending = true;
-        StartCoroutine(After(_clearDelay, () => _session.CompleteStage(reward)));
+        StartCoroutine(CompleteAfterDelay(reward));
+    }
+
+    IEnumerator CompleteAfterDelay(SkillDefinition reward)
+    {
+        yield return new WaitForSeconds(_clearDelay);
+        _session.CompleteStage(reward);
     }
 
     void OnPlayerDied()
     {
         if (_ending) return;
         _ending = true;
-        StartCoroutine(After(_retryDelay, () => _session.ShowGameOver()));
+        _session.ShowGameOver();
     }
 
-    static IEnumerator After(float seconds, System.Action action)
-    {
-        yield return new WaitForSeconds(seconds);
-        action();
-    }
 }

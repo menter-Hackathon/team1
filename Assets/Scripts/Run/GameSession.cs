@@ -56,6 +56,17 @@ public class GameSession : MonoBehaviour
     public AppCatalog Catalog => _catalog;
     public AbilityCatalog Abilities => _abilities;
     public RunState Run { get; private set; }
+    /// <summary>直近に読み取った使用データ。ゲーム内の書類に表示する（起動中のみ保持）。</summary>
+    public IReadOnlyList<AppUsage> LastUsages { get; private set; } = Array.Empty<AppUsage>();
+    public bool HasUsageRecord { get; private set; }
+    public bool LastUsageIsSample { get; private set; }
+
+    public void RememberUsages(IEnumerable<AppUsage> usages,bool sample)
+    {
+        LastUsages=Array.AsReadOnly((usages??Enumerable.Empty<AppUsage>()).ToArray());
+        HasUsageRecord=true;
+        LastUsageIsSample=sample;
+    }
     /// <summary>シーンを切り替えている途中か</summary>
     public bool IsTransitioning { get; private set; }
     /// <summary>ゲームオーバーの画面を出している</summary>
@@ -190,6 +201,7 @@ public class GameSession : MonoBehaviour
         if (_catalog == null) { error = "対応アプリ表（AppCatalog）が設定されていません"; return false; }
         if (provider == null) { error = "読み込み方が指定されていません"; return false; }
         if (!provider.TryLoad(out List<AppUsage> usages, out error)) return false;
+        RememberUsages(usages,provider is SampleUsageProvider);
 
         // 能力えらびのカード：使用時間の長いアプリから、カテゴリの能力を出す（足りなければ、まだ出ていないカテゴリで埋める）。
         // カテゴリの分からないアプリは、ひな形から能力をその場で作り、アイコンの色に塗る（2026-11-17）。

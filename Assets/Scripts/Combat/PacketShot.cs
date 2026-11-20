@@ -65,6 +65,7 @@ public class PacketShot : MonoBehaviour, IDamageable
     {
         if (_dead || _data == null || !_data.PacketDestructible || info.SourceTeam == Team || info.Amount <= 0) return false;
         Vfx.HitSpark(transform.position);
+        GameAudio.Event("gm_browser_packet_break");
         Die();
         return true;
     }

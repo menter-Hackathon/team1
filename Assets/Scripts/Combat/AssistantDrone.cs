@@ -305,6 +305,7 @@ public class AssistantDrone : MonoBehaviour
             _beamTarget = _target;
             _beamHitbox.Deactivate();
             _nextTick = Time.time + _data.TickInterval;
+            GameAudio.Event("gm_aichat_drone_beam"); // レーザーが敵をとらえた瞬間（2026-11-20）
         }
         else if (Time.time >= _nextTick)
         {
@@ -332,7 +333,11 @@ public class AssistantDrone : MonoBehaviour
         }
     }
 
-    void OnBeamHit(IDamageable target, DamageInfo info) => Vfx.HitSpark(info.HitPoint);
+    void OnBeamHit(IDamageable target, DamageInfo info)
+    {
+        Vfx.HitSpark(info.HitPoint);
+        GameAudio.Event("gm_aichat_drone_zap"); // レーザーでダメージが入った瞬間（2026-11-20：判定を出した時から、本当に当たった時へ）
+    }
 
     void StopBeam()
     {
@@ -365,6 +370,7 @@ public class AssistantDrone : MonoBehaviour
     {
         if (_vanishAt >= 0f) return;
         _vanishAt = Time.time;
+        GameAudio.Event("gm_aichat_drone_off");
         _target = null;
         if (_beam != null) StopBeam();
         Vfx.Sparkle(transform.position);

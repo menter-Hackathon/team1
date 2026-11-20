@@ -1,0 +1,66 @@
+{
+  "moves": [
+    {"move": "Attack_Ability_AiAssistant", "start": "", "release": "se_ai_drone_boot", "vol": 0.9, "pitch": 1.0},
+
+    {"move": "Attack_AIChat_Laser_P1", "start": "", "release": "se_aichat_beam_charge", "vol": 0.8, "pitch": 1.0},
+    {"move": "Attack_AIChat_LaserDouble_P1", "start": "", "release": "se_aichat_beam_charge", "vol": 0.85, "pitch": 0.95},
+    {"move": "Attack_AIChat_LaserFan_P2", "start": "", "release": "se_aichat_beam_charge", "vol": 0.9, "pitch": 0.9},
+    {"move": "Attack_AIChat_LaserBurst_P2", "start": "", "release": "se_aichat_beam_charge", "vol": 0.7, "pitch": 1.1},
+    {"move": "Attack_AIChat_CodeStream", "start": "se_aichat_think", "release": "se_gen_warn_beep", "vol": 1.0, "pitch": 0.8},
+    {"move": "Attack_AIChat_MiniBots_P1", "start": "", "release": "se_aichat_bot_spawn", "vol": 0.7, "pitch": 1.0},
+    {"move": "Attack_AIChat_MiniBots_P2", "start": "", "release": "se_aichat_bot_spawn", "vol": 0.7, "pitch": 1.08},
+
+    {"move": "Attack_App_Line", "start": "", "release": "se_line_bubble", "vol": 0.75, "pitch": 1.15},
+    {"move": "Attack_App_Slack", "start": "", "release": "se_chat_post", "vol": 0.8, "pitch": 1.0},
+    {"move": "Attack_App_Discord", "start": "", "release": "se_chat_post", "vol": 0.8, "pitch": 0.88},
+    {"move": "Attack_ChatBoss_Messages_P1", "start": "", "release": "se_chat_post", "vol": 0.9, "pitch": 0.62},
+    {"move": "Attack_ChatBoss_Messages_P2", "start": "", "release": "se_chat_post", "vol": 0.9, "pitch": 0.56},
+    {"move": "Attack_ChatBoss_Chatbots_P1", "start": "", "release": "se_aichat_bot_spawn", "vol": 0.7, "pitch": 0.85},
+    {"move": "Attack_ChatBoss_Chatbots_P2", "start": "", "release": "se_aichat_bot_spawn", "vol": 0.7, "pitch": 0.85},
+    {"move": "Attack_ChatBoss_Alarm", "start": "se_gen_warn_beep", "release": "se_gen_spawn_pop", "vol": 0.9, "pitch": 0.8},
+
+    {"move": "Attack_App_Photoshop", "start": "", "release": "se_ps_swing", "vol": 0.85, "pitch": 1.0},
+    {"move": "Attack_App_Photoshop_Ink", "start": "", "release": "", "vol": 1.0, "pitch": 1.0},
+    {"move": "Attack_PsBoss_BrushSweep_P1", "start": "", "release": "se_photoshop_brush", "vol": 1.0, "pitch": 0.8},
+    {"move": "Attack_PsBoss_BrushSweep_P2", "start": "", "release": "se_photoshop_brush", "vol": 1.0, "pitch": 0.75},
+    {"move": "Attack_PsBoss_Ink", "start": "", "release": "", "vol": 1.0, "pitch": 1.0},
+    {"move": "Attack_PsBoss_Marquee_P1", "start": "se_photoshop_lasso", "release": "se_gen_spawn_pop", "vol": 0.85, "pitch": 0.75},
+    {"move": "Attack_PsBoss_Marquee_P2", "start": "se_photoshop_lasso", "release": "se_gen_spawn_pop", "vol": 0.85, "pitch": 0.75},
+    {"move": "Attack_PsBoss_Filter", "start": "se_gen_charge", "release": "se_ps_filter", "vol": 1.0, "pitch": 0.9},
+
+    {"move": "Attack_Ability_Packet", "start": "", "release": "se_packet_lock", "vol": 0.8, "pitch": 1.0},
+    {"move": "Attack_BrowserBoss_Packets_P1", "start": "", "release": "se_packet_lock", "vol": 0.9, "pitch": 0.7},
+    {"move": "Attack_BrowserBoss_Packets_P2", "start": "", "release": "se_packet_lock", "vol": 0.9, "pitch": 0.66},
+    {"move": "Attack_BrowserBoss_BombSites_P1", "start": "", "release": "se_chrome_popup", "vol": 0.7, "pitch": 0.9},
+    {"move": "Attack_BrowserBoss_BombSites_P2", "start": "", "release": "se_chrome_popup", "vol": 0.7, "pitch": 0.9},
+    {"move": "Attack_BrowserBoss_Spawner", "start": "se_gen_charge", "release": "se_gen_spawn_pop", "vol": 1.0, "pitch": 0.6}
+  ],
+  "events": [
+    {"key": "gm_aichat_drone_beam", "se": "se_ai_drone_beam", "vol": 0.7, "pitch": 1.0},
+    {"key": "gm_aichat_drone_zap", "se": "se_ai_drone_zap", "vol": 0.85, "pitch": 1.0},
+    {"key": "gm_aichat_drone_off", "se": "se_ai_drone_off", "vol": 0.7, "pitch": 1.0},
+    {"key": "gm_aichat_beam_fire", "se": "se_aichat_beam_fire", "vol": 0.85, "pitch": 1.0},
+    {"key": "gm_aichat_codestream_fire", "se": "se_aichat_codestream", "vol": 1.0, "pitch": 1.0},
+    {"key": "gm_aichat_codestream_loop", "se": "se_aichat_codestream_loop", "vol": 0.8, "pitch": 1.0},
+    {"key": "gm_aichat_bot_launch", "se": "se_gen_whoosh", "vol": 0.35, "pitch": 1.2},
+    {"key": "gm_aichat_error", "se": "se_aichat_error", "vol": 0.9, "pitch": 1.0},
+
+    {"key": "gm_chat_send", "se": "se_chat_send", "vol": 0.8, "pitch": 1.0},
+    {"key": "gm_chat_send_boss", "se": "se_chat_send", "vol": 0.9, "pitch": 0.6},
+    {"key": "gm_chat_bell_ring", "se": "se_chat_bell_ring", "vol": 0.9, "pitch": 1.0},
+    {"key": "gm_chat_bell_get", "se": "se_chat_bell_get", "vol": 0.85, "pitch": 1.0},
+    {"key": "gm_chat_alarm_clear", "se": "se_chat_alarm_clear", "vol": 0.85, "pitch": 1.0},
+    {"key": "gm_chat_alarm_blast", "se": "se_gen_explosion_big", "vol": 1.0, "pitch": 0.85},
+
+    {"key": "gm_ps_ink", "se": "se_ps_ink_splat", "vol": 0.6, "pitch": 1.15},
+    {"key": "gm_ps_ink_boss", "se": "se_ps_ink_splat", "vol": 0.85, "pitch": 0.7},
+
+    {"key": "gm_browser_packet_shot", "se": "se_packet_shot", "vol": 0.55, "pitch": 1.0},
+    {"key": "gm_browser_packet_shot_boss", "se": "se_packet_shot", "vol": 0.6, "pitch": 0.6},
+    {"key": "gm_browser_packet_break", "se": "se_gen_glass_break", "vol": 0.45, "pitch": 1.5},
+    {"key": "gm_browser_packet_response", "se": "se_packet_response", "vol": 0.7, "pitch": 1.0},
+    {"key": "gm_browser_bomb_load", "se": "se_bombsite_load", "vol": 0.7, "pitch": 1.0},
+    {"key": "gm_browser_bomb_blast", "se": "se_gen_explosion_small", "vol": 0.9, "pitch": 0.85},
+    {"key": "gm_browser_spawner_spawn", "se": "se_gen_spawn_pop", "vol": 0.6, "pitch": 0.9}
+  ]
+}

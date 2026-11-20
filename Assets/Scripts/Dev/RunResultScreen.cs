@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -16,16 +17,57 @@ using UnityEngine.InputSystem;
 public class RunResultScreen : MonoBehaviour
 {
     AppDexMenu _dex;
+    readonly MacDesktopGui.WindowState _window = new MacDesktopGui.WindowState();
+    readonly List<MacDesktopGui.DockItem> _dockApps = new List<MacDesktopGui.DockItem>();
     int _focus = 2; // 0＝ずかん、1＝もう一度あそぶ、2＝タイトルへ
 
     void Awake()
     {
         _dex = GetComponent<AppDexMenu>();
         if (_dex == null) _dex = gameObject.AddComponent<AppDexMenu>();
+        _dex.HandleMinimizedExternally = true;
         _dex.ShowButton = false; // ボタンはこの画面に出す
     }
 
-    void Start() => GameAudio.ResultShown(GameSession.Instance != null ? GameSession.Instance.Run : null);
+    void Start()
+    {
+#if UNITY_EDITOR
+        PrepareEditorPreview();
+#endif
+        var session = GameSession.Instance;
+        MacDesktopWallpaper.Ensure(this);
+        if (session != null && session.Run != null)
+            foreach (var cleared in session.Run.Cleared)
+                if (cleared.Stage != null)
+                    _dockApps.Add(new MacDesktopGui.DockItem(cleared.Stage.DisplayName, cleared.Stage.Icon16));
+        GameAudio.ResultShown(session != null ? session.Run : null);
+    }
+
+#if UNITY_EDITOR
+    // RunResult を直接再生した場合だけサンプルを用意。図鑑の解除やセーブは行わない。
+    static void PrepareEditorPreview()
+    {
+        if (GameSession.Instance != null && GameSession.Instance.Run != null) return;
+        var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<AppCatalog>("Assets/ScriptableObjects/Run/AppCatalog.asset");
+        var abilities = UnityEditor.AssetDatabase.LoadAssetAtPath<AbilityCatalog>("Assets/ScriptableObjects/Run/AbilityCatalog.asset");
+        var session = GameSession.EnsureExists(catalog, abilities);
+        session.RandomSeed = 42;
+        if (!session.PrepareRun(new SampleUsageProvider(), out string error))
+        {
+            Debug.LogError("リザルト確認用データの作成に失敗：" + error);
+            return;
+        }
+        session.AutoPickLoadout();
+        var run = session.Run;
+        run.PlaySeconds = 522f;
+        run.Kills = 118;
+        run.DamageTaken = 8;
+        foreach (var stage in run.Stages)
+            run.Cleared.Add(new ClearRecord { Stage = stage, Reward = stage.Reward });
+        run.CurrentIndex = run.Stages.Count;
+        Debug.Log("[リザルト確認] サンプルデータで表示中。図鑑の解除記録は変更していません。");
+    }
+#endif
 
     void Update()
     {
@@ -52,28 +94,43 @@ public class RunResultScreen : MonoBehaviour
     void OnGUI()
     {
         GameSession session = GameSession.Instance;
-        if (session == null || session.IsTransitioning) return;
-        PixelGui.Begin();
+        if (session == null || session.IsTransitioning || session.IsGameOver) return;
+        // 図鑑が前面の間は背後のレポートを描かず、入力も渡さない。
+        // 別 MonoBehaviour の OnGUI の描画順に依存して覆い隠すのを防ぐ。
+        if (_dex != null && _dex.BlocksParentInput) return;
+        PixelGui.Begin(false);
         RunState run = session.Run;
         float W = PixelGui.Width, H = PixelGui.Height;
         float ox = Mathf.Round((W - 640f) * 0.5f), oy = Mathf.Round(Mathf.Max(0f, (H - 360f) * 0.5f));
-        float barY = PixelGui.BottomBar(34f);
+        MacDesktopGui.MenuBar(W, "Virus Desktop");
+        var home = new Rect(ox + 80f, oy + 24f, 478f, Mathf.Min(286f, H - oy - 92f));
+        Rect win = _window.Apply(home, W, H);
+        bool wasBackgroundEnabled = GUI.enabled;
+        GUI.enabled = wasBackgroundEnabled && (!_window.IsVisible || !win.Contains(Event.current.mousePosition));
+        MacDesktopGui.Folders(W);
+        var dock = new List<MacDesktopGui.DockItem>(_dockApps);
+        if (_window.IsMinimized) dock.Add(new MacDesktopGui.DockItem("システム復旧完了", null, _window));
+        if (_dex != null && _dex.IsMinimized) dock.Add(new MacDesktopGui.DockItem("アプリ図鑑", null, _dex.Window));
+        int clicked = MacDesktopGui.Dock(W, H, dock);
+        if (clicked == 1) _window.Open();
+        else if (clicked >= 2 && clicked - 2 < dock.Count && dock[clicked - 2].Window != null)
+            dock[clicked - 2].Window.Open();
+        GUI.enabled = wasBackgroundEnabled;
+        if (!_window.IsVisible || (_dex != null && _dex.BlocksParentInput)) { PixelGui.End(); return; }
 
-        // 後ろのウィンドウ（飾り。信号機は灰）と、手前のウィンドウ
-        // 2026-11-19：Mac の形。題名はタイトルバーのまん中（前は SCAN_REPORT.TXT を中の左上に）。閉じるのは左上の赤い丸＝前の右上の ×
-        bool dexOpen = _dex != null && _dex.IsOpen;
-        PixelGui.Window(new Rect(ox + 60f, oy + 38f, 200f, 210f), null, PixelGui.Ink, false);
-        var win = new Rect(ox + 80f, oy + 18f, 478f, Mathf.Min(286f, barY - oy - 26f));
-        Rect inner = PixelGui.Window(win, "Scan Report.txt", PixelGui.LabelGreen, !dexOpen);
-        if (PixelGui.WindowClose(win)) Choose(2);
+        bool dexOpen = false;
+        Rect inner = MacDesktopGui.Window(win, "システム復旧レポート", out var action);
+        if (action == MacDesktopGui.WindowAction.Close) { Choose(2); PixelGui.End(); return; }
+        _window.Handle(action);
+        if (!_window.IsVisible) { PixelGui.End(); return; }
 
         float x = inner.x + 12f, y = inner.y + 8f;
-        PixelGui.Text(new Rect(x, y + 14f, 300f, 28f), "システム復旧完了", 24, PixelGui.Ink);
+        PixelGui.Text(new Rect(x, y, 300f, 28f), "システム復旧完了", 24, PixelGui.Ink);
         // 2026-11-19：文字を減らした（docs/ui-text-and-dex-design.md 1-7）。説明の文は消し、表を 16 上へ。「能力」の行を 16 高くして、能力ごとの小さい組を出す
 
         // 表
         float rowH = 29f, abilityH = rowH + 16f;
-        var table = new Rect(x, y + 50f, 284f, 4f + rowH * 4f + abilityH + 1f);
+        var table = new Rect(x, y + 36f, 284f, 4f + rowH * 4f + abilityH + 1f);
         PixelGui.WhiteBox(table);
         float lx = table.x + 12f, rx = table.xMax - 12f;
         string[] labels = { "タイム", "ウイルス", "アプリ", "ダメージ", "能力" };
