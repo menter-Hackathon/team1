@@ -103,6 +103,12 @@ public class GameSession : MonoBehaviour
         if (_desktop == null) _desktop = gameObject.AddComponent<DesktopScreen>();
         Health.AnyDamaged += OnAnyDamaged;
         Health.AnyDied += OnAnyDied;
+        // 図鑑：同じアプリの記録（「Excel」と「Microsoft Excel」など）を1つにまとめる（2026-11-20。まとめる物が無ければ何もしない）
+        if (_catalog != null)
+        {
+            try { AppDex.MergeDuplicates(x => RunPlanner.DexIdentity(_catalog, x.name, x.bundleId)); }
+            catch (Exception e) { Debug.LogException(e); }
+        }
     }
 
     void OnDestroy()

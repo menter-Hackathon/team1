@@ -130,30 +130,9 @@ MonoBehaviour:
   - DisplayName: Unity
     BundleIdPrefixes:
     - com.unity3d.UnityEditor
-    ScreenTimeNames:
-    - Unity Editor
-    Category: 3
-    BossPrefab: {fileID: 7585367786747043523, guid: d6b3136282e2a4c4f99235248f8c08eb, type: 3}
-    Profile: {fileID: 11400000, guid: 0f08fe65b92a144d98aae51ef4a60ab8, type: 2}
-    ExcludeFromStandIn: 1
-    IconLook: 1
-    SpawnPosition: {x: 6, y: 1.5}
-    StageScene: Stage_Desktop
-    Theme: {fileID: 11400000, guid: e70c4254fd4454c47adb18ffbbfde684, type: 2}
-    GaugeMax:
-      Min: 80
-      Max: 140
-    Phase2Wait:
-      Min: 0.8
-      Max: 0.6
-    AbilityStat: 0
-    AbilityValue:
-      Min: 10
-      Max: 16
-  - DisplayName: Unity Hub
-    BundleIdPrefixes:
     - com.unity3d.unityhub
     ScreenTimeNames:
+    - Unity Editor
     - Unity Hub
     Category: 3
     BossPrefab: {fileID: 7585367786747043523, guid: d6b3136282e2a4c4f99235248f8c08eb, type: 3}

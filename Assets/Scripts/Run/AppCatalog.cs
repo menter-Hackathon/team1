@@ -161,13 +161,26 @@ public class AppCatalog : ScriptableObject
                (f.ScreenTimeNames != null && Array.Exists(f.ScreenTimeNames, x => string.Equals(n, x, StringComparison.OrdinalIgnoreCase)));
     }
 
+    /// <summary>
+    /// スクリーンタイムの名前が、その名前（表示名・別名）のアプリか。同じ名前か、「名前 - 説明」の形。
+    /// 2026-11-20：「-」の前に空白が無い形（読み取りの揺れ：「Google Chrome-ウェブ・・」）も当たる。同じアプリが図鑑・ランに2つ出ないように
+    /// </summary>
+    public static bool NameMatches(string name, string label)
+    {
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(label)) return false;
+        string n = name.Trim(), l = label.Trim();
+        if (n.Equals(l, StringComparison.OrdinalIgnoreCase)) return true;
+        if (!n.StartsWith(l, StringComparison.OrdinalIgnoreCase)) return false;
+        string rest = n.Substring(l.Length).TrimStart();
+        return rest.Length > 0 && "-－–—".IndexOf(rest[0]) >= 0;
+    }
+
     /// <summary>名前に当たる対応アプリ（表示名・スクリーンタイムでの別名。「名前 - 説明」の形も当たる）。無ければ null</summary>
     public AppEntry FindByName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
         string n = name.Trim();
-        bool Same(string label) => !string.IsNullOrWhiteSpace(label) &&
-            (n.Equals(label, StringComparison.OrdinalIgnoreCase) || n.StartsWith(label + " -", StringComparison.OrdinalIgnoreCase));
+        bool Same(string label) => NameMatches(n, label);
         foreach (var app in Apps)
         {
             if (app == null) continue;
