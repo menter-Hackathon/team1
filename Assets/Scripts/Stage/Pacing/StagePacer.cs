@@ -707,8 +707,19 @@ public class StagePacer : MonoBehaviour
         return JobResult.Spawned;
     }
 
-    /// <summary>雑魚の種類 → ひな形の番号（担当3 の物が無ければ 0＝歩く雑魚）</summary>
+    /// <summary>
+    /// 雑魚の種類 → ひな形の番号。今までの決め方（BaseTemplateOf）で決めてから、ウイルスの着せかえにする
+    /// （2026-11-20。docs/virus-types-design.md 5-3。着せかえが無ければ basic をそのまま返す。flying は変えない）
+    /// </summary>
     int TemplateOf(Kind kind, out bool flying)
+    {
+        int basic = BaseTemplateOf(kind, out flying);       // 今までの決め方（撃つ雑魚の上限・とぶ高さもここ）
+        string slot = basic == 0 ? "Walker" : kind.ToString();
+        return VirusRoster.Pick(slot, basic, this);          // 着せかえが無ければ basic をそのまま返す
+    }
+
+    /// <summary>雑魚の種類 → ひな形の番号（担当3 の物が無ければ 0＝歩く雑魚）</summary>
+    int BaseTemplateOf(Kind kind, out bool flying)
     {
         flying = false;
         switch (kind)
