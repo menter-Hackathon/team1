@@ -103,8 +103,32 @@ public class PlayerSkillExecutor : MonoBehaviour
     void UpdateSkillIcon()
     {
         float t = Mathf.Clamp01(_usedIconAge / 0.65f);
-        Vector2 head = FxKit.HeadOf(gameObject, (Vector2)transform.position + Vector2.up);
-        _usedIcon.transform.position = FxKit.ClampToView(head + Vector2.up * (0.65f + t * 0.22f), 0.7f);
+        Vector2 want;
+        PlayerOverheadHPBar hpBar = GetComponentInChildren<PlayerOverheadHPBar>();
+        if (hpBar != null && hpBar.TryGetTop(out Vector2 barTop))
+        {
+            // 頭の上の HP バーと重ねない（2026-11-20）：アイコンの下の端を、バーの上の端から2ドット上にそろえてから上がる
+            float bottom = _usedIcon.sprite != null ? _usedIcon.sprite.bounds.min.y * _usedIconScale : -0.5f;
+            want = new Vector2(barTop.x, barTop.y + 2f * hpBar.DotSize - bottom + t * 0.22f);
+        }
+        else
+        {
+            Vector2 head = FxKit.HeadOf(gameObject, (Vector2)transform.position + Vector2.up);
+            want = head + Vector2.up * (0.65f + t * 0.22f);
+        }
+        Vector2 pos = FxKit.ClampToView(want, 0.7f);
+        _usedIcon.transform.position = pos;
+        // 画面の上の端で押し下げられてバーにかぶるときだけ、バーより手前に描く
+        if (hpBar != null && pos.y < want.y - 0.001f)
+        {
+            _usedIcon.sortingLayerName = PlayerOverheadHPBar.SortingLayerName;
+            _usedIcon.sortingOrder = 10;
+        }
+        else
+        {
+            _usedIcon.sortingLayerID = 0; // Default
+            _usedIcon.sortingOrder = RewardKit.OrderBadge + 3;
+        }
         float pop = 1f + Mathf.Sin(Mathf.Clamp01(t / 0.3f) * Mathf.PI) * 0.18f;
         // 親の左右反転や拡大縮小をアイコンに伝えない。
         Vector3 parentScale = transform.lossyScale;
