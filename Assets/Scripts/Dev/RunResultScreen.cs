@@ -102,7 +102,7 @@ public class RunResultScreen : MonoBehaviour
         RunState run = session.Run;
         float W = PixelGui.Width, H = PixelGui.Height;
         float ox = Mathf.Round((W - 640f) * 0.5f), oy = Mathf.Round(Mathf.Max(0f, (H - 360f) * 0.5f));
-        MacDesktopGui.MenuBar(W, "Virus Desktop");
+        MacDesktopGui.MenuBar(W, MacDesktopGui.AppName);
         var home = new Rect(ox + 80f, oy + 24f, 478f, Mathf.Min(286f, H - oy - 92f));
         Rect win = _window.Apply(home, W, H);
         bool wasBackgroundEnabled = GUI.enabled;

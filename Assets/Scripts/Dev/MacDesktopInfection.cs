@@ -984,14 +984,14 @@ public static class MacDesktopInfection
         PixelGui.DrawSprite(new Rect(Mathf.Round(r.xMax - fr.width * 0.5f), Mathf.Round(r.y - fr.height * 0.5f), fr.width, fr.height), f);
     }
 
-    // 青い札「Virus Desktop で駆除」（Dock の名前の札と同じ形。下に小さい三角）
+    // 青い札「（ゲームの名前 AppName） で駆除」（Dock の名前の札と同じ形。下に小さい三角）
     static void Tag(Rect game, Rect dock, float t, float wt)
     {
         var r = new Rect(Mathf.Round(game.center.x - 64f), dock.y - 26f, 128f, 18f);
         r.y += Mathf.Round(4f * (1f - Ramp(t, TagAt, TagAt + 0.15f)));
         if (wt >= 0f && Mathf.FloorToInt(Now / 1.2f) % 2 == 1) r.y -= 1f;
         MacDesktopGui.Rounded(r, MacDesktopGui.Blue, 3);
-        PixelGui.Text(new Rect(r.x, r.y - 1f, r.width, r.height), "Virus Desktop で駆除", 12, Color.white, TextAnchor.MiddleCenter);
+        PixelGui.Text(new Rect(r.x, r.y - 1f, r.width, r.height), MacDesktopGui.AppName + " で駆除", 12, Color.white, TextAnchor.MiddleCenter);
         float cx = Mathf.Round(game.center.x);
         PixelGui.Fill(new Rect(cx - 2f, r.yMax, 5f, 1f), MacDesktopGui.Blue);
         PixelGui.Fill(new Rect(cx - 1f, r.yMax + 1f, 3f, 1f), MacDesktopGui.Blue);
@@ -1016,7 +1016,7 @@ public static class MacDesktopInfection
         }
     }
 
-    /// <summary>右上の通知（フォルダの左）。slide＝0 で出きった、1 で右へ隠れた。friendly＝青い台（Virus Desktop）、でなければうす紫の台にウイルス</summary>
+    /// <summary>右上の通知（フォルダの左）。slide＝0 で出きった、1 で右へ隠れた。friendly＝青い台（ゲームの名前 AppName）、でなければうす紫の台にウイルス</summary>
     internal static void Notice(float W, float slide, string title, string body, bool friendly)
     {
         var r = new Rect(Mathf.Round(W - 326f + slide * 340f), 32f, 228f, 44f); // 設計 2-11 は 188 幅。一言が切れたので 228 に（右のはしはフォルダの左のまま）
