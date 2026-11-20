@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddb7949fa55a4611ad4d7d0014a00a4f, type: 3}
+  m_Name: PlayerHPBarArt
+  m_EditorClassIdentifier: 
+  _frames:
+  - {fileID: 21300000, guid: 0d3927b710f7b4701822e75b32de0c50, type: 3}
+  - {fileID: 21300000, guid: ee478e56c98b244afb4f329fd4214714, type: 3}
+  - {fileID: 21300000, guid: 5ea8bdc9428b346a0a92ef2daec2c1ca, type: 3}
+  _pipFull: {fileID: 21300000, guid: 263da7622b21e4c31ac1db3d11ddd221, type: 3}
+  _pipEmpty: {fileID: 21300000, guid: 9531bc95178a64a7d9aae6001ba92a0f, type: 3}
+  _pipLow: {fileID: 21300000, guid: 35d1d410d853b4407a26fe363518a85e, type: 3}
+  _pipFlashWhite: {fileID: 21300000, guid: 8e92474b754884a8b86b5819954343d0, type: 3}
+  _pipFlashRed: {fileID: 21300000, guid: 6c0d5278e7dfd4ba4aae0ca33b94d85e, type: 3}
+  _exportScale: 3
+  _headTopDots: 23
+  _gapDots: 2
+  _flashFrameSeconds: 0.08

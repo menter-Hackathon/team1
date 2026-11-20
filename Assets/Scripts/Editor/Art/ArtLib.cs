@@ -114,7 +114,6 @@ internal static class ArtLib
             so.FindProperty("_camera").objectReferenceValue = cam;
             if (player != null)
             {
-                so.FindProperty("_playerHealth").objectReferenceValue = player.GetComponent<Health>();
                 so.FindProperty("_skills").objectReferenceValue = player.GetComponent<PlayerSkills>();
                 so.FindProperty("_executor").objectReferenceValue = player.GetComponent<PlayerSkillExecutor>();
             }

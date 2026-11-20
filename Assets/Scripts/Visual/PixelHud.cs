@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// 【仮】ゲーム中の画面表示（2026-11-18：デザイン担当の画面イメージの部品に合わせて、OnGUI で描く）。
 /// イメージは画面の下のバーだが、1画面のステージは床が画面の下の端にあり隠れてしまうので、場所は今までどおり上にした（まさぴ〜了承）。
-/// ・左上：相棒（選んだアプリのアイコンと名前）・HP（区切りのゲージ）・能力の枠3つ（枠の左上に 1・2・3。空の枠は点線で「空き」）
+/// ・左上：相棒（選んだアプリのアイコンと名前）・能力の枠3つ（HP は頭の上の PlayerOverheadHPBar。2026-11-20）（枠の左上に 1・2・3。空の枠は点線で「空き」）
 ///   枠の右下には、その能力の元になったアプリのアイコンを小さく重ねる（RunState.SourceIcon。2026-11-18）
 ///   選択中の枠は白い縁、ほかの枠の縁はその能力のアプリの色。クールタイム中は、残りの割合だけ上から暗くする
 ///   入れ替え待ちのときは、新しい能力を枠の右に出して点滅させる。X 長押しの進み具合は、選んでいる枠の下に赤い棒で出す
@@ -15,7 +15,6 @@ using UnityEngine;
 public class PixelHud : MonoBehaviour
 {
     [SerializeField] Camera _camera;
-    [SerializeField] Health _playerHealth;
     [SerializeField] PlayerSkills _skills;
     [SerializeField] PlayerSkillExecutor _executor;
     [Tooltip("ステージの進行（あれば、そのステージのボスを出す）。無ければ、出ているボスを探す")]
@@ -57,7 +56,6 @@ public class PixelHud : MonoBehaviour
         if (_skills == null) _skills = FindObjectOfType<PlayerSkills>();
         if (_skills != null)
         {
-            if (_playerHealth == null) _playerHealth = _skills.GetComponent<Health>();
             if (_executor == null) _executor = _skills.GetComponent<PlayerSkillExecutor>();
         }
     }
@@ -71,7 +69,7 @@ public class PixelHud : MonoBehaviour
         float x = 6f, y = 6f;
         x = DrawPartner(session, x, y);
         float hpX = x;
-        x = DrawHp(x, y);
+        x += HpAreaWidth;
         DrawSlots(x, y);
         DrawKitMarks(hpX + 20f, y + 29f, x - hpX - 24f); // アプリのキットの印とメーター（2026-11-19）
         float right = PixelGui.Width - 6f;
@@ -96,23 +94,11 @@ public class PixelHud : MonoBehaviour
         return box.xMax + 8f;
     }
 
-    float DrawHp(float x, float y)
-    {
-        if (_playerHealth == null) return x;
-        PixelGui.ShadowText(new Rect(x, y + 14f, 20f, 10f), "HP", PixelGui.Style(true, 8), PixelGui.White, PixelGui.FrameDark, 1f);
-        int max = Mathf.Max(1, _playerHealth.Max);
-        int life = _playerHealth.Current;
-        const float segW = 8f, gap = 2f;
-        var frame = new Rect(x + 20f, y + 10f, max * (segW + gap) + gap, 16f);
-        PixelGui.Fill(frame, PixelGui.FrameDark);
-        bool lowBlink = life == 1 && Mathf.FloorToInt(Time.unscaledTime / 0.25f) % 2 == 0;
-        for (int i = 0; i < max; i++)
-        {
-            Color c = i < life ? (lowBlink ? PixelGui.White : PixelGui.HpGreen) : PixelGui.HpOff;
-            PixelGui.Fill(new Rect(frame.x + gap + i * (segW + gap), frame.y + 2f, segW, frame.height - 4f), c);
-        }
-        return frame.xMax + 10f;
-    }
+    /// <summary>
+    /// HP があった場所（2026-11-20：HP は頭の上の PlayerOverheadHPBar に移した）。
+    /// ほかの表示（能力の枠・キットの印）の位置を変えないよう、前の HP（ライフ3）と同じ幅だけ空けておく
+    /// </summary>
+    const float HpAreaWidth = 62f;
 
     void DrawSlots(float x, float y)
     {
