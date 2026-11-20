@@ -70,9 +70,13 @@ namespace Team1.Achievements
             AchievementSpec spec = _current.Spec;
             AchievementDefinition def = _service != null ? _service.Definition(spec.Id) : null;
             AchievementGui.Icon(new Rect(r.x + 8f, r.y + 9f, 36f, 36f), def, spec.Rank, true, _service != null ? _service.Frame(spec.Rank) : null);
-            PixelGui.Text(new Rect(r.x + 52f, r.y + 5f, r.width - 58f, 15f), "実績を解除しました", 12, new Color32(70, 70, 70, 255));
-            PixelGui.TextFit(new Rect(r.x + 52f, r.y + 20f, r.width - 58f, 16f), spec.Name, 12, AchievementGui.TooltipLine);
-            PixelGui.Text(new Rect(r.x + 52f, r.y + 36f, r.width - 58f, 14f), AchievementLabels.Rank(spec.Rank), 12, AchievementGui.RankColor(spec.Rank));
+            // 実績一覧・スキャン画面と同じく短く：名前（灰）・褒める一言・達成したアプリだけ
+            float tx2 = r.x + 52f, tw = r.width - 58f;
+            bool hasApp = !string.IsNullOrEmpty(_current.App);
+            float top = hasApp ? r.y + 5f : r.y + 11f; // アプリが無いときは2行を上下のまん中に
+            PixelGui.TextFit(new Rect(tx2, top, tw, 15f), spec.Name, 12, new Color32(90, 90, 90, 255));
+            PixelGui.TextFit(new Rect(tx2, top + 15f, tw, 16f), string.IsNullOrEmpty(spec.Praise) ? spec.Name : spec.Praise, 12, AchievementGui.TooltipLine);
+            if (hasApp) PixelGui.TextFit(new Rect(tx2, top + 31f, tw, 15f), $"{_current.App}で達成！", 12, new Color32(0, 84, 190, 255));
 
             PixelGui.End();
         }
