@@ -13,6 +13,8 @@
 - 能力は 3 つまで持てます。ステージを進んでいき、最後にリザルト画面で、正常化したアプリと手に入れた能力を振り返ります。
 - 手に入れたアプリはアプリ図鑑から確認できます。
 
+<img width="1361" height="770" alt="スクリーンショット 2026-11-20 23 18 26" src="https://github.com/user-attachments/assets/be57425e-e925-4ae8-b592-4a21c4b685f0" />
+
 ### ゲームの流れ
 
 ```
@@ -20,6 +22,8 @@
 ```
 
 ステージは 3 種類です：1 画面（Stage_Desktop）、横スクロール（Stage_Scroll）、ウィンドウ移動（Stage_Windows）。
+
+<img width="1361" height="767" alt="スクリーンショット 2026-11-20 23 18 39" src="https://github.com/user-attachments/assets/d81f7bb0-495b-48b8-8cab-37d59ad065d4" />
 
 ### 動作環境
 
