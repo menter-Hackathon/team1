@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PLAY_FIRST_WAVE
+  m_EditorClassIdentifier: 
+  _id: PLAY_FIRST_WAVE
+  _displayName: "\u521D\u9663"
+  _description: "Wave 1\u3092\u30AF\u30EA\u30A2\u3057\u305F"
+  _praise: "\u6700\u521D\u306E\u30B9\u30C6\u30FC\u30B8\u3092\u7A81\u7834\uFF01"
+  _category: 1
+  _rank: 0
+  _trigger: 1
+  _conditionType: WaveCleared
+  _target: 1
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: c5952f949f5254f2c9c2281fa3f2ba16, type: 3}
+  _iconLocked: {fileID: 21300000, guid: 4c4d1406a78d34fd487db028da0a9c09, type: 3}
+  _condition:
+    rid: 5073824396624265226
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265226
+      type: {class: WaveClearedCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data: 

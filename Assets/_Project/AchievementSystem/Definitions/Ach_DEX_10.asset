@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_DEX_10
+  m_EditorClassIdentifier: 
+  _id: DEX_10
+  _displayName: "\u30A2\u30D7\u30EA\u535A\u58EB"
+  _description: "10\u7A2E\u985E\u306E\u30A2\u30D7\u30EA\u3092\u6B63\u5E38\u5316\u3057\u305F"
+  _praise: "\u30A2\u30D7\u30EA\u535A\u58EB\u306B\u306A\u3063\u305F\uFF01"
+  _category: 2
+  _rank: 1
+  _trigger: 2
+  _conditionType: PurifiedAppCount
+  _target: 10
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: 57654d8a672c14165bbd424adbecbbe0, type: 3}
+  _iconLocked: {fileID: 21300000, guid: 1e2395c20e7414407a908da141acef5b, type: 3}
+  _condition:
+    rid: 5073824396624265224
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265224
+      type: {class: PurifiedAppCountCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data: 

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PLAY_PARTNER_3
+  m_EditorClassIdentifier: 
+  _id: PLAY_PARTNER_3
+  _displayName: "\u540D\u30B3\u30F3\u30D3"
+  _description: "\u540C\u3058\u76F8\u68D2\u30673\u56DE\u30AF\u30EA\u30A2\u3057\u305F"
+  _praise: "\u76F8\u68D2\u3068\u606F\u3074\u3063\u305F\u308A\uFF01"
+  _category: 1
+  _rank: 1
+  _trigger: 1
+  _conditionType: ClearsWithSamePartner
+  _target: 3
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: bdc82c12f77234ed187e66cdad332e37, type: 3}
+  _iconLocked: {fileID: 21300000, guid: f8de55569e0ef48c4811f08dbb8cc824, type: 3}
+  _condition:
+    rid: 5073824396624265231
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265231
+      type: {class: ClearsWithSamePartnerCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data: 

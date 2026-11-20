@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PLAY_CLEAR
+  m_EditorClassIdentifier: 
+  _id: PLAY_CLEAR
+  _displayName: "\u5B8C\u5168\u99C6\u9664"
+  _description: "\u6700\u7D42\u30A6\u30A4\u30EB\u30B9\u30DC\u30B9\u3092\u5012\u3057\u305F"
+  _praise: "\u30A6\u30A4\u30EB\u30B9\u3092\u5B8C\u5168\u306B\u99C6\u9664\u3057\u305F\uFF01"
+  _category: 1
+  _rank: 2
+  _trigger: 1
+  _conditionType: FinalBossDefeated
+  _target: 1
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: cc7987b8f3dd24f0fbad49528daddb1c, type: 3}
+  _iconLocked: {fileID: 21300000, guid: e3a0e5518a1a945b193562137893c344, type: 3}
+  _condition:
+    rid: 5073824396624265222
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265222
+      type: {class: FinalBossDefeatedCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data: 

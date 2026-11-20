@@ -1,0 +1,45 @@
+﻿app_name,category,detox_target,match_key,note
+YouTube,エンタメ,TRUE,,
+Netflix,エンタメ,TRUE,,
+Prime Video,エンタメ,TRUE,,
+Spotify,作業,FALSE,,作業中のBGMも含むので、対象にするか要検討
+Steam,エンタメ,TRUE,,
+X,SNS,TRUE,,
+Instagram,SNS,TRUE,,
+TikTok,SNS,TRUE,,
+Discord,SNS,TRUE,,
+LINE,SNS,TRUE,,連絡用途もあるので要検討
+Slack,作業,FALSE,,
+Microsoft Teams,作業,FALSE,Microsoft Teams|Teams,
+Zoom,作業,FALSE,Zoom|zoom.us|Zoom Workplace,
+Visual Studio Code,作業,FALSE,,
+Unity,作業,FALSE,Unity|Unity Editor|Unity Hub,
+Excel,作業,FALSE,Excel|Microsoft Excel,Office系（元は「Excel / Word / PowerPoint」の1行。スクリーンタイムの名前で照合するため分けた）
+Word,作業,FALSE,Word|Microsoft Word,Office系
+PowerPoint,作業,FALSE,PowerPoint|Microsoft PowerPoint,Office系
+Figma,作業,FALSE,,
+Notion,作業,FALSE,,
+Chrome,作業,FALSE,Google Chrome|Chrome,ブラウザは中身がわからないので対象外
+Safari,作業,FALSE,,ブラウザは中身がわからないので対象外
+Arc,作業,FALSE,,ブラウザは中身がわからないので対象外（スキル実装済みのアプリとして追加）
+Firefox,作業,FALSE,Firefox|Firefox Developer Edition|Firefox Nightly,ブラウザは中身がわからないので対象外（スキル実装済みのアプリとして追加）
+ChatGPT,作業,FALSE,,スキル実装済みのアプリとして追加
+Claude,作業,FALSE,,スキル実装済みのアプリとして追加
+Gemini,作業,FALSE,,スキル実装済みのアプリとして追加
+Cursor,作業,FALSE,,スキル実装済みのアプリとして追加
+Xcode,作業,FALSE,,スキル実装済みのアプリとして追加
+GitHub Desktop,作業,FALSE,,スキル実装済みのアプリとして追加
+Terminal,作業,FALSE,Terminal|ターミナル,スキル実装済みのアプリとして追加
+Blender,作業,FALSE,,スキル実装済みのアプリとして追加
+Photoshop,作業,FALSE,Photoshop|Adobe Photoshop,スキル実装済みのアプリとして追加
+Illustrator,作業,FALSE,Illustrator|Adobe Illustrator,スキル実装済みのアプリとして追加
+Premiere Pro,作業,FALSE,Premiere Pro|Adobe Premiere Pro,スキル実装済みのアプリとして追加
+Keynote,作業,FALSE,,スキル実装済みのアプリとして追加
+Calendar,作業,FALSE,Calendar|カレンダー,スキル実装済みのアプリとして追加
+Mail,作業,FALSE,Mail|メール,スキル実装済みのアプリとして追加
+Notes,作業,FALSE,Notes|メモ,スキル実装済みのアプリとして追加
+Messages,SNS,TRUE,Messages|メッセージ,スキル実装済みのアプリとして追加。連絡用途もあるので要検討（LINE と同じ）
+Minecraft,エンタメ,TRUE,Minecraft|Minecraft Launcher,スキル実装済みのアプリとして追加
+Music,作業,FALSE,Music|ミュージック,スキル実装済みのアプリとして追加。Spotify と同じ扱い（作業中のBGMも含むので要検討）
+QuickTime Player,エンタメ,TRUE,QuickTime Player|QuickTime,スキル実装済みのアプリとして追加。動画の再生。画面収録にも使うので要検討
+Finder,その他,FALSE,,スキル実装済みのアプリとして追加。ファイル操作なのでどちらの対象にもしない

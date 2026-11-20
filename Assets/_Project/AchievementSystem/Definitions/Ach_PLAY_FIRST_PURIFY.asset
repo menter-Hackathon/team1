@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PLAY_FIRST_PURIFY
+  m_EditorClassIdentifier: 
+  _id: PLAY_FIRST_PURIFY
+  _displayName: "\u306F\u3058\u3081\u3066\u306E\u6B63\u5E38\u5316"
+  _description: "\u30A2\u30D7\u30EA\u30DC\u30B9\u3092\u306F\u3058\u3081\u3066\u6B63\u5E38\u5316\u3057\u305F"
+  _praise: "\u306F\u3058\u3081\u3066\u30A2\u30D7\u30EA\u3092\u6551\u3063\u305F\uFF01"
+  _category: 1
+  _rank: 0
+  _trigger: 1
+  _conditionType: AppBossPurified
+  _target: 1
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: 60eb1443e3e704389ba163e8d9b053d3, type: 3}
+  _iconLocked: {fileID: 21300000, guid: c277b905d68814abbbd550b53b707cf4, type: 3}
+  _condition:
+    rid: 5073824396624265230
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265230
+      type: {class: AppBossPurifiedCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data: 

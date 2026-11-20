@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PC_MORNING_1
+  m_EditorClassIdentifier: 
+  _id: PC_MORNING_1
+  _displayName: "\u671D\u578B I"
+  _description: "\u671D\u578B\u306E\u65E5\uFF085\u6642\u53F0\u301C8\u6642\u53F0\u306E\u5408\u8A08\u304C10\u5206\u4EE5\u4E0A\u306E\u65E5\uFF09\u304C1\u65E5\u3042\u308B"
+  _praise: "\u671D\u306BPC\u306B\u89E6\u308C\u305F\uFF01"
+  _category: 0
+  _rank: 0
+  _trigger: 0
+  _conditionType: MorningDays
+  _target: 1
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: c93e2e662fdd846189befef4a78b9262, type: 3}
+  _iconLocked: {fileID: 21300000, guid: dda78a52826664590b6a5a067d289166, type: 3}
+  _condition:
+    rid: 5073824396624265227
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265227
+      type: {class: MorningDaysCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data:
+        fromHour: 5
+        toHourExclusive: 9
+        minSeconds: 600

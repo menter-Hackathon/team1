@@ -24,6 +24,7 @@ public class RunTitleMenu : MonoBehaviour
     Vector2 _lastModePointer;
     bool _hasModePointer;
     AppDexMenu _dex;
+    Team1.Achievements.AchievementListWindow _achievements; // 2026-11-20：メニューの「じっせき」から開く
     MacDesktopFiles _files;
     MacDesktopBoot _boot;
     bool _authBusy,_touchIdAvailable,_autoAuthStarted;
@@ -33,6 +34,8 @@ public class RunTitleMenu : MonoBehaviour
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetBoot() { _bootPlayed=false; IsBootPlaying=false; }
+
+    bool AchievementsBlockInput => (_achievements != null && _achievements.BlocksParentInput) || Team1.Achievements.AchievementScanScreen.BlocksInput;
 
     GameSession Session => GameSession.Instance != null ? GameSession.Instance : GameSession.EnsureExists(_catalog);
 
@@ -55,6 +58,8 @@ public class RunTitleMenu : MonoBehaviour
         if (_dex == null) _dex = gameObject.AddComponent<AppDexMenu>();
         _dex.ShowButton = false;
         _dex.HandleMinimizedExternally = true;
+        _achievements = FindObjectOfType<Team1.Achievements.AchievementListWindow>();
+        if (_achievements == null) _achievements = gameObject.AddComponent<Team1.Achievements.AchievementListWindow>();
         if(Session.Catalog!=null) foreach(var app in Session.Catalog.Apps)
             if(app!=null&&app.Profile!=null&&_dockApps.Count<4)
                 _dockApps.Add(new MacDesktopGui.DockItem(app.DisplayName,app.Profile.Icon));
@@ -65,7 +70,7 @@ public class RunTitleMenu : MonoBehaviour
     void Update()
     {
         if (PauseMenu.BlocksInput) return; // 設定（歯車）を開いている間は、タイトルを操作しない（2026-11-20）
-        if (!_window.IsVisible || (_dex != null && _dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || Session.IsTransitioning) return;
+        if (!_window.IsVisible || (_dex != null && _dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || AchievementsBlockInput || Session.IsTransitioning) return;
         if(MacDesktopGui.WindowShortcuts(_window)) return;
         // キーボードとコントローラー（十字キー・左スティック・A／START で決定・B で戻る）。2026-11-20
         bool up = MenuInput.Up;
@@ -79,7 +84,7 @@ public class RunTitleMenu : MonoBehaviour
             else if (ok) ScanPrimary();
             return;
         }
-        int count = _page == Page.Menu ? 4 : ModeCount; // メニューの4つ目は、右下の歯車（設定）
+        int count = _page == Page.Menu ? 5 : ModeCount; // はじめる・アプリ図鑑・じっせき・終了・右下の歯車（設定）
         if (up) _focus = (_focus + count - 1) % count;
         if (down) _focus = (_focus + 1) % count;
         if (up || down) GameAudio.Event("ui_move");
@@ -154,8 +159,9 @@ public class RunTitleMenu : MonoBehaviour
         {
             if (index == 0) OpenPage(Page.Mode);
             else if (index == 1 && _dex != null) _dex.Open();
-            else if (index == 2) Quit();
-            else if (index == 3) PauseMenu.OpenSettings(); // 右下の歯車：音量・キー設定（2026-11-20。音は上の ui_decide）
+            else if (index == 2 && _achievements != null) _achievements.Open();
+            else if (index == 3) Quit();
+            else if (index == 4) PauseMenu.OpenSettings(); // 右下の歯車：音量・キー設定（2026-11-20。音は上の ui_decide）
             return;
         }
         // はじめかた：スキャン（できるとき）・訓練モード・もどる
@@ -204,9 +210,9 @@ public class RunTitleMenu : MonoBehaviour
         bool scanWaiting=_scan&&_topApps==null;
         bool compactScan=_scan&&string.IsNullOrEmpty(_error)&&(_scanning||_topApps!=null);
         Rect win=MacDesktopGui.CenteredWindow(w,h,scanWaiting?480:_scan?500:mode?480:420,
-            scanWaiting?(_scanning?268:286):_scan?(string.IsNullOrEmpty(_error)?268:306):mode?(string.IsNullOrEmpty(_error)?254:286):268,
+            scanWaiting?(_scanning?268:286):_scan?(string.IsNullOrEmpty(_error)?268:306):mode?(string.IsNullOrEmpty(_error)?254:286):298, // メニューは「じっせき」の分だけ高い
             !_scan||compactScan);
-        bool front=(_dex==null||!_dex.IsOpen)&&(_files==null||!_files.BlocksParentInput);
+        bool front=(_dex==null||!_dex.IsOpen)&&(_files==null||!_files.BlocksParentInput)&&!AchievementsBlockInput;
         win=_window.Apply(win,w,h,front);
         bool folderEnabled=GUI.enabled;
         GUI.enabled=folderEnabled&&front&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
@@ -223,7 +229,7 @@ public class RunTitleMenu : MonoBehaviour
         int dock=MacDesktopGui.Dock(w,h,items);
         // 右下の歯車：設定（音量・キー設定）。キー・コントローラーでは、メニューの「終了」の下（2026-11-20）
         GUI.enabled=was&&active&&!PauseMenu.IsOpen;
-        if(SettingsGear(new Rect(w-40,h-84,30,30),_window.IsVisible&&!_scan&&_page==Page.Menu&&_focus==3)) OpenSettings(); // どの画面（はじめかた・スキャン）からでも、その画面のまま設定を開く
+        if(SettingsGear(new Rect(w-40,h-84,30,30),_window.IsVisible&&!_scan&&_page==Page.Menu&&_focus==4)) OpenSettings(); // どの画面（はじめかた・スキャン）からでも、その画面のまま設定を開く
         if(dock==0)
         {
             _window.Open();
@@ -260,7 +266,7 @@ public class RunTitleMenu : MonoBehaviour
         PixelGui.ShadowText(new Rect(inner.x,y+16,inner.width,28),"VIRUS",logo,MacDesktopGui.Ink,new Color32(170,193,226,255),1);
         PixelGui.ShadowText(new Rect(inner.x,y+44,inner.width,28),"DESKTOP",logo,MacDesktopGui.Ink,new Color32(170,193,226,255),1);
         PixelGui.Text(new Rect(inner.x,y+80,inner.width,16),"このMacのデスクトップを取り戻せ",12,PixelGui.BodyText,TextAnchor.MiddleCenter);
-        string[] items={"はじめる","アプリ図鑑","終了"};
+        string[] items={"はじめる","アプリ図鑑","じっせき","終了"};
         for(int i=0;i<items.Length;i++)
         {
             Rect r=new Rect(cx-80,y+106+i*30,160,24);
@@ -535,6 +541,7 @@ public class RunTitleMenu : MonoBehaviour
             var usages = MacScreenTime.ReadUsages(result.Output, catalog, out var topApps);
             if (topApps.Count > 0)
             {
+                Team1.Achievements.AchievementService.Instance?.ReportScreenTimeScan(usages); // 実績「コンプリート」用：TOP10 のアプリ名だけ残す
                 _detectedApps = usages;
                 Session.RememberUsages(usages,false);
                 _topApps = topApps;

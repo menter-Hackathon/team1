@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1994027e6eb144f2fb8ee4e58ca17d7b, type: 3}
+  m_Name: Ach_PLAY_FULL_SKILLS
+  m_EditorClassIdentifier: 
+  _id: PLAY_FULL_SKILLS
+  _displayName: "\u30D5\u30EB\u88C5\u5099"
+  _description: "\u30B9\u30AD\u30EB\u30923\u3064\u88C5\u5099\u3057\u305F\u72B6\u614B\u3067Wave\u3092\u30AF\u30EA\u30A2\u3057\u305F"
+  _praise: "\u30B9\u30AD\u30EB\u5168\u958B\u3067\u6226\u3063\u305F\uFF01"
+  _category: 1
+  _rank: 0
+  _trigger: 1
+  _conditionType: WaveClearedWithSkills
+  _target: 3
+  _gameEffect: 
+  _icon: {fileID: 21300000, guid: 17e18ed46acd64af29a1929437afdcef, type: 3}
+  _iconLocked: {fileID: 21300000, guid: 9537b98a1b8ac486abc5fcdcca39d322, type: 3}
+  _condition:
+    rid: 5073824396624265232
+  references:
+    version: 2
+    RefIds:
+    - rid: 5073824396624265232
+      type: {class: WaveClearedWithSkillsCondition, ns: Team1.Achievements, asm: Assembly-CSharp}
+      data: 
