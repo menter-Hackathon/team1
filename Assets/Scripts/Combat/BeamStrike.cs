@@ -156,6 +156,8 @@ public class BeamStrike : MonoBehaviour
         // ── レーザー（太くなって、少し止まり、細くなる） ──
         _beam.enabled = true;
         _activeStart = Time.time;
+        GameAudio.Event(IsCodeStream ? "gm_aichat_codestream_fire" : "gm_aichat_beam_fire");
+        if (IsCodeStream) _loop = SeLoop.Play("gm_aichat_codestream_loop"); // 大技：レーザーが消えるまで、うなりを鳴らし続ける
         float duration = Mathf.Max(0.05f, _data.ActiveTime);
         while (Time.time - _activeStart < duration)
         {
@@ -173,8 +175,19 @@ public class BeamStrike : MonoBehaviour
         }
         _hitbox.Deactivate();
         _hitOn = false;
+        StopLoop();
         Destroy(gameObject);
     }
+
+    SeLoop _loop;
+
+    void StopLoop()
+    {
+        if (_loop != null) _loop.Stop(0.3f);
+        _loop = null;
+    }
+
+    void OnDestroy() => StopLoop(); // 技が途中で止められた（ボスの形態変化・正常化）ときも止める
 
     static float EaseOut(float x) => 1f - (1f - x) * (1f - x);
     static float EaseIn(float x) => x * x;

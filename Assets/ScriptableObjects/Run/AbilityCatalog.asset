@@ -187,6 +187,10 @@ MonoBehaviour:
     - com.tinyspeck.slackmacgap
   - Label: Discord
     Skill: {fileID: 11400000, guid: 62a921635ed68478f817a39305100dc6, type: 2}
+    AppNames:
+    - Discord
+    BundleIdPrefixes:
+    - com.hnc.Discord
     FromKit: 0
   - Label: Arc
     Skill: {fileID: 11400000, guid: 7ce67a171a4f6443cb990e3adc28ae1a, type: 2}
@@ -247,7 +251,12 @@ MonoBehaviour:
     - com.hnc.Discord
   - Label: Photoshop
     Skill: {fileID: 11400000, guid: 5fef6b5a6be9d49f88185fc058f6e957, type: 2}
-    FromKit: 1
+    AppNames:
+    - Photoshop
+    - Adobe Photoshop
+    BundleIdPrefixes:
+    - com.adobe.Photoshop
+    FromKit: 0
   - Label: Excel
     Skill: {fileID: 11400000, guid: 6918daaa3bcee48a296c83333c73af30, type: 2}
     AppNames:

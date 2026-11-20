@@ -17,9 +17,3 @@ MonoBehaviour:
   _category: 2
   _attack: {fileID: 11400000, guid: aa54b9e66baf8494f8a7d92feb0bdb9a, type: 2}
   _theme: {fileID: 11400000, guid: 6da3555efd7b94cbca97afddc11f88c0, type: 2}
-  _displayName: "\u30EA\u30A2\u30AF\u30B7\u30E7\u30F3"
-  _icon: {fileID: 0}
-  _category: 2
-  _attack: {fileID: 11400000, guid: 9b009c57a823949809d89c7e4f12e236, type: 2}
-  _theme: {fileID: 0}
-  _skin: 0

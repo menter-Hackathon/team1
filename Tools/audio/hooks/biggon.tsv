@@ -1,0 +1,24 @@
+key	file	where	note
+gm_aichat_drone_beam	Combat/AssistantDrone.cs	AssistantDrone の Update：撃ち始め・狙う敵が変わったとき `_nextTick = Time.time + _data.TickInterval;` の直後	レーザーが敵をとらえた瞬間（2026-11-20）
+gm_aichat_drone_zap	Combat/AssistantDrone.cs	AssistantDrone.OnBeamHit（レーザーの判定が敵に当たった時）	ダメージが入った瞬間。1秒に1回くらい（2026-11-20：判定を出した時から移した）
+gm_aichat_drone_off	Combat/AssistantDrone.cs	AssistantDrone.BeginVanish：`_vanishAt = Time.time;` の直後	1回だけ（すでに消え始めていたら return 済み）
+gm_aichat_beam_fire	Combat/BeamStrike.cs	BeamStrike の予告が終わってレーザーを出すとき `_activeStart = Time.time;` の直後（コードのレーザーでないとき）	AI チャットのボス。扇は同時に数本鳴る（同じ音は3つまで）
+gm_aichat_codestream_fire	Combat/BeamStrike.cs	同上（IsCodeStream のとき）	AI チャットのボスの大技
+gm_aichat_codestream_loop	Combat/BeamStrike.cs	BeamStrike：コードのレーザーを出すとき `SeLoop.Play("gm_aichat_codestream_loop")`。レーザーが細くなり終わった時と OnDestroy で Stop(0.3秒)	鳴らし続ける音（SeLoop：2つの AudioSource で 0.08秒重ねて交互にくり返す）。技が途中で止められても止まる
+gm_aichat_bot_launch	Combat/ChaserBot.cs	ChaserBot の Update：`_armed = true; _contact.Activate();` の直後	小さなロボットが点滅を終えて飛び出す
+gm_aichat_error	Visual/AiChatBossVisual.cs	AiChatBossVisual.OnError の最初	ボスのエラーで止まる（BossController.ErrorRaised）
+gm_chat_send	Combat/ChatVolley.cs	ChatVolley.Fire：`_fired = true;` の直後（持ち主がプレイヤー）	ためたメッセージが一斉に飛ぶ
+gm_chat_send_boss	Combat/ChatVolley.cs	同上（持ち主がボス）	同じ音を低く
+gm_chat_bell_ring	Combat/NotificationAlarm.cs	NotificationAlarm.Ring の `_shakeUntil = …` の直後	倍率＝1 + 0.1 ×（鳴った回数 − 1）
+gm_chat_bell_get	Combat/NotificationAlarm.cs	NotificationAlarm.CollectTouched：`Vfx.Sparkle(b.Body.transform.position);` の直後	ベルを1つ回収
+gm_chat_alarm_clear	Combat/NotificationAlarm.cs	NotificationAlarm.Clear の最初	ベルを全部回収した
+gm_chat_alarm_blast	Combat/NotificationAlarm.cs	NotificationAlarm.Impact：`_hitbox.Activate();` の直後	回収しきれず部屋全体に攻撃
+gm_ps_ink	Combat/InkBlot.cs	InkBlot.Spawn：予告なし（プレイヤーのインク）で判定を出す所	筆を振るとまとめて出る（同じ音は3つまで）
+gm_ps_ink_boss	Combat/InkBlot.cs	InkBlot の Update：予告のあと `_fired = true; _hitbox.Activate();` の直後	ボスのインクがはじける
+gm_browser_packet_shot	Combat/PacketVolley.cs	PacketVolley の Update：`_shots.Add(PacketShot.Spawn(…));` の直後（持ち主がプレイヤー）	1発ごと
+gm_browser_packet_shot_boss	Combat/PacketVolley.cs	同上（持ち主がボス）	同じ音を低く
+gm_browser_packet_break	Combat/PacketShot.cs	PacketShot.TryTakeDamage：`Vfx.HitSpark(transform.position);` の直後	ボスのパケットを攻撃で壊した
+gm_browser_packet_response	Combat/ResponsePacket.cs	ResponsePacket.Spawn の最初	応答のパケットが返ってくる（届いた時の回復は共通の player_heal）
+gm_browser_bomb_load	Combat/BombSiteWindow.cs	BombSiteWindow の Update：ゆっくりの時間を過ぎた最初のフレーム（_fastStarted）	読み込みバーが一気にたまり始める（0.25秒後に爆発）
+gm_browser_bomb_blast	Combat/BombSiteWindow.cs	BombSiteWindow.Explode：`_hitbox.Activate();` の直後	爆発
+gm_browser_spawner_spawn	Combat/SpawnerWindow.cs	SpawnerWindow の Update：雑魚を出して `_flashUntil = …` の直後	3秒ごと

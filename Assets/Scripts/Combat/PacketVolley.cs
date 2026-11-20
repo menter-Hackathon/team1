@@ -119,6 +119,7 @@ public class PacketVolley : MonoBehaviour
             Vector2 dir = Quaternion.Euler(0f, 0f, angle) * baseDir;
             Vector2 from = OwnerCenter + new Vector2(_owner.Facing * 0.4f, 0.1f);
             _shots.Add(PacketShot.Spawn(_owner, _data, this, from, dir, _target != null));
+            GameAudio.Event(_owner.Team == Team.Player ? "gm_browser_packet_shot" : "gm_browser_packet_shot_boss");
             _fired++;
             _nextShot = Time.time + _data.PacketInterval;
         }
