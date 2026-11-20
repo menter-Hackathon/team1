@@ -114,7 +114,7 @@ public class RunLoadoutMenu : MonoBehaviour
         if(Session==null||Session.Run==null||Session.IsTransitioning) return;
         PixelGui.Begin(false);
         float w=PixelGui.Width,h=PixelGui.Height;
-        MacDesktopGui.MenuBar(w,"Virus Desktop");
+        MacDesktopGui.MenuBar(w,MacDesktopGui.AppName);
         Rect win=MacDesktopGui.CenteredWindow(w,h,584,252);
         bool front=(_dex==null||!_dex.IsOpen)&&(_files==null||!_files.BlocksParentInput);
         win=_window.Apply(win,w,h,front);

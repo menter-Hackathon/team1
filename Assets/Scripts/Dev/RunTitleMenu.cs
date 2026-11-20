@@ -253,7 +253,7 @@ public class RunTitleMenu : MonoBehaviour
             PixelGui.End();
             return;
         }
-        MacDesktopGui.MenuBar(w,"Virus Desktop",MacDesktopInfection.LingerStatus(_dockApps.Count)); // 起動のあとも感染したまま（2026-11-20）
+        MacDesktopGui.MenuBar(w,MacDesktopGui.AppName,MacDesktopInfection.LingerStatus(_dockApps.Count)); // 起動のあとも感染したまま（2026-11-20）
         bool mode=_page==Page.Mode;
         bool scanWaiting=_scan&&_topApps==null;
         bool compactScan=_scan&&string.IsNullOrEmpty(_error)&&(_scanning||_topApps!=null);
@@ -271,7 +271,7 @@ public class RunTitleMenu : MonoBehaviour
         bool was=GUI.enabled;
         bool active=front;
         var items=new List<MacDesktopGui.DockItem>(_dockApps);
-        if(_window.IsMinimized) items.Add(new MacDesktopGui.DockItem("Virus Desktop",null,_window));
+        if(_window.IsMinimized) items.Add(new MacDesktopGui.DockItem(MacDesktopGui.AppName,null,_window));
         if(_dex!=null&&_dex.IsMinimized) items.Add(new MacDesktopGui.DockItem("アプリ図鑑",null,_dex.Window));
         if(_files!=null&&_files.IsMinimized) items.Add(new MacDesktopGui.DockItem("Finder",null,_files.Window));
         GUI.enabled=was&&active&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
@@ -295,7 +295,7 @@ public class RunTitleMenu : MonoBehaviour
         }
         GUI.enabled=was&&front;
         if(!_window.IsVisible) { GUI.enabled=was; PixelGui.End(); return; }
-        Rect inner=MacDesktopGui.Window(win,_scan?"端末スキャン":mode?"はじめかた":"Virus Desktop",out var action);
+        Rect inner=MacDesktopGui.Window(win,_scan?"端末スキャン":mode?"はじめかた":MacDesktopGui.AppName,out var action);
         _window.Handle(action);
         if(!_window.IsVisible) { GUI.enabled=was; PixelGui.End(); return; }
         if(_scan) DrawScanPanel(session,inner);
@@ -317,9 +317,9 @@ public class RunTitleMenu : MonoBehaviour
         float buttonHeight=Mathf.Min(24f,step-4f);
         float y=inner.y+Mathf.Max(4f,(inner.height-(106f+step*(items.Length-1)+buttonHeight))*0.5f);
         PixelGui.TextEn(new Rect(inner.x,y,inner.width,10),"~/Desktop",8,MacDesktopGui.Blue,TextAnchor.MiddleCenter);
-        GUIStyle logo=PixelGui.Style(true,24,TextAnchor.MiddleCenter);
-        PixelGui.ShadowText(new Rect(inner.x,y+16,inner.width,28),"VIRUS",logo,MacDesktopGui.Ink,new Color32(170,193,226,255),1);
-        PixelGui.ShadowText(new Rect(inner.x,y+44,inner.width,28),"DESKTOP",logo,MacDesktopGui.Ink,new Color32(170,193,226,255),1);
+        // ロゴ＝ゲームの名前 AppName（2026-11-20 に「VIRUS／DESKTOP」の2行から1行へ。前の2行の帯 y+16〜y+72 のまん中に置く。英字は 8 の倍数の大きさ）
+        GUIStyle logo=PixelGui.Style(true,32,TextAnchor.MiddleCenter);
+        PixelGui.ShadowText(new Rect(inner.x,y+26,inner.width,36),MacDesktopGui.AppName,logo,MacDesktopGui.Ink,new Color32(170,193,226,255),1);
         PixelGui.Text(new Rect(inner.x,y+80,inner.width,16),"このMacのデスクトップを取り戻せ",12,PixelGui.BodyText,TextAnchor.MiddleCenter);
         for(int i=0;i<items.Length;i++)
         {
@@ -346,7 +346,7 @@ public class RunTitleMenu : MonoBehaviour
             GUI.matrix=keep*Matrix4x4.Translate(new Vector3(shake.x,shake.y,0));
             MacDesktopInfection.DrawBack(infection,width,height,_dockApps.Count);
             MacDesktopGui.Folders(width); // フォルダ・ほかの Dock のアイコンは、ゲームのアプリを開くまで押しても何もしない
-            MacDesktopGui.MenuBar(width,_boot.ShowApp?"Virus Desktop":"Finder",MacDesktopInfection.Status(infection,_dockApps.Count));
+            MacDesktopGui.MenuBar(width,_boot.ShowApp?MacDesktopGui.AppName:"Finder",MacDesktopInfection.Status(infection,_dockApps.Count));
             MacDesktopInfection.DrawMenuBarOverlay(infection,width); // 電池と時計がおかしくなる
             bool launched=_boot.Current>=MacDesktopBoot.Step.Bouncing;
             float hop=_boot.Current==MacDesktopBoot.Step.Bouncing?_boot.BounceProgress(now):_boot.IdleHop(now);
@@ -368,7 +368,7 @@ public class RunTitleMenu : MonoBehaviour
                     GUI.matrix=matrix*Matrix4x4.TRS(new Vector3(position.x,position.y,0),Quaternion.identity,
                         new Vector3(size.x/target.width,size.y/target.height,1))*
                         Matrix4x4.Translate(new Vector3(-target.x,-target.y,0));
-                    Rect inner=MacDesktopGui.Window(target,"Virus Desktop",out _);
+                    Rect inner=MacDesktopGui.Window(target,MacDesktopGui.AppName,out _);
                     DrawMenu(inner);
                 }
                 finally { GUI.matrix=matrix; }

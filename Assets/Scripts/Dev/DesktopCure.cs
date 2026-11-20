@@ -38,7 +38,7 @@ public static class DesktopCure
     static readonly string[] WalkTypes = { "Worm", "Trojan" }; // Dock の上を歩く（0＝ゲームの左、1＝右）
     static readonly string[] SeatTypes = { "Macro", "Worm" };  // フォルダに座る（0＝書類、1＝ダウンロード。起動の感染と同じ）
     const string TerminalType = "Ransomware", FinderType = "Spyware";
-    const string NoticeTitle = "Virus Desktop", NoticeBody = "ウイルス 0。このMacは安全です";
+    const string NoticeTitle = MacDesktopGui.AppName, NoticeBody = "ウイルス 0。このMacは安全です";
     static readonly string[] StatusText = { "感染 0", "感染 1", "感染 2", "感染 3", "感染 4" };
     static readonly Color TitleBar = new Color32(231, 234, 240, 255); // MacDesktopGui.Window のタイトルバーと同じ
 
@@ -376,7 +376,7 @@ public static class DesktopCure
             }
         }
 
-        // 通知「Virus Desktop／ウイルス 0。このMacは安全です」（右から入る）
+        // 通知「（ゲームの名前 AppName）／ウイルス 0。このMacは安全です」（右から入る）
         if (c >= NoticeAt) DrawNotice(W, 1f - Mathf.Clamp01((c - NoticeAt) / 0.2f));
 
         // 白い光（輪が出るとき 0.30 → 0、ジングルのとき 0.10 → 0）

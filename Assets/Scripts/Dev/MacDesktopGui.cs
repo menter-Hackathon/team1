@@ -5,6 +5,10 @@ using UnityEngine.InputSystem;
 /// <summary>ゲーム内デスクトップの共通部品。PixelGui.Begin(false) の後で使う。</summary>
 public static class MacDesktopGui
 {
+    /// <summary>画面に出すゲームの名前（窓の題名・メニューバー・Dock・通知）。2026-11-20 に「Virus Desktop」から変更。
+    /// 保存の場所（productName＝Team1）は変えていない（変えると図鑑・実績・設定が読めなくなる）</summary>
+    public const string AppName="ViruScan";
+
     public readonly struct DockItem
     {
         public readonly string Name;
@@ -383,7 +387,7 @@ public static class MacDesktopGui
             bool hover=r.Contains(Event.current.mousePosition)&&GUI.enabled;
             Rect icon=r; if(hover) icon.y-=3;
             if(i==1&&launchProgress>=0) icon.y-=Mathf.Abs(Mathf.Sin(launchProgress*Mathf.PI*2))*7;
-            string name=i==0?"Finder":i==1?"Virus Desktop":apps[i-2].Name;
+            string name=i==0?"Finder":i==1?AppName:apps[i-2].Name;
             if(i==0) FinderIcon(icon);
             else if(i==1)
             {
