@@ -127,10 +127,10 @@ namespace Team1.Achievements
             var box = new Rect(r.x, r.y + 16f, r.width, r.height - 16f);
             MacDesktopGui.Card(box, false);
             AchievementGui.Icon(new Rect(box.x + 5f, box.y + 3f, 28f, 28f), _service.Definition(spec.Id), spec.Rank, false, null);
-            var record = _service.Engine.Save.Find(spec.Id);
-            PixelGui.TextFit(new Rect(box.x + 40f, box.y + 2f, box.width - 150f, 16f), spec.Name, 12, MacDesktopGui.Ink);
-            string progress = AchievementGui.ProgressText(spec, record);
-            PixelGui.Text(new Rect(box.xMax - 106f, box.y + 2f, 100f, 16f), progress, 12, PixelGui.SubText, TextAnchor.MiddleRight);
+            // 解除した実績の行と同じく短く：褒める一言と名前、進み具合はバーだけ（数字は出さない）
+            float nameW = Mathf.Min(150f, PixelGui.Measure(spec.Name, PixelGui.Style(false, 12)) + 4f);
+            PixelGui.TextFit(new Rect(box.x + 40f, box.y + 2f, box.width - 52f - nameW, 16f), string.IsNullOrEmpty(spec.Praise) ? spec.Name : spec.Praise, 12, MacDesktopGui.Ink);
+            PixelGui.TextFit(new Rect(box.xMax - 6f - nameW, box.y + 2f, nameW, 16f), spec.Name, 12, PixelGui.SubText, TextAnchor.MiddleRight);
             AchievementGui.Bar(new Rect(box.x + 40f, box.y + 22f, box.width - 46f, 5f), (float)_service.Engine.Ratio(spec), AchievementGui.BarFill);
         }
     }
