@@ -57,6 +57,7 @@ public class RunTitleMenu : MonoBehaviour
             !_touchIdAvailable?"Enterで解除できます":null;
         _files=GetComponent<MacDesktopFiles>();
         if(_files==null) _files=gameObject.AddComponent<MacDesktopFiles>();
+        if(GetComponent<MacControlCenter>()==null) gameObject.AddComponent<MacControlCenter>(); // メニューバー右上のコントロールセンター（設定。2026-11-20）
         // 図鑑はメニューの「ずかん」から開く（右上のボタンは出さない）
         _dex = FindObjectOfType<AppDexMenu>();
         if (_dex == null) _dex = gameObject.AddComponent<AppDexMenu>();
@@ -102,7 +103,7 @@ public class RunTitleMenu : MonoBehaviour
             else if(_boot.Current==MacDesktopBoot.Step.Desktop&&MenuInput.Confirm()) LaunchGameApp(); // マウスが無くても開ける
             return;
         }
-        if (PauseMenu.BlocksInput) return; // 設定（歯車）を開いている間は、タイトルを操作しない（2026-11-20）
+        if (PauseMenu.BlocksInput || MacControlCenter.BlocksInput) return; // 設定・コントロールセンターを開いている間は、タイトルを操作しない（2026-11-20）
         if (!_window.IsVisible || (_dex != null && _dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || AchievementsBlockInput || Session.IsTransitioning) return;
         if(MacDesktopGui.WindowShortcuts(_window)) return;
         // キーボードとコントローラー（十字キー・左スティック・A／START で決定・B で戻る）。2026-11-20
@@ -117,7 +118,7 @@ public class RunTitleMenu : MonoBehaviour
             else if (ok) ScanPrimary();
             return;
         }
-        int count = _page == Page.Menu ? 5 : ModeCount; // はじめる・アプリ図鑑・じっせき・終了・右下の歯車（設定）
+        int count = _page == Page.Menu ? 5 : ModeCount; // はじめる・アプリ図鑑・じっせき・設定・終了（2026-11-20：設定を窓の中へ）
         if (up) _focus = (_focus + count - 1) % count;
         if (down) _focus = (_focus + 1) % count;
         if (up || down) GameAudio.Event("ui_move");
@@ -206,8 +207,8 @@ public class RunTitleMenu : MonoBehaviour
             if (index == 0) OpenPage(Page.Mode);
             else if (index == 1 && _dex != null) _dex.Open();
             else if (index == 2 && _achievements != null) _achievements.Open();
-            else if (index == 3) Quit();
-            else if (index == 4) PauseMenu.OpenSettings(); // 右下の歯車：音量・キー設定（2026-11-20。音は上の ui_decide）
+            else if (index == 3) PauseMenu.OpenSettings(); // 設定：音量・キー設定（2026-11-20。音は上の ui_decide）
+            else if (index == 4) Quit();
             return;
         }
         // はじめかた：スキャン（できるとき）・訓練モード・もどる
@@ -256,7 +257,7 @@ public class RunTitleMenu : MonoBehaviour
         bool scanWaiting=_scan&&_topApps==null;
         bool compactScan=_scan&&string.IsNullOrEmpty(_error)&&(_scanning||_topApps!=null);
         Rect win=MacDesktopGui.CenteredWindow(w,h,scanWaiting?480:_scan?500:mode?480:420,
-            scanWaiting?(_scanning?268:286):_scan?(string.IsNullOrEmpty(_error)?268:306):mode?(string.IsNullOrEmpty(_error)?254:286):298, // メニューは「じっせき」の分だけ高い
+            scanWaiting?(_scanning?268:286):_scan?(string.IsNullOrEmpty(_error)?268:306):mode?(string.IsNullOrEmpty(_error)?254:286):MenuWindowHeight, // メニューは「じっせき」「設定」の分だけ高い
             !_scan||compactScan);
         bool front=(_dex==null||!_dex.IsOpen)&&(_files==null||!_files.BlocksParentInput)&&!AchievementsBlockInput;
         win=_window.Apply(win,w,h,front);
@@ -275,9 +276,7 @@ public class RunTitleMenu : MonoBehaviour
         GUI.enabled=was&&active&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
         int dock=MacDesktopGui.Dock(w,h,items);
         MacDesktopInfection.DrawLingerFront(w,h,items); // フォルダと Dock の紫・乗った雑魚
-        // 右下の歯車：設定（音量・キー設定）。キー・コントローラーでは、メニューの「終了」の下（2026-11-20）
-        GUI.enabled=was&&active&&!PauseMenu.IsOpen;
-        if(SettingsGear(new Rect(w-40,h-84,30,30),_window.IsVisible&&!_scan&&_page==Page.Menu&&_focus==4)) OpenSettings(); // どの画面（はじめかた・スキャン）からでも、その画面のまま設定を開く
+        // 右下の歯車は消した。設定は、窓の中の「設定」と、メニューバー右上のコントロールセンター（MacControlCenter）から（2026-11-20 まさぴ〜）
         if(dock==0)
         {
             _window.Open();
@@ -305,19 +304,25 @@ public class RunTitleMenu : MonoBehaviour
         PixelGui.End();
     }
 
+    // メニューの窓の高さ（「じっせき」「設定」の分。起動の演出の窓も同じ高さにする）
+    const float MenuWindowHeight=328f;
+
     void DrawMenu(Rect inner)
     {
         float cx=inner.center.x;
-        float y=inner.y+Mathf.Max(10f,(inner.height-210f)*0.5f);
+        string[] items={"はじめる","アプリ図鑑","じっせき","設定","終了"}; // 設定：2026-11-20（右下の歯車と同じ画面）
+        // 低い画面（640×360。窓は 268 まで縮む）でも5つが窓に収まるように、ボタンの間を詰める
+        float step=Mathf.Clamp(Mathf.Floor((inner.height-10f-106f-24f)/(items.Length-1)),24f,30f);
+        float buttonHeight=Mathf.Min(24f,step-4f);
+        float y=inner.y+Mathf.Max(4f,(inner.height-(106f+step*(items.Length-1)+buttonHeight))*0.5f);
         PixelGui.TextEn(new Rect(inner.x,y,inner.width,10),"~/Desktop",8,MacDesktopGui.Blue,TextAnchor.MiddleCenter);
         GUIStyle logo=PixelGui.Style(true,24,TextAnchor.MiddleCenter);
         PixelGui.ShadowText(new Rect(inner.x,y+16,inner.width,28),"VIRUS",logo,MacDesktopGui.Ink,new Color32(170,193,226,255),1);
         PixelGui.ShadowText(new Rect(inner.x,y+44,inner.width,28),"DESKTOP",logo,MacDesktopGui.Ink,new Color32(170,193,226,255),1);
         PixelGui.Text(new Rect(inner.x,y+80,inner.width,16),"このMacのデスクトップを取り戻せ",12,PixelGui.BodyText,TextAnchor.MiddleCenter);
-        string[] items={"はじめる","アプリ図鑑","じっせき","終了"};
         for(int i=0;i<items.Length;i++)
         {
-            Rect r=new Rect(cx-80,y+106+i*30,160,24);
+            Rect r=new Rect(cx-80,y+106+i*step,160,buttonHeight);
             if(MenuItem(r,items[i],i==_focus)) { _focus=i; Choose(i); }
             else if(GUI.enabled&&r.Contains(Event.current.mousePosition)&&Event.current.type==EventType.MouseMove) _focus=i;
         }
@@ -351,7 +356,7 @@ public class RunTitleMenu : MonoBehaviour
             if(_boot.ShowApp)
             {
                 float t=MacDesktopBoot.Ease(_boot.LaunchProgress(now));
-                Rect target=MacDesktopGui.CenteredWindow(width,height,420,298); // 本番のメニューの窓と同じ高さ（じっせきの分。窓が跳ねないように）
+                Rect target=MacDesktopGui.CenteredWindow(width,height,420,MenuWindowHeight); // 本番のメニューの窓と同じ高さ（じっせき・設定の分。窓が跳ねないように）
                 float dockWidth=(2+_dockApps.Count)*42+12;
                 Vector2 origin=new Vector2((width-dockWidth)*0.5f+26,height-65);
                 Vector2 position=Vector2.Lerp(origin,target.position,t);
@@ -439,53 +444,8 @@ public class RunTitleMenu : MonoBehaviour
         }
     }
 
-    /// <summary>右下の歯車をマウスで押した：今の画面（ページ・選んでいる項目）はそのままで、設定を開く</summary>
-    static void OpenSettings()
-    {
-        if(PauseMenu.IsOpen) return;
-        GameAudio.Event("ui_decide");
-        PauseMenu.OpenSettings();
-    }
-
     static bool MenuItem(Rect r,string text,bool focused,TextAnchor anchor=TextAnchor.MiddleCenter)
         => MacDesktopGui.Button(r,text,false,focused);
-
-    // 歯車のドット絵（16×16。# が線）
-    static readonly string[] Gear =
-    {
-        "......####......",
-        "......####......",
-        "..##..####..##..",
-        "..############..",
-        "...##########...",
-        "..####....####..",
-        "#####......#####",
-        "#####......#####",
-        "#####......#####",
-        "#####......#####",
-        "..####....####..",
-        "...##########...",
-        "..############..",
-        "..##..####..##..",
-        "......####......",
-        "......####......",
-    };
-
-    /// <summary>右下の歯車のボタン（設定）。押されたら true。focused：キー・コントローラーで選んでいる</summary>
-    static bool SettingsGear(Rect r,bool focused)
-    {
-        bool hover=r.Contains(Event.current.mousePosition)&&GUI.enabled;
-        bool blue=focused||hover;
-        MacDesktopGui.Rounded(r,blue?new Color32(0,81,188,255):MacDesktopGui.BorderColor,6);
-        MacDesktopGui.Rounded(PixelGui.Inset(r,1),blue?MacDesktopGui.Blue:new Color(1f,1f,1f,0.92f),5);
-        Color ink=blue?Color.white:MacDesktopGui.Ink;
-        float ox=r.x+Mathf.Floor((r.width-Gear[0].Length)*0.5f), oy=r.y+Mathf.Floor((r.height-Gear.Length)*0.5f);
-        for(int y=0;y<Gear.Length;y++)
-            for(int x=0;x<Gear[y].Length;x++)
-                if(Gear[y][x]=='#') PixelGui.Fill(new Rect(ox+x,oy+y,1,1),ink);
-        if(hover||focused) PixelGui.ShadowText(new Rect(r.x-52,r.y+7,46,16),"設定",PixelGui.Style(false,12,TextAnchor.MiddleRight),PixelGui.White,MacDesktopGui.Ink,1);
-        return GUI.Button(r,GUIContent.none,GUIStyle.none);
-    }
 
     void DrawScanPanel(GameSession session, Rect inner)
     {

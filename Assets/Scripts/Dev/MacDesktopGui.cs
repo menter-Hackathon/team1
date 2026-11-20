@@ -20,6 +20,10 @@ public static class MacDesktopGui
     public static readonly Color BorderColor=new Color32(186,194,207,255);
     static Font _menuFont;
     static int _shortcutFrame = -1;
+    /// <summary>メニューバーのコントロールセンターのスイッチの押す所（仮想の画面の座標。MenuBar が描くたびに入る。MacControlCenter が使う。2026-11-20）</summary>
+    public static Rect ControlCenterIcon { get; private set; }
+    /// <summary>スイッチの後ろの明るい下じきの濃さ（0＝なし。開いている間・マウスが乗っている間。MacControlCenter が入れる）</summary>
+    public static float ControlCenterGlow;
 
     public sealed class WindowDrag
     {
@@ -233,6 +237,9 @@ public static class MacDesktopGui
             GUI.Label(new Rect(right-dateWidth,0,dateWidth,h),date,style);
             right-=dateWidth+19*scale;
             // コントロールセンター：左右でつまみの位置が異なる二本のスイッチ。
+            // 押す所を覚え、開いている間は後ろに明るい下じきを敷く（MacControlCenter。2026-11-20）
+            ControlCenterIcon=new Rect((right-21*scale)/PixelGui.Scale,0,28*scale/PixelGui.Scale,h/PixelGui.Scale);
+            if(ControlCenterGlow>0f) Rounded(new Rect(right-20*scale,3*scale,26*scale,h-6*scale),new Color(1,1,1,ControlCenterGlow),Mathf.RoundToInt(4*scale));
             for(int row=0;row<2;row++)
             {
                 Rect track=new Rect(right-14*scale,(7+row*8)*scale,14*scale,5*scale);
