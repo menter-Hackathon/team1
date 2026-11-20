@@ -70,25 +70,13 @@ public class GameOverScreen : MonoBehaviour
             }
             return;
         }
-        float messageAge = Age - CascadeSeconds - BlackoutSeconds;
-        if (messageAge < 0.6f) return;
-        if (!_choices)
-        {
-            bool pressed = kb != null && kb.anyKey.wasPressedThisFrame;
-            bool clicked = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
-            if (messageAge >= MessageSeconds || pressed || clicked)
-            {
-                _choices = true;
-                GameAudio.Event("ui_move");
-            }
-            return; // このキーを選択の決定として再利用しない
-        }
-        if (kb == null) return;
+        if (Time.unscaledTime - _shownAt < 0.4f) return; // 倒れた瞬間の押しっぱなしで決めない
         int before = _focus;
-        if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) _focus = 0;
-        if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) _focus = 1;
+        // キーボードとコントローラー（2026-11-20）。Space では決めない（今までどおり）
+        if (MenuInput.Left) _focus = 0;
+        if (MenuInput.Right) _focus = 1;
         if (_focus != before) GameAudio.Event("ui_move");
-        if (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) Choose(_focus);
+        if (MenuInput.Confirm(allowSpace: false)) Choose(_focus);
     }
 
     void Choose(int index)

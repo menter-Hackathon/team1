@@ -93,6 +93,7 @@ public partial class GameAudio : MonoBehaviour
         LogPlays = false;
         _master = _bgmVolume = _seVolume = -1f;
         _warned.Clear();
+        GamePaused = false;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -412,25 +413,41 @@ public partial class GameAudio : MonoBehaviour
     /// <summary>赤い予告（線・枠）が出た。たくさん出るので、0.15秒に1回まで</summary>
     public static void Telegraph() => Event("telegraph");
 
+    // ───────── 一時停止（2026-11-20：PauseMenu） ─────────
+
+    /// <summary>ゲームが一時停止しているか（PauseMenu が切り替える）</summary>
+    public static bool GamePaused { get; private set; }
+    readonly List<AudioSource> _pausedVoices = new List<AudioSource>();
+
     /// <summary>
-    /// 出来事のキーに割り当てた SE の音（AudioClip）と大きさ・高さを返す（2026-11-20：鳴らし続ける音 SeLoop 用）。
-    /// 割り当てが無い・空文字・ファイルが無ければ false。鳴らしすぎ対策・ピッチのばらつきは入れない（呼んだ側が鳴らす）
+    /// 一時停止：今鳴っている SE（技の音など）を止める／続きから鳴らす。
+    /// BGM と、止めている間に新しく鳴らす音（メニューのカーソル・決定の音）は止めない
     /// </summary>
-    public static bool TryGetEventClip(string key, out AudioClip clip, out float vol, out float pitch)
+    public static void SetGamePaused(bool paused)
     {
-        clip = null;
-        vol = pitch = 1f;
-        if (string.IsNullOrEmpty(key)) return false;
+        if (GamePaused == paused) return;
+        GamePaused = paused;
         try
         {
             GameAudio a = Ensure();
-            if (a == null || !a._events.TryGetValue(key, out EventRow row) || string.IsNullOrEmpty(row.se)) return false;
-            clip = a.Clip(SeFolder, row.se);
-            vol = RowVol(row.vol);
-            pitch = RowPitch(row.pitch);
-            return clip != null;
+            if (a == null) return;
+            if (paused)
+            {
+                a._pausedVoices.Clear();
+                foreach (Voice v in a._voices)
+                {
+                    if (v.Src == null || !v.Src.isPlaying) continue;
+                    v.Src.Pause();
+                    a._pausedVoices.Add(v.Src);
+                }
+            }
+            else
+            {
+                foreach (AudioSource s in a._pausedVoices) if (s != null) s.UnPause();
+                a._pausedVoices.Clear();
+            }
         }
-        catch (Exception e) { LogOnce("TryGetEventClip " + key, e); return false; }
+        catch (Exception e) { LogOnce("SetGamePaused", e); }
     }
 
     void PlayEventNow(string key, float pitchMul)

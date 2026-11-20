@@ -101,23 +101,25 @@ public class AppDexMenu : MonoBehaviour
             if(kb.rightArrowKey.wasPressedThisFrame||kb.dKey.wasPressedThisFrame) StepDetail(1);
             return;
         }
-        if(kb.escapeKey.wasPressedThisFrame||(!_searchFocused&&(kb.xKey.wasPressedThisFrame||kb.backspaceKey.wasPressedThisFrame))) { Close(); return; }
-        if(!_searchFocused&&_visible.Count>0&&(kb.spaceKey.wasPressedThisFrame||kb.zKey.wasPressedThisFrame||kb.enterKey.wasPressedThisFrame||kb.numpadEnterKey.wasPressedThisFrame))
+        // 閉じる：Esc、検索欄の外なら X／Backspace、コントローラーの B／SELECT（2026-11-20）
+        if(kb.escapeKey.wasPressedThisFrame||(!_searchFocused&&(kb.xKey.wasPressedThisFrame||MenuInput.Back))) { Close(); return; }
+        if(_searchFocused) return;
+        // 絞り込み（すべて・正常化済・未正常化）を Q／E、コントローラーの L／R で切り替える（端から端へ回る）。2026-11-20
+        int tab = (MenuInput.NextTab ? 1 : 0) - (MenuInput.PrevTab ? 1 : 0);
+        if (tab != 0)
         {
-            TryOpenDetail(_selected); return;
+            int n = System.Enum.GetValues(typeof(Filter)).Length;
+            _filter = (Filter)(((int)_filter + tab + n) % n);
+            ApplyFilter();
+            GameAudio.Event("ui_move");
         }
-        if(_searchFocused||_visible.Count==0) return;
+        if(_visible.Count==0) return;
         int step = 0;
-        if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) step = -1;
-        if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) step = 1;
-        if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) step = -_cols;
-        if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) step = _cols;
-        if(step!=0)
-        {
-            int before=_selected;
-            _selected=Mathf.Clamp(_selected+step,0,_visible.Count-1); _revealSelection=true;
-            if(_selected!=before) GameAudio.Event("ui_move");
-        }
+        if (MenuInput.Left) step = -1;
+        if (MenuInput.Right) step = 1;
+        if (MenuInput.Up) step = -_cols;
+        if (MenuInput.Down) step = _cols;
+        if(step!=0) { _selected=Mathf.Clamp(_selected+step,0,_visible.Count-1); _revealSelection=true; }
     }
 
     void OnGUI()
@@ -160,6 +162,7 @@ public class AppDexMenu : MonoBehaviour
         Rect sidebar=new Rect(inner.x-11,inner.y-8,104,inner.height+19);
         PixelGui.Fill(sidebar,new Color32(232,237,245,255));
         PixelGui.Text(new Rect(sidebar.x+10,sidebar.y+10,90,18),"よく使う項目",12,MacDesktopGui.Muted);
+        PixelGui.TextEn(new Rect(sidebar.x+10,sidebar.y+26,90,8),"Q/E  L/R",8,MacDesktopGui.Muted); // 切り替えのボタン（2026-11-20）
         string[] filters={"すべて","正常化済","未正常化"};
         for(int i=0;i<filters.Length;i++)
         {
