@@ -50,7 +50,6 @@
 | ドット絵を作るスクリプト（Python） | `Tools/art/` |
 | 効果音・BGM を作るシンセサイザーと楽譜・レシピ（Python） | `Tools/audio/` |
 | シーン、プレハブ、ScriptableObject、アニメーション | `Assets/Scenes/`、`Assets/Prefabs/`、`Assets/ScriptableObjects/`、`Assets/Animations/` |
-| 設計メモ | `docs/` |
 
 #### 画像
 
@@ -59,7 +58,6 @@
 | プレイヤー、ウイルスの煙、壁紙、画面の見本 | `Assets/Sprites/Provided/` | チームのデザイン担当が手描き |
 | アプリボス、スキルのエフェクト、雑魚ウイルス、最終ボス | `Assets/_Project/Art/VirusGameArt/` | チームのデザイン担当が手描き |
 | 実績のアイコンとランク枠 | `Assets/_Project/AchievementSystem/` | チームのデザイン担当が手描き |
-| 頭の上の HP バー | `Assets/_Project/PlayerHPBar/` | チームのデザイン担当が手描き |
 | まだ手描きの絵がない物の仮の絵（UI、足場、攻撃、エフェクトなど） | `Assets/Sprites/Generated/` | `Tools/art/gen_sprites.py` で生成 |
 | アプリの画面を模したステージ背景（38 種類） | `Assets/Resources/AppBackgrounds/` | `Tools/art/appbg/` で生成 |
 | ウイルスの種類ごとの絵 | `Assets/Resources/Virus/` | `Tools/art/virus/` で生成 |
