@@ -73,6 +73,9 @@ public class StageDirector : MonoBehaviour
         }
         // アプリの UI の部品を、乗れる足場・ギミックにする（2026-11-19。1画面のステージだけ。表が無ければ今までのフォルダ。中で失敗しても止めない）
         AppStagePlatforms.Build(Plan, this);
+        // シーンに置いたフォルダ・ウィンドウの足場（横スクロール・VS Code のステージなど）も「厚みのある板」に見せる（2026-11-20。中で失敗しても止めない）
+        try { PlatformSlab.DressSceneBlocks(gameObject.scene); }
+        catch (System.Exception e) { Debug.LogException(e, this); }
         // 出てくる位置は、ボス部屋（BattleArena）の床の真ん中からのずれ（ボス部屋がステージの端にあるステージもあるため）
         var arena = FindObjectOfType<BattleArena>();
         Vector2 roomFloor = arena != null ? new Vector2(arena.Bounds.center.x, arena.Bounds.yMin) : Vector2.zero;
