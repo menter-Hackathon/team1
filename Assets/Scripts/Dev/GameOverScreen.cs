@@ -71,6 +71,20 @@ public class GameOverScreen : MonoBehaviour
             return;
         }
         if (Time.unscaledTime - _shownAt < 0.4f) return; // 倒れた瞬間の押しっぱなしで決めない
+        // 再起動の画面のあと、何かキー・クリック・コントローラー、または 4.5 秒で選ぶ板を出す（d1dc07f0 のれっきーさんの処理。7ef855e2 のマージで消えていたので戻した。2026-11-20）
+        float messageAge = Age - CascadeSeconds - BlackoutSeconds;
+        if (messageAge < 0.6f) return;
+        if (!_choices)
+        {
+            bool pressed = (kb != null && kb.anyKey.wasPressedThisFrame) || MenuInput.Confirm();
+            bool clicked = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+            if (messageAge >= MessageSeconds || pressed || clicked)
+            {
+                _choices = true;
+                GameAudio.Event("ui_move");
+            }
+            return; // このキーを選択の決定として再利用しない
+        }
         int before = _focus;
         // キーボードとコントローラー（2026-11-20）。Space では決めない（今までどおり）
         if (MenuInput.Left) _focus = 0;
@@ -230,6 +244,7 @@ public class GameOverScreen : MonoBehaviour
         Label(new Rect(panel.x, panel.y + 4, panel.width, 18), "このステージから再開しますか？", 11, Color.white, TextAnchor.MiddleCenter);
         if (MacDesktopGui.Button(new Rect(panel.x + 10, panel.y + 27, 136, 26), "リトライ", _focus == 0)) Choose(0);
         if (MacDesktopGui.Button(new Rect(panel.x + 158, panel.y + 27, 136, 26), "タイトルへ", _focus == 1)) Choose(1);
+        if (BackupFx.Enabled) BackupFx.DrawDrive(panel.x + 20, panel.y + 33, 1, PixelGui.HpGreen); // リトライ＝バックアップから戻す、の印（2026-11-20。docs/backup-restore-design.md 5章）
     }
 
     static void DrawPower(Vector2 center, float radius)

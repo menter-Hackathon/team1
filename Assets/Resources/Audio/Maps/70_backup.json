@@ -1,0 +1,9 @@
+{
+  "moves": [],
+  "events": [
+    {"key": "backup_done", "se": "se_backup_done", "vol": 0.35, "pitch": 1.0},
+    {"key": "restore_rewind", "se": "se_restore_rewind", "vol": 0.6, "pitch": 1.0},
+    {"key": "restore_done", "se": "se_backup_done", "vol": 0.7, "pitch": 1.0},
+    {"key": "title_reboot", "se": "se_title_reboot", "vol": 0.6, "pitch": 1.0}
+  ]
+}

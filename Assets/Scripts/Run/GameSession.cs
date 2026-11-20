@@ -51,6 +51,7 @@ public class GameSession : MonoBehaviour
     IAppUsageProvider _lastProvider; // 「もう一度あそぶ」で同じ使用データを使う
     bool _inStage; // ステージで遊んでいる（時間を数える）
     DesktopScreen _desktop;
+    BackupFx _backup; // バックアップ・復元・タイトルへ の演出（2026-11-20。docs/backup-restore-design.md）
 
     public static GameSession Instance { get; private set; }
     public AppCatalog Catalog => _catalog;
@@ -101,6 +102,8 @@ public class GameSession : MonoBehaviour
         if (GetComponent<GameOverScreen>() == null) gameObject.AddComponent<GameOverScreen>();
         _desktop = GetComponent<DesktopScreen>();
         if (_desktop == null) _desktop = gameObject.AddComponent<DesktopScreen>();
+        _backup = GetComponent<BackupFx>();
+        if (_backup == null) _backup = gameObject.AddComponent<BackupFx>();
         Health.AnyDamaged += OnAnyDamaged;
         Health.AnyDied += OnAnyDied;
         // 図鑑：同じアプリの記録（「Excel」と「Microsoft Excel」など）を1つにまとめる（2026-11-20。まとめる物が無ければ何もしない）
@@ -373,32 +376,50 @@ public class GameSession : MonoBehaviour
         _inStage = false;
         Run.RetryCount++;
         Run.Loadout.Restore(Run.StageStartSlots);
-        StartCoroutine(Transition(Run.Current.App.StageScene));
+        StartCoroutine(Transition(Run.Current.App.StageScene, fx: 1)); // 復元の演出（BackupFx。2026-11-20）
     }
 
     /// <summary>タイトルに戻る（ランは終わり）</summary>
     public void ReturnToTitle()
     {
         if (IsTransitioning) return;
+        bool fromGameOver = IsGameOver; // ゲームオーバーから戻るときだけ演出（一時停止・リザルト・能力えらびからは今までどおり。2026-11-20）
         IsGameOver = false;
         _inStage = false;
         Run = null;
-        StartCoroutine(Transition(_titleScene));
+        StartCoroutine(Transition(_titleScene, fx: fromGameOver ? 2 : 0));
     }
 
     /// <summary>今のステージへ（感染したデスクトップの画面を通る）。restored：いまクリアしたステージ（-1＝なし）</summary>
     void LoadCurrentStage(int restored = -1)
     {
         Run.StageStartSlots = Run.Loadout.Snapshot();
+        if (BackupFx.Enabled && _backup != null) _backup.Arm(Run.Current); // ステージに入ったら右下にバックアップの札（2026-11-20）
         StartCoroutine(Transition(Run.Current.App.StageScene, true, restored));
     }
 
-    /// <summary>シーンを切り替える。desktop なら、暗転の間に感染したデスクトップの画面を出し、終わるのを待ってから読み込む</summary>
-    IEnumerator Transition(string sceneName, bool desktop = false, int restored = -1)
+    /// <summary>シーンを切り替える。desktop なら、暗転の間に感染したデスクトップの画面を出し、終わるのを待ってから読み込む。
+    /// fx：1＝復元・2＝タイトルへ の演出（BackupFx。2026-11-20）。呼んだフレームから真っ黒の上に見せ、最初の暗くする 0.4 秒は飛ばす</summary>
+    IEnumerator Transition(string sceneName, bool desktop = false, int restored = -1, int fx = 0)
     {
         IsTransitioning = true;
+        if (_backup != null) _backup.StopPill();
+        if (fx != 0 && BackupFx.Enabled && _backup != null)
+        {
+            Time.timeScale = 0f; // 後ろのステージは止めたまま
+            if (fx == 1) _backup.BeginRestore(Run?.Current);
+            else _backup.BeginQuit();
+            while (!_backup.IsDone) yield return null;
+            for (float t = 0f; t < _fadeTime; t += Time.unscaledDeltaTime)
+            {
+                _fade = t / _fadeTime;
+                yield return null;
+            }
+            _fade = 1f;
+            _backup.Hide();
+        }
         Time.timeScale = 1f; // レベルアップの選択などで止めていても、戻してから切り替える
-        for (float t = 0f; t < _fadeTime; t += Time.unscaledDeltaTime)
+        for (float t = _fade * _fadeTime; t < _fadeTime; t += Time.unscaledDeltaTime)
         {
             _fade = t / _fadeTime;
             yield return null;
@@ -437,6 +458,7 @@ public class GameSession : MonoBehaviour
             yield break;
         }
         while (!op.isDone) yield return null;
+        if (BackupFx.Enabled && _backup != null) _backup.ShowPillIfArmed(); // 控えを取ったばかりなら、明るくなり始めた所から札を出す
 
         for (float t = 0f; t < _fadeTime; t += Time.unscaledDeltaTime)
         {
