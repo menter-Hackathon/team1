@@ -103,6 +103,12 @@ public static class AppBackgrounds
     /// <summary>ステージの始めに呼ぶ（StageDirector）：そのステージの背景を決めて、Current に入れる（無ければ null を入れる）</summary>
     public static Sprite ForStage(StagePlan plan)
     {
+        // ウィンドウのステージ（2026-11-20）：後ろは Mac のデスクトップの壁紙（明るくした物）。無ければ今までどおり
+        if (WindowStage.Wants(plan))
+        {
+            Sprite w = WindowStage.Wallpaper();
+            if (w != null) { Current = w; CurrentLabel = LabelFor(plan); return w; }
+        }
         Current = Find(plan);
         CurrentLabel = Current != null ? LabelFor(plan) : null;
         return Current;

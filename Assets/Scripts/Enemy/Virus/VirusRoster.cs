@@ -18,6 +18,10 @@ public static class VirusRoster
     public const float W2Chance = 0.2f;
     public const int MaxWorms = 3;
     public const int MaxRootkits = 2;
+    // ウィンドウのステージ（2026-11-20。docs/window-stage-and-pickup-design.md 1-7）：W1 をワームにして 45%、W2 は表のまま 15%（スス玉 40%）。ワームは同時 4 体まで
+    public const float WindowWormChance = 0.45f;
+    public const float WindowW2Chance = 0.15f;
+    public const int WindowMaxWorms = 4;
 
     /// <summary>
     /// 【確認用】種類の名前を入れると、歩く枠すべてと、その種類の枠で、表を見ずにかならずその種類にする（出せるときだけ。ワーム・ルートキットの上限は守る）。
@@ -139,7 +143,9 @@ public static class VirusRoster
             {
                 // 1 回だけふる（出せない種類のときは、ふり直さずにスス玉。スス玉は半分より減らない）
                 float r = UnityEngine.Random.value;
-                string t = r < W1Chance ? row.W1 : r < W1Chance + W2Chance ? row.W2 : null;
+                string t = WindowStage.Active
+                    ? (r < WindowWormChance ? "Worm" : r < WindowWormChance + WindowW2Chance ? row.W2 : null)
+                    : (r < W1Chance ? row.W1 : r < W1Chance + W2Chance ? row.W2 : null);
                 if (string.IsNullOrEmpty(t) || Capped(spawner, t)) return null;
                 return t;
             }
@@ -152,10 +158,10 @@ public static class VirusRoster
         return null;
     }
 
-    /// <summary>同時にいられる数をこえるか（ワーム 3 体・ルートキット 2 体）</summary>
+    /// <summary>同時にいられる数をこえるか（ワーム 3 体＝ウィンドウのステージは 4 体・ルートキット 2 体）</summary>
     static bool Capped(ZakoSpawner spawner, string type)
     {
-        if (type == "Worm") return VirusArt.AliveOf(spawner, "Worm") >= MaxWorms;
+        if (type == "Worm") return VirusArt.AliveOf(spawner, "Worm") >= (WindowStage.Active ? WindowMaxWorms : MaxWorms);
         if (type == "Rootkit") return VirusArt.AliveOf(spawner, "Rootkit") >= MaxRootkits;
         return false;
     }

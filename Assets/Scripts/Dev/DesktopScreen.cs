@@ -15,6 +15,8 @@ using UnityEngine.InputSystem;
 ///   Dock は角の丸い板と区切りとゴミ箱、メニューバーは Finder のメニューと日付。Mac の部品は担当1 の MacUi.Gui で描く
 /// 文字の説明は出さない（使用時間などの数字も出さない）。自動で進み、Z・Enter・Space・クリックで早送りできる。
 /// 時間はすべて unscaledTime（前のステージは止めてある）。GameSession が自分に付ける。
+/// ・2026-11-20（docs/window-stage-and-pickup-design.md 2-4）：ManualClick（既定 true）のときは、次のアプリを自分でクリックして入る。
+///   元に戻る所を見せた後、次のアプリが跳ねて待つ（マウスが乗ると大きくなる）。Z・Enter・Space・ゲームパッドの下のボタンなら、今までの矢印が動いてクリックする
 /// </summary>
 public class DesktopScreen : MonoBehaviour
 {
@@ -26,6 +28,14 @@ public class DesktopScreen : MonoBehaviour
     const float InputGuard = 0.4f;  // 出た瞬間の押しっぱなしで早送りしない
     const float FinalDelay = 0.45f; // 前のアプリが元に戻ってから、ラスボスが Dock に現れるまで
     const float FinalGlitch = 0.35f; // ラスボスが現れるときに乱れている時間
+    const float WaitBounceEvery = 1.6f; // 待ち：次のアプリが跳ねる間隔（2回ずつ）
+    const float WaitBounceTime = 0.28f; // 待ち：1回の跳ねの時間
+    const float WaitBounceHeight = 6f;  // 待ち：跳ねる高さ（ドット）
+    const float HitPad = 6f;            // クリックできる範囲：元のアイコンの四角を広げる幅
+    const float HoverIcon = 38f;        // マウスが乗ったときのアイコンの大きさ（Dock の拡大。元は 32）
+
+    /// <summary>true＝次のアプリを自分でクリックして入る（2-4）。false＝今までどおり自動で進む</summary>
+    public static bool ManualClick = true;
 
     static readonly Color FolderBody = new Color32(0x7c, 0xb7, 0xe8, 0xff);
     static readonly Color FolderTab = new Color32(0x5a, 0x95, 0xcc, 0xff);
@@ -41,8 +51,16 @@ public class DesktopScreen : MonoBehaviour
     float _openAt = -1f; // ウィンドウが開き始めた時刻（-1＝まだ）
     bool _visible;
     Sprite _targetBg;    // 次に入るアプリの画面の背景の絵（AppBackgrounds。無ければ null）。描くたびに探さないよう、出すときに1回だけ
+    float _clickAt = -1f;  // クリックした時刻（T。-1＝まだ）
+    float _autoFrom = -1f; // Z などで矢印が動き始めた時刻（T。-1＝矢印なし）
+    Rect _targetHome;      // 次のアプリのアイコンの元の位置（GUI の座標。DrawDock が毎回入れる。幅 0＝まだ無い）
+    bool _cursorShown;     // 待ちの始めに本物のマウスの矢印を出したか
 
     public bool IsVisible => _visible;
+    /// <summary>次のアプリのクリックを待っている（ManualClick のとき。自動では進まない）</summary>
+    public bool IsWaitingForClick => _visible && !IsDone && ManualClick && _target >= 0 && _openAt < 0f && _clickAt < 0f && T >= TargetStart;
+    /// <summary>次のアプリをクリックしたことにする（確認用・ゲームパッド用の口）。待っていなければ何もしない</summary>
+    public void ClickTarget() { if (IsWaitingForClick) _clickAt = T; }
     /// <summary>見せ終わった（GameSession が次のシーンを読み込む）</summary>
     public bool IsDone { get; private set; }
 
@@ -55,6 +73,10 @@ public class DesktopScreen : MonoBehaviour
         _targetBg = _target >= 0 ? AppBackgrounds.Find(run.Current) : null;
         _shownAt = Time.unscaledTime;
         _openAt = -1f;
+        _clickAt = -1f;
+        _autoFrom = -1f;
+        _targetHome = default;
+        _cursorShown = false;
         IsDone = false;
         _visible = true;
         MacDesktopWallpaper.Ensure(this,()=>_visible&&_run!=null);
@@ -70,7 +92,7 @@ public class DesktopScreen : MonoBehaviour
         float t = T;
         if (_restored >= 0 && t >= RestoreAt) SoundOnce(1, "desktop_cure");
         if (TargetIsFinal && t >= FinalAppearAt) SoundOnce(2, "desktop_glitch");
-        if (_target >= 0 && _openAt < 0f && t >= TargetStart + CursorTime) SoundOnce(4, "desktop_click");
+        if (_target >= 0 && _openAt < 0f && t >= ClickAt) SoundOnce(4, "desktop_click");
         if (_openAt >= 0f) SoundOnce(8, "desktop_open");
     }
 
@@ -95,6 +117,8 @@ public class DesktopScreen : MonoBehaviour
     float FinalAppearAt => (_restored >= 0 ? RestoreAt : 0f) + FinalDelay;
     // 次のアプリへ向かい始める時刻（元に戻る所を見せてから。ラスボスなら、現れてから）
     float TargetStart => TargetIsFinal ? FinalAppearAt + FinalGlitch + 0.4f : _restored >= 0 ? RestoreAt + 0.5f : 0.3f;
+    // 次のアプリがクリックされる時刻（自動なら矢印が着いた時。自分でクリックするときは、クリックするまで来ない）
+    float ClickAt => !ManualClick ? TargetStart + CursorTime : _clickAt >= 0f ? _clickAt : float.PositiveInfinity;
 
     // Dock に出すか：ラスボスは、次がラスボスになって現れる時刻を過ぎてから（倒した後はずっと出す）
     bool IsShown(int stage, float t)
@@ -109,7 +133,7 @@ public class DesktopScreen : MonoBehaviour
         if (!_visible || IsDone) return;
         if (_openAt < 0f)
         {
-            if (_target >= 0 && T >= TargetStart + CursorTime + BounceTime) _openAt = Time.unscaledTime;
+            if (_target >= 0 && T >= ClickAt + BounceTime) _openAt = Time.unscaledTime;
             else if (_target < 0 && T >= (_restored >= 0 ? RestoreAt : 0f) + FinalHold) IsDone = true;
         }
         else if (Time.unscaledTime - _openAt >= OpenTime)
@@ -117,9 +141,67 @@ public class DesktopScreen : MonoBehaviour
             IsDone = true;
         }
 
-        if (T >= InputGuard && Pressed()) Skip();
+        if (IsWaitingForClick && !_cursorShown)
+        {
+            MousePointer.ShowCursor(); // 待ちの始めに、本物のマウスの矢印を出す（3-15）
+            _cursorShown = true;
+        }
+        if (ManualClick)
+        {
+            if (T >= InputGuard) OnPress();
+        }
+        else if (T >= InputGuard && Pressed()) Skip();
         PlaySounds();
     }
+
+    // 自分でクリックするとき（2-4）：元に戻る所までは早送りだけ。待ちに入ったら、次のアプリのクリック、または Z などで矢印を動かす
+    void OnPress()
+    {
+        bool key = KeyPressed();
+        var mouse = Mouse.current;
+        bool click = mouse != null && mouse.leftButton.wasPressedThisFrame;
+        if (!key && !click) return;
+        if (_target < 0) { Skip(); return; } // 最後のクリアの後は今までどおり
+        if (_openAt >= 0f || _clickAt >= 0f) return;
+        if (T < TargetStart)
+        {
+            if (_restored >= 0 && T < RestoreAt) _shownAt = Time.unscaledTime - RestoreAt;
+            return;
+        }
+        if (key)
+        {
+            _autoFrom = T;
+            _clickAt = T + CursorTime;
+        }
+        else if (MouseOnTarget())
+        {
+            _clickAt = T;
+            MousePointer.Consume();
+        }
+    }
+
+    // キーボード（Z・Enter・Space）とゲームパッドの下のボタン
+    static bool KeyPressed()
+    {
+        var kb = Keyboard.current;
+        if (kb != null && (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame)) return true;
+        var pad = Gamepad.current;
+        return pad != null && pad.buttonSouth.wasPressedThisFrame;
+    }
+
+    // マウスの位置（GUI の座標）。PixelGui.Begin は原点のまま Scale 倍するだけなので、画面のドットを Scale で割り、上下を返す
+    static bool TryMouseGui(out Vector2 p)
+    {
+        p = default;
+        var mouse = Mouse.current;
+        if (mouse == null) return false;
+        Vector2 s = mouse.position.ReadValue();
+        p = new Vector2(s.x / PixelGui.Scale, (Screen.height - s.y) / PixelGui.Scale);
+        return true;
+    }
+
+    // マウスが次のアプリのアイコン（元の位置の四角を HitPad 広げた範囲）の上にあるか
+    bool MouseOnTarget() => _targetHome.width > 0f && TryMouseGui(out Vector2 p) && PixelGui.Inset(_targetHome, -HitPad).Contains(p);
 
     static bool Pressed()
     {
@@ -164,7 +246,7 @@ public class DesktopScreen : MonoBehaviour
         DrawFolders(W, infected);
         DrawMenuBar(W, infected);
         Rect target = DrawDock(W, H, t, out Rect targetHome);
-        if (_target >= 0 && _openAt < 0f) DrawCursor(W, H, t, targetHome);
+        if (_target >= 0 && _openAt < 0f && (!ManualClick || _autoFrom >= 0f)) DrawCursor(W, H, t, targetHome);
         if (_openAt >= 0f) DrawOpening(target, W, H);
         PixelGui.End();
     }
@@ -234,7 +316,8 @@ public class DesktopScreen : MonoBehaviour
 
         Rect target = new Rect(W * 0.5f - 16f, H * 0.5f - 16f, 32f, 32f);
         targetHome = target;
-        float clickAt = TargetStart + CursorTime;
+        float clickAt = ClickAt;
+        _targetHome = default;
         for (int i = 0; i < apps.Count; i++)
         {
             DockApp app = apps[i];
@@ -246,6 +329,14 @@ public class DesktopScreen : MonoBehaviour
                 // クリックされて跳ねる（Mac の Dock のように）
                 float b = (t - clickAt) * 9f;
                 r.y -= Mathf.Round(Mathf.Abs(Mathf.Sin(b)) * 10f);
+            }
+            if (isTarget) _targetHome = home;
+            if (isTarget && IsWaitingForClick)
+            {
+                // 待ち（2-4）：マウスが乗ると大きくなり（Dock の拡大。下をそろえる）、1.6秒ごとに 2回 小さく跳ねる（「見てほしい」の跳ね方）
+                if (MouseOnTarget()) r = new Rect(home.center.x - HoverIcon * 0.5f, home.yMax - HoverIcon, HoverIcon, HoverIcon);
+                float ph = (t - TargetStart) % WaitBounceEvery;
+                if (ph < WaitBounceTime * 2f) r.y -= Mathf.Round(Mathf.Abs(Mathf.Sin(ph / WaitBounceTime * Mathf.PI)) * WaitBounceHeight);
             }
             if (isTarget)
             {
@@ -345,12 +436,12 @@ public class DesktopScreen : MonoBehaviour
     // 画面の真ん中から、次に入るアプリへ矢印が動き、クリックする（押した瞬間は少し沈む）
     void DrawCursor(float W, float H, float t, Rect targetHome)
     {
-        float p = Mathf.Clamp01((t - TargetStart) / CursorTime);
+        float p = Mathf.Clamp01((t - (ManualClick ? _autoFrom : TargetStart)) / CursorTime);
         p = p * p * (3f - 2f * p);
         var from = new Vector2(W * 0.5f, H * 0.42f);
         var to = new Vector2(targetHome.center.x + 4f, targetHome.center.y + 2f);
         Vector2 pos = Vector2.Lerp(from, to, p);
-        float sinceClick = t - (TargetStart + CursorTime);
+        float sinceClick = t - ClickAt;
         if (sinceClick >= 0f && sinceClick < 0.12f) pos.y += 1f;
         // Mac の矢印（黒い矢印に白いふち。1-5）
         MacUi.Gui.Arrow(new Vector2(Mathf.Round(pos.x), Mathf.Round(pos.y)));
