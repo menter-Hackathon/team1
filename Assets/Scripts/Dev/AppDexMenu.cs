@@ -39,11 +39,18 @@ public class AppDexMenu : MonoBehaviour
     public bool ShowButton { get => _showButton; set => _showButton = value; }
     /// <summary>詳しい画面を開いているか</summary>
     public bool IsDetailOpen => IsOpen && _detail >= 0;
+    /// <summary>図鑑から戦える（タイトルだけ。2026-11-20 AppDexBattle）。倒していない（灰色の）アプリも詳しい画面を開ける</summary>
+    public bool AllowFight { get; set; }
+    int _openedFrame = -1; // 開いたフレーム（開いたときの決定のキーで、詳しい画面まで開かないように）
+
+    bool CanView(AppDexEntry e) => e != null && (e.IsDefeated || AllowFight);
+    bool CanFightNow(AppDexEntry e) => AllowFight && AppDexBattle.CanFight(GameSession.Instance, e);
 
     public void Open()
     {
         if(_window.IsMinimized) { _window.Open(); return; }
-        _entries = AppDex.Entries.ToList();
+        _entries = AppDexBattle.WithRoster(AppDex.Entries, GameSession.Instance); // 戦えるアプリで、まだ載っていない物も灰色で並べる（記録には書かない。2026-11-20）
+        _openedFrame = Time.frameCount;
         AppVisuals.Prepare(_entries.Select(e => e.Row)); // アイコンをまとめて読む（まだのアプリだけ）
         ApplyFilter();
         _detail = -1;
@@ -86,24 +93,30 @@ public class AppDexMenu : MonoBehaviour
 
     void Update()
     {
+        ReopenAfterFight();
         var kb = Keyboard.current;
         if (!IsOpen || kb == null) return;
+        if (GameSession.Instance != null && GameSession.Instance.IsTransitioning) return; // 戦いに行く途中は触れない
         if(MacDesktopGui.WindowShortcuts(_window))
         {
             if(!IsOpen) { _searchFocused=false; _clearFocus=true; _dismissedFrame=Time.frameCount; if(!_window.IsMinimized) OnClosed(); }
             return;
         }
         // 詳しい画面（クイックルック）を開いている間：←→ で前／次、スペース・Esc・X で一覧に戻る
+        // 2026-11-20：Z・Enter・A・START で戦う。コントローラーの十字キー・B も
         if(_detail>=0)
         {
-            if(kb.escapeKey.wasPressedThisFrame||kb.spaceKey.wasPressedThisFrame||kb.xKey.wasPressedThisFrame||kb.backspaceKey.wasPressedThisFrame) { CloseDetail(); return; }
-            if(kb.leftArrowKey.wasPressedThisFrame||kb.aKey.wasPressedThisFrame) StepDetail(-1);
-            if(kb.rightArrowKey.wasPressedThisFrame||kb.dKey.wasPressedThisFrame) StepDetail(1);
+            if(kb.escapeKey.wasPressedThisFrame||kb.spaceKey.wasPressedThisFrame||kb.xKey.wasPressedThisFrame||kb.backspaceKey.wasPressedThisFrame||MenuInput.Back) { CloseDetail(); return; }
+            if(MenuInput.Confirm(false)) { TryFight(); return; }
+            if(MenuInput.Left) StepDetail(-1);
+            if(MenuInput.Right) StepDetail(1);
             return;
         }
         // 閉じる：Esc、検索欄の外なら X／Backspace、コントローラーの B／SELECT（2026-11-20）
         if(kb.escapeKey.wasPressedThisFrame||(!_searchFocused&&(kb.xKey.wasPressedThisFrame||MenuInput.Back))) { Close(); return; }
         if(_searchFocused) return;
+        // 決定（Z・Enter・Space・A・START）で詳しい画面を開く（2026-11-20：マージで消えていたのを戻す）
+        if(_visible.Count>0&&Time.frameCount!=_openedFrame&&MenuInput.Confirm()) { TryOpenDetail(_selected); return; }
         // 絞り込み（すべて・正常化済・未正常化）を Q／E、コントローラーの L／R で切り替える（端から端へ回る）。2026-11-20
         int tab = (MenuInput.NextTab ? 1 : 0) - (MenuInput.PrevTab ? 1 : 0);
         if (tab != 0)
@@ -254,7 +267,12 @@ public class AppDexMenu : MonoBehaviour
             PixelGui.TextFit(new Rect(sx+22,detail.y+27,detail.xMax-sx-28,18),string.IsNullOrEmpty(s.skill)?"-":s.skill,16,MacDesktopGui.Ink);
         }
         else PixelGui.Text(new Rect(sx,detail.y+27,detail.xMax-sx-6,18),"？？？",16,MacDesktopGui.Muted);
-        if(s.IsDefeated&&_detail<0) PixelGui.TextEn(new Rect(detail.xMax-74,detail.yMax-14,70,9),"SPACE ▶",8,MacDesktopGui.Blue,TextAnchor.MiddleRight);
+        if(CanView(s)&&_detail<0)
+        {
+            Rect hint=new Rect(detail.xMax-74,detail.yMax-14,70,9);
+            PixelGui.TextEn(hint,"SPACE ▶",8,MacDesktopGui.Blue,TextAnchor.MiddleRight);
+            if(GUI.Button(new Rect(hint.x,hint.y-4,hint.width+4,hint.height+8),GUIContent.none,GUIStyle.none)) TryOpenDetail(_selected); // マウスでも開ける（2026-11-20）
+        }
         if(_detail>=0) DrawQuickLook(win);
     }
 
@@ -263,9 +281,32 @@ public class AppDexMenu : MonoBehaviour
     void TryOpenDetail(int index)
     {
         if(index<0||index>=_visible.Count) return;
-        if(!_visible[index].IsDefeated) { GameAudio.Event("ui_cancel"); return; } // まだ正常化していないアプリは開かない
+        if(!CanView(_visible[index])) { GameAudio.Event("ui_cancel"); return; } // まだ正常化していないアプリは開かない（図鑑から戦えるタイトルでは開く）
         _detail=index; _selected=index;
         GameAudio.Event("ui_decide");
+    }
+
+    // 詳しい画面のアプリのボスと戦いに行く（2026-11-20。図鑑・実績には書かない練習のラン）
+    void TryFight()
+    {
+        if(_detail<0||_detail>=_visible.Count) return;
+        AppDexEntry s=_visible[_detail];
+        if(!CanFightNow(s)||!AppDexBattle.Fight(GameSession.Instance,s)) { GameAudio.Event("ui_cancel"); return; }
+        GameAudio.Event("ui_start");
+    }
+
+    // 図鑑から戦ってタイトルに戻ってきたら、そのアプリの詳しい画面で開き直す（2026-11-20）
+    void ReopenAfterFight()
+    {
+        if(!AllowFight||IsOpen||!AppDexBattle.HasReturn||RunTitleMenu.IsBootPlaying) return;
+        GameSession session=GameSession.Instance;
+        if(session==null||session.IsTransitioning||session.Run!=null) return;
+        string key=AppDexBattle.TakeReturnKey();
+        Open();
+        int i=_visible.FindIndex(e=>e.key==key);
+        if(i<0) return;
+        _selected=i; _revealSelection=true;
+        if(CanView(_visible[i])) _detail=i;
     }
 
     void CloseDetail()
@@ -279,7 +320,7 @@ public class AppDexMenu : MonoBehaviour
     {
         for(int i=_detail+dir;i>=0&&i<_visible.Count;i+=dir)
         {
-            if(!_visible[i].IsDefeated) continue;
+            if(!CanView(_visible[i])) continue;
             _detail=i; _selected=i; _revealSelection=true;
             GameAudio.Event("ui_move");
             return;
@@ -296,16 +337,19 @@ public class AppDexMenu : MonoBehaviour
         Rect q=new Rect(Mathf.Round(dexWindow.center.x-qw*0.5f),Mathf.Round(dexWindow.center.y-qh*0.5f+6f),qw,qh);
         Rect inner=MacDesktopGui.Window(q,s.name,out var action);
         if(action!=MacDesktopGui.WindowAction.None) { CloseDetail(); return; }
+        bool known=s.IsDefeated; // 倒していないアプリ（2026-11-20）：ボスは影、技・能力は ？
+        // 右下：戦う（2026-11-20。タイトルの図鑑だけ）
+        if(CanFightNow(s)&&MacDesktopGui.Button(new Rect(inner.xMax-72f,inner.yMax-22f,72f,22f),"戦う",true)) { TryFight(); return; }
 
         // 左：ボスの姿
         float pw=Mathf.Min(200f,inner.width*0.42f),ph=inner.height-24f;
         BossPortrait portrait=BossPortrait.For(s);
-        portrait.Draw(new Rect(inner.x,inner.y,pw,ph));
+        portrait.Draw(new Rect(inner.x,inner.y,pw,ph),!known);
         // 前／次（正常化したアプリの中の何番目か）
         int count=0,pos=0;
         for(int i=0;i<_visible.Count;i++)
         {
-            if(!_visible[i].IsDefeated) continue;
+            if(!CanView(_visible[i])) continue;
             if(i==_detail) pos=count;
             count++;
         }
@@ -317,17 +361,24 @@ public class AppDexMenu : MonoBehaviour
         float rx=inner.x+pw+12f,rw=inner.xMax-rx,y=inner.y;
         PixelGui.DrawSprite(new Rect(rx,y,24f,24f),IconOf(s,24));
         PixelGui.TextFit(new Rect(rx+30f,y+1f,rw-30f,18f),s.name,16,MacDesktopGui.Ink);
-        Rect badge=new Rect(rx+30f,y+20f,24f,12f);
-        MacDesktopGui.Rounded(badge,MacDesktopGui.Blue,3);
-        PixelGui.TextEn(new Rect(badge.x,badge.y+2f,badge.width,8f),$"x{Mathf.Min(99,s.defeats)}",8,Color.white,TextAnchor.MiddleCenter);
-        PixelGui.Text(new Rect(badge.xMax+6f,y+17f,80f,14f),ShortDate(s.firstDefeated),12,MacDesktopGui.Muted);
+        if(known)
+        {
+            Rect badge=new Rect(rx+30f,y+20f,24f,12f);
+            MacDesktopGui.Rounded(badge,MacDesktopGui.Blue,3);
+            PixelGui.TextEn(new Rect(badge.x,badge.y+2f,badge.width,8f),$"x{Mathf.Min(99,s.defeats)}",8,Color.white,TextAnchor.MiddleCenter);
+            PixelGui.Text(new Rect(badge.xMax+6f,y+17f,80f,14f),ShortDate(s.firstDefeated),12,MacDesktopGui.Muted);
+        }
 
         y+=40f;
         PixelGui.Fill(new Rect(rx,y,rw,1f),MacDesktopGui.BorderColor);
         PixelGui.Text(new Rect(rx,y+4f,rw,14f),"ボスの技",12,MacDesktopGui.Blue);
         float cw=Mathf.Floor((rw-4f)*0.5f);
         for(int k=0;k<portrait.Moves.Count&&k<4;k++)
-            portrait.DrawMove(new Rect(rx+(k%2)*(cw+4f),y+22f+(k/2)*24f,cw,20f),portrait.Moves[k]);
+        {
+            Rect card=new Rect(rx+(k%2)*(cw+4f),y+22f+(k/2)*24f,cw,20f);
+            if(known) portrait.DrawMove(card,portrait.Moves[k]);
+            else portrait.DrawUnknownMove(card);
+        }
 
         y+=74f;
         PixelGui.Fill(new Rect(rx,y,rw,1f),MacDesktopGui.BorderColor);
@@ -336,6 +387,7 @@ public class AppDexMenu : MonoBehaviour
         MacDesktopGui.Card(slot,false);
         bool hasSkill=!string.IsNullOrEmpty(s.skill);
         PixelGui.DrawSprite(PixelGui.Inset(slot,4f),hasSkill?SkillIconOf(s):IconOf(s,16));
+        if(!known) PixelGui.Text(new Rect(rx+40f,y+24f,rw-40f,18f),"？？？",16,MacDesktopGui.Muted);
         if(!hasSkill) return;
         SkillDefinition def=SkillDefOf(s);
         PixelGui.TextFit(new Rect(rx+40f,y+24f,rw-40f,18f),s.skill,16,MacDesktopGui.Ink);

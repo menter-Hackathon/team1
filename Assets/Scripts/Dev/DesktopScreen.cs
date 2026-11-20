@@ -87,7 +87,8 @@ public class DesktopScreen : MonoBehaviour
     }
 
     // 2026-11-20：最後のクリアの後の絵を DesktopCure に任せるか（docs/infection-panic-and-cure-design.md 7-3）
-    bool CureActive => DesktopCure.Enabled && _target < 0 && _restored >= 0;
+    // 図鑑から戦った練習のラン（AppDexBattle）では出さない（1体倒しただけで、デスクトップ全部が治ったことにならないように）
+    bool CureActive => DesktopCure.Enabled && _target < 0 && _restored >= 0 && !AppDexBattle.IsPractice;
 
     int _sounded; // 鳴らした音（ビット）。早送りで時刻が飛んでも、1回ずつ鳴らす
 

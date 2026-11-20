@@ -63,6 +63,7 @@ public class RunTitleMenu : MonoBehaviour
         if (_dex == null) _dex = gameObject.AddComponent<AppDexMenu>();
         _dex.ShowButton = false;
         _dex.HandleMinimizedExternally = true;
+        _dex.AllowFight = true; // 図鑑から戦える（2026-11-20。AppDexBattle。左下の確認用の板はやめた）
         _achievements = FindObjectOfType<Team1.Achievements.AchievementListWindow>();
         if (_achievements == null) _achievements = gameObject.AddComponent<Team1.Achievements.AchievementListWindow>();
         if(Session.Catalog!=null) foreach(var app in Session.Catalog.Apps)

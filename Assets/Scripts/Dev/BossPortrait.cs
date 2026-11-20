@@ -166,8 +166,11 @@ public class BossPortrait
     const float Unit = 18f * Px;   // 1マス＝18 ドット
     const float FloorH = 24f;
 
-    /// <summary>ボスの枠（縁 2・テーマの空を暗くした地・下に床の帯）と、ボスの姿（2倍。足を床の帯に合わせる）</summary>
-    public void Draw(Rect frame)
+    /// <summary>影の色（倒していないボス。2026-11-20）。真っ黒（IMGUI の色は Linear の色空間で明るめに出るので、0 にして確実に黒）</summary>
+    static readonly Color Shadow = new Color(0f, 0f, 0f, 1f);
+
+    /// <summary>ボスの枠（縁 2・テーマの空を暗くした地・下に床の帯）と、ボスの姿（2倍。足を床の帯に合わせる）。silhouette：姿を影だけにする（倒していないボス）</summary>
+    public void Draw(Rect frame, bool silhouette = false)
     {
         PixelGui.Fill(frame, PixelGui.Frame);
         Rect inner = PixelGui.Inset(frame, 2f);
@@ -184,7 +187,9 @@ public class BossPortrait
             if (Icon24 != null)
             {
                 float s = 96f;
-                PixelGui.DrawSprite(new Rect(Mathf.Round(inner.center.x - s * 0.5f), Mathf.Round(floorTop - s - 8f), s, s), Icon24);
+                var r = new Rect(Mathf.Round(inner.center.x - s * 0.5f), Mathf.Round(floorTop - s - 8f), s, s);
+                if (silhouette) PixelGui.DrawSprite(r, Icon24, Shadow);
+                else PixelGui.DrawSprite(r, Icon24);
             }
             return;
         }
@@ -214,10 +219,10 @@ public class BossPortrait
         float bob = Mathf.Repeat(t, 2f) < 1f ? 0f : -Px; // 全体を上下に 1ドット（2秒の周期）
         var anchor = new Vector2(Mathf.Round(inner.center.x - (minX + maxX) * 0.5f), Mathf.Round(floorTop - maxBottom + bob));
         // 重ねる順（後ろから）：体 → ウィンドウ → 手 → 顔
-        DrawPart(anchor, body, _bodyPos);
-        DrawPart(anchor, _window, _windowPos);
-        DrawPart(anchor, _hands, _handsPos);
-        DrawPart(anchor, face, _facePos);
+        DrawPart(anchor, body, _bodyPos, silhouette);
+        DrawPart(anchor, _window, _windowPos, silhouette);
+        DrawPart(anchor, _hands, _handsPos, silhouette);
+        DrawPart(anchor, face, _facePos, silhouette);
     }
 
     static Sprite Frame(Sprite[] frames, int index) => frames != null && frames.Length > 0 ? frames[Mathf.Abs(index) % frames.Length] : null;
@@ -232,11 +237,13 @@ public class BossPortrait
         return new Rect(x, y, r.width * Px, r.height * Px);
     }
 
-    static void DrawPart(Vector2 anchor, Sprite sp, Vector2 pos)
+    static void DrawPart(Vector2 anchor, Sprite sp, Vector2 pos, bool silhouette)
     {
         if (sp == null) return;
         Rect r = OffsetRect(sp, pos);
-        PixelGui.DrawSprite(new Rect(Mathf.Round(anchor.x + r.x), Mathf.Round(anchor.y + r.y), r.width, r.height), sp);
+        var at = new Rect(Mathf.Round(anchor.x + r.x), Mathf.Round(anchor.y + r.y), r.width, r.height);
+        if (silhouette) PixelGui.DrawSprite(at, sp, Shadow);
+        else PixelGui.DrawSprite(at, sp);
     }
 
     /// <summary>技の札（高さ 22）：左に技の絵（枠 20。無ければアプリのアイコン）、右に名前（英字 8）。第2形態だけの技は縁がマゼンタ</summary>
@@ -250,6 +257,16 @@ public class BossPortrait
         GUIStyle en = PixelGui.Style(true, 8);
         float w = r.xMax - (box.xMax + 4f) - 3f;
         PixelGui.TextEn(new Rect(box.xMax + 4f, r.y + 7f, w, 10f), PixelGui.Fit(m.Name, en, w), 8, PixelGui.Ink);
+    }
+
+    /// <summary>まだ分からない技の札（倒していないボス。2026-11-20）：DrawMove と同じ形で、絵の所は空、名前は ???</summary>
+    public void DrawUnknownMove(Rect r)
+    {
+        PixelGui.Fill(r, PixelGui.FrameDark);
+        PixelGui.Fill(PixelGui.Inset(r, 1f), PixelGui.White);
+        var box = new Rect(r.x + 1f, r.y + 1f, 20f, 20f);
+        PixelGui.Fill(box, PixelGui.SlotBg);
+        PixelGui.TextEn(new Rect(box.xMax + 4f, r.y + 7f, r.xMax - (box.xMax + 4f) - 3f, 10f), "???", 8, MacDesktopGui.Muted);
     }
 
     // 縦横の比を保って、四角の中に収めて描く（細長い技の絵がつぶれないように）

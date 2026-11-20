@@ -42,7 +42,8 @@ public static class AppDex
     static Data _data;
 
     /// <summary>
-    /// 【確認用】true の間は、図鑑に何も書かない（2026-11-18：遊ぶボスを選ぶ確認用のラン。本物の app_dex.json を変えないため）
+    /// true の間は、図鑑に何も書かない（2026-11-18：遊ぶボスを選ぶ確認用のラン → 2026-11-20：図鑑から戦う練習のラン（AppDexBattle）。本物の app_dex.json を変えないため）。
+    /// 実績（AchievementService）も、この間は数えない。タイトルに戻ると false に戻る
     /// </summary>
     public static bool Suspended { get; set; }
 
