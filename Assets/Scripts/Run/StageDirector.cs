@@ -126,19 +126,12 @@ public class StageDirector : MonoBehaviour
     {
         if (_ending) return;
         _ending = true;
-        StartCoroutine(ShowRewardThenComplete(reward));
+        StartCoroutine(CompleteAfterDelay(reward));
     }
 
-    IEnumerator ShowRewardThenComplete(SkillDefinition reward)
+    IEnumerator CompleteAfterDelay(SkillDefinition reward)
     {
         yield return new WaitForSeconds(_clearDelay);
-        if (reward != null)
-        {
-            var window = gameObject.AddComponent<SkillRewardWindow>();
-            window.Show(Plan, reward, _session.Run.Loadout);
-            while (window.IsOpen) yield return null;
-            Destroy(window);
-        }
         _session.CompleteStage(reward);
     }
 
