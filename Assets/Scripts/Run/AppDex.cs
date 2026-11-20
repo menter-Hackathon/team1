@@ -97,6 +97,77 @@ public static class AppDex
         return first;
     }
 
+    /// <summary>まとめる前の記録の控え（1回だけ書く）</summary>
+    static string BackupPath => Path.Combine(Application.persistentDataPath, "app_dex.before-merge.json");
+
+    /// <summary>
+    /// 同じアプリの記録を1つにまとめる（2026-11-20 まさぴ〜決定：「Excel」と「Microsoft Excel」、「Chrome」と「Google Chrome-ウェブ・・」、
+    /// 「Unity」と「Unity Hub」が別々に載っていたため）。identity：記録 → そのアプリの今の名前とバンドルID（ランが図鑑に書く名前と同じ決め方）。
+    /// ・倒した回数は足す。初めて載った日・初めて倒した日は早い方。能力は、もともと今の名前だった記録の物（空なら、ほかの記録の物）
+    /// ・何度呼んでも同じ（まとめる物が無ければ書かない）。まとめるときは、最初の1回だけ app_dex.before-merge.json に控えを残す
+    /// ・確認用のラン（Suspended）の間は何もしない。まとめた記録の数を返す
+    /// </summary>
+    public static int MergeDuplicates(Func<AppDexEntry, (string name, string bundleId)> identity)
+    {
+        if (Suspended || identity == null) return 0;
+        Data data = Load();
+        var result = new List<AppDexEntry>();
+        var fromOwnName = new HashSet<AppDexEntry>(); // もともと今の名前だった記録（その能力を優先する）
+        int merged = 0;
+        bool changed = false;
+        foreach (AppDexEntry e in data.entries)
+        {
+            if (e == null) { changed = true; continue; }
+            (string name, string bundleId) id;
+            try { id = identity(e); }
+            catch (Exception ex) { Debug.LogException(ex); id = (e.name, e.bundleId); }
+            if (string.IsNullOrWhiteSpace(id.name)) id = (e.name, e.bundleId);
+            string key = KeyOf(id.name);
+            bool own = e.key == key;
+            AppDexEntry target = result.FirstOrDefault(x => x.key == key);
+            if (target == null)
+            {
+                if (!own)
+                {
+                    e.key = key;
+                    e.name = id.name.Trim();
+                    if (!string.IsNullOrEmpty(id.bundleId)) e.bundleId = id.bundleId;
+                    changed = true;
+                }
+                if (own) fromOwnName.Add(e);
+                result.Add(e);
+                continue;
+            }
+            target.defeats += e.defeats;
+            target.firstSeen = Earlier(target.firstSeen, e.firstSeen);
+            target.firstDefeated = Earlier(target.firstDefeated, e.firstDefeated);
+            if (string.IsNullOrEmpty(target.bundleId)) target.bundleId = e.bundleId ?? "";
+            bool takeSkill = !string.IsNullOrEmpty(e.skill) && (string.IsNullOrEmpty(target.skill) || (own && !fromOwnName.Contains(target)));
+            if (takeSkill) target.skill = e.skill;
+            if (own) fromOwnName.Add(target);
+            merged++;
+            changed = true;
+        }
+        if (!changed) return 0;
+        try
+        {
+            if (merged > 0 && File.Exists(FilePath) && !File.Exists(BackupPath)) File.Copy(FilePath, BackupPath);
+        }
+        catch (Exception ex) { Debug.LogWarning($"図鑑の記録の控えを残せませんでした\n{ex.Message}"); }
+        data.entries = result;
+        Save();
+        if (merged > 0) Debug.Log($"図鑑：同じアプリの記録を {merged} 件まとめました（控え：{BackupPath}）");
+        return merged;
+    }
+
+    /// <summary>日付（yyyy-MM-dd）の早い方。空は無いものとする</summary>
+    static string Earlier(string a, string b)
+    {
+        if (string.IsNullOrEmpty(a)) return b ?? "";
+        if (string.IsNullOrEmpty(b)) return a;
+        return string.CompareOrdinal(a, b) <= 0 ? a : b;
+    }
+
     /// <summary>記録を消す（確認用）</summary>
     public static void Clear()
     {

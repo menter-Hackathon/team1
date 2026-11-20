@@ -68,6 +68,12 @@ public static class MacScreenTime
                     (app.ScreenTimeNames == null || !Array.Exists(app.ScreenTimeNames, alias => MatchesDisplayName(name, alias)))) continue;
                 string id = Array.Find(app.BundleIdPrefixes, prefix => !string.IsNullOrWhiteSpace(prefix));
                 if (id != null && seen.Add(app)) usages.Add(new AppUsage(id, app.DisplayName, row.seconds));
+                else if (id != null)
+                {
+                    // 2026-11-20：同じ対応アプリの2行目（「Unity」と「Unity Hub」・名前の揺れ）は、使用時間を足す
+                    int at = usages.FindIndex(u => u.Id == id);
+                    if (at >= 0) usages[at] = new AppUsage(id, app.DisplayName, usages[at].UsageSeconds + row.seconds);
+                }
                 matched = true;
                 break;
             }
@@ -78,8 +84,8 @@ public static class MacScreenTime
         return usages;
     }
 
-    static bool MatchesDisplayName(string name, string label) => !string.IsNullOrWhiteSpace(label) &&
-        (name.Equals(label, StringComparison.OrdinalIgnoreCase) || name.StartsWith(label + " -", StringComparison.OrdinalIgnoreCase));
+    // 2026-11-20：「-」の前に空白が無い形（「Google Chrome-ウェブ・・」）も当たる（AppCatalog.NameMatches）
+    static bool MatchesDisplayName(string name, string label) => AppCatalog.NameMatches(name, label);
 
     public static (int ExitCode, string Output, string Error) RunProjectTool(string project, string argument, string destination = null)
     {
