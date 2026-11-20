@@ -14,6 +14,9 @@ using K = GenericFrameKit;
 /// ・出来事③（PremiereRenderEvent）の間：書き出しのウィンドウ（進みのバー）、再生ヘッドが2倍の速さ（B）
 /// ・ボスの登場（PacePhase.Done）で、再生ヘッド・マーカー・書き出しのウィンドウを消す。見た目は残す
 /// 重ねる順番：飾りはどれも 8 以下（レーザーツールの黒い列 9 の下。キャラクター 11〜 より後ろ）
+/// 2026-11-20（docs/premiere-edit-screen-design.md）：編集画面全体の割り付け（PremiereEditScreen）が有効なときは、ルーラーを下の段（py 78）に下げ、
+///   上の段のプログラムモニター（PremiereMonitor）を作る。再生ヘッドの位置をモニターに渡し（Follow）、白い柱でモニターが白く飛ぶ（Flash）。
+///   マーカーの赤い点線・帯は床から部屋の上の端まで（上の段にいても見える）。書き出しのウィンドウは右上のパネルの上。ボスの登場でモニターはウイルスを映す
 /// </summary>
 public class PremiereTimelineStage : MonoBehaviour
 {
@@ -79,6 +82,7 @@ public class PremiereTimelineStage : MonoBehaviour
 
     Transform _export;
     MacProgress _exportBar;
+    PremiereMonitor _monitor;   // 2026-11-20：編集画面全体のときだけ（無ければ null）
     float _exportStart, _exportLen;
     bool _exporting;
 
@@ -101,7 +105,7 @@ public class PremiereTimelineStage : MonoBehaviour
         _arena = BattleArena.GetBounds();
         Rect view = ScreenUi.ViewRect();
         _view = view.width > 1f ? view : new Rect(_arena.xMin - 1f, _arena.yMin - 2f, _arena.width + 2f, _arena.height + 4f);
-        _rulerTop = _arena.yMax - PremiereArt.HudInset;
+        _rulerTop = PremiereEditScreen.RulerTop(_arena, PremiereArt.HudInset); // 2026-11-20：編集画面全体なら下の段のルーラー
         _rulerBottom = _rulerTop - RulerHeight;
         try { _strength = Mathf.Clamp(StagePaceTable.For(pacer.StageNumber, pacer.IsFinal).Strength, 1, 3); }
         catch (System.Exception) { _strength = 2; }
@@ -119,6 +123,9 @@ public class PremiereTimelineStage : MonoBehaviour
         if (!painted) BuildAudio();
         BuildHead();
         PrepareHazard();
+        try { _monitor = PremiereMonitor.Create(transform); } // 2026-11-20：割り付けが有効なときだけ作る
+        catch (System.Exception e) { Debug.LogException(e); _monitor = null; }
+        if (_monitor != null) BossEntrance.CustomAppear = PremiereBossCrawl.Run; // 2026-11-20（10章）：ボスはモニターから這い出す
         _headX = _arena.xMin;
         BeginPass();
     }
@@ -127,13 +134,22 @@ public class PremiereTimelineStage : MonoBehaviour
     {
         if (_pacer != null) _pacer.PhaseChanged -= OnPhase;
         ClearRule();
+        if (_monitor != null) Destroy(_monitor.gameObject);
+        if (BossEntrance.CustomAppear == (System.Func<BossController, System.Collections.IEnumerator>)PremiereBossCrawl.Run) BossEntrance.CustomAppear = null;
         if (Current == this) Current = null;
     }
 
     void OnPhase(PacePhase phase)
     {
-        if (phase == PacePhase.Done) ClearRule();
+        if (phase == PacePhase.Done)
+        {
+            ClearRule();
+            if (_monitor != null) _monitor.EnterBoss(); // 映像が頭へ巻き戻り、ここからはウイルスが映る
+        }
     }
+
+    /// <summary>2026-11-20：再生ヘッドの位置（部屋の左の壁＝0、右の壁＝1）</summary>
+    public float HeadK => _arena.width > 0.01f ? Mathf.Clamp01((_headX - _arena.xMin) / _arena.width) : 0f;
 
     bool MarkersAllowed => _pacer != null && (_pacer.Phase == PacePhase.Build || _pacer.Phase == PacePhase.Event || _pacer.Phase == PacePhase.Climax);
 
@@ -157,6 +173,7 @@ public class PremiereTimelineStage : MonoBehaviour
             BeginPass();
         }
         _head.position = new Vector3(_headX, _head.position.y, 0f);
+        if (_monitor != null) _monitor.Follow(HeadK);
 
         PlaceMarkers(speed);
         UpdateMarkers();
@@ -200,12 +217,19 @@ public class PremiereTimelineStage : MonoBehaviour
     void AddMarker(float x)
     {
         var m = new MarkerView { X = x };
-        m.Root = PremiereTimelineArt.BuildMarker(_rule, x, _rulerBottom + 0.5f * PremiereArt.Pixel, _arena.yMin, _rulerBottom, DipWidth, OrderMarker);
+        m.Root = PremiereTimelineArt.BuildMarker(_rule, x, _rulerBottom + 0.5f * PremiereArt.Pixel, _arena.yMin, PremiereEditScreen.MarkerTop(_arena, _rulerBottom), DipWidth, OrderMarker);
         Transform mark = m.Root.Find("Marker");
         m.Mark = mark != null ? mark.GetComponent<SpriteRenderer>() : null;
         if (m.Mark != null) GenericFrameTweens.Of(m.Mark.gameObject).Scale(m.Mark.transform, Vector3.one * 1.5f, Vector3.one, 0.1f);
         _markers.Add(m);
         GameAudio.Event("gm_premiere_marker");
+        // 2026-11-20（B2）：スクラブバーにも同じ所の赤い印（再生ヘッドが着いて柱が消えるころまで）
+        if (_monitor != null)
+        {
+            float speed = _arena.width / PassSeconds * (_exporting ? ExportSpeedUp : 1f);
+            float until = Mathf.Max(0f, x - _headX) / Mathf.Max(0.1f, speed) + DipDelay + DipTime + 1f;
+            _monitor.AddTick(_monitor.KAt(x), until, PremiereTimelineArt.EnemyRed);
+        }
     }
 
     void CheckCross(float from, float to)
@@ -216,6 +240,7 @@ public class PremiereTimelineStage : MonoBehaviour
             if (DipHold != null && Held(DipHold, m.X)) { m.Late = true; continue; } // 波が通る前後：待つ
             m.FiredAt = Time.time;
             GameAudio.Event("gm_premiere_dip");
+            if (_monitor != null) _monitor.Flash(DipDelay + DipTime); // モニターが先に白く飛ぶ
         }
     }
 
@@ -235,6 +260,7 @@ public class PremiereTimelineStage : MonoBehaviour
                 m.Late = false;
                 m.FiredAt = Time.time; // 待っていた分、遅れて光る
                 GameAudio.Event("gm_premiere_dip");
+                if (_monitor != null) _monitor.Flash(DipDelay + DipTime);
             }
             if (m.FiredAt < 0f) continue;
             float age = Time.time - m.FiredAt;
@@ -351,7 +377,8 @@ public class PremiereTimelineStage : MonoBehaviour
         _exportLen = Mathf.Max(1f, seconds);
         if (_toPlace > 0) _toPlace++;
         if (_export != null) Destroy(_export.gameObject);
-        Vector2 pos = new Vector2(_arena.center.x, _rulerBottom - 1.4f);
+        // 2026-11-20：編集画面全体のときは右上のパネルの上（今の式だと遊ぶ所のまん中に出るため）
+        Vector2 pos = PremiereEditScreen.Active ? PremiereEditScreen.ExportCenter(_arena) : new Vector2(_arena.center.x, _rulerBottom - 1.4f);
         _export = PremiereArt.Child(_rule != null ? _rule : transform, "Export", Vector2.zero);
         _export.position = pos;
         Transform win = MacUi.PlaceWindow(_export, Vector2.zero, new Vector2(96f, 40f), MacLook.Dark, null, OrderExport, "Export");

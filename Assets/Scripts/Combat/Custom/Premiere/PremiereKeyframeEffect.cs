@@ -5,6 +5,9 @@ using UnityEngine;
 /// 【仮】キーフレームの本体（2026-11-19。docs/app-feedback-v2-design.md 5-1）。PremiereKeyframe が出し、あとは自分で進む。
 /// ◆ を順に打ち、赤い点線でつなぐ（予告）→ クリップが道すじを ◆ から ◆ へ動く（判定は円）→ 最後の ◆ ではじけて消える。
 /// 形態変化・正常化で消されたら、その場で全部消える。場に残る技ではない（技はこれが終わるまで待つ）
+/// 2026-11-20（docs/premiere-edit-screen-design.md 6-1）：プログラムモニター（PremiereMonitor）があれば、予告の間は映像が止まり、
+/// ◆ が打たれるたびにスクラブバーに白い印。予告の最後の 0.4秒で、映像のコマ（当たらない）がモニターからちぢみながらボスの体（◆1）へ飛び、
+/// そこから赤いふちのクリップが走り出す（今の技）。走っている間、モニターは「抜けた絵」。道すじ・◆・判定・速さは今のまま
 /// </summary>
 public class PremiereKeyframeEffect : CustomEffect
 {
@@ -17,6 +20,8 @@ public class PremiereKeyframeEffect : CustomEffect
     }
 
     const int PathOrder = 17, DiamondOrder = 18, ClipOrder = 20;
+    const int FlyOrder = 15;          // 2026-11-20：モニターから飛ぶコマ（キャラクター 11〜 の前、道すじ 17 の後ろ）
+    const float FlyTime = 0.4f;       // 2026-11-20：コマが飛ぶ秒数（クリップが走り出す瞬間に着く）
 
     AttackRunner _owner;
     PremiereKeyframe _config;
@@ -26,6 +31,8 @@ public class PremiereKeyframeEffect : CustomEffect
     readonly List<SpriteRenderer> _lines = new List<SpriteRenderer>();
     readonly List<Clip> _clips = new List<Clip>();
     float _start, _runAt, _travel;
+    int _ticked;        // 2026-11-20：スクラブバーに印を出した ◆ の数
+    bool _blanked;      // 2026-11-20：モニターを「抜けた絵」にしたか
 
     public bool Finished { get; private set; }
 
@@ -39,6 +46,7 @@ public class PremiereKeyframeEffect : CustomEffect
         e._start = Time.time;
         e._runAt = e._start + config.TelegraphTime;
         e.Build(data);
+        if (PremiereMonitor.Current != null) PremiereMonitor.Current.Hold(config.TelegraphTime); // 予告の間、映像が止まる
         return e;
     }
 
@@ -86,6 +94,14 @@ public class PremiereKeyframeEffect : CustomEffect
             }
             clip.Root.gameObject.SetActive(false);
             _clips.Add(clip);
+            // 2026-11-20：モニターから映像のコマが飛び出し、ちぢみながら ◆1（クリップが出る所）へ。当たらない
+            PremiereMonitor monitor = PremiereMonitor.Current;
+            if (monitor != null)
+            {
+                Vector2 start = _path[0];
+                Vector2 clipSize = new Vector2(22f, 14f) / 18f;
+                PremiereMonitorFlyer.Frame(transform, monitor.VideoCenter, monitor.VideoSize, () => start, clipSize, clip.StartAt - FlyTime, clip.StartAt, FlyOrder);
+            }
         }
     }
 
@@ -108,8 +124,20 @@ public class PremiereKeyframeEffect : CustomEffect
             float s = Mathf.Lerp(1.5f, 1f, k);
             d.transform.localScale = new Vector3(s, s, 1f);
             if (i > 0 && i - 1 < _lines.Count && _lines[i - 1] != null) _lines[i - 1].enabled = !blink;
+            if (i >= _ticked && PremiereMonitor.Current != null)
+            {
+                // 2026-11-20：スクラブバーに白い印（◆ の x の所。予告が終わるまで）
+                _ticked = i + 1;
+                PremiereMonitor.Current.AddTick(PremiereMonitor.Current.KAt(_path[i].x), _runAt - now + 0.1f, Color.white);
+            }
         }
         if (now < _runAt) return;
+        if (!_blanked)
+        {
+            // 2026-11-20：コマを取られたモニターは「抜けた絵」（最後のクリップがはじけるころまで）
+            _blanked = true;
+            if (PremiereMonitor.Current != null) PremiereMonitor.Current.Blank(_travel + (_clips.Count - 1) * _config.ClipGap + 0.3f);
+        }
 
         // ── 本体：クリップが道すじを動く ──
         bool allDone = true;
