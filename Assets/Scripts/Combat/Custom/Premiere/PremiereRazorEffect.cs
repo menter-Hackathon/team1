@@ -12,6 +12,9 @@ using UnityEngine;
 ///   部屋の床（部屋の幅の半分以上ある物）・落下物の足場・開いたり閉じたりする足場（BlinkingPlatform）は消さない
 /// ・消えた足場は当たり判定と絵を消し、点線の枠だけを残す。最後の1秒は点滅して戻る
 /// ・形態変化・正常化で消されたとき、自分で終わったときは、Restore で足場をすぐ戻す（黒い列は子なので一緒に消える）。寄ったボスはそのまま
+/// 2026-11-20（docs/premiere-edit-screen-design.md 6-3）：プログラムモニター（PremiereMonitor）があれば、予告の間は映像が止まり、刃は最初の 0.2秒で
+/// モニターのまん中から切る線の上へすべって出る（点線・斜線は今と同じ瞬間・同じ場所）。スクラブバーに区間の両端の印。切る瞬間に映像に白い横の線。
+/// 閉じたら映像が区間の幅の分だけ先へ飛ぶ（ジャンプカット）。黒い列はモニターの上にもかぶる。判定・区間の置き方・ボスの寄りは今のまま
 /// </summary>
 public class PremiereRazorEffect : CustomEffect
 {
@@ -37,6 +40,8 @@ public class PremiereRazorEffect : CustomEffect
     float _center;
     float _half;
     float _top;        // 刃の上の端
+    Vector2? _bladeFrom;   // 2026-11-20：刃がすべって出てくる所（モニターのまん中。無ければ null）
+    const float BladeSlideTime = 0.2f;
     float _start;
     float _cutAt;
     float _deleteAt;
@@ -94,6 +99,16 @@ public class PremiereRazorEffect : CustomEffect
         e._boss = owner.GetComponent<BossController>();
         e.BuildTelegraph();
         e.BuildHitbox();
+        PremiereMonitor monitor = PremiereMonitor.Current;
+        if (monitor != null)
+        {
+            // 2026-11-20：予告の間は映像が止まる。スクラブバーに区間の両端の印。刃はモニターから出てくる
+            monitor.Hold(config.TelegraphTime);
+            float life = config.TelegraphTime + config.CutTime;
+            monitor.AddTick(monitor.KAt(centerX - e._half), life, PremiereTimelineArt.EnemyRed);
+            monitor.AddTick(monitor.KAt(centerX + e._half), life, PremiereTimelineArt.EnemyRed);
+            e._bladeFrom = monitor.VideoCenter;
+        }
         e.Tick(Time.time);
         return e;
     }
@@ -110,6 +125,18 @@ public class PremiereRazorEffect : CustomEffect
             bool blink = _cutAt - now < 0.3f && Mathf.FloorToInt(now / 0.06f) % 2 == 1;
             foreach (var d in _dotted) d.enabled = !blink;
             foreach (var t in _cutTicks) if (t != null) t.enabled = !blink;
+            if (_bladeFrom is Vector2 from)
+            {
+                // 2026-11-20：刃が、モニターのまん中から切る線の上へすべって出る（最初の 0.2秒）
+                float k = Mathf.Clamp01((now - _start) / BladeSlideTime);
+                float e = 1f - (1f - k) * (1f - k);
+                for (int i = 0; i < 2; i++)
+                {
+                    if (_blades[i] == null) continue;
+                    Vector2 to = new Vector2(LineX(i), _top - BladeHeight * 0.5f);
+                    _blades[i].position = (Vector3)Vector2.Lerp(from, to, e);
+                }
+            }
             return;
         }
         UpdateClips(now);
@@ -124,6 +151,7 @@ public class PremiereRazorEffect : CustomEffect
                 _dotted[i].enabled = false;
                 _flashes[i].enabled = true;
             }
+            if (PremiereMonitor.Current != null) PremiereMonitor.Current.Scanline(_config.CutTime); // 2026-11-20：映像にも白い横の線
         }
         float cutK = _config.CutTime > 0f ? Mathf.Clamp01((now - _cutAt) / _config.CutTime) : 1f;
         float span = Mathf.Max(0.1f, _top - floor);
@@ -170,6 +198,7 @@ public class PremiereRazorEffect : CustomEffect
         {
             _column.gameObject.SetActive(false);
             ShowSeam(now);
+            if (PremiereMonitor.Current != null) PremiereMonitor.Current.Skip(_config.SectionWidth / Mathf.Max(1f, _arena.width)); // 2026-11-20：ジャンプカット
         }
         UpdateApproach(closeK);
         UpdateSeam(now);

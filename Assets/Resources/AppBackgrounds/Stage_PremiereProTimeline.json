@@ -1,0 +1,92 @@
+{
+ "label": "PremiereProTimeline",
+ "hideFolders": true,
+ "platforms": [
+  {
+   "id": "clip1",
+   "x": -2.8,
+   "y": 2.6333,
+   "w": 4.0,
+   "h": 0.8,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/PremiereProTimeline__clip1",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "clip2",
+   "x": 4.2,
+   "y": 2.6333,
+   "w": 4.1333,
+   "h": 0.8,
+   "top": 3.0333,
+   "sprite": "AppBackgrounds/Parts/PremiereProTimeline__clip2",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "drag",
+   "x": -1.0,
+   "y": 4.6333,
+   "w": 3.3333,
+   "h": 0.8,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/PremiereProTimeline__drag",
+   "behavior": "move",
+   "params": {
+    "type": "move",
+    "dx": 3.066666666666667,
+    "dy": 0.0,
+    "period": 8,
+    "offset": 0
+   }
+  },
+  {
+   "id": "clip3",
+   "x": 7.4667,
+   "y": 4.6333,
+   "w": 3.4667,
+   "h": 0.8,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/PremiereProTimeline__clip3",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "clip4",
+   "x": -6.0667,
+   "y": 4.6333,
+   "w": 3.0667,
+   "h": 0.8,
+   "top": 5.0333,
+   "sprite": "AppBackgrounds/Parts/PremiereProTimeline__clip4",
+   "behavior": "static",
+   "params": {
+    "type": "static"
+   }
+  },
+  {
+   "id": "title",
+   "x": 0.8,
+   "y": 6.6333,
+   "w": 2.9333,
+   "h": 0.8,
+   "top": 7.0333,
+   "sprite": "AppBackgrounds/Parts/PremiereProTimeline__title",
+   "behavior": "blink",
+   "params": {
+    "type": "blink",
+    "on": 6,
+    "off": 3,
+    "warn": 1.0,
+    "offset": 0
+   }
+  }
+ ]
+}

@@ -182,8 +182,8 @@ public static class PremiereTimelineArt
         float h = Mathf.Max(0.1f, topY - floorY);
         // 帯（15%）
         PremiereArt.Box(root, new Vector2(0f, h * 0.5f), new Vector2(width, h), WithAlpha(EnemyRed, 0.15f), order - 2, "Band");
-        // 赤い点線（ルーラーから床まで）
-        float lineH = Mathf.Max(0.05f, rulerY - floorY);
+        // 赤い点線（ルーラーから床まで）。2026-11-20：topY がルーラーより上なら、topY まで伸ばす（編集画面全体：柱の判定の上下いっぱいに予告を見せる）
+        float lineH = Mathf.Max(0.05f, Mathf.Max(rulerY, topY) - floorY);
         Tiled(root, DotColumn, new Vector2(0f, lineH * 0.5f), new Vector2(Px, lineH), EnemyRed, order - 1, "Line");
         SpriteRenderer mark = RuntimeSprites.Show(root, Marker, new Vector2(0f, rulerY - floorY), order, 1f, "Marker");
         mark.color = EnemyRed;

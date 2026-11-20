@@ -70,23 +70,6 @@
    "params": {
     "type": "static"
    }
-  },
-  {
-   "id": "title",
-   "x": 0.8,
-   "y": 6.6333,
-   "w": 2.9333,
-   "h": 0.8,
-   "top": 7.0333,
-   "sprite": "AppBackgrounds/Parts/PremierePro__title",
-   "behavior": "blink",
-   "params": {
-    "type": "blink",
-    "on": 6,
-    "off": 3,
-    "warn": 1.0,
-    "offset": 0
-   }
   }
  ]
 }
