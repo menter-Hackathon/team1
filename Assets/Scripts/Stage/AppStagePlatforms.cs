@@ -206,6 +206,7 @@ public static class AppStagePlatforms
             default: platform = go.AddComponent<AppPlatform>(); break;
         }
         platform.Setup(row.id, col, art, body, p);
+        PlatformSlab.Attach(art, col); // 2026-11-20：乗れる足場だけ「厚みのある板」に見せる（背景の中の同じ形の飾りと見分ける）
         return true;
     }
 

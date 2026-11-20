@@ -16,9 +16,11 @@ public class StageTheme : MonoBehaviour
     [SerializeField] Sprite _folder;
     [Tooltip("タイトルバーをアプリの色にする絵（ウィンドウの足場・部屋のタイトルバー）")]
     [SerializeField] Sprite[] _titleBars;
-    [Tooltip("アプリの画面の背景のアルファ（1 で元のまま。小さいほど薄い）。足場と見分けやすくするため（2026-11-20）。Mac のデスクトップの壁紙にはかけない")]
+    [Tooltip("オン：背景のアルファと後ろに敷く色を、そのアプリの絵の明るさで決める（AppBackgroundTone。紫の板の上で少し沈める）。2026-11-20：白く薄くするとアプリが分からなくなったため。オフ：下の2つの値")]
+    [SerializeField] bool _appBackgroundAuto = true;
+    [Tooltip("アプリの画面の背景のアルファ（1 で元のまま。小さいほど薄い）。足場と見分けやすくするため（2026-11-20）。Mac のデスクトップの壁紙にはかけない。上の「自動」がオフのときだけ使う")]
     [SerializeField, Range(0f, 1f)] float _appBackgroundAlpha = 0.4f;
-    [Tooltip("薄くした背景の後ろに敷く色（透けて見える色）。白なら明るく薄くなる")]
+    [Tooltip("薄くした背景の後ろに敷く色（透けて見える色）。白なら明るく薄くなる。上の「自動」がオフのときだけ使う")]
     [SerializeField] Color _appBackgroundBacking = Color.white;
 
     /// <summary>今の色。塗り替えていなければ null</summary>
@@ -39,8 +41,16 @@ public class StageTheme : MonoBehaviour
                     sr.sprite = appBackground;
                     // 薄くするのは、アプリの画面の背景を出している間だけ（AppBackgroundFade が毎フレーム見る。Mac の壁紙にはかけない）
                     if (!sr.TryGetComponent(out AppBackgroundFade fade)) fade = sr.gameObject.AddComponent<AppBackgroundFade>();
-                    fade.Alpha = _appBackgroundAlpha;
-                    fade.BackingColor = _appBackgroundBacking;
+                    if (_appBackgroundAuto && AppBackgroundTone.TryFor(appBackground, out float autoAlpha, out Color autoBacking))
+                    {
+                        fade.Alpha = autoAlpha; // 2026-11-20：白く薄くする代わりに、紫の板の上で少し沈める（足場は PlatformSlab で浮かせる）
+                        fade.BackingColor = autoBacking;
+                    }
+                    else
+                    {
+                        fade.Alpha = _appBackgroundAlpha;
+                        fade.BackingColor = _appBackgroundBacking;
+                    }
                 }
                 else sr.sprite = ThemeRecolor.Stage(_wallpaper, theme, ThemeRecolor.Kind.Wallpaper);
                 continue;
