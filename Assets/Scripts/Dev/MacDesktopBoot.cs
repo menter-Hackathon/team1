@@ -3,7 +3,8 @@ using UnityEngine;
 /// <summary>ゲーム内だけのロック解除とアプリ起動の演出。</summary>
 public sealed class MacDesktopBoot
 {
-    public enum Step { Locked, Unlocking, Desktop, Bouncing, Launching, Ready }
+    // 2026-11-20（まさぴ〜）：解除のあと、デスクトップがウイルスに感染する Infecting を足した（MacDesktopInfection。Desktop の前）
+    public enum Step { Locked, Unlocking, Infecting, Desktop, Bouncing, Launching, Ready }
     public const float BounceDuration=1.8f;
     public const float LaunchDuration=0.75f;
     public Step Current { get; private set; }
@@ -26,7 +27,20 @@ public sealed class MacDesktopBoot
     public bool CanUnlock(float now) => Current==Step.Locked&&now-_started>=0.25f;
 
     // 2026-11-20（まさぴ〜）：解除のあとはデスクトップで待ち、Dock のゲームのアイコンを押したら起動する
-    public const float IdleHopDelay=1.5f,IdleHopInterval=2.4f,IdleHopTime=0.45f;
+    // IdleHopDelay：感染のあとに待ちが始まるので 1.5 → 0.4 にした（2026-11-20 docs/infection-intro-design.md 7-2）
+    public const float IdleHopDelay=0.4f,IdleHopInterval=2.4f,IdleHopTime=0.45f;
+
+    /// <summary>感染のステップが始まってからの秒。始まる前は -1、終わった後（飛ばした後も）は MacDesktopInfection.Duration</summary>
+    public float InfectionTime(float now) => Current<Step.Infecting?-1f:
+        Current==Step.Infecting?now-_started:MacDesktopInfection.Duration;
+
+    /// <summary>感染を飛ばして、感染し終わったデスクトップの待ちへ（起動はしない）。出た直後は飛ばさない</summary>
+    public bool SkipInfection(float now)
+    {
+        if(Current!=Step.Infecting||now-_started<MacDesktopInfection.InputGuard) return false;
+        Current=Step.Desktop; _started=now;
+        return true;
+    }
 
     /// <summary>デスクトップで待っているとき、ゲームのアプリを起動する（アイコンが跳ねてから窓が開く）。</summary>
     public bool Launch(float now)
@@ -50,7 +64,8 @@ public sealed class MacDesktopBoot
     {
         while(Current!=Step.Locked&&Current!=Step.Desktop&&Current!=Step.Ready)
         {
-            float duration=Current==Step.Bouncing?BounceDuration:Current==Step.Launching?LaunchDuration:0.65f; // Unlocking
+            float duration=Current==Step.Bouncing?BounceDuration:Current==Step.Launching?LaunchDuration:
+                Current==Step.Infecting?(MacDesktopInfection.Enabled?MacDesktopInfection.Duration:0f):0.65f; // Unlocking
             if(now-_started<duration) break;
             _started+=duration;
             Current=(Step)((int)Current+1);

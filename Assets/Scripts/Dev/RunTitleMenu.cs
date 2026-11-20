@@ -80,6 +80,7 @@ public class RunTitleMenu : MonoBehaviour
             float now=Time.unscaledTime;
             _boot.Tick(now);
             IsBootPlaying=_boot.IsPlaying;
+            MacDesktopInfection.Tick(_boot.InfectionTime(now),_dockApps.Count); // 感染の SE（2026-11-20）
             if(_boot.ShowApp) StartTitleBgm(); // 窓が開き始めたら曲を流す
             var kb=Keyboard.current;
             if(_boot.Current==MacDesktopBoot.Step.Locked)
@@ -91,6 +92,12 @@ public class RunTitleMenu : MonoBehaviour
                     _autoAuthStarted=true;
                     AuthenticateTouchId();
                 }
+            }
+            else if(_boot.Current==MacDesktopBoot.Step.Infecting)
+            {
+                // 感染の間は飛ばすだけ（感染し終わった待ちへ。起動はしない。2026-11-20）
+                bool click=Mouse.current!=null&&Mouse.current.leftButton.wasPressedThisFrame;
+                if((MenuInput.Confirm()||click)&&_boot.SkipInfection(now)) MacDesktopInfection.MuteRest();
             }
             else if(_boot.Current==MacDesktopBoot.Step.Desktop&&MenuInput.Confirm()) LaunchGameApp(); // マウスが無くても開ける
             return;
@@ -244,7 +251,7 @@ public class RunTitleMenu : MonoBehaviour
             PixelGui.End();
             return;
         }
-        MacDesktopGui.MenuBar(w,"Virus Desktop");
+        MacDesktopGui.MenuBar(w,"Virus Desktop",MacDesktopInfection.LingerStatus(_dockApps.Count)); // 起動のあとも感染したまま（2026-11-20）
         bool mode=_page==Page.Mode;
         bool scanWaiting=_scan&&_topApps==null;
         bool compactScan=_scan&&string.IsNullOrEmpty(_error)&&(_scanning||_topApps!=null);
@@ -255,6 +262,7 @@ public class RunTitleMenu : MonoBehaviour
         win=_window.Apply(win,w,h,front);
         bool folderEnabled=GUI.enabled;
         GUI.enabled=folderEnabled&&front&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
+        MacDesktopInfection.DrawLingerBack(w,h);
         int folder=MacDesktopGui.Folders(w);
         GUI.enabled=folderEnabled;
         if(folder>=0&&_files!=null) { _files.Open(folder); front=false; }
@@ -266,6 +274,7 @@ public class RunTitleMenu : MonoBehaviour
         if(_files!=null&&_files.IsMinimized) items.Add(new MacDesktopGui.DockItem("Finder",null,_files.Window));
         GUI.enabled=was&&active&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
         int dock=MacDesktopGui.Dock(w,h,items);
+        MacDesktopInfection.DrawLingerFront(w,h,items); // フォルダと Dock の紫・乗った雑魚
         // 右下の歯車：設定（音量・キー設定）。キー・コントローラーでは、メニューの「終了」の下（2026-11-20）
         GUI.enabled=was&&active&&!PauseMenu.IsOpen;
         if(SettingsGear(new Rect(w-40,h-84,30,30),_window.IsVisible&&!_scan&&_page==Page.Menu&&_focus==4)) OpenSettings(); // どの画面（はじめかた・スキャン）からでも、その画面のまま設定を開く
@@ -326,13 +335,16 @@ public class RunTitleMenu : MonoBehaviour
             bool mouse=type==EventType.MouseDown||type==EventType.MouseUp||type==EventType.MouseDrag||type==EventType.MouseMove||
                 type==EventType.ScrollWheel;
             if((mouse&&!waiting)||type==EventType.KeyDown) Event.current.Use();
+            float infection=_boot.InfectionTime(now); // 解除のあとの感染（MacDesktopInfection。2026-11-20）
+            MacDesktopInfection.DrawBack(infection,width,height,_dockApps.Count);
             MacDesktopGui.Folders(width); // フォルダ・ほかの Dock のアイコンは、ゲームのアプリを開くまで押しても何もしない
-            MacDesktopGui.MenuBar(width,_boot.ShowApp?"Virus Desktop":"Finder");
+            MacDesktopGui.MenuBar(width,_boot.ShowApp?"Virus Desktop":"Finder",MacDesktopInfection.Status(infection,_dockApps.Count));
             bool launched=_boot.Current>=MacDesktopBoot.Step.Bouncing;
             float hop=_boot.Current==MacDesktopBoot.Step.Bouncing?_boot.BounceProgress(now):_boot.IdleHop(now);
             int dock=MacDesktopGui.Dock(width,height,_dockApps,launched?1:-1,hop); // 起動するまで、ゲームの下の点は出さない
             if(waiting&&dock==1) LaunchGameApp();
             if(waiting&&mouse&&Event.current.type!=EventType.Used) Event.current.Use();
+            MacDesktopInfection.DrawFront(infection,width,height,_dockApps,hop,launched); // ゲームの窓より先（窓が警告の窓の上に開く）
             if(_boot.ShowApp)
             {
                 float t=MacDesktopBoot.Ease(_boot.LaunchProgress(now));
