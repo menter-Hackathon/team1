@@ -25,11 +25,32 @@ public sealed class MacDesktopBoot
 
     public bool CanUnlock(float now) => Current==Step.Locked&&now-_started>=0.25f;
 
+    // 2026-11-20（まさぴ〜）：解除のあとはデスクトップで待ち、Dock のゲームのアイコンを押したら起動する
+    public const float IdleHopDelay=1.5f,IdleHopInterval=2.4f,IdleHopTime=0.45f;
+
+    /// <summary>デスクトップで待っているとき、ゲームのアプリを起動する（アイコンが跳ねてから窓が開く）。</summary>
+    public bool Launch(float now)
+    {
+        if(Current!=Step.Desktop||now-_started<0.3f) return false;
+        Current=Step.Bouncing; _started=now;
+        return true;
+    }
+
+    /// <summary>デスクトップで待つ間、Dock のゲームのアイコンをときどき1回だけ跳ねさせる（押す所を字なしで見せる）。跳ねないときは -1。</summary>
+    public float IdleHop(float now)
+    {
+        if(Current!=Step.Desktop) return -1;
+        float t=now-_started-IdleHopDelay;
+        if(t<0) return -1;
+        t%=IdleHopInterval;
+        return t<IdleHopTime?t/IdleHopTime*0.5f:-1;
+    }
+
     public void Tick(float now)
     {
-        while(Current!=Step.Locked&&Current!=Step.Ready)
+        while(Current!=Step.Locked&&Current!=Step.Desktop&&Current!=Step.Ready)
         {
-            float duration=Current==Step.Bouncing?BounceDuration:Current==Step.Launching?LaunchDuration:0.65f;
+            float duration=Current==Step.Bouncing?BounceDuration:Current==Step.Launching?LaunchDuration:0.65f; // Unlocking
             if(now-_started<duration) break;
             _started+=duration;
             Current=(Step)((int)Current+1);
