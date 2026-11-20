@@ -97,6 +97,11 @@ public class BossController : MonoBehaviour, IWarpable
     public Sprite NormalizedIcon => _profile != null ? _profile.NormalIcon : null;
     /// <summary>正常化して手に入った能力（まだなら null）</summary>
     public SkillDefinition AcquiredReward { get; private set; }
+    /// <summary>
+    /// 正常化した瞬間に、報酬のスキルをプレイヤーに直接入れるか（既定 true＝今までどおり。テスト用のシーンはこのまま）。
+    /// StageDirector だけが false にして、スキルを落とす（RewardDrop → 入れ替えの画面。2026-11-20）
+    /// </summary>
+    public bool AutoAcquireReward { get; set; } = true;
 
     IDisposable _passive; // ボスの常に効く効果（Steam ボスの実績解除）
     int _sequenceIndex;   // 技を順に出すときの、次の番号
@@ -538,7 +543,7 @@ public class BossController : MonoBehaviour, IWarpable
         DetachPassive();
 
         SkillDefinition reward = _profile.Reward;
-        if (reward != null)
+        if (reward != null && AutoAcquireReward)
         {
             PlayerSkills skills = _runner.Target != null ? _runner.Target.GetComponentInParent<PlayerSkills>() : null;
             if (skills == null) skills = FindObjectOfType<PlayerSkills>();

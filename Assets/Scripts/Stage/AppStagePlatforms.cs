@@ -58,6 +58,20 @@ public static class AppStagePlatforms
                 if (Debug.isDebugBuild) Debug.Log("[AppStagePlatforms] フォルダの足場が無いステージ（横スクロール・ウィンドウ）なので、出さない");
                 return 0; // 1画面のステージではない
             }
+            // ウィンドウのステージ（2026-11-20。docs/window-stage-and-pickup-design.md 1章）：フォルダの代わりに、Mac のウィンドウ 4枚を足場にする。
+            // 作れなければ（0）今までどおり、アプリの UI の足場
+            if (WindowStage.Wants(plan))
+            {
+                int made = WindowStage.Build(plan, left.transform.parent);
+                if (made > 0)
+                {
+                    left.SetActive(false); right.SetActive(false);
+                    Physics2D.SyncTransforms();
+                    try { ReseatWave(director.Wave); } catch (Exception e) { Debug.LogException(e); }
+                    Active = true; Label = AppBackgrounds.LabelFor(plan) ?? "Window";
+                    return made;
+                }
+            }
             string label = AppBackgrounds.LabelFor(plan);
             if (string.IsNullOrEmpty(label)) return 0;
             var asset = Resources.Load<TextAsset>($"{AppBackgrounds.Folder}/Stage_{label}");
@@ -193,6 +207,27 @@ public static class AppStagePlatforms
         }
         platform.Setup(row.id, col, art, body, p);
         return true;
+    }
+
+    /// <summary>
+    /// ウィンドウのステージのウィンドウ 1枚を、動かない足場にする（WindowStage が呼ぶ。2026-11-20）。Spawn の static と同じ作り（絵の順番だけ引数）：
+    /// AppPlatform_Win&lt;id&gt;・すり抜け床・子 "Art"（ワームと巣が名前で探す）・上の端だけの当たり判定（横・下は無い）
+    /// </summary>
+    internal static AppPlatform SpawnWindow(string id, Vector2 center, Vector2 size, Sprite sprite, int order, Transform parent)
+    {
+        if (sprite == null || parent == null || !Finite(center.x) || !Finite(center.y) || size.x < 0.1f || size.y < ColliderThick) return null;
+        var go = new GameObject($"AppPlatform_Win{id}");
+        int oneWay = LayerMask.NameToLayer("OneWayPlatform");
+        if (oneWay >= 0) go.layer = oneWay;
+        go.transform.SetParent(parent, false);
+        go.transform.position = center; // 当たり判定を付ける前に置く
+        SpriteRenderer art = AttackRunner.AddVisual(go.transform, sprite, Color.white, size, order, "Art");
+        var col = go.AddComponent<BoxCollider2D>();
+        col.size = new Vector2(size.x, ColliderThick);
+        col.offset = new Vector2(0f, size.y * 0.5f - ColliderThick * 0.5f); // 上の端だけ
+        AppPlatform platform = go.AddComponent<AppPlatform>();
+        platform.Setup(id, col, art, null, new AppStageParams());
+        return platform;
     }
 
     // フォルダの足場の上にいた最初の雑魚（シーンに置いてある物）を、下にある床・動かない足場の上に置き直す。

@@ -49,6 +49,9 @@ public class Health : MonoBehaviour, IDamageable
     /// </summary>
     public static bool DebugInvincible { get; set; }
 
+    /// <summary>【仮】ボスが落としたスキルを拾って入れ替えの画面を閉じるまで、プレイヤーはダメージを受けない（RewardDrop が入れ・消す。2026-11-20）</summary>
+    public static bool RewardGrace { get; set; }
+
     /// <summary>
     /// 【仮】被弾の直前に止める口（2026-11-19：アプリのキット。Firefox の広告ブロックなど）。true を返すと、その当たりを止める（ダメージなし）。
     /// null なら今までどおり。攻撃の判定から来た当たり（DamageInfo.Source がある物）だけで呼ぶ（落下など、ダメージ以外の減り方は止めない）。
@@ -60,6 +63,7 @@ public class Health : MonoBehaviour, IDamageable
     {
         if (!isActiveAndEnabled || IsDead || IsInvincible) return false;
         if (DebugInvincible && _team == Team.Player) return false;
+        if (RewardGrace && _team == Team.Player) return false;
         if (info.SourceTeam == _team) return false;
         if (Guard != null && info.Source != null)
         {
