@@ -16,6 +16,10 @@ public class StageTheme : MonoBehaviour
     [SerializeField] Sprite _folder;
     [Tooltip("タイトルバーをアプリの色にする絵（ウィンドウの足場・部屋のタイトルバー）")]
     [SerializeField] Sprite[] _titleBars;
+    [Tooltip("アプリの画面の背景のアルファ（1 で元のまま。小さいほど薄い）。足場と見分けやすくするため（2026-11-20）。Mac のデスクトップの壁紙にはかけない")]
+    [SerializeField, Range(0f, 1f)] float _appBackgroundAlpha = 0.4f;
+    [Tooltip("薄くした背景の後ろに敷く色（透けて見える色）。白なら明るく薄くなる")]
+    [SerializeField] Color _appBackgroundBacking = Color.white;
 
     /// <summary>今の色。塗り替えていなければ null</summary>
     public AppTheme Current { get; private set; }
@@ -30,7 +34,14 @@ public class StageTheme : MonoBehaviour
             if (sr.sprite == null) continue;
             if (sr.sprite == _wallpaper)
             {
-                if (appBackground != null) sr.sprite = appBackground;
+                if (appBackground != null)
+                {
+                    sr.sprite = appBackground;
+                    // 薄くするのは、アプリの画面の背景を出している間だけ（AppBackgroundFade が毎フレーム見る。Mac の壁紙にはかけない）
+                    if (!sr.TryGetComponent(out AppBackgroundFade fade)) fade = sr.gameObject.AddComponent<AppBackgroundFade>();
+                    fade.Alpha = _appBackgroundAlpha;
+                    fade.BackingColor = _appBackgroundBacking;
+                }
                 else sr.sprite = ThemeRecolor.Stage(_wallpaper, theme, ThemeRecolor.Kind.Wallpaper);
                 continue;
             }
