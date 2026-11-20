@@ -1,20 +1,15 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>ゲーム内の架空ファイル。実際の端末のファイルにはアクセスしない。</summary>
+/// <summary>スキャン・能力・駆除記録をFinder風に表示。端末の実ファイルは操作しない。</summary>
 public sealed class MacDesktopFiles : MonoBehaviour
 {
     static readonly string[] Folders={"書類","ダウンロード","ゴミ箱"};
-    static readonly string[][] Names={
-        new[]{"企画書_最終版.txt","やること.todo","ウイルス対策メモ.txt"},
-        new[]{"名称未設定.zip","無料メモリ増量.pkg","あとで読む.html"},
-        new[]{"消したはずのバグ.txt","やる気"}
-    };
     readonly MacDesktopGui.WindowState _window=new MacDesktopGui.WindowState(false);
-    int _folder,_selected,_versions=1,_zipDepth,_dismissedFrame=-1;
-    readonly bool[] _tasks=new bool[3];
-    bool _installed,_motivation;
-    float _bugReturnsAt=-1;
+    List<MacDesktopFileContent.File> _files=new List<MacDesktopFileContent.File>();
+    int _folder,_selected,_dismissedFrame=-1;
+    Vector2 _listScroll,_previewScroll;
     AppDexMenu _dex;
     public MacDesktopGui.WindowState Window => _window;
     public bool IsMinimized => _window.IsMinimized;
@@ -22,7 +17,19 @@ public sealed class MacDesktopFiles : MonoBehaviour
 
     public void Open(int folder)
     {
-        _folder=Mathf.Clamp(folder,0,Folders.Length-1); _selected=0; _window.Open();
+        _folder=Mathf.Clamp(folder,0,Folders.Length-1); _selected=0;
+        _listScroll=_previewScroll=Vector2.zero;
+        RefreshContents(); _window.Open();
+    }
+
+    void RefreshContents()
+    {
+        string selected=_selected<_files.Count?_files[_selected].Name:null;
+        var session=GameSession.Instance;
+        _files=MacDesktopFileContent.Build(_folder,session?.LastUsages,session!=null&&session.HasUsageRecord,
+            session!=null&&session.LastUsageIsSample,session?.Run,AppDex.Entries);
+        int found=_files.FindIndex(f=>f.Name==selected);
+        _selected=found>=0?found:Mathf.Clamp(_selected,0,Mathf.Max(0,_files.Count-1));
     }
 
     void Close() { _window.Close(); _dismissedFrame=Time.frameCount; }
@@ -37,7 +44,7 @@ public sealed class MacDesktopFiles : MonoBehaviour
             if(!_window.IsVisible) _dismissedFrame=Time.frameCount;
             return;
         }
-        if(Keyboard.current!=null&&Keyboard.current.escapeKey.wasPressedThisFrame) Close();
+        if(MenuInput.Back) Close(); // Esc・Backspace・コントローラーの B（2026-11-20）
     }
 
     void OnGUI()
@@ -48,10 +55,12 @@ public sealed class MacDesktopFiles : MonoBehaviour
         PixelGui.Begin(false);
         try
         {
+            if(_dex==null) _dex=GetComponent<AppDexMenu>();
             GUI.enabled=enabled&&(_dex==null||!_dex.IsOpen);
             float w=PixelGui.Width,h=PixelGui.Height;
             Rect home=MacDesktopGui.CenteredWindow(w,h,570,286);
             if(!_window.IsVisible) { _window.Apply(home,w,h,false); return; }
+            if(Event.current.type==EventType.Layout) RefreshContents();
             Rect win=_window.Apply(home,w,h,GUI.enabled);
             Rect inner=MacDesktopGui.Window(win,Folders[_folder],out var action);
             _window.Handle(action);
@@ -68,17 +77,22 @@ public sealed class MacDesktopFiles : MonoBehaviour
             }
             float x=inner.x+sidebar+8;
             PixelGui.Text(new Rect(x,inner.y,list,20),"名前",12,MacDesktopGui.Muted);
-            for(int i=0;i<Names[_folder].Length;i++)
+            Rect listArea=new Rect(x,inner.y+25,list,inner.height-44);
+            _listScroll=GUI.BeginScrollView(listArea,_listScroll,
+                new Rect(0,0,list-18,Mathf.Max(listArea.height,_files.Count*34)));
+            for(int i=0;i<_files.Count;i++)
             {
-                Rect row=new Rect(x,inner.y+25+i*34,list-4,30);
+                Rect row=new Rect(0,i*34,list-18,30);
                 if(i==_selected) MacDesktopGui.Rounded(row,MacDesktopGui.Blue,3);
                 PixelGui.Fill(new Rect(row.x+6,row.y+6,12,17),Color.white);
                 PixelGui.Fill(new Rect(row.x+8,row.y+11,8,1),MacDesktopGui.Muted);
                 PixelGui.Fill(new Rect(row.x+8,row.y+14,6,1),MacDesktopGui.Muted);
-                PixelGui.TextFit(new Rect(row.x+23,row.y,row.width-27,row.height),Names[_folder][i],12,
+                PixelGui.TextFit(new Rect(row.x+23,row.y,row.width-27,row.height),_files[i].Name,12,
                     i==_selected?Color.white:MacDesktopGui.Ink);
-                if(GUI.Button(row,GUIContent.none,GUIStyle.none)) _selected=i;
+                if(GUI.Button(row,GUIContent.none,GUIStyle.none)) { _selected=i; _previewScroll=Vector2.zero; }
             }
+            GUI.EndScrollView();
+            PixelGui.Text(new Rect(x,inner.yMax-18,list,18),_files.Count+"項目",12,MacDesktopGui.Muted);
             Rect preview=new Rect(x+list+8,inner.y+3,inner.xMax-x-list-8,inner.height-6);
             Preview(preview);
         }
@@ -90,62 +104,25 @@ public sealed class MacDesktopFiles : MonoBehaviour
 
     void Preview(Rect r)
     {
-        string title=Names[_folder][_selected],body="",button=null;
-        if(_folder==0)
+        if(_files.Count==0)
         {
-            if(_selected==0)
-            {
-                title="企画書_最終版"+(_versions>1?"_最終版×"+_versions:"")+".txt";
-                body="これが最後の修正です。\n\n※ 前の最終版は念のため残す。\n\n保存された最終版："+_versions+"個";
-                button="最終版として保存";
-            }
-            else if(_selected==1)
-            {
-                PixelGui.TextFit(new Rect(r.x,r.y,r.width,22),title,12,MacDesktopGui.Ink);
-                string[] tasks={"バグを直す","バグの原因を探す","今日はもう寝る"};
-                for(int i=0;i<tasks.Length;i++)
-                    if(MacDesktopGui.Button(new Rect(r.x,r.y+34+i*30,r.width,25),(_tasks[i]?"✓ ":"□ ")+tasks[i],_tasks[i])) _tasks[i]=!_tasks[i];
-                PixelGui.Text(new Rect(r.x,r.y+132,r.width,48),_tasks[0]&&_tasks[1]&&_tasks[2]?
-                    "すべて完了！\n……バグから新しいタスクが届いた。":"チェックを付けるだけなら、\nすぐ終わる。",12,MacDesktopGui.Muted,TextAnchor.UpperLeft,true);
-                return;
-            }
-            else body="知らないファイルは開かない。\n\n知らないアプリの中に入らない。\n\n中に入ってしまった場合：\nウイルスを全部倒す。";
+            PixelGui.Text(new Rect(r.x,r.y+8,r.width,r.height-16),MacDesktopFileContent.EmptyMessage(_folder),
+                12,MacDesktopGui.Muted,TextAnchor.UpperLeft,true);
+            return;
         }
-        else if(_folder==1)
+        var file=_files[_selected];
+        PixelGui.TextFit(new Rect(r.x,r.y,r.width,25),file.Title,12,MacDesktopGui.Ink);
+        bool link=file.OpenDex&&_dex!=null;
+        Rect area=new Rect(r.x,r.y+34,r.width,r.height-34-(link?38:0));
+        float textWidth=Mathf.Max(30,area.width-18);
+        float textHeight=PixelGui.Style(false,12,TextAnchor.UpperLeft,true).CalcHeight(new GUIContent(file.Body),textWidth)+8;
+        _previewScroll=GUI.BeginScrollView(area,_previewScroll,
+            new Rect(0,0,textWidth,Mathf.Max(area.height,textHeight)));
+        PixelGui.Text(new Rect(0,0,textWidth,textHeight),file.Body,12,MacDesktopGui.Muted,TextAnchor.UpperLeft,true);
+        GUI.EndScrollView();
+        if(link&&MacDesktopGui.Button(new Rect(r.x,r.yMax-30,r.width,28),"図鑑を開く",true))
         {
-            if(_selected==0)
-            {
-                title="名称未設定"+(_zipDepth>0?"（展開 "+_zipDepth+" 回目）":"")+".zip";
-                body=_zipDepth==0?"中身：1ファイル\n\n何を圧縮したのか、\n誰も覚えていない。":"展開しました。\n\n中から、別の zip が出てきた。\n\n中身：1ファイル";
-                button="展開する";
-            }
-            else if(_selected==1)
-            {
-                body=_installed?"インストール完了？\n\nメモリは増えなかった。\n\n不安が増えた。":"メモリを無料で増やせます！\n\n提供元：不明\nレビュー：星5（1件）\n投稿者：提供元";
-                if(!_installed) button="インストールしてみる";
-            }
-            else body="あとで読むために保存した。\n\n保存したことは覚えている。\n\n何の記事かは覚えていない。";
-        }
-        else if(_selected==0)
-        {
-            bool deleted=_bugReturnsAt>Time.unscaledTime;
-            body=deleted?"削除しました。\n\n……。":_bugReturnsAt>=0?"バグが戻ってきました。\n\n「まだ再現します」":"昨日、確かに消したはず。\n\nなぜかここにいる。";
-            if(!deleted) button="完全に削除する";
-        }
-        else
-        {
-            body=_motivation?"復元しました。\n\n保存先：どこか\n\n必要なときに見つからない。":"いつ捨てたのか思い出せない。\n\nまだ使えるかもしれない。";
-            if(!_motivation) button="やる気を復元する";
-        }
-        PixelGui.TextFit(new Rect(r.x,r.y,r.width,25),title,12,MacDesktopGui.Ink);
-        PixelGui.Text(new Rect(r.x,r.y+34,r.width,Mathf.Max(50,r.height-76)),body,12,MacDesktopGui.Muted,TextAnchor.UpperLeft,true);
-        if(button!=null&&MacDesktopGui.Button(new Rect(r.x,r.yMax-30,r.width,28),button,true))
-        {
-            if(_folder==0) _versions++;
-            else if(_folder==1&&_selected==0) _zipDepth++;
-            else if(_folder==1) _installed=true;
-            else if(_selected==0) _bugReturnsAt=Time.unscaledTime+1.5f;
-            else _motivation=true;
+            Close(); _dex.Open();
         }
     }
 }

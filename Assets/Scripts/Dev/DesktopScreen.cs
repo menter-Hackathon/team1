@@ -205,8 +205,7 @@ public class DesktopScreen : MonoBehaviour
 
     static bool Pressed()
     {
-        var kb = Keyboard.current;
-        if (kb != null && (kb.zKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame)) return true;
+        if (MenuInput.Confirm()) return true; // キーボードとコントローラー（A／START）。2026-11-20
         var mouse = Mouse.current;
         return mouse != null && mouse.leftButton.wasPressedThisFrame;
     }

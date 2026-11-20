@@ -73,6 +73,7 @@ public class SpawnerWindow : MonoBehaviour, ISummonedBy
         if (_summoner != null) _summoner.Register(go);
         _spawned.Add(go);
         _flashUntil = Time.time + 0.15f;
+        GameAudio.Event("gm_browser_spawner_spawn");
         Vfx.SmokeSmall(at + Vector2.up * 0.3f);
     }
 }

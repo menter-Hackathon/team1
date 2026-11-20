@@ -102,6 +102,7 @@ public class BossSelectDebug : MonoBehaviour
 
     void OnGUI()
     {
+        if(RunTitleMenu.IsBootPlaying) return;
         GameSession session = GameSession.Instance;
         if (session == null || session.IsTransitioning || !IsTitle(SceneManager.GetActiveScene().name)) return;
         GUI.depth = 0; // ほかの画面より手前

@@ -21,6 +21,7 @@ public class BombSiteWindow : MonoBehaviour
     Vector2 _size;
     float _start;
     bool _exploded;
+    bool _fastStarted;
     float _explodedAt;
 
     public static BombSiteWindow Spawn(AttackRunner owner, AttackData data, Vector2 center)
@@ -77,6 +78,11 @@ public class BombSiteWindow : MonoBehaviour
                 ? _data.BombSlowPortion * (age / slow)
                 : Mathf.Lerp(_data.BombSlowPortion, 1f, Mathf.Clamp01((age - slow) / _data.BombFillTime));
             SetBar(p, p >= 1f ? BarDone : BarFill);
+            if (age >= slow && !_fastStarted)
+            {
+                _fastStarted = true;
+                GameAudio.Event("gm_browser_bomb_load"); // 残りを一気にためる（このあと爆発）
+            }
             if (age >= slow + _data.BombFillTime) Explode();
             return;
         }
@@ -115,6 +121,7 @@ public class BombSiteWindow : MonoBehaviour
         _blast.enabled = true;
         _blastBaseScale = _blast.transform.localScale;
         _hitbox.Activate();
+        GameAudio.Event("gm_browser_bomb_blast");
         Vfx.Shards(transform.position);
         Vfx.SmokeSmall(transform.position);
     }

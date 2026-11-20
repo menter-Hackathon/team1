@@ -363,7 +363,7 @@ public static class MacDesktopGui
     }
 
     /// <returns>クリックした項目。0はFinder、1はゲーム、2以降はアプリ。なしは-1。</returns>
-    public static int Dock(float width,float height,IReadOnlyList<DockItem> apps,int active=1)
+    public static int Dock(float width,float height,IReadOnlyList<DockItem> apps,int active=1,float launchProgress=-1)
     {
         int count=2+(apps!=null?apps.Count:0);
         float w=count*42f+12f;
@@ -375,6 +375,7 @@ public static class MacDesktopGui
             Rect r=new Rect(dock.x+9+i*42,dock.y+6,30,30);
             bool hover=r.Contains(Event.current.mousePosition)&&GUI.enabled;
             Rect icon=r; if(hover) icon.y-=3;
+            if(i==1&&launchProgress>=0) icon.y-=Mathf.Abs(Mathf.Sin(launchProgress*Mathf.PI*2))*7;
             string name=i==0?"Finder":i==1?"Virus Desktop":apps[i-2].Name;
             if(i==0) FinderIcon(icon);
             else if(i==1)

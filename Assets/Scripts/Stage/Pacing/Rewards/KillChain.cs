@@ -318,7 +318,7 @@ public class KillChain : MonoBehaviour
         if (!h.IsDead) _sweepVictims.Remove(h);
     }
 
-    /// <summary>一掃の見た目：白い光・白い輪とアプリの色の輪・アプリのアイコンが頭の上にはねる・アプリの色のかけら・隅の通知</summary>
+    /// <summary>一掃の見た目：白い光・白い輪とアプリの色の輪・アプリの色のかけら・隅の通知</summary>
     void SweepFx(Vector2 c, SkinId skin, AppTheme theme, Sprite icon)
     {
         Color main = FxKit.MainOf(theme, RuntimeSprites.Hex("8AB4F8"));
@@ -328,14 +328,6 @@ public class KillChain : MonoBehaviour
         RewardKit.BigRing(c, SweepRadius, SweepExpand, Color.white);
         RewardKit.BigRing(c, SweepRadius * 0.75f, SweepExpand + 0.05f, main, 0.05f);
         FxKit.Ring(c, 2.5f, 0.15f, Color.white);
-
-        // アプリのアイコン（無ければアプリの色の四角）が、頭の上にはねる
-        Vector2 head = _player != null ? FxKit.HeadOf(_player.gameObject, c) + Vector2.up * 0.9f : c + Vector2.up * 1.4f;
-        head = FxKit.ClampToView(head, 1.2f);
-        FxAnim a = icon != null
-            ? FxAnim.Sprite(icon, head, FxKit.OrderRing + 1, 0.7f, Color.white, RewardKit.IconScale(icon, 20f), "SweepIcon")
-            : FxAnim.Sprite(FxArt.Square(14), head, FxKit.OrderRing + 1, 0.7f, main, 1f, "SweepIcon");
-        a.Pop().Rise(0.5f).FadeFrom(0.6f);
 
         // アプリの色のかけらが、まわりへ飛ぶ
         Sprite[] bits = { FxArt.Square(3), FxArt.Square(2), FxArt.Square(3) };

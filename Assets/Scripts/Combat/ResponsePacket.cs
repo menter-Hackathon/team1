@@ -20,6 +20,7 @@ public class ResponsePacket : MonoBehaviour
 
     public static ResponsePacket Spawn(AttackRunner owner, AttackData data, Vector2 from)
     {
+        GameAudio.Event("gm_browser_packet_response");
         var go = new GameObject("ResponsePacket");
         go.transform.position = from;
         var r = go.AddComponent<ResponsePacket>();
