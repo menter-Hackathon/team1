@@ -25,6 +25,9 @@ public class ZakoWorm : MonoBehaviour
     public const float Speed = 2.5f;              // 這う速さ（マス/秒。GameBuffs.ZakoSpeed を掛ける）
     public const float HighLine = 3.3f;           // 床からこれより上は「手が届かない」（doc は 3.0。下の段の足場の上が 3.0〜3.05 なので少し上げた）
     public const float HighSeconds = 5f;          // つづけてこの秒数、上にいたら落ちる
+    public const float WindowHighSeconds = 9f;    // 同じ（ウィンドウのレール。高い所の道のりが最大 7.0秒。docs/window-stage-and-pickup-design.md 7-2）
+    public const float WindowCover = 0.3f;        // 重なったウィンドウ：手前のウィンドウの四角をこれだけふくらませた中を「かくれる」とする
+    public const float PingPongSeconds = 1f;      // 同じ：この秒数の間に 2回 折り返したら、予告して落ちる
     public const float WarnSeconds = 0.6f;        // 落ちる前の予告（止まってふるえる）
     public const float CeilingDropRange = 0.8f;   // 天井にいて、プレイヤーとの横の差がこれ以内なら落ちる
     const float LandDelay = 0.3f;                 // 落ち始めてから、着地を見るまで
@@ -64,6 +67,8 @@ public class ZakoWorm : MonoBehaviour
     bool _roomReady, _roomTried;
 
     AppPlatform _platform;
+    StageWindow _window;          // 足場がウィンドウのステージのウィンドウなら、そのウィンドウ（7-2）
+    float _lastCoverTurn = -9f;
     SpriteRenderer _platformArt;
     Rigidbody2D _platformBody;
     Collider2D _topCol;
@@ -94,6 +99,8 @@ public class ZakoWorm : MonoBehaviour
     public Rail RailKind => _mode == Mode.Rail || _mode == Mode.Warn ? _rail : Rail.None;
     /// <summary>乗っている面の法線（レールに乗っていなければ上）</summary>
     public Vector2 SurfaceNormal => RailKind != Rail.None ? _normal : Vector2.up;
+    /// <summary>今乗っている足場（足場レールでなければ null）</summary>
+    public AppPlatform RailPlatform => RailKind == Rail.Platform ? _platform : null;
     /// <summary>落ちている途中か</summary>
     public bool IsFalling => _mode == Mode.Falling;
     /// <summary>落ちる前の予告の間か</summary>
@@ -316,6 +323,19 @@ public class ZakoWorm : MonoBehaviour
                     _dir = -_dir;
                 }
             }
+            // 重なったウィンドウ（docs/window-stage-and-pickup-design.md 7-2）：手前のウィンドウの裏へ入る手前で折り返す（いつも見える所を這う）。
+            // 前の点もかくれていたら（巣から裏で出たなど）、そのまま進んで出る
+            if (_window != null)
+            {
+                if (WindowStage.Hidden(_window, PointAt(r, _s, true, out _, out _, out _), -WindowCover)
+                    && !WindowStage.Hidden(_window, PointAt(r, before, true, out _, out _, out _), -WindowCover))
+                {
+                    _s = before;
+                    _dir = -_dir;
+                    if (Time.time - _lastCoverTurn <= PingPongSeconds && _mode == Mode.Rail && _oneScreen) StartWarn(); // 短い所で行ったり来たりしない
+                    _lastCoverTurn = Time.time;
+                }
+            }
         }
         Vector2 p = PointAt(r, _s, _rail != Rail.Room, out _edge, out _tangent, out _normal);
         _body.Warp(p); // 足場に付いている間は位置を直接書く（補間なし。動く足場とずれない）
@@ -333,7 +353,7 @@ public class ZakoWorm : MonoBehaviour
         bool onFloor = _rail == Rail.Room && _edge == 0;
         if (last && onFloor) _floorOnly = true;
 
-        if (_highTime >= HighSeconds) StartWarn();
+        if (_highTime >= (_window != null ? WindowHighSeconds : HighSeconds)) StartWarn();
         else if (_rail == Rail.Room && _edge == 2 && PlayerBelow()) StartWarn();
         else if (last && !onFloor) StartWarn();
         else if (onFloor && Time.time >= _nextHoleCheck)
@@ -457,6 +477,7 @@ public class ZakoWorm : MonoBehaviour
         if (b.size.x > TopOnlyMaxWidth || b.size.x < 0.6f) return false; // 広い床は歩く雑魚のまま
         _topCol = hit.collider;
         _platform = null;
+        _window = null;
         _platformArt = null;
         _rail = Rail.TopOnly;
         _floorOnly = false;
@@ -479,6 +500,8 @@ public class ZakoWorm : MonoBehaviour
         SpriteRenderer sr = art != null ? art.GetComponent<SpriteRenderer>() : null;
         if (sr == null) return false;
         _platform = platform;
+        _window = WindowStage.Of(platform);
+        _lastCoverTurn = -9f;
         _platformArt = sr;
         _platformBody = platform.GetComponent<Rigidbody2D>();
         _topCol = null;
@@ -500,6 +523,7 @@ public class ZakoWorm : MonoBehaviour
     {
         if (!EnsureRoom()) return false;
         _platform = null;
+        _window = null;
         _platformArt = null;
         _topCol = null;
         _rail = Rail.Room;
@@ -527,6 +551,7 @@ public class ZakoWorm : MonoBehaviour
     {
         _rail = Rail.None;
         _platform = null;
+        _window = null;
         _platformArt = null;
         _platformBody = null;
         _topCol = null;

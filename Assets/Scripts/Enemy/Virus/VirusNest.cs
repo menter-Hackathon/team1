@@ -383,6 +383,8 @@ public class VirusNests : MonoBehaviour
     public const float UnderMinWidth = 2.5f;    // 下の面に付ける足場の幅
     public const float UnderMinHeight = 1.8f;   // 下の面の高さ（床から。ジャンプで届く）
     public const float UnderMaxHeight = 3.6f;
+    public const float WindowCover = 0.3f;      // 重なったウィンドウ：手前のウィンドウの四角をこれだけふくらませて、かくれる所を切る（docs/window-stage-and-pickup-design.md 7-2）
+    public const float WindowSpanMin = 2.0f;    // 同じ：見えている区間がこれより短ければ付けない
     const float RetrySeconds = 0.5f;
     const int FloorTries = 12;
 
@@ -653,6 +655,17 @@ public class VirusNests : MonoBehaviour
             float under = b.min.y - floor;
             if (b.size.x < UnderMinWidth || under < UnderMinHeight || under > UnderMaxHeight) continue;
             var spot = new Vector2(b.center.x, b.min.y);
+            StageWindow win = WindowStage.Of(p);
+            if (win != null)
+            {
+                // 重なったウィンドウ（docs/window-stage-and-pickup-design.md 7-2）：下の端の、手前のウィンドウ（0.3 ふくらませる）にかくれていない
+                // いちばん長い区間（2.0マス以上）のまん中
+                if (!WindowStage.LongestVisibleBottom(win, WindowCover, out float x0, out float x1) || x1 - x0 < WindowSpanMin) continue;
+                spot = new Vector2((x0 + x1) * 0.5f, b.min.y);
+                if (!SpotOk(spot)) continue;
+                found.Add((p, spot));
+                continue;
+            }
             if (!SpotOk(spot)) continue;
             found.Add((p, spot));
         }

@@ -30,6 +30,14 @@ public class StageDirector : MonoBehaviour
     GameSession _session;
     Health _playerHealth;
     bool _ending;
+    bool _usesDrop;     // このステージはボスがスキルを落とす（Awake で 1回だけ決める。2026-11-20）
+    bool _dropSpawned;
+
+    /// <summary>
+    /// ボスがスキルを落とすか（docs/window-stage-and-pickup-design.md 2-1）。落とさない：報酬が無い・ラスボス・RewardDrop.Enabled == false。
+    /// そのときは今までどおり、正常化の瞬間に手に入って少し待って次へ
+    /// </summary>
+    bool UsesDrop => RewardDrop.Enabled && Plan != null && !Plan.IsFinal && Plan.Profile != null && Plan.Profile.Reward != null && _player != null;
 
     /// <summary>このステージの計画</summary>
     public StagePlan Plan { get; private set; }
@@ -72,6 +80,9 @@ public class StageDirector : MonoBehaviour
         Boss.name = Plan.App.BossPrefab.name;
         Boss.gameObject.SetActive(false); // プレハブは非表示で保存してあるが、念のため
         Boss.SetProfile(Plan.Profile);
+        // スキルを落とすステージでは、正常化の瞬間に直接入れない（拾って入れ替えの画面で決める。2026-11-20）
+        _usesDrop = UsesDrop;
+        Boss.AutoAcquireReward = !_usesDrop;
         // 代用ボス・ラスボス・アイコンから見た目を作る行（Office・Unity・Steam。2026-11-19）：着ているウィンドウを、そのアプリのアイコンから作ったものにする
         if (Plan.Visual != null)
         {
@@ -124,7 +135,17 @@ public class StageDirector : MonoBehaviour
 
     void OnBossNormalized(SkillDefinition reward)
     {
-        if (_ending) return;
+        if (_ending || _dropSpawned) return;
+        if (_usesDrop && reward != null)
+        {
+            // スキルを落とす：拾って入れ替えの画面で決めたら次へ。それまで _ending は立てない（拾う前に倒れたら、今までどおりゲームオーバー）
+            _dropSpawned = true;
+            RewardDrop drop = null;
+            try { drop = RewardDrop.Spawn(Boss, _player, reward, _session.Run.SourceIcon(reward), Plan.Theme, () => FinishWithReward(reward)); }
+            catch (System.Exception e) { Debug.LogException(e, this); }
+            if (drop != null) return;
+            SkillSwapScreen.ApplyFallback(_session.Run.Loadout, reward); // 落とせなかった：空いた枠に入れて、今までどおり次へ
+        }
         _ending = true;
         StartCoroutine(CompleteAfterDelay(reward));
     }
@@ -135,9 +156,18 @@ public class StageDirector : MonoBehaviour
         _session.CompleteStage(reward);
     }
 
+    // 入れ替えの画面を閉じた：図鑑・リザルトには、入れても入れなくてもボスの報酬をそのまま渡す
+    void FinishWithReward(SkillDefinition reward)
+    {
+        if (_ending) return;
+        _ending = true;
+        _session.CompleteStage(reward);
+    }
+
     void OnPlayerDied()
     {
         if (_ending) return;
+        if (_dropSpawned) RewardDrop.Cancel(); // 落ちたスキルを消す（開いている画面も閉じる）
         _ending = true;
         _session.ShowGameOver();
     }
