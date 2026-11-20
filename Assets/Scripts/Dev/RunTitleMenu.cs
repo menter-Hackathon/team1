@@ -28,6 +28,7 @@ public class RunTitleMenu : MonoBehaviour
     MacDesktopFiles _files;
     MacDesktopBoot _boot;
     bool _authBusy,_touchIdAvailable,_autoAuthStarted;
+    bool _bgmStarted; // タイトルの曲を流し始めたか（起動の演出があるときは、ゲームのアプリが開いてから）
     string _touchIdStatus;
     static bool _bootPlayed;
     public static bool IsBootPlaying { get; private set; }
@@ -41,10 +42,13 @@ public class RunTitleMenu : MonoBehaviour
 
     void Start()
     {
-        GameAudio.PlayBgm("bgm_title"); // タイトルの曲（2026-11-20：画面を Mac 仕様にしたときに消えていたので戻した）
         MacDesktopWallpaper.Ensure(this);
         _boot=new MacDesktopBoot(Time.unscaledTime,!_bootPlayed);
         _bootPlayed=true; IsBootPlaying=_boot.IsPlaying;
+        // タイトルの曲：起動の演出（ロック画面→デスクトップ）の間は鳴らさず、Dock からゲームのアプリを開いたところから流す。
+        // ランから戻ったとき（演出なし）は、今までどおりすぐ流す（2026-11-20 まさぴ〜）
+        if(_boot.IsPlaying) GameAudio.StopBgm(0.3f);
+        else StartTitleBgm();
         var touchId=MacTouchId.CheckAvailability();
         _touchIdAvailable=touchId==MacTouchId.Availability.Ready;
         _touchIdStatus=touchId==MacTouchId.Availability.NotEnrolled?"Touch IDが未設定です":
@@ -69,6 +73,28 @@ public class RunTitleMenu : MonoBehaviour
 
     void Update()
     {
+        // 起動の演出：ロック画面（Touch ID か Enter で解除）→ デスクトップで待つ → Dock のゲームを開く（2026-11-20）。
+        // 9ac66e42 にあった処理がマージで消えてロック画面から進めなかったので戻し、デスクトップで待つようにした
+        if(_boot!=null&&_boot.IsPlaying)
+        {
+            float now=Time.unscaledTime;
+            _boot.Tick(now);
+            IsBootPlaying=_boot.IsPlaying;
+            if(_boot.ShowApp) StartTitleBgm(); // 窓が開き始めたら曲を流す
+            var kb=Keyboard.current;
+            if(_boot.Current==MacDesktopBoot.Step.Locked)
+            {
+                if(MenuInput.Confirm(false)) { CompleteDesktopUnlock(); return; } // Enter・Z・A・START
+                if(_authBusy&&kb!=null&&kb.escapeKey.wasPressedThisFrame) { MacTouchId.Cancel(); return; }
+                if(!_autoAuthStarted&&_touchIdAvailable&&_boot.CanUnlock(now))
+                {
+                    _autoAuthStarted=true;
+                    AuthenticateTouchId();
+                }
+            }
+            else if(_boot.Current==MacDesktopBoot.Step.Desktop&&MenuInput.Confirm()) LaunchGameApp(); // マウスが無くても開ける
+            return;
+        }
         if (PauseMenu.BlocksInput) return; // 設定（歯車）を開いている間は、タイトルを操作しない（2026-11-20）
         if (!_window.IsVisible || (_dex != null && _dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || AchievementsBlockInput || Session.IsTransitioning) return;
         if(MacDesktopGui.WindowShortcuts(_window)) return;
@@ -97,6 +123,19 @@ public class RunTitleMenu : MonoBehaviour
     }
 
     int ModeCount => MacScreenTime.CanScan ? 3 : 2;
+
+    /// <summary>デスクトップの Dock から、このゲームのアプリを開く（アイコンが跳ねてから窓が開く）</summary>
+    void LaunchGameApp()
+    {
+        if(_boot!=null&&_boot.Launch(Time.unscaledTime)) GameAudio.Event("ui_decide");
+    }
+
+    void StartTitleBgm()
+    {
+        if(_bgmStarted) return;
+        _bgmStarted=true;
+        GameAudio.PlayBgm("bgm_title"); // タイトルの曲（2026-11-20：画面を Mac 仕様にしたときに消えていたので戻した）
+    }
 
     void CompleteDesktopUnlock()
     {
@@ -281,17 +320,23 @@ public class RunTitleMenu : MonoBehaviour
         if(_boot.ShowDesktop)
         {
             // 起動途中にクリックが背後のメニューへ届かないようにする。
+            // デスクトップで待つ間だけ、Dock のクリックを通す（ゲームのアイコンだけが反応する。2026-11-20）
+            bool waiting=_boot.Current==MacDesktopBoot.Step.Desktop;
             EventType type=Event.current.type;
-            if(type==EventType.MouseDown||type==EventType.MouseUp||type==EventType.MouseDrag||type==EventType.MouseMove||
-                type==EventType.ScrollWheel||type==EventType.KeyDown)
-                Event.current.Use();
-            MacDesktopGui.Folders(width);
-            MacDesktopGui.MenuBar(width,"Finder");
-            MacDesktopGui.Dock(width,height,_dockApps,1,_boot.BounceProgress(now));
+            bool mouse=type==EventType.MouseDown||type==EventType.MouseUp||type==EventType.MouseDrag||type==EventType.MouseMove||
+                type==EventType.ScrollWheel;
+            if((mouse&&!waiting)||type==EventType.KeyDown) Event.current.Use();
+            MacDesktopGui.Folders(width); // フォルダ・ほかの Dock のアイコンは、ゲームのアプリを開くまで押しても何もしない
+            MacDesktopGui.MenuBar(width,_boot.ShowApp?"Virus Desktop":"Finder");
+            bool launched=_boot.Current>=MacDesktopBoot.Step.Bouncing;
+            float hop=_boot.Current==MacDesktopBoot.Step.Bouncing?_boot.BounceProgress(now):_boot.IdleHop(now);
+            int dock=MacDesktopGui.Dock(width,height,_dockApps,launched?1:-1,hop); // 起動するまで、ゲームの下の点は出さない
+            if(waiting&&dock==1) LaunchGameApp();
+            if(waiting&&mouse&&Event.current.type!=EventType.Used) Event.current.Use();
             if(_boot.ShowApp)
             {
                 float t=MacDesktopBoot.Ease(_boot.LaunchProgress(now));
-                Rect target=MacDesktopGui.CenteredWindow(width,height,420,268);
+                Rect target=MacDesktopGui.CenteredWindow(width,height,420,298); // 本番のメニューの窓と同じ高さ（じっせきの分。窓が跳ねないように）
                 float dockWidth=(2+_dockApps.Count)*42+12;
                 Vector2 origin=new Vector2((width-dockWidth)*0.5f+26,height-65);
                 Vector2 position=Vector2.Lerp(origin,target.position,t);
