@@ -79,10 +79,15 @@ public class DesktopScreen : MonoBehaviour
         _cursorShown = false;
         IsDone = false;
         _visible = true;
-        MacDesktopWallpaper.Ensure(this,()=>_visible&&_run!=null);
+        MacDesktopWallpaper.Ensure(this,()=>_visible&&_run!=null,true); // 2026-11-20：ステージの上に出すので、壁紙をステージの絵より手前に（後ろのステージが透けていた）
         _sounded = 0;
-        GameAudio.PlayBgm("bgm_desktop");
+        if (CureActive) DesktopCure.Begin(); // 2026-11-20：最後のクリアの後は、ウイルスがいなくなった演出（曲は鳴らさない）
+        else GameAudio.PlayBgm("bgm_desktop");
+        if (_target >= 0) MacDesktopInfection.Cured = false; // 2026-11-20：次のステージへ入る画面が出たら、また感染
     }
+
+    // 2026-11-20：最後のクリアの後の絵を DesktopCure に任せるか（docs/infection-panic-and-cure-design.md 7-3）
+    bool CureActive => DesktopCure.Enabled && _target < 0 && _restored >= 0;
 
     int _sounded; // 鳴らした音（ビット）。早送りで時刻が飛んでも、1回ずつ鳴らす
 
@@ -90,7 +95,7 @@ public class DesktopScreen : MonoBehaviour
     void PlaySounds()
     {
         float t = T;
-        if (_restored >= 0 && t >= RestoreAt) SoundOnce(1, "desktop_cure");
+        if (_restored >= 0 && t >= RestoreAt && !CureActive) SoundOnce(1, "desktop_cure"); // 2026-11-20：最後は DesktopCure が C=1.2 に鳴らす
         if (TargetIsFinal && t >= FinalAppearAt) SoundOnce(2, "desktop_glitch");
         if (_target >= 0 && _openAt < 0f && t >= ClickAt) SoundOnce(4, "desktop_click");
         if (_openAt >= 0f) SoundOnce(8, "desktop_open");
@@ -134,7 +139,7 @@ public class DesktopScreen : MonoBehaviour
         if (_openAt < 0f)
         {
             if (_target >= 0 && T >= ClickAt + BounceTime) _openAt = Time.unscaledTime;
-            else if (_target < 0 && T >= (_restored >= 0 ? RestoreAt : 0f) + FinalHold) IsDone = true;
+            else if (_target < 0 && T >= (_restored >= 0 ? RestoreAt : 0f) + (CureActive ? DesktopCure.Hold : FinalHold)) IsDone = true; // 2026-11-20：最後は 6.1 秒
         }
         else if (Time.unscaledTime - _openAt >= OpenTime)
         {
@@ -152,6 +157,7 @@ public class DesktopScreen : MonoBehaviour
         }
         else if (T >= InputGuard && Pressed()) Skip();
         PlaySounds();
+        if (CureActive) DesktopCure.Tick(T); // 2026-11-20：ウイルスがいなくなった演出の音
     }
 
     // 自分でクリックするとき（2-4）：元に戻る所までは早送りだけ。待ちに入ったら、次のアプリのクリック、または Z などで矢印を動かす
@@ -229,6 +235,7 @@ public class DesktopScreen : MonoBehaviour
     {
         if (!_visible || _run == null) return;
         GUI.depth = -500; // ステージの表示・ゲームオーバーより手前、暗転（-1000）より奥
+        if (CureActive) { DesktopCure.Draw(T, _run, _restored); return; } // 2026-11-20：最後のクリアの後（Begin・End も DesktopCure がやる）
         PixelGui.Begin(false);
         float W = PixelGui.Width, H = PixelGui.Height, t = T;
         // 感染の数と割合は、Dock に出ているボスのアプリで数える（ラスボスが現れる前は、きれいになったデスクトップに見える）

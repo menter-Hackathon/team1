@@ -80,7 +80,7 @@ public class RunTitleMenu : MonoBehaviour
             float now=Time.unscaledTime;
             _boot.Tick(now);
             IsBootPlaying=_boot.IsPlaying;
-            MacDesktopInfection.Tick(_boot.InfectionTime(now),_dockApps.Count); // 感染の SE（2026-11-20）
+            MacDesktopInfection.Tick(_boot.InfectionTime(now),_dockApps.Count,_boot.Current>=MacDesktopBoot.Step.Bouncing); // 感染の音（2026-11-20）
             if(_boot.ShowApp) StartTitleBgm(); // 窓が開き始めたら曲を流す
             var kb=Keyboard.current;
             if(_boot.Current==MacDesktopBoot.Step.Locked)
@@ -336,9 +336,12 @@ public class RunTitleMenu : MonoBehaviour
                 type==EventType.ScrollWheel;
             if((mouse&&!waiting)||type==EventType.KeyDown) Event.current.Use();
             float infection=_boot.InfectionTime(now); // 解除のあとの感染（MacDesktopInfection。2026-11-20）
+            Matrix4x4 keep=GUI.matrix; Vector2 shake=MacDesktopInfection.Shake(infection); // 感染のゆれ（メニューバーは自分で戻して描くのでゆれない）
+            GUI.matrix=keep*Matrix4x4.Translate(new Vector3(shake.x,shake.y,0));
             MacDesktopInfection.DrawBack(infection,width,height,_dockApps.Count);
             MacDesktopGui.Folders(width); // フォルダ・ほかの Dock のアイコンは、ゲームのアプリを開くまで押しても何もしない
             MacDesktopGui.MenuBar(width,_boot.ShowApp?"Virus Desktop":"Finder",MacDesktopInfection.Status(infection,_dockApps.Count));
+            MacDesktopInfection.DrawMenuBarOverlay(infection,width); // 電池と時計がおかしくなる
             bool launched=_boot.Current>=MacDesktopBoot.Step.Bouncing;
             float hop=_boot.Current==MacDesktopBoot.Step.Bouncing?_boot.BounceProgress(now):_boot.IdleHop(now);
             int dock=MacDesktopGui.Dock(width,height,_dockApps,launched?1:-1,hop); // 起動するまで、ゲームの下の点は出さない
@@ -364,6 +367,7 @@ public class RunTitleMenu : MonoBehaviour
                 }
                 finally { GUI.matrix=matrix; }
             }
+            GUI.matrix=keep; // ゆれを戻す
         }
         _boot.DrawLock(now,_authBusy,_touchIdAvailable,_touchIdStatus);
     }

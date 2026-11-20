@@ -9,12 +9,16 @@ public sealed class MacDesktopWallpaper : MonoBehaviour
     Canvas _canvas;
     RawImage _image;
 
-    public static MacDesktopWallpaper Ensure(Behaviour owner,System.Func<bool> visible=null)
+    bool _overWorld;
+
+    /// <param name="overWorld">true＝ステージの絵（スプライト）より手前に出す（ステージの上に出すデスクトップ用。2026-11-20）</param>
+    public static MacDesktopWallpaper Ensure(Behaviour owner,System.Func<bool> visible=null,bool overWorld=false)
     {
         var wallpaper=owner.GetComponent<MacDesktopWallpaper>();
         if(wallpaper==null) wallpaper=owner.gameObject.AddComponent<MacDesktopWallpaper>();
         wallpaper._owner=owner;
         wallpaper._visible=visible;
+        wallpaper._overWorld=overWorld;
         wallpaper.Refresh();
         return wallpaper;
     }
@@ -47,6 +51,7 @@ public sealed class MacDesktopWallpaper : MonoBehaviour
             _image.maskable=false;
         }
         _canvas.enabled=true;
+        _canvas.sortingOrder=_overWorld?short.MaxValue:short.MinValue; // ステージの上では、スプライトより手前（OnGUI よりは奥）
         _canvas.worldCamera=camera;
         _canvas.targetDisplay=camera.targetDisplay;
         _canvas.planeDistance=camera.nearClipPlane+0.01f;
