@@ -58,8 +58,18 @@ public static class StagePaceTable
     public const int EventCap = 2;
     /// <summary>③ 出来事が終わらないときに、こちらで止める秒数（出来事は 8〜12秒で自分で終わる）</summary>
     public const float EventMaxSeconds = 20f;
-    /// <summary>④ ひと休みの秒数（③ が終わってから）</summary>
-    public const float RestSeconds = 3f;
+    /// <summary>
+    /// 2026-11-20【仮】③ の雑魚を倒し切ったのに出来事だけが続くとき、雑魚 0体のままこの秒数たったら、出来事を終わらせて ④ へ
+    /// （まさぴ〜：倒し終わったあとに間がある。早く倒すと、危ない物だけの時間が 5〜11秒あった）
+    /// </summary>
+    public const float EventTailGrace = 1f;
+    /// <summary>2026-11-20【仮】ただし、出来事が始まってからこの秒数より前には終わらせない（出来事の中身を見せる）。ラスボス（sudo reboot）は終わらせない</summary>
+    public const float EventMinSeconds = 7f;
+    /// <summary>
+    /// ④ ひと休みの秒数（③ が終わってから。ウィンドウ移動は部屋3に入ってから）。
+    /// 2026-11-20：3 → 1.5（まさぴ〜：雑魚を倒し終わったあとに間がある。雑魚 0体のまま 3秒＋⑤の 0.6秒 待っていた）
+    /// </summary>
+    public const float RestSeconds = 1.5f;
     /// <summary>⑤ に入ってから1つ目の群れまで</summary>
     public const float ClimaxLeadIn = 0.6f;
     /// <summary>⑤ 群れの1体ずつの間・群れと群れの間・同時の数</summary>

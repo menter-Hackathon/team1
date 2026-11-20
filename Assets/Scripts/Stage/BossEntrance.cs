@@ -31,6 +31,16 @@ public class BossEntrance : MonoBehaviour
     /// <summary>【仮】登場の演出を打ち切る秒数（演出が止まっても、ボスが戦えないままにならないように）</summary>
     public const float CustomAppearLimit = 4f;
 
+    /// <summary>
+    /// 【仮】2026-11-20：雑魚を全員倒してから（ボス部屋に入ってから）ボスが出てくるまでの秒数の上限（ゲームの時間）。
+    /// シーンの _delay（3つのステージのシーンは 1秒）より長ければ、こちらを使う（まさぴ〜：雑魚を倒し終わったあとに間がある）。
+    /// 1画面のステージは、最後の1体のスロー（StagePaceTable.LastSlowSeconds。実時間 0.25秒）がこの前に入るので、実時間ではおよそ 0.25＋この秒数
+    /// </summary>
+    public const float MaxDelay = 0.35f;
+
+    /// <summary>ボスが出てくるまでの秒数（シーンの _delay と MaxDelay の短い方）</summary>
+    public float Delay => Mathf.Min(_delay, MaxDelay);
+
     public BossController Boss => _boss;
     /// <summary>雑魚ではなく、ボス部屋の入口で出てくるか（横スクロール・ウィンドウ移動）</summary>
     public bool WaitsForGate => _waitForGate;
@@ -84,7 +94,8 @@ public class BossEntrance : MonoBehaviour
 
     IEnumerator Appear()
     {
-        if (_delay > 0f) yield return new WaitForSeconds(_delay);
+        float delay = Delay; // 2026-11-20：シーンの 1秒ではなく、MaxDelay まで（最後の1体のあとの間を詰める）
+        if (delay > 0f) yield return new WaitForSeconds(delay);
 
         Appearing?.Invoke(_boss);
         GameAudio.BossAppearing(_boss);

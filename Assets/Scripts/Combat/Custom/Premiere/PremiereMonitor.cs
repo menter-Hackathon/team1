@@ -26,8 +26,8 @@ public class PremiereMonitor : MonoBehaviour
     const float FollowGrace = 0.2f;
     const float VirusSceneSeconds = 1.6f; // 場面3 の長さ（ボス戦の間は、この長さでゆれ続ける）
     const float GlintTime = 0.35f;
-    const float RewindOnBoss = 0.6f;     // ボスの登場で巻き戻す秒
-    const float ApproachUntil = 1.0f;    // 2026-11-20：ボスの登場から、ボスが表示されるまで（BossEntrance の待ち 1秒）
+    const float RewindOnBoss = 0.15f;    // ボスの登場で巻き戻す秒（2026-11-20：0.6 → 0.15。ボスが出るまでの待ちを 0.35秒に詰めたので、その中に収める）
+    const float ApproachUntil = BossEntrance.MaxDelay; // 2026-11-20：ボスの登場から、ボスが表示されるまで（BossEntrance の待ち。1秒 → 0.35秒）
     const int OrderVideo = -60, OrderVeil = -59, OrderScrub = -58, OrderTick = -57, OrderKnob = -56, OrderIcon = -55;
 
     // ───────── 色（4-3。黒・赤・プレイヤーの黄・真っ白は使わない） ─────────
