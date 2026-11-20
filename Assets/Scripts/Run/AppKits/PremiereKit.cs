@@ -82,6 +82,9 @@ public class PremiereRenderEvent : PaceEvent
 
     protected override void OnEnd(bool byBoss)
     {
-        if (PremiereTimelineStage.Current != null) PremiereTimelineStage.Current.EndExport(!byBoss && _clock >= Seconds - 0.05f);
+        // 2026-11-20【仮】雑魚を倒し切って出来事が先に終わったとき（StagePacer.CuttingEventTail）も、書き出しは「完了」で閉じる（緑のチェック・Export complete）。
+        // シーンを出るとき（ライフ0・リトライ）は今までどおり、満タンでなければ黙って消す
+        bool cut = Pacer != null && Pacer.CuttingEventTail;
+        if (PremiereTimelineStage.Current != null) PremiereTimelineStage.Current.EndExport(!byBoss && (cut || _clock >= Seconds - 0.05f));
     }
 }

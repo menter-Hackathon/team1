@@ -74,7 +74,7 @@ public static class AppStagePlatforms
             }
             string label = AppBackgrounds.LabelFor(plan);
             if (string.IsNullOrEmpty(label)) return 0;
-            var asset = Resources.Load<TextAsset>($"{AppBackgrounds.Folder}/Stage_{label}");
+            var asset = Resources.Load<TextAsset>($"{AppBackgrounds.Folder}/Stage_{PremiereEditScreen.ResourceLabel(label)}"); // 2026-11-20：Premiere Pro の切り戻し
             if (asset == null)
             {
                 if (Debug.isDebugBuild) Debug.Log($"[AppStagePlatforms] {label}：表が無いので、今までのフォルダの足場");

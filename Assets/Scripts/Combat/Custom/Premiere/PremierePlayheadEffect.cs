@@ -8,6 +8,9 @@ using UnityEngine;
 /// 炎・雷のアイコン、円の爆発、黄色の予告は出さない。
 /// 再生ヘッドの線には当たり判定を付けない。形態変化・正常化で消されたら、その場で全部消える（まだ出ていない柱は出ない）。
 /// 場に残る技ではない（技はこれが終わるまで待つ）
+/// 2026-11-20（docs/premiere-edit-screen-design.md 6-2）：編集画面全体（PremiereEditScreen）のときは、帯を下の段のルーラーの上に置き、帯の地・目盛り・時計は描かない
+/// （背景のルーラーがある）。マーカーの点線と帯は床から部屋の上の端まで。プログラムモニター（PremiereMonitor）に合図：出たら巻き戻す・
+/// マーカーの印をスクラブバーに・再生ヘッドに合わせて映像が流れる・着いたらモニターが白く飛ぶ。判定は今のまま
 /// </summary>
 public class PremierePlayheadEffect : CustomEffect
 {
@@ -20,6 +23,7 @@ public class PremierePlayheadEffect : CustomEffect
         public int LastPass = -1;                       // 最後に触れた往復の回（同じ回で2回起きない）
         public readonly List<float> Pending = new List<float>(); // 起きる時刻
         public float FlashUntil = float.NegativeInfinity;
+        public bool Ticked;                             // 2026-11-20：モニターのスクラブバーに印を出したか
     }
 
     // ───────── 見た目【仮】 ─────────
@@ -50,6 +54,7 @@ public class PremierePlayheadEffect : CustomEffect
     // 2026-11-18：スキルの見た目（docs/app-skill-visuals-design.md 12-2）【仮】
     Transform _timecode;                                     // 帯の右の端の時計（00:00:SS:FF）
     readonly SpriteRenderer[] _digits = new SpriteRenderer[8];
+    bool _editScreen;                                        // 2026-11-20：編集画面全体の割り付け（帯は背景のルーラーの上）
 
     /// <summary>走り終え、最後の白い柱まで出し終えたら true（このあとすぐ消える）</summary>
     public bool Finished { get; private set; }
@@ -63,7 +68,8 @@ public class PremierePlayheadEffect : CustomEffect
         e._config = config;
         e._arena = arena;
         e._start = Time.time;
-        e._stripTop = arena.yMax - config.TopInset;
+        e._editScreen = PremiereEditScreen.Active;
+        e._stripTop = PremiereEditScreen.RulerTop(arena, config.TopInset);
         e._stripBottom = e._stripTop - StripHeight;
         e._runStart = e._start + config.StripTime + config.PlaceTime;
         e._passTime = arena.width / Mathf.Max(0.1f, config.Speed);
@@ -77,6 +83,7 @@ public class PremierePlayheadEffect : CustomEffect
         ordered.Sort((a, b) => a.x.CompareTo(b.x));
         float interval = ordered.Count > 0 ? config.PlaceTime / ordered.Count : 0f;
         for (int i = 0; i < ordered.Count; i++) e.BuildMarker(ordered[i], e._start + config.StripTime + i * interval);
+        if (PremiereMonitor.Current != null) PremiereMonitor.Current.Rewind(Mathf.Max(0.1f, config.StripTime)); // 映像が頭へ巻き戻る
         e.Tick(Time.time);
         return e;
     }
@@ -97,6 +104,13 @@ public class PremierePlayheadEffect : CustomEffect
         {
             bool shown = now >= m.AppearAt;
             if (m.Root.gameObject.activeSelf != shown) m.Root.gameObject.SetActive(shown);
+            if (shown && !m.Ticked && PremiereMonitor.Current != null)
+            {
+                // 2026-11-20：スクラブバーの同じ所に赤い印（再生ヘッドが走り終えて、最後の柱が消えるまで）
+                m.Ticked = true;
+                PremiereMonitor monitor = PremiereMonitor.Current;
+                monitor.AddTick(monitor.KAt(m.Position.x), _runStart + _passTime * _passes + _config.TriggerDelay + HitTime() - now, PremiereTimelineArt.EnemyRed);
+            }
             if (m.Mark != null)
             {
                 bool flash = shown && now < m.FlashUntil && Mathf.FloorToInt(now / 0.05f) % 2 == 0;
@@ -128,6 +142,7 @@ public class PremierePlayheadEffect : CustomEffect
             CheckCross(_lastX, x, pass, now);
             _lastX = x;
             _head.position = new Vector3(x, _head.position.y, 0f);
+            if (PremiereMonitor.Current != null) PremiereMonitor.Current.Follow(PremiereMonitor.Current.KAt(x)); // 映像が線と一緒に流れる（帰りは逆に）
             // 尾は、進む向きの後ろ
             _tail.transform.localPosition = new Vector3((forward ? -1f : 1f) * (LineWidth + TailWidth) * 0.5f, _tail.transform.localPosition.y, 0f);
         }
@@ -180,12 +195,18 @@ public class PremierePlayheadEffect : CustomEffect
             m.LastPass = pass;
             m.Pending.Add(now + _config.TriggerDelay);
             m.FlashUntil = now + _config.TriggerDelay;
+            if (PremiereMonitor.Current != null)
+            {
+                PremiereMonitor.Current.Flash(_config.TriggerDelay + HitTime()); // モニターが先に白く飛ぶ
+                PremiereMonitor.Current.Beam(transform, new Vector2(mx, _stripBottom), _config.TriggerDelay, MarkerOrder); // B3：モニターからマーカーへ白い光の線
+            }
         }
     }
 
     /// <summary>帯の右の端の時計（白い数字 8つ。00:00:秒:コマ）</summary>
     void BuildTimecode()
     {
+        if (_editScreen) return; // 2026-11-20：モニターの下のタイムコードが代わり
         _timecode = PremiereArt.Child(transform, "Timecode", Vector2.zero);
         float w = (8 * 4 + 3 * 2 + 2) * PremiereArt.Pixel;
         _timecode.position = new Vector3(_arena.xMax - w * 0.5f - 3f * PremiereArt.Pixel, _stripTop - StripHeight * 0.5f, 0f);
@@ -247,6 +268,7 @@ public class PremierePlayheadEffect : CustomEffect
     {
         _strip = PremiereArt.Child(transform, "Timeline", Vector2.zero);
         _strip.position = new Vector3(_arena.xMin, _stripTop - StripHeight * 0.5f, 0f);
+        if (_editScreen) return; // 2026-11-20：帯の地・目盛りは描かない（背景のルーラーの上。地を描くと V2 のクリップに立つ人の頭が隠れる）
         float w = _arena.width;
         _stripParts.Add(PremiereArt.Box(_strip, new Vector2(w * 0.5f, 0f), new Vector2(w, StripHeight), PremiereArt.TimelineBg, StripOrder, "Bar"));
         // 目盛り：1マスごとに短い線、5マスごとに長い線（上の端から下へ）
@@ -280,7 +302,7 @@ public class PremierePlayheadEffect : CustomEffect
     {
         var m = new MarkerView { Position = position, AppearAt = appearAt };
         float rulerY = _stripBottom + 0.5f * PremiereArt.Pixel;
-        m.Root = PremiereTimelineArt.BuildMarker(transform, position.x, rulerY, _arena.yMin, _stripBottom, _config.DipWidth, MarkerOrder);
+        m.Root = PremiereTimelineArt.BuildMarker(transform, position.x, rulerY, _arena.yMin, PremiereEditScreen.MarkerTop(_arena, _stripBottom), _config.DipWidth, MarkerOrder);
         Transform mark = m.Root.Find("Marker");
         m.Mark = mark != null ? mark.GetComponent<SpriteRenderer>() : null;
         if (m.Mark != null) m.Mark.sortingOrder = TickOrder + 1; // 帯の上に見える

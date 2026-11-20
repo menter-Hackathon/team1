@@ -1,0 +1,20 @@
+{
+  "moves": [],
+  "events": [
+    {"key": "inf_breach",     "se": "se_inf_breach",  "vol": 0.9,  "pitch": 1.0},
+    {"key": "inf_skitter",    "se": "se_inf_skitter", "vol": 0.45, "pitch": 1.0},
+    {"key": "inf_spread",     "se": "se_inf_spread",  "vol": 0.8,  "pitch": 1.0},
+    {"key": "inf_heart",      "se": "se_inf_heart",   "vol": 0.8,  "pitch": 1.0},
+    {"key": "inf_heart_soft", "se": "se_inf_heart",   "vol": 0.4,  "pitch": 1.0},
+    {"key": "inf_popup",      "se": "se_inf_popup",   "vol": 0.6,  "pitch": 1.0},
+    {"key": "inf_popup_soft", "se": "se_inf_popup",   "vol": 0.25, "pitch": 1.0},
+    {"key": "inf_alarm",      "se": "se_inf_alarm",   "vol": 0.55, "pitch": 1.0},
+    {"key": "inf_drone",      "se": "se_inf_drone",   "vol": 0.3,  "pitch": 1.0},
+    {"key": "inf_repel",      "se": "se_inf_repel",   "vol": 0.6,  "pitch": 1.0},
+    {"key": "inf_slam",       "se": "se_inf_slam",    "vol": 1.0,  "pitch": 1.0},
+    {"key": "inf_shield",     "se": "se_inf_shield",  "vol": 0.8,  "pitch": 1.0},
+    {"key": "cure_wave",      "se": "se_cure_wave",   "vol": 0.8,  "pitch": 1.0},
+    {"key": "cure_pop",       "se": "se_cure_pop",    "vol": 0.6,  "pitch": 1.0},
+    {"key": "cure_zero",      "se": "se_cure_zero",   "vol": 0.75, "pitch": 1.0}
+  ]
+}

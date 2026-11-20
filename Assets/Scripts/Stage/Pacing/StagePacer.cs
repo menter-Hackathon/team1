@@ -306,8 +306,16 @@ public class StagePacer : MonoBehaviour
                 break;
             case PacePhase.Event:
                 RunPlan(alive);
+                bool eventZakoDone = PlanDone && alive == 0 && (PhaseSpawned >= _eventBudget || Spawner.QuotaUsedUp);
+                // 2026-11-20【仮】雑魚を倒し切ったのに出来事だけが続く（危ない物だけ・雑魚 0体）ときは、少し待って出来事を終わらせる（終わりの白い光は出る）
+                if (eventZakoDone && _eventRunning && CanCutEventTail())
+                {
+                    CuttingEventTail = true;
+                    try { StopEvent(); }
+                    finally { CuttingEventTail = false; }
+                }
                 // 「予算を倒し切った」と「出来事が終わった」の両方で終わる
-                if (!_eventRunning && PlanDone && alive == 0 && (PhaseSpawned >= _eventBudget || Spawner.QuotaUsedUp))
+                if (!_eventRunning && eventZakoDone)
                 {
                     if (_row.Rest) SetPhase(PacePhase.Rest);
                     else EnterClimax(); // 【要相談⑧】Terminal はひと休みなし
@@ -324,6 +332,22 @@ public class StagePacer : MonoBehaviour
                 break;
         }
     }
+
+    /// <summary>
+    /// 2026-11-20【仮】③ の雑魚を倒し切ったあと、出来事を先に終わらせてよいか：雑魚 0体のまま EventTailGrace 秒・出来事が始まって EventMinSeconds 秒。
+    /// ラスボス（Terminal の sudo reboot）は最後まで見せる
+    /// </summary>
+    bool CanCutEventTail()
+    {
+        if (IsFinal) return false;
+        return Time.time - _zeroSince >= StagePaceTable.EventTailGrace && Time.time - _eventAt >= StagePaceTable.EventMinSeconds;
+    }
+
+    /// <summary>
+    /// 2026-11-20【仮】③ の雑魚を倒し切ったので、出来事を先に終わらせている最中か（出来事の OnEnd の中で true。
+    /// Premiere の書き出しを「完了」で閉じるのに使う。シーンを出るとき・ボスの登場で終わるときは false）
+    /// </summary>
+    public bool CuttingEventTail { get; private set; }
 
     void EnterBuild()
     {

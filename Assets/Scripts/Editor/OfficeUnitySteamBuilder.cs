@@ -662,7 +662,8 @@ public static class OfficeUnitySteamBuilder
             new AppRow { Name = "Word", ScreenTimeName = "Microsoft Word", BundleId = "com.microsoft.Word", Boss = "Office", Category = SkillCategory.Office, Theme = "Theme_Office" },
             new AppRow { Name = "PowerPoint", ScreenTimeName = "Microsoft PowerPoint", BundleId = "com.microsoft.Powerpoint", Boss = "Office", Category = SkillCategory.Office, Theme = "Theme_Office" },
             new AppRow { Name = "Unity", ScreenTimeName = "Unity Editor", BundleId = "com.unity3d.UnityEditor", Boss = "Unity", Category = SkillCategory.Dev, Theme = null },
-            new AppRow { Name = "Unity Hub", ScreenTimeName = "Unity Hub", BundleId = "com.unity3d.unityhub", Boss = "Unity", Category = SkillCategory.Dev, Theme = null },
+            // 2026-11-20（まさぴ〜決定）：Unity Hub は Unity の行にまとめた（同じボス・同じ能力が1回のランに2回出ていたため）。
+            // 表の Unity の行のバンドルID・別名に com.unity3d.unityhub・Unity Hub を入れてある。ここで別の行を作り直さない
             new AppRow { Name = "Steam", ScreenTimeName = "Steam", BundleId = "com.valvesoftware.steam", Boss = "Steam", Category = SkillCategory.Game, Theme = "Theme_Game" },
         };
 

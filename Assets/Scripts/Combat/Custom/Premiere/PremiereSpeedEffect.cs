@@ -7,6 +7,9 @@ using UnityEngine;
 /// ・スローの場：出した瞬間のプレイヤーの位置に、半径3マスの円（予告は点線の枠だけ）。効果の間、中にいるプレイヤーの横の速さを 0.5倍にする
 /// ・ボスの倍速：効果の間、ボスの移動の速さ 3倍・攻撃のあとの待ち時間 0.5倍。頭の上に ▶▶、後ろに赤っぽい残像
 /// ・時間切れ・形態変化・正常化で消えるとき、Restore で倍率を 1 に戻す（変えた物だけ）
+/// 2026-11-20（docs/premiere-edit-screen-design.md 6-4）：プログラムモニター（PremiereMonitor）があれば、数字が回る間、映像の右上に同じ印（スローは時計、
+/// 倍速は ▶▶）を出し、その印がモニターからスローの場のまん中／ボスの頭の上へ飛ぶ（当たらない。着く瞬間に効果が始まる）。効果の間、映像も 0.5倍／3倍で流れる。
+/// 場の大きさ・倍率・秒数は今のまま
 /// </summary>
 public class PremiereSpeedEffect : CustomEffect
 {
@@ -74,6 +77,18 @@ public class PremiereSpeedEffect : CustomEffect
         e._boss = owner.GetComponent<BossController>();
         if (slow) e.BuildField();
         else e.BuildBoost();
+        PremiereMonitor monitor = PremiereMonitor.Current;
+        if (monitor != null)
+        {
+            // 2026-11-20：モニターの右上に印 → 効果の場所へ飛ぶ（数字が回る 0.8秒）。効果の間、映像の速さも変わる
+            Sprite icon = slow ? PremiereArt.ClockFace : PremiereArt.FastForwardMark;
+            monitor.ShowIcon(icon, config.WindowTime);
+            BossController boss = e._boss;
+            System.Func<Vector2> to = slow ? (System.Func<Vector2>)(() => center)
+                : () => boss != null ? new Vector2(boss.BodyBounds.center.x, boss.BodyBounds.max.y + 0.4f) : center;
+            PremiereMonitorFlyer.Icon(go.transform, icon, monitor.VideoCenter, to, e._start, e._effectAt, 16);
+            monitor.Speed(slow ? config.SlowMultiplier : config.BoostMoveMultiplier, e._end - e._start);
+        }
         e.Tick(Time.time);
         return e;
     }

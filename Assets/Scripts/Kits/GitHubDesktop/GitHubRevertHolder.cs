@@ -36,7 +36,10 @@ public class GitHubRevertHolder : MonoBehaviour
         Clear();
         Vector2 feet = Feet();
         float gy = feet.y;
-        if (_owner.TryFindGround(feet.x, feet.y + 0.3f, out float g) && feet.y - g < 30f) gy = g;
+        // 2026-11-20：前は体の真ん中の 1本の線で床を探していたので、段・壁の上の端（体の半分が外に出ている所）や、壁のすぐ横の空中で置くと、
+        // 丸が下の床に落ち、戻ったときに体が段・壁にめり込んで動けなくなっていた。体の箱ごと下へ動かして、体が収まる床を探す。立っているなら今の場所
+        var body = GetComponent<KinematicBody2D>();
+        if ((body == null || !body.IsGrounded) && TryFindLanding(feet, out float g)) gy = g;
         _commitFeet = new Vector2(feet.x, gy);
         _commit = _owner.CreateSpawnedObject("GitHubRevertCommit", _commitFeet + Vector2.up * 0.5f);
         _commitArt = RuntimeSprites.Show(_commit.transform, GitHubDesktopArt.RevertCommit(), Vector2.zero, Order + 1, 1f, "Commit");
@@ -55,11 +58,19 @@ public class GitHubRevertHolder : MonoBehaviour
             Place();
             return;
         }
-        Vector2 from = transform.position;
-        Vector2 pivot = from - Feet(); // 位置と足元のずれ（足元を丸の床に合わせる）
-        Vector2 to = _commitFeet + pivot + Vector2.up * 0.02f;
+        // 2026-11-20：丸の所に体が収まらない（あとから置いた箱・閉じた門・壁などが来た）ときは、近くの空いている所へずらす。
+        // 体が床・壁にめり込むと、KinematicBody2D がどの向きにも動けなくなるため。どこにも空きが無ければ、今の場所に置き直す（クールタイムは始めない）
+        Vector2 feetTo = _commitFeet + Vector2.up * 0.02f;
+        if (!TryFindRoom(ref feetTo, arena, arena.Contains(RewardKit.BodyCenter(transform))))
+        {
+            Place();
+            return;
+        }
+        // 2026-11-20：位置と足元のずれは、体の箱の形から出す。前は transform.position - Feet() で出していたが、
+        // transform は補間で物理の位置より遅れるので、ジャンプで上がっている途中に戻ると、そのずれの分だけ床にめり込んで動けなくなっていた
+        Vector2 to = feetTo - FeetOffset();
         Vector2 c0 = RewardKit.BodyCenter(transform);
-        Vector2 c1 = c0 + (to - from);
+        Vector2 c1 = feetTo + Vector2.up * BodyBounds().extents.y;
 
         var body = GetComponent<KinematicBody2D>();
         if (body != null) body.Warp(to);
@@ -128,10 +139,96 @@ public class GitHubRevertHolder : MonoBehaviour
 
     Vector2 Feet()
     {
+        Bounds b = BodyBounds();
+        return new Vector2(b.center.x, b.min.y);
+    }
+
+    // ───────── 体が収まるか（2026-11-20） ─────────
+
+    // 体の箱を内側へ縮めて調べる幅（床・壁にふれているだけは数えない）。KinematicBody2D のすき間（0.015）より小さくする
+    // （大きいと、ここでは重ならないのに、KinematicBody2D からは重なって見えて動けない所を「空き」と答えてしまう）
+    const float FitInset = 0.01f;
+    static readonly RaycastHit2D[] CastHits = new RaycastHit2D[8];
+    static readonly Collider2D[] OverlapHits = new Collider2D[8];
+
+    // 体の箱（動くときの当たり判定＝トリガーでないコライダー）
+    Bounds BodyBounds()
+    {
         foreach (var col in GetComponents<Collider2D>())
         {
-            if (!col.isTrigger && col.enabled) return new Vector2(col.bounds.center.x, col.bounds.min.y);
+            if (!col.isTrigger && col.enabled) return col.bounds;
         }
-        return transform.position;
+        return new Bounds(transform.position + Vector3.up * 0.5f, new Vector3(0.7f, 1f, 0f));
+    }
+
+    // 位置（原点）から見た足元のずれ（体の箱の形から。プレイヤーは足元が原点なので 0）
+    Vector2 FeetOffset()
+    {
+        var box = GetComponent<BoxCollider2D>();
+        if (box == null) return Vector2.zero;
+        Vector2 s = transform.lossyScale;
+        s = new Vector2(Mathf.Abs(s.x), Mathf.Abs(s.y));
+        return Vector2.Scale(box.offset, s) - new Vector2(0f, box.size.y * s.y * 0.5f);
+    }
+
+    Vector2 InsetSize(Bounds b) => Vector2.Max((Vector2)b.size - Vector2.one * (FitInset * 2f), Vector2.one * 0.05f);
+
+    // 足元を feet に置いたとき、体が床・壁（Ground）に重ならないか。すり抜け床は重なっても出られるので数えない
+    bool Fits(Vector2 feet)
+    {
+        Bounds b = BodyBounds();
+        var filter = new ContactFilter2D { useTriggers = false, useLayerMask = true };
+        filter.SetLayerMask(LayerMask.GetMask("Ground"));
+        int n = Physics2D.OverlapBox(feet + Vector2.up * b.extents.y, InsetSize(b), 0f, filter, OverlapHits);
+        Rigidbody2D self = GetComponent<Rigidbody2D>();
+        for (int i = 0; i < n; i++)
+        {
+            Collider2D c = OverlapHits[i];
+            if (c != null && (self == null || c.attachedRigidbody != self)) return false;
+        }
+        return true;
+    }
+
+    // 空中から体の箱をまっすぐ下へ動かして、乗る床（Ground・上から乗るすり抜け床）の上面を探す（KinematicBody2D の着地と同じ考え方）
+    bool TryFindLanding(Vector2 feet, out float groundY)
+    {
+        groundY = feet.y;
+        Bounds b = BodyBounds();
+        int oneWay = LayerMask.GetMask("OneWayPlatform");
+        var filter = new ContactFilter2D { useTriggers = false, useLayerMask = true };
+        filter.SetLayerMask(LayerMask.GetMask("Ground") | oneWay);
+        int n = Physics2D.BoxCast(feet + Vector2.up * b.extents.y, InsetSize(b), 0f, Vector2.down, filter, CastHits, 30f);
+        Rigidbody2D self = GetComponent<Rigidbody2D>();
+        float best = float.PositiveInfinity;
+        for (int i = 0; i < n; i++)
+        {
+            RaycastHit2D h = CastHits[i];
+            if (h.collider == null || (self != null && h.collider.attachedRigidbody == self)) continue;
+            if (h.distance <= 0f) continue; // 始めから重なっている物（下から抜けている途中のすり抜け床など）
+            if ((oneWay & (1 << h.collider.gameObject.layer)) != 0 && h.normal.y < 0.5f) continue; // すり抜け床は上から乗るときだけ
+            best = Mathf.Min(best, h.distance);
+        }
+        if (float.IsPositiveInfinity(best)) return false;
+        groundY = feet.y + FitInset - best; // 縮めた箱の下の端が床に着いた高さ
+        return true;
+    }
+
+    // 足元 feet に体が収まらなければ、近くの空いている所を探す（横へ少し → 上へ）。ボス部屋の内と外はまたがない
+    bool TryFindRoom(ref Vector2 feet, Rect arena, bool inArena)
+    {
+        for (float up = 0f; up <= 3.01f; up += 0.25f)
+        {
+            for (float side = 0f; side <= 0.751f; side += 0.125f)
+            {
+                for (int s = 0; s < (side > 0f ? 2 : 1); s++)
+                {
+                    Vector2 p = feet + new Vector2(s == 0 ? side : -side, up);
+                    if (arena.Contains(p + Vector2.up * 0.5f) != inArena || !Fits(p)) continue;
+                    feet = p;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

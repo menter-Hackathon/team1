@@ -28,6 +28,7 @@ public class RunTitleMenu : MonoBehaviour
     MacDesktopFiles _files;
     MacDesktopBoot _boot;
     bool _authBusy,_touchIdAvailable,_autoAuthStarted;
+    bool _bgmStarted; // タイトルの曲を流し始めたか（起動の演出があるときは、ゲームのアプリが開いてから）
     string _touchIdStatus;
     static bool _bootPlayed;
     public static bool IsBootPlaying { get; private set; }
@@ -41,10 +42,13 @@ public class RunTitleMenu : MonoBehaviour
 
     void Start()
     {
-        GameAudio.PlayBgm("bgm_title"); // タイトルの曲（2026-11-20：画面を Mac 仕様にしたときに消えていたので戻した）
         MacDesktopWallpaper.Ensure(this);
         _boot=new MacDesktopBoot(Time.unscaledTime,!_bootPlayed);
         _bootPlayed=true; IsBootPlaying=_boot.IsPlaying;
+        // タイトルの曲：起動の演出（ロック画面→デスクトップ）の間は鳴らさず、Dock からゲームのアプリを開いたところから流す。
+        // ランから戻ったとき（演出なし）は、今までどおりすぐ流す（2026-11-20 まさぴ〜）
+        if(_boot.IsPlaying) GameAudio.StopBgm(0.3f);
+        else StartTitleBgm();
         var touchId=MacTouchId.CheckAvailability();
         _touchIdAvailable=touchId==MacTouchId.Availability.Ready;
         _touchIdStatus=touchId==MacTouchId.Availability.NotEnrolled?"Touch IDが未設定です":
@@ -69,6 +73,35 @@ public class RunTitleMenu : MonoBehaviour
 
     void Update()
     {
+        // 起動の演出：ロック画面（Touch ID か Enter で解除）→ デスクトップで待つ → Dock のゲームを開く（2026-11-20）。
+        // 9ac66e42 にあった処理がマージで消えてロック画面から進めなかったので戻し、デスクトップで待つようにした
+        if(_boot!=null&&_boot.IsPlaying)
+        {
+            float now=Time.unscaledTime;
+            _boot.Tick(now);
+            IsBootPlaying=_boot.IsPlaying;
+            MacDesktopInfection.Tick(_boot.InfectionTime(now),_dockApps.Count,_boot.Current>=MacDesktopBoot.Step.Bouncing); // 感染の音（2026-11-20）
+            if(_boot.ShowApp) StartTitleBgm(); // 窓が開き始めたら曲を流す
+            var kb=Keyboard.current;
+            if(_boot.Current==MacDesktopBoot.Step.Locked)
+            {
+                if(MenuInput.Confirm(false)) { CompleteDesktopUnlock(); return; } // Enter・Z・A・START
+                if(_authBusy&&kb!=null&&kb.escapeKey.wasPressedThisFrame) { MacTouchId.Cancel(); return; }
+                if(!_autoAuthStarted&&_touchIdAvailable&&_boot.CanUnlock(now))
+                {
+                    _autoAuthStarted=true;
+                    AuthenticateTouchId();
+                }
+            }
+            else if(_boot.Current==MacDesktopBoot.Step.Infecting)
+            {
+                // 感染の間は飛ばすだけ（感染し終わった待ちへ。起動はしない。2026-11-20）
+                bool click=Mouse.current!=null&&Mouse.current.leftButton.wasPressedThisFrame;
+                if((MenuInput.Confirm()||click)&&_boot.SkipInfection(now)) MacDesktopInfection.MuteRest();
+            }
+            else if(_boot.Current==MacDesktopBoot.Step.Desktop&&MenuInput.Confirm()) LaunchGameApp(); // マウスが無くても開ける
+            return;
+        }
         if (PauseMenu.BlocksInput) return; // 設定（歯車）を開いている間は、タイトルを操作しない（2026-11-20）
         if (!_window.IsVisible || (_dex != null && _dex.BlocksParentInput) || (_files!=null&&_files.BlocksParentInput) || AchievementsBlockInput || Session.IsTransitioning) return;
         if(MacDesktopGui.WindowShortcuts(_window)) return;
@@ -97,6 +130,19 @@ public class RunTitleMenu : MonoBehaviour
     }
 
     int ModeCount => MacScreenTime.CanScan ? 3 : 2;
+
+    /// <summary>デスクトップの Dock から、このゲームのアプリを開く（アイコンが跳ねてから窓が開く）</summary>
+    void LaunchGameApp()
+    {
+        if(_boot!=null&&_boot.Launch(Time.unscaledTime)) GameAudio.Event("ui_decide");
+    }
+
+    void StartTitleBgm()
+    {
+        if(_bgmStarted) return;
+        _bgmStarted=true;
+        GameAudio.PlayBgm("bgm_title"); // タイトルの曲（2026-11-20：画面を Mac 仕様にしたときに消えていたので戻した）
+    }
 
     void CompleteDesktopUnlock()
     {
@@ -205,7 +251,7 @@ public class RunTitleMenu : MonoBehaviour
             PixelGui.End();
             return;
         }
-        MacDesktopGui.MenuBar(w,"Virus Desktop");
+        MacDesktopGui.MenuBar(w,"Virus Desktop",MacDesktopInfection.LingerStatus(_dockApps.Count)); // 起動のあとも感染したまま（2026-11-20）
         bool mode=_page==Page.Mode;
         bool scanWaiting=_scan&&_topApps==null;
         bool compactScan=_scan&&string.IsNullOrEmpty(_error)&&(_scanning||_topApps!=null);
@@ -216,6 +262,7 @@ public class RunTitleMenu : MonoBehaviour
         win=_window.Apply(win,w,h,front);
         bool folderEnabled=GUI.enabled;
         GUI.enabled=folderEnabled&&front&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
+        MacDesktopInfection.DrawLingerBack(w,h);
         int folder=MacDesktopGui.Folders(w);
         GUI.enabled=folderEnabled;
         if(folder>=0&&_files!=null) { _files.Open(folder); front=false; }
@@ -227,6 +274,7 @@ public class RunTitleMenu : MonoBehaviour
         if(_files!=null&&_files.IsMinimized) items.Add(new MacDesktopGui.DockItem("Finder",null,_files.Window));
         GUI.enabled=was&&active&&(!_window.IsVisible||!win.Contains(Event.current.mousePosition));
         int dock=MacDesktopGui.Dock(w,h,items);
+        MacDesktopInfection.DrawLingerFront(w,h,items); // フォルダと Dock の紫・乗った雑魚
         // 右下の歯車：設定（音量・キー設定）。キー・コントローラーでは、メニューの「終了」の下（2026-11-20）
         GUI.enabled=was&&active&&!PauseMenu.IsOpen;
         if(SettingsGear(new Rect(w-40,h-84,30,30),_window.IsVisible&&!_scan&&_page==Page.Menu&&_focus==4)) OpenSettings(); // どの画面（はじめかた・スキャン）からでも、その画面のまま設定を開く
@@ -281,17 +329,29 @@ public class RunTitleMenu : MonoBehaviour
         if(_boot.ShowDesktop)
         {
             // 起動途中にクリックが背後のメニューへ届かないようにする。
+            // デスクトップで待つ間だけ、Dock のクリックを通す（ゲームのアイコンだけが反応する。2026-11-20）
+            bool waiting=_boot.Current==MacDesktopBoot.Step.Desktop;
             EventType type=Event.current.type;
-            if(type==EventType.MouseDown||type==EventType.MouseUp||type==EventType.MouseDrag||type==EventType.MouseMove||
-                type==EventType.ScrollWheel||type==EventType.KeyDown)
-                Event.current.Use();
-            MacDesktopGui.Folders(width);
-            MacDesktopGui.MenuBar(width,"Finder");
-            MacDesktopGui.Dock(width,height,_dockApps,1,_boot.BounceProgress(now));
+            bool mouse=type==EventType.MouseDown||type==EventType.MouseUp||type==EventType.MouseDrag||type==EventType.MouseMove||
+                type==EventType.ScrollWheel;
+            if((mouse&&!waiting)||type==EventType.KeyDown) Event.current.Use();
+            float infection=_boot.InfectionTime(now); // 解除のあとの感染（MacDesktopInfection。2026-11-20）
+            Matrix4x4 keep=GUI.matrix; Vector2 shake=MacDesktopInfection.Shake(infection); // 感染のゆれ（メニューバーは自分で戻して描くのでゆれない）
+            GUI.matrix=keep*Matrix4x4.Translate(new Vector3(shake.x,shake.y,0));
+            MacDesktopInfection.DrawBack(infection,width,height,_dockApps.Count);
+            MacDesktopGui.Folders(width); // フォルダ・ほかの Dock のアイコンは、ゲームのアプリを開くまで押しても何もしない
+            MacDesktopGui.MenuBar(width,_boot.ShowApp?"Virus Desktop":"Finder",MacDesktopInfection.Status(infection,_dockApps.Count));
+            MacDesktopInfection.DrawMenuBarOverlay(infection,width); // 電池と時計がおかしくなる
+            bool launched=_boot.Current>=MacDesktopBoot.Step.Bouncing;
+            float hop=_boot.Current==MacDesktopBoot.Step.Bouncing?_boot.BounceProgress(now):_boot.IdleHop(now);
+            int dock=MacDesktopGui.Dock(width,height,_dockApps,launched?1:-1,hop); // 起動するまで、ゲームの下の点は出さない
+            if(waiting&&dock==1) LaunchGameApp();
+            if(waiting&&mouse&&Event.current.type!=EventType.Used) Event.current.Use();
+            MacDesktopInfection.DrawFront(infection,width,height,_dockApps,hop,launched); // ゲームの窓より先（窓が警告の窓の上に開く）
             if(_boot.ShowApp)
             {
                 float t=MacDesktopBoot.Ease(_boot.LaunchProgress(now));
-                Rect target=MacDesktopGui.CenteredWindow(width,height,420,268);
+                Rect target=MacDesktopGui.CenteredWindow(width,height,420,298); // 本番のメニューの窓と同じ高さ（じっせきの分。窓が跳ねないように）
                 float dockWidth=(2+_dockApps.Count)*42+12;
                 Vector2 origin=new Vector2((width-dockWidth)*0.5f+26,height-65);
                 Vector2 position=Vector2.Lerp(origin,target.position,t);
@@ -307,6 +367,7 @@ public class RunTitleMenu : MonoBehaviour
                 }
                 finally { GUI.matrix=matrix; }
             }
+            GUI.matrix=keep; // ゆれを戻す
         }
         _boot.DrawLock(now,_authBusy,_touchIdAvailable,_touchIdStatus);
     }

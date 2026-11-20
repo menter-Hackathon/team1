@@ -47,6 +47,7 @@ namespace Team1.Achievements
 
         void Update()
         {
+            if (RunTitleMenu.IsBootPlaying) return; // 起動の演出（ロック画面・デスクトップ）の間は待ち、タイトルの窓が開いてから出す（2026-11-20）
             if (!IsOpen)
             {
                 if (BlocksInput && Time.frameCount > _closedFrame) BlocksInput = false;
@@ -69,7 +70,7 @@ namespace Team1.Achievements
         void OnGUI()
         {
             GUI.depth = -90; // タイトル・一覧より手前（GUI.depth は戻さない）
-            if (!IsOpen) return;
+            if (!IsOpen || RunTitleMenu.IsBootPlaying) return;
             PixelGui.Begin(false);
             float W = PixelGui.Width, H = PixelGui.Height;
             PixelGui.Fill(new Rect(0, 0, W, H), new Color(0.02f, 0.04f, 0.08f, 0.45f));

@@ -1,0 +1,93 @@
+{
+ "id": "jingle_cure",
+ "desc": "全クリアのあと、このMacからウイルスがいなくなった瞬間。治ったモチーフ（Aメジャー）がゆっくり高く上がって、明るく開いて終わる（ステージクリアより遅く・大きく）",
+ "bpm": 120,
+ "steps_per_beat": 4,
+ "beats_per_bar": 4,
+ "swing": 0.0,
+ "instruments": {
+  "lead": {
+   "wave": "pulse",
+   "duty": 0.25,
+   "env": {
+    "a": 0.005,
+    "d": 0.12,
+    "s": 0.55,
+    "r": 0.06
+   },
+   "vol": 0.33,
+   "vib": [
+    0.15,
+    5.5,
+    0.15
+   ],
+   "echo": [
+    3,
+    0.3,
+    0.22
+   ]
+  },
+  "harm": {
+   "wave": "pulse",
+   "duty": 0.125,
+   "env": {
+    "a": 0.002,
+    "d": 0.06,
+    "s": 0.3,
+    "r": 0.03
+   },
+   "vol": 0.3,
+   "arp_rate": 0.04
+  },
+  "bass": {
+   "wave": "triangle",
+   "env": {
+    "a": 0.002,
+    "d": 0.05,
+    "s": 0.9,
+    "r": 0.03
+   },
+   "vol": 0.331
+  },
+  "drums": {
+   "kit": "chip",
+   "vol": 0.529
+  },
+  "bell": {
+   "wave": "triangle",
+   "env": {
+    "a": 0.002,
+    "d": 0.1,
+    "s": 0.25,
+    "r": 0.12
+   },
+   "vol": 0.22,
+   "echo": [
+    2,
+    0.35,
+    0.3
+   ]
+  }
+ },
+ "patterns": {
+  "lead": "A4 C#5 E5 D#5 E5 - A5 - C#6 - B5 - C#6 - E6 - | A6! - - - - - E6 - A6! - - - - - . . |",
+  "harm": "A3+C#4+E4 - - - - - - - D4+F#4+A4 - - - E4+G#4+B4 - - - | A3+C#4+E4+A4 - - - - - - - A3+C#4+E4+A4 - - - - - . . |",
+  "bass": "A2 . A2 . A2 . A2 . D3 . D3 . E3 . E3 . | A2 - - - - - E2 - A2 - - - - - . . |",
+  "bell": ". . . . . . . . . . . . . . . . | E7 A7 C#8 . . . . . E7 A7 C#8 . . . . . |",
+  "drums": "k+c . h . s . h . k . h . s . s s | k+c . . . . . s . k+c . . . . . . . |"
+ },
+ "sections": {
+  "A": {
+   "bars": 2,
+   "lead": "lead",
+   "harm": "harm",
+   "bass": "bass",
+   "bell": "bell",
+   "drums": "drums"
+  }
+ },
+ "loop": [
+  "A"
+ ],
+ "jingle": true
+}

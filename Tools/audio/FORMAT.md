@@ -224,6 +224,10 @@ Unity の JsonUtility で読むので、**辞書ではなく配列** で書く�
 | `ui_plat_fall` | UI の足場が落ちた・消えた |
 | `ui_button` | UI のボタンを叩いて押した |
 | `ui_button_ready` | UI のボタンがまた押せるようになった |
+| `backup_done` | ステージに入ったときの右下の札で、バックアップができた（小さく。2026-11-20。`Maps/70_backup.json`） |
+| `restore_rewind` | リトライの復元の窓で、バックアップから巻き戻し始めた |
+| `restore_done` | 復元ができた（`backup_done` と同じ音を大きめに） |
+| `title_reboot` | ゲームオーバーから「タイトルへ」：顔の印と白いバーが出た（起動し直す） |
 
 BGM の id（作る曲と、流す画面。まさぴ〜から任されたので、この割り当てで作る）
 | id | 流す所 |

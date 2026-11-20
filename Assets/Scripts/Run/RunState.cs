@@ -223,14 +223,16 @@ public static class RunPlanner
         {
             if (p.entry != null)
             {
-                SkillDefinition own = abilities != null ? abilities.FindAppSkill(p.row)?.Skill : null; // 対応表のアプリでも、専用の能力があればそれ
+                // 対応表のアプリでも、専用の能力があればそれ。本物のボスの能力とキットの能力など2つ以上あれば、ランダムにどれか（2026-11-20）
+                SkillDefinition own = abilities != null ? abilities.PickAppSkill(p.row, rng, catalog) : null;
                 plans.Add(CreatePlan(catalog, p.entry, p.seconds, own, IconLookOf(p.entry, p.row)));
                 continue;
             }
             AppUsageRow row = p.row;
             row.Seconds = p.seconds;
             BossLook look = StandIn(catalog, abilities, row, templates);
-            SkillDefinition reward = abilities != null ? abilities.SkillFor(row) : null;
+            // 専用の能力が2つ以上（チームの能力とキットの能力）あれば、ランダムにどれか（2026-11-20）→ カテゴリの能力 → その場で作る
+            SkillDefinition reward = abilities != null ? abilities.PickAppSkill(row, rng, catalog) ?? abilities.Find(row)?.Skill : null;
             if (reward == null) reward = AppVisuals.Generate(row, abilities, null);
             plans.Add(CreatePlan(catalog, look.App, p.seconds, reward, look.Visual));
         }
@@ -330,6 +332,18 @@ public static class RunPlanner
         StagePlan plan = CreatePlan(catalog, look.App, catalog.FullStrengthHours * 3600.0, null, look.Visual);
         plan.IsFinal = true;
         return plan;
+    }
+
+    /// <summary>
+    /// 図鑑に載せるときの、そのアプリの名前とバンドルID（2026-11-20：同じアプリの記録をまとめるため。ランが図鑑に書く名前と同じ決め方）。
+    /// ラスボス（Terminal）→ 表の名前。対応表のアプリ（ボスのあるもの）→ 表の名前。ほかはそのまま（スクリーンタイムの名前）
+    /// </summary>
+    public static (string name, string bundleId) DexIdentity(AppCatalog catalog, string name, string bundleId)
+    {
+        if (catalog == null) return (name, bundleId);
+        AppEntry entry = catalog.IsFinalBossApp(bundleId, name) ? catalog.FinalBoss : catalog.Find(bundleId) ?? catalog.FindByName(name);
+        if (entry == null || entry.BossPrefab == null || entry.Profile == null) return (name, bundleId);
+        return (entry.DisplayName, entry.BundleIdPrefixes?.FirstOrDefault(b => !string.IsNullOrEmpty(b)) ?? bundleId);
     }
 
     /// <summary>

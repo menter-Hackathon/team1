@@ -198,15 +198,68 @@ public class AbilityCatalog : ScriptableObject
     /// </summary>
     public SkillDefinition SkillFor(AppUsageRow row) => FindAppSkill(row)?.Skill ?? Find(row)?.Skill;
 
+    /// <summary>
+    /// このアプリの専用の能力を全部（2026-11-20 まさぴ〜決定：同じアプリに能力が2つ以上あれば、まとめてランダムでどれかを出す）。
+    /// ・この表で当たる行の能力を全部（LINE・Slack・Discord・Photoshop は、チームの能力とキットの能力の2行ある）
+    /// ・catalog を渡すと、対応表の本物のボス（Office・Unity・Steam など）の「手に入る能力」も足す（専用の能力の行があるアプリだけ。
+    ///   キットの能力の行が、本物のボスの能力を上書きしていたため）
+    /// ・同じ能力は1つ。ラスボス（Terminal）の能力は入れない。専用の能力が無ければ空
+    /// </summary>
+    public List<SkillDefinition> AppSkillChoices(AppUsageRow row, AppCatalog catalog = null)
+    {
+        var list = new List<SkillDefinition>();
+        SkillDefinition finalSkill = FinalBossSkill(out _);
+        foreach (AppSkillEntry a in AppSkills)
+        {
+            if (a != null && a.Skill != null && a.IsActive && a.Skill != finalSkill && a.Matches(row) && !list.Contains(a.Skill)) list.Add(a.Skill);
+        }
+        if (list.Count == 0 || catalog == null || catalog.IsFinalBossApp(row.BundleId, row.Name)) return list;
+        AppEntry entry = catalog.Find(row.BundleId) ?? catalog.FindByName(row.Name);
+        BossProfile profile = entry == null ? null : entry.OwnProfile != null ? entry.OwnProfile : entry.Profile;
+        SkillDefinition bossSkill = profile != null ? profile.Reward : null;
+        if (entry != null && entry.BossPrefab != null && bossSkill != null && bossSkill != finalSkill && !list.Contains(bossSkill)) list.Add(bossSkill);
+        return list;
+    }
+
+    /// <summary>
+    /// このアプリの専用の能力から、ランダムに1つ（AppSkillChoices。1つだけならそれ、無ければ null）。
+    /// skip に入っている能力は、ほかに選べる能力があれば選ばない（カードで同じ能力が2枚にならないように）
+    /// </summary>
+    public SkillDefinition PickAppSkill(AppUsageRow row, System.Random rng, AppCatalog catalog = null, ICollection<SkillDefinition> skip = null)
+    {
+        List<SkillDefinition> list = AppSkillChoices(row, catalog);
+        if (skip != null && list.Count > 1)
+        {
+            var rest = list.Where(s => !skip.Contains(s)).ToList();
+            if (rest.Count > 0) list = rest;
+        }
+        if (list.Count == 0) return null;
+        if (list.Count == 1 || rng == null) return list[0];
+        return list[rng.Next(list.Count)];
+    }
+
+    /// <summary>このアプリから出る能力のうち、その名前の物（図鑑の記録の能力の名前から引く）。無ければ null</summary>
+    public SkillDefinition FindAppSkillByName(AppUsageRow row, string displayName, AppCatalog catalog = null)
+    {
+        if (string.IsNullOrEmpty(displayName)) return null;
+        SkillDefinition hit = AppSkillChoices(row, catalog).FirstOrDefault(s => s.DisplayName == displayName);
+        if (hit != null) return hit;
+        SkillDefinition category = Find(row)?.Skill;
+        return category != null && category.DisplayName == displayName ? category : null;
+    }
+
     /// <summary>この能力のカテゴリ。無ければ null</summary>
     public AbilityCategoryEntry FindBySkill(SkillDefinition skill) => Categories.FirstOrDefault(c => c != null && c.Skill == skill);
 
     /// <summary>
     /// 能力えらびのカードを作る（使用時間の長い順）。
-    /// appIcon：アプリのアイコン（カードに出す）。generate：カテゴリの分からないアプリの能力をその場で作る（使ったひな形の番号を渡す。作れなければ null）
+    /// appIcon：アプリのアイコン（カードに出す）。generate：カテゴリの分からないアプリの能力をその場で作る（使ったひな形の番号を渡す。作れなければ null）。
+    /// rng・catalog（2026-11-20）：渡すと、専用の能力が2つ以上あるアプリは、その中からランダムに1枚（PickAppSkill）。
+    /// 今は渡していない（まさぴ〜が決めたのは、倒したときの能力だけランダム）。rng が null なら今までどおり先の行
     /// </summary>
     public List<AbilityCandidate> BuildCandidates(IEnumerable<AppUsageRow> rows,
-        Func<AppUsageRow, Sprite> appIcon = null, Func<AppUsageRow, HashSet<int>, SkillDefinition> generate = null)
+        Func<AppUsageRow, Sprite> appIcon = null, Func<AppUsageRow, HashSet<int>, SkillDefinition> generate = null,
+        System.Random rng = null, AppCatalog catalog = null)
     {
         var cards = new List<AbilityCandidate>();
         var used = new HashSet<SkillCategory>();
@@ -219,9 +272,10 @@ public class AbilityCatalog : ScriptableObject
             AppSkillEntry own = FindAppSkill(row);
             if (own != null)
             {
-                // アプリ専用の能力：カテゴリの1枚とは別に数える（同じ能力は1枚だけ）
-                if (!usedAppSkills.Add(own.Skill)) continue;
-                cards.Add(new AbilityCandidate { Skill = own.Skill, Category = own.Skill.Category, AppName = row.Name, Seconds = row.Seconds, AppIcon = appIcon?.Invoke(row) });
+                // アプリ専用の能力：カテゴリの1枚とは別に数える（同じ能力は1枚だけ）。2つ以上あれば、まだ出ていない物からランダム（2026-11-20）
+                SkillDefinition ownSkill = rng != null ? PickAppSkill(row, rng, catalog, usedAppSkills) ?? own.Skill : own.Skill;
+                if (!usedAppSkills.Add(ownSkill)) continue;
+                cards.Add(new AbilityCandidate { Skill = ownSkill, Category = ownSkill.Category, AppName = row.Name, Seconds = row.Seconds, AppIcon = appIcon?.Invoke(row) });
                 continue;
             }
             AbilityCategoryEntry entry = Find(row);

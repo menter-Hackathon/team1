@@ -48,7 +48,7 @@ public class BossSelectDebug : MonoBehaviour
     static readonly Choice[] Fixed =
     {
         new Choice { Label = "Finder", BundleId = "com.apple.finder", Name = "Finder" },
-        new Choice { Label = "Premiere", BundleId = "com.adobe.PremierePro", Name = "Adobe Premiere Pro" },
+        new Choice { Label = "Premiere Pro", BundleId = "com.adobe.PremierePro", Name = "Adobe Premiere Pro" }, // 表の行と同じ名前（2026-11-20：「Premiere」と2つ出ていた）
         // ラスボスは毎回最後に足されるので、何か1つのアプリでランを作ってから、ラスボスだけにしぼる
         new Choice { Label = "Terminal", BundleId = "com.apple.finder", Name = "Finder", Final = true },
         new Choice { Label = "Chrome", BundleId = "com.google.Chrome", Name = "Google Chrome" },
@@ -63,19 +63,27 @@ public class BossSelectDebug : MonoBehaviour
     float _choicesAt = -1f;
     int _page;
 
-    /// <summary>並べるアプリ（決まった物 → 表の行 → AppKits の登録。同じ名前は1つ）。2秒ごとに作り直す</summary>
+    /// <summary>並べるアプリ（決まった物 → 表の行 → AppKits の登録。同じ名前・同じバンドルIDは1つ）。2秒ごとに作り直す</summary>
     List<Choice> Choices(GameSession session)
     {
         if (_choices != null && Time.unscaledTime - _choicesAt < 2f) return _choices;
         _choicesAt = Time.unscaledTime;
         var list = new List<Choice>(Fixed);
         var seen = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
-        foreach (var c in Fixed) seen.Add(c.Label);
+        // 同じバンドルIDも1つ（2026-11-20：名前の違う同じアプリが2つ並ばないように）。ラスボスのボタンは借りたバンドルIDなので数えない
+        var seenBundles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+        foreach (var c in Fixed)
+        {
+            seen.Add(c.Label);
+            if (!c.Final && !string.IsNullOrEmpty(c.BundleId)) seenBundles.Add(c.BundleId);
+        }
         void Add(string label, string[] names, string[] bundles)
         {
-            if (string.IsNullOrEmpty(label) || !seen.Add(label)) return;
+            if (string.IsNullOrEmpty(label) || seen.Contains(label)) return;
             string name = names != null && names.Length > 0 && !string.IsNullOrEmpty(names[0]) ? names[0] : label;
             string bundle = bundles != null && bundles.Length > 0 && !string.IsNullOrEmpty(bundles[0]) ? bundles[0] : "";
+            if (!string.IsNullOrEmpty(bundle) && !seenBundles.Add(bundle)) return;
+            seen.Add(label);
             list.Add(new Choice { Label = label, Name = name, BundleId = bundle });
         }
         if (session.Catalog != null) foreach (var e in session.Catalog.AppBosses) if (e != null) Add(e.Label, e.AppNames, e.BundleIdPrefixes);

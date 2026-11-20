@@ -354,6 +354,9 @@ public class AppDexMenu : MonoBehaviour
     static SkillDefinition SkillDefOf(AppDexEntry e)
     {
         AbilityCatalog abilities = GameSession.Instance != null ? GameSession.Instance.Abilities : null;
+        // 能力が2つ以上あるアプリ（2026-11-20：ランダムでどれかが出る）は、記録の名前の能力
+        SkillDefinition named = abilities != null ? abilities.FindAppSkillByName(e.Row, e.skill, GameSession.Instance.Catalog) : null;
+        if (named != null) return named;
         SkillDefinition skill = abilities != null ? abilities.SkillFor(e.Row) : null;
         if (skill == null) skill = AppVisuals.Get(e.Row)?.Generated;
         return skill != null && skill.DisplayName == e.skill ? skill : null;
@@ -375,7 +378,8 @@ public class AppDexMenu : MonoBehaviour
     static Sprite SkillIconOf(AppDexEntry e)
     {
         AbilityCatalog abilities = GameSession.Instance != null ? GameSession.Instance.Abilities : null;
-        SkillDefinition skill = abilities != null ? abilities.SkillFor(e.Row) : null;
+        // 能力が2つ以上あるアプリ（2026-11-20）は、手に入れた能力（記録の名前）のアイコン
+        SkillDefinition skill = abilities != null ? abilities.FindAppSkillByName(e.Row, e.skill, GameSession.Instance.Catalog) ?? abilities.SkillFor(e.Row) : null;
         if (skill != null && skill.Icon != null) return skill.Icon;
         return AppVisuals.Get(e.Row)?.Icon16;
     }

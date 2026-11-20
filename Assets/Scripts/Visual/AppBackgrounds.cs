@@ -121,10 +121,11 @@ public static class AppBackgrounds
             Log(appName ?? "?", $"[AppBackgrounds] {appName}：ラベルが無いので、今までの壁紙");
             return null;
         }
-        if (!Cache.TryGetValue(label, out Sprite sprite))
+        string file = PremiereEditScreen.ResourceLabel(label); // 2026-11-20：Premiere Pro の切り戻し（スイッチがオフなら前の絵）
+        if (!Cache.TryGetValue(file, out Sprite sprite))
         {
-            sprite = Resources.Load<Sprite>($"{Folder}/Bg_{label}");
-            Cache[label] = sprite;
+            sprite = Resources.Load<Sprite>($"{Folder}/Bg_{file}");
+            Cache[file] = sprite;
         }
         Log(label, sprite != null
             ? $"[AppBackgrounds] {appName} → Bg_{label}"
