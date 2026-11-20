@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: PC_MORNING_2
   _displayName: "\u671D\u578B II"
   _description: "\u671D\u578B\u306E\u65E5\u304C\u5408\u8A087\u65E5\u306B\u306A\u3063\u305F"
+  _praise: "\u671D\u306BPC\u306B\u3088\u304F\u89E6\u308C\u305F\uFF01"
   _category: 0
   _rank: 1
   _trigger: 0

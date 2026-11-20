@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: PC_MULTITASK
   _displayName: "\u30DE\u30EB\u30C1\u30BF\u30B9\u30AB\u30FC"
   _description: "1\u65E5\u306B10\u7A2E\u985E\u4EE5\u4E0A\u306E\u30A2\u30D7\u30EA\u3092\u4F7F\u3063\u305F"
+  _praise: "\u30A2\u30D7\u30EA\u3092\u4F7F\u3044\u3053\u306A\u3057\u305F\uFF01"
   _category: 0
   _rank: 1
   _trigger: 0

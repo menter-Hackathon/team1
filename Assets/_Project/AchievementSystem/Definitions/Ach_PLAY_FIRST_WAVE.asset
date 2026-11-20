@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: PLAY_FIRST_WAVE
   _displayName: "\u521D\u9663"
   _description: "Wave 1\u3092\u30AF\u30EA\u30A2\u3057\u305F"
+  _praise: "\u6700\u521D\u306E\u30B9\u30C6\u30FC\u30B8\u3092\u7A81\u7834\uFF01"
   _category: 1
   _rank: 0
   _trigger: 1

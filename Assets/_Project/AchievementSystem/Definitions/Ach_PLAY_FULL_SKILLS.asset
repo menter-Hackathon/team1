@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: PLAY_FULL_SKILLS
   _displayName: "\u30D5\u30EB\u88C5\u5099"
   _description: "\u30B9\u30AD\u30EB\u30923\u3064\u88C5\u5099\u3057\u305F\u72B6\u614B\u3067Wave\u3092\u30AF\u30EA\u30A2\u3057\u305F"
+  _praise: "\u30B9\u30AD\u30EB\u5168\u958B\u3067\u6226\u3063\u305F\uFF01"
   _category: 1
   _rank: 0
   _trigger: 1

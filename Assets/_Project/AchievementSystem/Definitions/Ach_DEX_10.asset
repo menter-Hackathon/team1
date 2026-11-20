@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: DEX_10
   _displayName: "\u30A2\u30D7\u30EA\u535A\u58EB"
   _description: "10\u7A2E\u985E\u306E\u30A2\u30D7\u30EA\u3092\u6B63\u5E38\u5316\u3057\u305F"
+  _praise: "\u30A2\u30D7\u30EA\u535A\u58EB\u306B\u306A\u3063\u305F\uFF01"
   _category: 2
   _rank: 1
   _trigger: 2

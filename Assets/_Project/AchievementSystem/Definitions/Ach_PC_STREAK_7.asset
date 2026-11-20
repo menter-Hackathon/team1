@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: PC_STREAK_7
   _displayName: "\u7686\u52E4\u8CDE"
   _description: "7\u65E5\u9023\u7D9A\u3067PC\u3092\u4F7F\u3063\u305F"
+  _praise: "1\u9031\u9593\u6BCE\u65E5PC\u306B\u89E6\u308C\u305F\uFF01"
   _category: 0
   _rank: 1
   _trigger: 0

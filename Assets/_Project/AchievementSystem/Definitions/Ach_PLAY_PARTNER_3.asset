@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: PLAY_PARTNER_3
   _displayName: "\u540D\u30B3\u30F3\u30D3"
   _description: "\u540C\u3058\u76F8\u68D2\u30673\u56DE\u30AF\u30EA\u30A2\u3057\u305F"
+  _praise: "\u76F8\u68D2\u3068\u606F\u3074\u3063\u305F\u308A\uFF01"
   _category: 1
   _rank: 1
   _trigger: 1

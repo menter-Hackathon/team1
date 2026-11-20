@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: PLAY_NO_DAMAGE
   _displayName: "\u30CE\u30FC\u30C0\u30E1\u30FC\u30B8"
   _description: "\u30C0\u30E1\u30FC\u30B8\u3092\u53D7\u3051\u305A\u306BWave\u3092\u30AF\u30EA\u30A2\u3057\u305F"
+  _praise: "\u7121\u50B7\u3067\u30B9\u30C6\u30FC\u30B8\u3092\u7A81\u7834\uFF01"
   _category: 1
   _rank: 1
   _trigger: 1

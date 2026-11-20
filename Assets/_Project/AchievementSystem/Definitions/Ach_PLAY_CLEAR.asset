@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: PLAY_CLEAR
   _displayName: "\u5B8C\u5168\u99C6\u9664"
   _description: "\u6700\u7D42\u30A6\u30A4\u30EB\u30B9\u30DC\u30B9\u3092\u5012\u3057\u305F"
+  _praise: "\u30A6\u30A4\u30EB\u30B9\u3092\u5B8C\u5168\u306B\u99C6\u9664\u3057\u305F\uFF01"
   _category: 1
   _rank: 2
   _trigger: 1
