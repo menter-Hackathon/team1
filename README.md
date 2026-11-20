@@ -126,6 +126,9 @@
 | Git・GitHub | バージョン管理 |
 | [Claude Code](https://claude.com/claude-code)（Anthropic。Claude Opus 5.5 / Sonnet 5.5） | AI によるコーディング支援。設計メモ、C# スクリプト、画像・音を作るスクリプトの多くを、チームの指示のもとで生成した（コミットに `Co-Authored-By: Claude` と記載） |
 
+#### ゲーム内のデスクトップ画像
+Desktop background image © Life is Tech, Inc.
+
 #### 商標について
 
 ゲームに登場するアプリ名（Chrome、VS Code、Discord、Photoshop など）は、各社の商標です。本作はそれらの会社とは関係ありません。アプリのアイコンは遊ぶ人の Mac から実行時に読み込むだけで、配布物には含めていません。
