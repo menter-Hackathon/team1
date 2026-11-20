@@ -143,7 +143,7 @@ public class GameSession : MonoBehaviour
     /// <summary>確認用：ボスを選ぶ乱数の種（0＝毎回ちがう）</summary>
     public int RandomSeed { get => _randomSeed; set => _randomSeed = value; }
 
-    /// <summary>【確認用】ランを作るとき、ステージをしぼる（null なら何もしない）。遊ぶボスを選ぶ確認用の画面（BossSelectDebug）が使う</summary>
+    /// <summary>ランを作るとき、ステージをしぼる（null なら何もしない）。図鑑から戦うとき（AppDexBattle。2026-11-20：もとは確認用の BossSelectDebug）が使い、タイトルに戻ると null に戻る</summary>
     public Func<List<StagePlan>, List<StagePlan>> StageFilter { get; set; }
 
     /// <summary>無ければ作る（ステージのシーンを直接再生したときの開発用）</summary>
@@ -210,7 +210,7 @@ public class GameSession : MonoBehaviour
         if (_catalog == null) { error = "対応アプリ表（AppCatalog）が設定されていません"; return false; }
         if (provider == null) { error = "読み込み方が指定されていません"; return false; }
         if (!provider.TryLoad(out List<AppUsage> usages, out error)) return false;
-        RememberUsages(usages,provider is SampleUsageProvider);
+        if (!AppDexBattle.IsPractice) RememberUsages(usages,provider is SampleUsageProvider); // 図鑑から戦う練習のラン（1アプリだけの仮の使用データ）は、デスクトップの書類に残さない（2026-11-20）
 
         // 能力えらびのカード：使用時間の長いアプリから、カテゴリの能力を出す（足りなければ、まだ出ていないカテゴリで埋める）。
         // カテゴリの分からないアプリは、ひな形から能力をその場で作り、アイコンの色に塗る（2026-11-17）。
@@ -243,7 +243,7 @@ public class GameSession : MonoBehaviour
             if (final != null) plans.Add(final);
         }
 
-        // 【確認用】遊ぶボスを選ぶとき：ステージをしぼる（2026-11-18。BossSelectDebug）
+        // 図鑑から戦うとき：ステージをそのボスだけにしぼる（2026-11-18 BossSelectDebug → 2026-11-20 AppDexBattle）
         if (StageFilter != null)
         {
             plans = StageFilter(plans) ?? plans;
